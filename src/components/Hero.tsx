@@ -64,9 +64,8 @@ const Hero = () => {
             alt={slide.title}
             className="w-full h-full object-cover"
           />
-          {/* Overlay premium */}
-          <div className="absolute inset-0 bg-gradient-to-b from-background/20 via-transparent to-background/40" />
-          <div className="absolute inset-0 bg-gradient-luxury opacity-20" />
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-secondary/30" />
         </div>
       ))}
 
@@ -74,10 +73,10 @@ const Hero = () => {
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-4xl mx-auto animate-fade-in">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-serif font-bold mb-6 tracking-luxury text-gradient leading-tight">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-serif font-bold mb-6 tracking-wide text-foreground">
               {slides[currentSlide].title}
             </h1>
-            <p className="text-lg md:text-xl lg:text-2xl mb-10 text-foreground/90 font-light leading-relaxed backdrop-blur-sm bg-background/10 py-3 px-6 rounded-2xl inline-block">
+            <p className="text-lg md:text-xl lg:text-2xl mb-10 text-foreground/90 font-light leading-relaxed">
               {slides[currentSlide].subtitle}
             </p>
             <Button
@@ -94,17 +93,17 @@ const Hero = () => {
       {/* Navigation Arrows */}
       <button
         onClick={prevSlide}
-        className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full glass-strong flex items-center justify-center hover:scale-110 transition-all duration-500 shadow-medium hover:shadow-glow"
+        className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-all hover:scale-110"
         aria-label="Slide anterior"
       >
-        <ChevronLeft className="w-6 h-6 text-primary" />
+        <ChevronLeft className="w-6 h-6 text-foreground" />
       </button>
       <button
         onClick={nextSlide}
-        className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-14 h-14 rounded-full glass-strong flex items-center justify-center hover:scale-110 transition-all duration-500 shadow-medium hover:shadow-glow"
+        className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-all hover:scale-110"
         aria-label="Próximo slide"
       >
-        <ChevronRight className="w-6 h-6 text-primary" />
+        <ChevronRight className="w-6 h-6 text-foreground" />
       </button>
 
       {/* Dots Indicator */}

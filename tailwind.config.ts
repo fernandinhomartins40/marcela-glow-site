@@ -52,30 +52,15 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         gold: {
-          premium: "hsl(var(--gold-premium))",
-          light: "hsl(var(--rose-gold-light))",
+          light: "hsl(var(--gold-light))",
         },
-        bronze: "hsl(var(--bronze))",
-        champagne: "hsl(var(--champagne-dark))",
-        pearl: "hsl(var(--pearl))",
+        brown: {
+          medium: "hsl(var(--brown-medium))",
+        },
       },
       letterSpacing: {
         wider: "0.05em",
-        widest: "0.15em",
-        luxury: "0.08em",
-      },
-      boxShadow: {
-        'soft': 'var(--shadow-soft)',
-        'medium': 'var(--shadow-medium)',
-        'strong': 'var(--shadow-strong)',
-        'glow': 'var(--shadow-glow)',
-      },
-      backgroundImage: {
-        'gradient-hero': 'var(--gradient-hero)',
-        'gradient-luxury': 'var(--gradient-luxury)',
-        'gradient-subtle': 'var(--gradient-subtle)',
-        'gradient-cta': 'var(--gradient-cta)',
-        'gradient-shimmer': 'var(--gradient-shimmer)',
+        widest: "0.1em",
       },
       borderRadius: {
         lg: "var(--radius)",

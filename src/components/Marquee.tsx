@@ -11,16 +11,15 @@ const Marquee = () => {
   ];
 
   return (
-    <div className="bg-gradient-luxury py-8 overflow-hidden relative">
-      <div className="absolute inset-0 bg-gradient-shimmer opacity-30" />
-      <div className="flex animate-marquee whitespace-nowrap relative z-10">
+    <div className="bg-primary py-6 overflow-hidden">
+      <div className="flex animate-marquee whitespace-nowrap">
         {/* Duplicate content for seamless loop */}
         {[...messages, ...messages].map((message, index) => (
-          <div key={index} className="flex items-center mx-10">
-            <span className="text-primary-foreground font-semibold text-lg tracking-luxury drop-shadow-lg">
+          <div key={index} className="flex items-center mx-8">
+            <span className="text-primary-foreground font-medium text-lg tracking-wider">
               {message}
             </span>
-            <Sparkles className="w-5 h-5 text-gold-premium ml-10 animate-pulse" />
+            <Sparkles className="w-4 h-4 text-primary-foreground ml-8" />
           </div>
         ))}
       </div>

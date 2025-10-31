@@ -49,7 +49,7 @@ const Procedures = () => {
     <section id="procedimentos" className="py-20 md:py-32 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16 animate-fade-in">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 tracking-luxury text-gradient">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 tracking-wide">
             Nossos Tratamentos
           </h2>
           <p className="text-lg md:text-xl text-muted-foreground font-light max-w-2xl mx-auto">
@@ -61,12 +61,11 @@ const Procedures = () => {
           {procedures.map((procedure, index) => (
             <div
               key={index}
-              className="glass p-8 rounded-3xl shadow-soft hover-lift border-gradient animate-fade-in group relative overflow-hidden"
+              className="bg-card p-8 rounded-2xl shadow-sm hover-lift border border-border/50 animate-fade-in"
               style={{ animationDelay: `${index * 100}ms` }}
             >
-              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-luxury rounded-full blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
-              <div className="w-16 h-16 rounded-full bg-gradient-luxury flex items-center justify-center mb-6 shadow-medium group-hover:shadow-glow transition-all duration-500 group-hover:scale-110 relative z-10">
-                <procedure.icon className="w-8 h-8 text-primary-foreground" strokeWidth={1.5} />
+              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                <procedure.icon className="w-7 h-7 text-primary" strokeWidth={1.5} />
               </div>
               <h3 className="text-xl font-serif font-semibold mb-3 text-foreground">
                 {procedure.title}

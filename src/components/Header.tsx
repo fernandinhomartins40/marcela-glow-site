@@ -25,19 +25,19 @@ const Header = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled ? "glass-strong shadow-medium" : "glass"
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled ? "bg-background/95 backdrop-blur-sm shadow-md" : "bg-background/80 backdrop-blur-sm"
       }`}
     >
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-luxury shadow-glow flex items-center justify-center relative overflow-hidden shimmer-effect">
+            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
               <span className="text-2xl font-serif font-bold text-primary-foreground">MD</span>
             </div>
             <div className="hidden sm:block">
-              <h2 className="text-lg font-serif font-semibold tracking-luxury text-gradient">Dra. Marcela Duch</h2>
+              <h2 className="text-lg font-serif font-semibold tracking-wide">Dra. Marcela Duch</h2>
             </div>
           </div>
 
