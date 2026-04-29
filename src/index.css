@@ -2,84 +2,82 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* Sistema de design — Dra. Marcela Duch
+   Inspiração editorial: bege marmorizado + chocolate + serifada display
+   Todas as cores em HSL.
 */
 
 @layer base {
   :root {
-    /* Cores base - Bege/Areia/Off-white */
-    --background: 32 25% 97%; /* Off-white #FAFAF8 */
-    --foreground: 20 18% 32%; /* Marrom escuro #5A4A42 */
+    /* Base — bege cremoso/mármore */
+    --background: 36 30% 94%;        /* Bege cream #F2EADC */
+    --foreground: 24 25% 18%;        /* Marrom chocolate escuro #3B2B22 */
 
-    --card: 32 25% 97%;
-    --card-foreground: 20 18% 32%;
+    --card: 36 30% 96%;
+    --card-foreground: 24 25% 18%;
 
-    --popover: 32 25% 97%;
-    --popover-foreground: 20 18% 32%;
+    --popover: 36 30% 96%;
+    --popover-foreground: 24 25% 18%;
 
-    /* Dourado como primário */
-    --primary: 38 42% 65%; /* Dourado suave #D4AF7A */
-    --primary-foreground: 20 18% 32%;
+    /* Primário — marrom chocolate (cor da roupa nas fotos) */
+    --primary: 24 25% 20%;           /* #3F2D23 */
+    --primary-foreground: 36 30% 96%;
 
-    /* Bege/areia como secundário */
-    --secondary: 32 28% 88%; /* Bege/areia #E8DED3 */
-    --secondary-foreground: 20 18% 32%;
+    /* Secundário — bege areia médio */
+    --secondary: 32 28% 85%;         /* #E5D8C7 */
+    --secondary-foreground: 24 25% 20%;
 
-    /* Tons de apoio */
-    --muted: 30 22% 92%; /* Bege mais claro */
-    --muted-foreground: 25 15% 55%; /* Tom intermediário */
+    --muted: 33 22% 90%;
+    --muted-foreground: 24 15% 40%;  /* Marrom médio sóbrio */
 
-    --accent: 15 35% 78%; /* Pêssego suave #F4DDD4 */
-    --accent-foreground: 20 18% 32%;
+    /* Acento — bronze sutil terroso (não dourado brilhante) */
+    --accent: 28 22% 55%;            /* #9C8268 */
+    --accent-foreground: 36 30% 96%;
 
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 32 25% 97%;
+    --destructive: 0 60% 45%;
+    --destructive-foreground: 36 30% 96%;
 
-    --border: 32 20% 90%;
-    --input: 32 20% 90%;
-    --ring: 38 42% 65%;
+    --border: 32 18% 82%;
+    --input: 32 18% 88%;
+    --ring: 28 22% 55%;
 
-    --radius: 0.75rem;
+    --radius: 0.25rem;
 
-    /* Cores adicionais para efeitos especiais */
-    --gold-light: 40 45% 80%; /* Dourado claro para hovers */
-    --brown-medium: 25 25% 60%; /* Marrom médio #B8967D */
-    --terracotta: 15 28% 70%; /* Vermelho terroso #C9A997 */
+    /* Tons editoriais adicionais */
+    --cream: 36 35% 96%;             /* Quase branco quente */
+    --cream-deep: 34 28% 88%;        /* Bege profundo */
+    --espresso: 22 30% 14%;          /* Marrom muito escuro, quase preto */
+    --bronze: 28 22% 55%;            /* Bronze terroso */
+    --bronze-light: 32 25% 75%;      /* Bronze claro */
+    --marble-vein: 36 25% 80%;       /* Veio do mármore */
 
     /* Gradientes */
-    --gradient-hero: linear-gradient(135deg, hsl(32 28% 88%) 0%, hsl(38 42% 65%) 100%);
-    --gradient-cta: linear-gradient(90deg, hsl(32 28% 88%) 0%, hsl(40 45% 80%) 100%);
+    --gradient-marble: linear-gradient(135deg, hsl(36 35% 96%) 0%, hsl(33 28% 90%) 50%, hsl(32 25% 86%) 100%);
+    --gradient-espresso: linear-gradient(180deg, hsl(24 25% 20%) 0%, hsl(22 30% 14%) 100%);
+    --gradient-overlay-dark: linear-gradient(180deg, transparent 0%, hsl(22 30% 14% / 0.85) 100%);
+    --gradient-overlay-light: linear-gradient(180deg, transparent 40%, hsl(36 35% 96% / 0.4) 100%);
   }
 
   .dark {
-    --background: 20 18% 32%;
-    --foreground: 32 25% 97%;
-
-    --card: 20 18% 32%;
-    --card-foreground: 32 25% 97%;
-
-    --popover: 20 18% 32%;
-    --popover-foreground: 32 25% 97%;
-
-    --primary: 38 42% 65%;
-    --primary-foreground: 20 18% 32%;
-
-    --secondary: 25 25% 40%;
-    --secondary-foreground: 32 25% 97%;
-
-    --muted: 25 20% 35%;
-    --muted-foreground: 30 22% 75%;
-
-    --accent: 15 35% 60%;
-    --accent-foreground: 32 25% 97%;
-
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 32 25% 97%;
-
-    --border: 25 20% 35%;
-    --input: 25 20% 35%;
-    --ring: 38 42% 65%;
+    --background: 22 30% 10%;
+    --foreground: 36 30% 94%;
+    --card: 22 30% 12%;
+    --card-foreground: 36 30% 94%;
+    --popover: 22 30% 12%;
+    --popover-foreground: 36 30% 94%;
+    --primary: 36 30% 94%;
+    --primary-foreground: 22 30% 10%;
+    --secondary: 24 18% 22%;
+    --secondary-foreground: 36 30% 94%;
+    --muted: 24 18% 18%;
+    --muted-foreground: 33 20% 70%;
+    --accent: 28 22% 55%;
+    --accent-foreground: 36 30% 96%;
+    --destructive: 0 60% 45%;
+    --destructive-foreground: 36 30% 96%;
+    --border: 24 15% 22%;
+    --input: 24 15% 22%;
+    --ring: 28 22% 55%;
   }
 }
 
@@ -90,69 +88,144 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "ss01", "salt";
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-serif;
+    @apply font-display;
+    font-feature-settings: "lnum", "kern";
+  }
+
+  /* Seleção de texto editorial */
+  ::selection {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
   }
 }
 
 @layer utilities {
-  /* Animações suaves */
+  /* === BACKGROUNDS EDITORIAIS === */
+  .bg-marble {
+    background-image: var(--gradient-marble);
+    position: relative;
+  }
+  .bg-marble::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(ellipse at 20% 30%, hsl(36 30% 98% / 0.6), transparent 50%),
+      radial-gradient(ellipse at 80% 70%, hsl(28 22% 75% / 0.3), transparent 50%);
+    pointer-events: none;
+  }
+
+  .bg-espresso {
+    background: hsl(var(--espresso));
+    color: hsl(var(--cream));
+  }
+
+  /* === TIPOGRAFIA EDITORIAL === */
+  .font-editorial {
+    font-family: "Cormorant Garamond", "Playfair Display", Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 0.95;
+  }
+
+  .font-editorial-italic {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .label-eyebrow {
+    font-family: "Inter", sans-serif;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: hsl(var(--accent));
+  }
+
+  .text-watermark {
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 300;
+    color: hsl(var(--cream-deep));
+    opacity: 0.5;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+  }
+
+  /* === ANIMAÇÕES SUTIS === */
   .animate-fade-in {
-    animation: fadeIn 0.6s ease-out forwards;
+    animation: fadeIn 0.9s ease-out forwards;
   }
-
   .animate-slide-up {
-    animation: slideUp 0.6s ease-out forwards;
+    animation: slideUp 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
-
   .animate-marquee {
-    animation: marquee 30s linear infinite;
+    animation: marquee 40s linear infinite;
+  }
+  .animate-reveal {
+    animation: reveal 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
 
   @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-
   @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-
   @keyframes marquee {
-    0% {
-      transform: translateX(0);
-    }
-    100% {
-      transform: translateX(-50%);
-    }
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  @keyframes reveal {
+    from { opacity: 0; clip-path: inset(0 100% 0 0); }
+    to { opacity: 1; clip-path: inset(0 0 0 0); }
   }
 
-  /* Efeitos de hover suaves */
+  /* === HOVER & LINKS EDITORIAIS === */
   .hover-lift {
-    @apply transition-all duration-300 ease-out;
+    @apply transition-all duration-500 ease-out;
   }
-
   .hover-lift:hover {
-    @apply -translate-y-1 shadow-lg;
+    transform: translateY(-4px);
   }
 
-  /* Underline animado */
   .link-underline {
-    @apply relative inline-block after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left;
+    @apply relative inline-block;
+  }
+  .link-underline::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 100%;
+    height: 1px;
+    background-color: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .link-underline:hover::after {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+
+  /* Divisor decorativo */
+  .divider-luxe {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .divider-luxe::before,
+  .divider-luxe::after {
+    content: "";
+    width: 2.5rem;
+    height: 1px;
+    background-color: hsl(var(--accent));
   }
 }

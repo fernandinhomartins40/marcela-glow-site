@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
+import logoMD from "@/assets/logo-md.png";
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -10,7 +11,6 @@ const Header = () => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -23,60 +23,76 @@ const Header = () => {
     }
   };
 
+  const links = [
+    { id: "home", label: "Início" },
+    { id: "sobre", label: "Sobre" },
+    { id: "procedimentos", label: "Tratamentos" },
+    { id: "tecnologias", label: "Tecnologia" },
+    { id: "depoimentos", label: "Depoimentos" },
+    { id: "contato", label: "Contato" },
+  ];
+
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "bg-background/95 backdrop-blur-sm shadow-md" : "bg-background/80 backdrop-blur-sm"
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        isScrolled
+          ? "bg-background/95 backdrop-blur-md border-b border-border"
+          : "bg-transparent"
       }`}
     >
-      <div className="container mx-auto px-4 py-4">
+      <div className="container mx-auto px-6 lg:px-10 py-4">
         <div className="flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center">
-              <span className="text-2xl font-serif font-bold text-primary-foreground">MD</span>
+          {/* Logo MD */}
+          <button
+            onClick={() => scrollToSection("home")}
+            className="flex items-center gap-3 group"
+            aria-label="Dra. Marcela Duch"
+          >
+            <img
+              src={logoMD}
+              alt="MD - Dra. Marcela Duch"
+              className="h-10 md:h-12 w-auto transition-transform duration-500 group-hover:scale-105"
+              width={48}
+              height={48}
+            />
+            <div className="hidden sm:flex flex-col leading-tight">
+              <span className="font-display text-base md:text-lg tracking-[0.25em] uppercase text-primary">
+                Dra. Marcela Duch
+              </span>
+              <span className="text-[0.6rem] tracking-[0.3em] uppercase text-muted-foreground">
+                Médica · CRM/MS 5691
+              </span>
             </div>
-            <div className="hidden sm:block">
-              <h2 className="text-lg font-serif font-semibold tracking-wide">Dra. Marcela Duch</h2>
-            </div>
-          </div>
+          </button>
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-8">
-            <button onClick={() => scrollToSection("home")} className="link-underline text-sm font-medium">
-              Home
-            </button>
-            <button onClick={() => scrollToSection("sobre")} className="link-underline text-sm font-medium">
-              Sobre
-            </button>
-            <button onClick={() => scrollToSection("procedimentos")} className="link-underline text-sm font-medium">
-              Procedimentos
-            </button>
-            <button onClick={() => scrollToSection("tecnologias")} className="link-underline text-sm font-medium">
-              Tecnologias
-            </button>
-            <button onClick={() => scrollToSection("depoimentos")} className="link-underline text-sm font-medium">
-              Depoimentos
-            </button>
-            <button onClick={() => scrollToSection("contato")} className="link-underline text-sm font-medium">
-              Contato
-            </button>
+            {links.map((link) => (
+              <button
+                key={link.id}
+                onClick={() => scrollToSection(link.id)}
+                className="link-underline text-[0.7rem] tracking-[0.25em] uppercase font-medium text-foreground/80 hover:text-foreground transition-colors"
+              >
+                {link.label}
+              </button>
+            ))}
           </nav>
 
-          {/* CTA Button - Desktop */}
+          {/* CTA Desktop */}
           <Button
-            variant="hero"
+            variant="cta"
             size="default"
             className="hidden lg:inline-flex"
             onClick={() => scrollToSection("agendamento")}
           >
-            Agendar Consulta
+            Agendar
           </Button>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile menu button */}
           <button
-            className="lg:hidden p-2 hover:bg-accent rounded-lg transition-colors"
+            className="lg:hidden p-2"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Menu"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -84,44 +100,22 @@ const Header = () => {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <nav className="lg:hidden mt-6 pb-4 space-y-4 animate-fade-in">
-            <button
-              onClick={() => scrollToSection("home")}
-              className="block w-full text-left py-2 px-4 hover:bg-accent rounded-lg transition-colors"
+          <nav className="lg:hidden mt-6 pb-6 space-y-1 animate-fade-in border-t border-border pt-6">
+            {links.map((link) => (
+              <button
+                key={link.id}
+                onClick={() => scrollToSection(link.id)}
+                className="block w-full text-left py-3 px-2 text-sm tracking-[0.2em] uppercase hover:text-accent transition-colors"
+              >
+                {link.label}
+              </button>
+            ))}
+            <Button
+              variant="cta"
+              size="default"
+              className="w-full mt-4"
+              onClick={() => scrollToSection("agendamento")}
             >
-              Home
-            </button>
-            <button
-              onClick={() => scrollToSection("sobre")}
-              className="block w-full text-left py-2 px-4 hover:bg-accent rounded-lg transition-colors"
-            >
-              Sobre
-            </button>
-            <button
-              onClick={() => scrollToSection("procedimentos")}
-              className="block w-full text-left py-2 px-4 hover:bg-accent rounded-lg transition-colors"
-            >
-              Procedimentos
-            </button>
-            <button
-              onClick={() => scrollToSection("tecnologias")}
-              className="block w-full text-left py-2 px-4 hover:bg-accent rounded-lg transition-colors"
-            >
-              Tecnologias
-            </button>
-            <button
-              onClick={() => scrollToSection("depoimentos")}
-              className="block w-full text-left py-2 px-4 hover:bg-accent rounded-lg transition-colors"
-            >
-              Depoimentos
-            </button>
-            <button
-              onClick={() => scrollToSection("contato")}
-              className="block w-full text-left py-2 px-4 hover:bg-accent rounded-lg transition-colors"
-            >
-              Contato
-            </button>
-            <Button variant="hero" size="default" className="w-full" onClick={() => scrollToSection("agendamento")}>
               Agendar Consulta
             </Button>
           </nav>

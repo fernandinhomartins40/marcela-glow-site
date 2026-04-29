@@ -1,84 +1,95 @@
 import { Button } from "@/components/ui/button";
-import { Droplet, Sparkles, Zap, Heart, Waves, Shield, Star, Sun } from "lucide-react";
 
 const procedures = [
   {
-    icon: Droplet,
-    title: "Hidratação Facial Profunda",
-    description: "Revitalização intensa da pele com ativos de última geração para brilho natural e duradouro.",
+    number: "01",
+    title: "Neck Contour Signature",
+    subtitle: "Assinatura exclusiva",
+    description: "Protocolo proprietário para contorno e firmeza do pescoço — porque o pescoço entrega o que o rosto não revela.",
   },
   {
-    icon: Sparkles,
-    title: "Preenchimento com Ácido Hialurônico",
-    description: "Harmonização facial sutil e natural, respeitando suas características únicas.",
-  },
-  {
-    icon: Zap,
-    title: "Bioestimuladores de Colágeno",
-    description: "Estímulo natural da produção de colágeno para rejuvenescimento progressivo e duradouro.",
-  },
-  {
-    icon: Heart,
-    title: "Rejuvenescimento Facial",
-    description: "Protocolos personalizados para reduzir sinais de envelhecimento com resultados naturais.",
-  },
-  {
-    icon: Waves,
-    title: "T-Sculptor - Remodelagem Corporal",
-    description: "Tecnologia não invasiva para definição corporal e redução de gordura localizada.",
-  },
-  {
-    icon: Shield,
-    title: "Tratamento de Flacidez",
-    description: "Protocolos avançados para firmeza e elasticidade da pele com tecnologia de ponta.",
-  },
-  {
-    icon: Star,
+    number: "02",
     title: "Harmonização Facial",
-    description: "Equilíbrio perfeito entre proporções faciais para um resultado elegante e natural.",
+    subtitle: "Equilíbrio e proporção",
+    description: "Técnica refinada que respeita a anatomia única, devolvendo equilíbrio sem alterar a identidade do rosto.",
   },
   {
-    icon: Sun,
-    title: "Protocolo Antienvelhecimento",
-    description: "Tratamento completo que combina múltiplas tecnologias para prevenir e tratar o envelhecimento.",
+    number: "03",
+    title: "Bioestimuladores de Colágeno",
+    subtitle: "Rejuvenescimento progressivo",
+    description: "Estímulo natural à produção de colágeno, com resultados que evoluem ao longo do tempo de forma sutil.",
+  },
+  {
+    number: "04",
+    title: "Preenchimento Premium",
+    subtitle: "Ácido hialurônico de alta densidade",
+    description: "Hidratação profunda, definição de contornos e suavização de linhas com naturalidade absoluta.",
+  },
+  {
+    number: "05",
+    title: "T-Sculptor Body",
+    subtitle: "Remodelagem corporal não invasiva",
+    description: "Tecnologia avançada para definição, firmeza e redução de gordura localizada sem cirurgia.",
+  },
+  {
+    number: "06",
+    title: "Skinbooster & Hidratação",
+    subtitle: "Glow editorial",
+    description: "Pele revitalizada, luminosa e uniforme com ativos de última geração e protocolos personalizados.",
   },
 ];
 
 const Procedures = () => {
   return (
-    <section id="procedimentos" className="py-20 md:py-32 bg-muted/30">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16 animate-fade-in">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 tracking-wide">
-            Nossos Tratamentos
+    <section id="procedimentos" className="relative py-24 md:py-40 bg-secondary/40">
+      <div className="container mx-auto px-6 lg:px-10">
+        {/* Cabeçalho */}
+        <div className="max-w-3xl mb-20 animate-fade-in">
+          <p className="label-eyebrow mb-6">Tratamentos exclusivos</p>
+          <h2 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.9] tracking-[-0.02em] text-primary">
+            Cada tratamento,
+            <span className="block italic font-light text-accent">uma assinatura.</span>
           </h2>
-          <p className="text-lg md:text-xl text-muted-foreground font-light max-w-2xl mx-auto">
-            Procedimentos personalizados para sua beleza natural
+          <p className="font-editorial-italic text-xl md:text-2xl text-foreground/70 mt-6 max-w-2xl">
+            Protocolos personalizados para realçar sua beleza natural com a sutileza
+            que define a medicina estética contemporânea.
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 max-w-7xl mx-auto mb-12">
-          {procedures.map((procedure, index) => (
-            <div
+        {/* Grid de procedimentos — estilo editorial */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border border-y border-border">
+          {procedures.map((proc, index) => (
+            <article
               key={index}
-              className="bg-card p-8 rounded-2xl shadow-sm hover-lift border border-border/50 animate-fade-in"
-              style={{ animationDelay: `${index * 100}ms` }}
+              className="group relative p-10 lg:p-12 hover:bg-background transition-colors duration-700 animate-fade-in"
+              style={{ animationDelay: `${index * 80}ms` }}
             >
-              <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                <procedure.icon className="w-7 h-7 text-primary" strokeWidth={1.5} />
+              <div className="flex items-start justify-between mb-8">
+                <span className="font-display text-3xl text-accent/60 group-hover:text-accent transition-colors">
+                  {proc.number}
+                </span>
+                <span className="label-eyebrow text-xs">
+                  {proc.subtitle}
+                </span>
               </div>
-              <h3 className="text-xl font-serif font-semibold mb-3 text-foreground">
-                {procedure.title}
+
+              <h3 className="font-display text-3xl lg:text-4xl text-primary leading-tight mb-4 group-hover:italic transition-all duration-500">
+                {proc.title}
               </h3>
-              <p className="text-muted-foreground leading-relaxed text-sm">
-                {procedure.description}
+
+              <p className="text-sm text-foreground/65 leading-relaxed font-light mb-8">
+                {proc.description}
               </p>
-            </div>
+
+              <button className="link-underline text-[0.7rem] tracking-[0.3em] uppercase text-accent font-medium">
+                Saiba mais
+              </button>
+            </article>
           ))}
         </div>
 
-        <div className="text-center animate-fade-in">
-          <Button variant="hero" size="lg">
+        <div className="text-center mt-16 animate-fade-in">
+          <Button variant="cta" size="lg">
             Ver Todos os Tratamentos
           </Button>
         </div>

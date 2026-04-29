@@ -1,25 +1,24 @@
-import { Sparkles } from "lucide-react";
-
 const Marquee = () => {
   const messages = [
-    "Hidratação que vem de dentro",
-    "Saúde, beleza e tecnologia",
-    "Rejuvenescimento natural",
-    "Medicina regenerativa",
-    "Autoestima e bem-estar",
-    "Resultados cientificamente comprovados",
+    "Medicina Estética",
+    "Medicina Regenerativa",
+    "Harmonização Facial",
+    "Neck Contour Signature",
+    "Bioestimuladores",
+    "T-Sculptor",
+    "Skinbooster",
+    "Antienvelhecimento",
   ];
 
   return (
-    <div className="bg-primary py-6 overflow-hidden">
+    <div className="bg-espresso py-8 overflow-hidden border-y border-[hsl(var(--cream))]/10">
       <div className="flex animate-marquee whitespace-nowrap">
-        {/* Duplicate content for seamless loop */}
-        {[...messages, ...messages].map((message, index) => (
-          <div key={index} className="flex items-center mx-8">
-            <span className="text-primary-foreground font-medium text-lg tracking-wider">
+        {[...messages, ...messages, ...messages].map((message, index) => (
+          <div key={index} className="flex items-center mx-10">
+            <span className="font-display italic text-2xl md:text-3xl text-[hsl(var(--cream))]/90 font-light tracking-wide">
               {message}
             </span>
-            <Sparkles className="w-4 h-4 text-primary-foreground ml-8" />
+            <span className="ml-10 text-[hsl(var(--bronze))] text-xl">✦</span>
           </div>
         ))}
       </div>
