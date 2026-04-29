@@ -3,15 +3,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { newsletterApi, getErrorMessage } from "@/lib/api";
 
 const Footer = () => {
   const [email, setEmail] = useState("");
 
+  const mutation = useMutation({
+    mutationFn: newsletterApi.subscribe,
+    onSuccess: () => {
+      toast.success("Obrigada por se inscrever! Você receberá nossas novidades em breve.");
+      setEmail("");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+
   const handleNewsletter = (e: React.FormEvent) => {
     e.preventDefault();
     if (email) {
-      toast.success("Obrigada por se inscrever! Você receberá nossas novidades em breve.");
-      setEmail("");
+      mutation.mutate(email);
     }
   };
 
@@ -156,8 +168,13 @@ const Footer = () => {
                 className="bg-background/10 border-background/20 text-background placeholder:text-background/60"
                 required
               />
-              <Button type="submit" variant="outline" className="w-full bg-background/10 text-background border-background/20 hover:bg-background hover:text-foreground">
-                Inscrever
+              <Button
+                type="submit"
+                variant="outline"
+                className="w-full bg-background/10 text-background border-background/20 hover:bg-background hover:text-foreground"
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending ? "Inscrevendo..." : "Inscrever"}
               </Button>
             </form>
           </div>

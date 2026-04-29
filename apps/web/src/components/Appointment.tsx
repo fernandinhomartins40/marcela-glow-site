@@ -5,6 +5,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { proceduresApi, appointmentsApi, getErrorMessage } from "@/lib/api";
 
 const Appointment = () => {
   const [formData, setFormData] = useState({
@@ -15,25 +17,37 @@ const Appointment = () => {
     message: "",
   });
 
+  const { data: procedures = [] } = useQuery({
+    queryKey: ["procedures"],
+    queryFn: proceduresApi.list,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const mutation = useMutation({
+    mutationFn: appointmentsApi.create,
+    onSuccess: () => {
+      toast.success("Solicitação enviada com sucesso! Entraremos em contato em breve.");
+      setFormData({ name: "", email: "", phone: "", procedure: "", message: "" });
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validação básica
+
     if (!formData.name || !formData.email || !formData.phone) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
 
-    // Aqui você pode adicionar a lógica de envio do formulário
-    toast.success("Solicitação enviada com sucesso! Entraremos em contato em breve.");
-    
-    // Limpar formulário
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      procedure: "",
-      message: "",
+    mutation.mutate({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      procedure: formData.procedure || undefined,
+      message: formData.message || undefined,
     });
   };
 
@@ -147,14 +161,22 @@ const Appointment = () => {
                     <SelectValue placeholder="Procedimento de interesse" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="hidratacao">Hidratação Facial Profunda</SelectItem>
-                    <SelectItem value="preenchimento">Preenchimento com Ácido Hialurônico</SelectItem>
-                    <SelectItem value="bioestimuladores">Bioestimuladores de Colágeno</SelectItem>
-                    <SelectItem value="rejuvenescimento">Rejuvenescimento Facial</SelectItem>
-                    <SelectItem value="tsculptor">T-Sculptor - Remodelagem Corporal</SelectItem>
-                    <SelectItem value="flacidez">Tratamento de Flacidez</SelectItem>
-                    <SelectItem value="harmonizacao">Harmonização Facial</SelectItem>
-                    <SelectItem value="antienvelhecimento">Protocolo Antienvelhecimento</SelectItem>
+                    {procedures.length > 0
+                      ? procedures.map((p) => (
+                          <SelectItem key={p.id} value={p.title}>
+                            {p.title}
+                          </SelectItem>
+                        ))
+                      : (
+                          <>
+                            <SelectItem value="Neck Contour Signature">Neck Contour Signature</SelectItem>
+                            <SelectItem value="Harmonização Facial">Harmonização Facial</SelectItem>
+                            <SelectItem value="Bioestimuladores de Colágeno">Bioestimuladores de Colágeno</SelectItem>
+                            <SelectItem value="Preenchimento Premium">Preenchimento Premium</SelectItem>
+                            <SelectItem value="T-Sculptor Body">T-Sculptor Body</SelectItem>
+                            <SelectItem value="Skinbooster & Hidratação">Skinbooster &amp; Hidratação</SelectItem>
+                          </>
+                        )}
                   </SelectContent>
                 </Select>
 
@@ -169,8 +191,14 @@ const Appointment = () => {
                   * Campos obrigatórios. Ao enviar este formulário, você concorda com nossa política de privacidade.
                 </p>
 
-                <Button type="submit" variant="cta" size="lg" className="w-full">
-                  Solicitar Agendamento
+                <Button
+                  type="submit"
+                  variant="cta"
+                  size="lg"
+                  className="w-full"
+                  disabled={mutation.isPending}
+                >
+                  {mutation.isPending ? "Enviando..." : "Solicitar Agendamento"}
                 </Button>
               </div>
             </form>
