@@ -1,0 +1,145 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  STAFF
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tenant  (one row per clinic / white-label customer)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Tenant {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  email     String
+  phone     String
+  address   String
+  logoUrl   String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // relations
+  users         User[]
+  procedures    Procedure[]
+  appointments  Appointment[]
+  testimonials  Testimonial[]
+  subscribers   NewsletterSubscriber[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// User  (clinic staff / admins)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(cuid())
+  email        String
+  passwordHash String
+  name         String
+  role         UserRole @default(STAFF)
+  tenantId     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([email, tenantId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Procedure  (treatments / services offered)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Procedure {
+  id           String   @id @default(cuid())
+  number       String
+  title        String
+  subtitle     String
+  description  String
+  imageUrl     String?
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  tenantId     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Appointment  (booking requests from patients)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Appointment {
+  id          String            @id @default(cuid())
+  name        String
+  email       String
+  phone       String
+  message     String?
+  status      AppointmentStatus @default(PENDING)
+  procedureId String?
+  tenantId    String
+  scheduledAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  procedure Procedure? @relation(fields: [procedureId], references: [id], onDelete: SetNull)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Testimonial  (patient reviews displayed on the site)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Testimonial {
+  id           String   @id @default(cuid())
+  authorName   String
+  text         String
+  rating       Int      @default(5)
+  isVisible    Boolean  @default(true)
+  displayOrder Int      @default(0)
+  tenantId     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NewsletterSubscriber  (email marketing opt-ins)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String
+  tenantId  String
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([email, tenantId])
+}

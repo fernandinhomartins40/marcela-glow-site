@@ -1,31 +1,27 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { testimonialsApi } from "@/lib/api";
 
-const testimonials = [
-  {
-    name: "Ana Paula Silva",
-    text: "A Dra. Marcela transformou minha autoestima! O tratamento foi super personalizado e os resultados foram além das minhas expectativas. Ela tem um olhar único para realçar a beleza natural.",
-    rating: 5,
-  },
-  {
-    name: "Juliana Mendes",
-    text: "Profissional extremamente competente e atenciosa. O ambiente da clínica é maravilhoso e os procedimentos são realizados com todo cuidado e tecnologia de ponta. Super recomendo!",
-    rating: 5,
-  },
-  {
-    name: "Carla Rodrigues",
-    text: "Fiz o tratamento com T-Sculptor e estou impressionada com os resultados! A Dra. Marcela explicou todo o processo com muita paciência e o resultado ficou incrível, muito natural.",
-    rating: 5,
-  },
-  {
-    name: "Beatriz Costa",
-    text: "Há anos procurava uma médica que entendesse minha necessidade de manter a naturalidade. A Dra. Marcela é simplesmente perfeita! Técnica impecável e resultado harmonioso.",
-    rating: 5,
-  },
+const FALLBACK_TESTIMONIALS = [
+  { id: "1", authorName: "Ana Paula Silva", text: "A Dra. Marcela transformou minha autoestima! O tratamento foi super personalizado e os resultados foram além das minhas expectativas. Ela tem um olhar único para realçar a beleza natural.", rating: 5 },
+  { id: "2", authorName: "Juliana Mendes", text: "Profissional extremamente competente e atenciosa. O ambiente da clínica é maravilhoso e os procedimentos são realizados com todo cuidado e tecnologia de ponta. Super recomendo!", rating: 5 },
+  { id: "3", authorName: "Carla Rodrigues", text: "Fiz o tratamento com T-Sculptor e estou impressionada com os resultados! A Dra. Marcela explicou todo o processo com muita paciência e o resultado ficou incrível, muito natural.", rating: 5 },
+  { id: "4", authorName: "Beatriz Costa", text: "Há anos procurava uma médica que entendesse minha necessidade de manter a naturalidade. A Dra. Marcela é simplesmente perfeita! Técnica impecável e resultado harmonioso.", rating: 5 },
 ];
 
 const Testimonials = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const { data: apiTestimonials } = useQuery({
+    queryKey: ["testimonials"],
+    queryFn: testimonialsApi.list,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const testimonials = apiTestimonials && apiTestimonials.length > 0
+    ? apiTestimonials.map((t) => ({ id: t.id, authorName: t.authorName, text: t.text, rating: t.rating }))
+    : FALLBACK_TESTIMONIALS;
 
   const next = () => {
     setCurrentIndex((prev) => (prev + 1) % testimonials.length);
@@ -52,11 +48,11 @@ const Testimonials = () => {
               style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
               {testimonials.map((testimonial, index) => (
-                <div key={index} className="w-full flex-shrink-0 px-4">
+                <div key={testimonial.id} className="w-full flex-shrink-0 px-4">
                   <div className="bg-card p-10 md:p-12 rounded-2xl shadow-lg max-w-3xl mx-auto border border-border/50">
                     {/* Quote mark */}
                     <div className="text-7xl md:text-8xl font-serif text-primary/20 leading-none mb-4">"</div>
-                    
+
                     {/* Stars */}
                     <div className="flex gap-1 mb-6">
                       {[...Array(testimonial.rating)].map((_, i) => (
@@ -71,7 +67,7 @@ const Testimonials = () => {
 
                     {/* Name */}
                     <p className="font-semibold text-lg text-foreground">
-                      — {testimonial.name}
+                      — {testimonial.authorName}
                     </p>
                   </div>
                 </div>
