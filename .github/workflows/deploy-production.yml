@@ -19,6 +19,7 @@ env:
   CANONICAL_URL: https://www.dramarceladuch.com.br
   SSL_EMAIL: admin@dramarceladuch.com.br
   SITE_NAME: dramarcela
+  SSH_OPTS: -o StrictHostKeyChecking=no -o PreferredAuthentications=password -o PubkeyAuthentication=no -o NumberOfPasswordPrompts=1 -o ConnectTimeout=20
 
 jobs:
   deploy:
@@ -41,12 +42,26 @@ jobs:
       - name: Install sshpass
         run: sudo apt-get update && sudo apt-get install -y sshpass
 
+      - name: Verify VPS password access
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          if [ -z "${SSHPASS:-}" ]; then
+            echo "GitHub secret VPS_PASSWORD is empty or missing." >&2
+            exit 1
+          fi
+
+          if ! sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} "echo SSH password authentication OK"; then
+            echo "::error::SSH password authentication failed. Confirm that the GitHub secret VPS_PASSWORD contains the root password for ${{ env.VPS_HOST }} and that PasswordAuthentication/PermitRootLogin are enabled on the VPS." >&2
+            exit 1
+          fi
+
       - name: Upload source to VPS
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
           RELEASE_DIR="${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}"
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+          sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
             "mkdir -p '$RELEASE_DIR'"
 
           tar \
@@ -67,14 +82,14 @@ jobs:
             --exclude=packages/database/tsconfig.tsbuildinfo \
             --exclude=apps/api/tsconfig.tsbuildinfo \
             -czf - . | \
-            sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+            sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
               "tar -xzf - -C '$RELEASE_DIR'"
 
       - name: Prepare VPS runtime
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} "bash -s" <<'ENDSSH'
+          sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} "bash -s" <<'ENDSSH'
             set -euo pipefail
 
             if ! command -v apt-get >/dev/null 2>&1; then
@@ -132,7 +147,7 @@ jobs:
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+          sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
             "APP_ROOT='${{ env.APP_ROOT }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' bash -s" <<'ENDSSH'
             set -euo pipefail
 
@@ -234,14 +249,14 @@ jobs:
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+          sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
             "APP_ROOT='${{ env.APP_ROOT }}' RELEASE='${{ steps.release.outputs.version }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' bash '${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/.github/scripts/remote-deploy.sh'"
 
       - name: Configure Nginx (HTTP)
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+          sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
             "DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' SITE_NAME='${{ env.SITE_NAME }}' bash -s" <<'ENDSSH'
             set -euo pipefail
 
@@ -278,7 +293,7 @@ jobs:
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+          sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
             "PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' SSL_EMAIL='${{ env.SSL_EMAIL }}' bash -s" <<'ENDSSH'
             set -euo pipefail
 
@@ -305,7 +320,7 @@ jobs:
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+          sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
             "DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' SITE_NAME='${{ env.SITE_NAME }}' bash -s" <<'ENDSSH'
             set -euo pipefail
 
@@ -352,7 +367,7 @@ jobs:
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+          sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
             "APP_ROOT='${{ env.APP_ROOT }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' RELEASE='${{ steps.release.outputs.version }}' bash '${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/.github/scripts/remote-health-check.sh'"
 
       - name: Notify success
