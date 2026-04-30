@@ -1,0 +1,361 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  VPS_HOST: 72.60.10.108
+  VPS_USER: root
+  APP_ROOT: /opt/dramarcela
+  DEPLOY_PORT: "3095"
+  PRIMARY_DOMAIN: dramarceladuch.com.br
+  SECONDARY_DOMAIN: www.dramarceladuch.com.br
+  CANONICAL_URL: https://www.dramarceladuch.com.br
+  SSL_EMAIL: admin@dramarceladuch.com.br
+  SITE_NAME: dramarcela
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    environment:
+      name: production
+      url: https://www.dramarceladuch.com.br
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set release version
+        id: release
+        run: echo "version=$(git rev-parse --short HEAD)-$(date +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
+
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Upload source to VPS
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          RELEASE_DIR="${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}"
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+            "mkdir -p '$RELEASE_DIR'"
+
+          tar \
+            --exclude=.git \
+            --exclude=.claude \
+            --exclude=node_modules \
+            --exclude=.turbo \
+            --exclude=dist \
+            --exclude=apps/api/node_modules \
+            --exclude=apps/api/dist \
+            --exclude=apps/web/node_modules \
+            --exclude=apps/web/dist \
+            --exclude=apps/admin/node_modules \
+            --exclude=apps/admin/dist \
+            --exclude=apps/patient/node_modules \
+            --exclude=apps/patient/dist \
+            --exclude=packages/database/node_modules \
+            --exclude=packages/database/tsconfig.tsbuildinfo \
+            --exclude=apps/api/tsconfig.tsbuildinfo \
+            -czf - . | \
+            sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+              "tar -xzf - -C '$RELEASE_DIR'"
+
+      - name: Prepare VPS runtime
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} "bash -s" <<'ENDSSH'
+            set -euo pipefail
+
+            if ! command -v apt-get >/dev/null 2>&1; then
+              echo "Unsupported VPS distribution: apt-get is required" >&2
+              exit 1
+            fi
+
+            export DEBIAN_FRONTEND=noninteractive
+            APT_UPDATED=0
+
+            apt_update_once() {
+              if [ "$APT_UPDATED" -eq 0 ]; then
+                apt-get update
+                APT_UPDATED=1
+              fi
+            }
+
+            ensure_apt_packages() {
+              local missing=0
+              local package_name
+              for package_name in "$@"; do
+                if ! dpkg-query -W -f='${Status}' "$package_name" 2>/dev/null | grep -q 'install ok installed'; then
+                  missing=1
+                  break
+                fi
+              done
+              if [ "$missing" -eq 1 ]; then
+                apt_update_once
+                apt-get install -y --no-install-recommends "$@"
+              fi
+            }
+
+            ensure_apt_packages ca-certificates certbot curl nginx openssl tar util-linux
+
+            if ! command -v docker >/dev/null 2>&1; then
+              apt_update_once
+              apt-get install -y --no-install-recommends docker.io
+            fi
+
+            if ! docker compose version >/dev/null 2>&1; then
+              apt_update_once
+              apt-get install -y --no-install-recommends docker-compose-v2 || \
+              apt-get install -y --no-install-recommends docker-compose-plugin
+            fi
+
+            systemctl enable --now docker
+            systemctl enable --now nginx
+
+            docker compose version >/dev/null
+            nginx -v >/dev/null 2>&1
+            certbot --version >/dev/null
+          ENDSSH
+
+      - name: Ensure .env exists on VPS
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+            "APP_ROOT='${{ env.APP_ROOT }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' bash -s" <<'ENDSSH'
+            set -euo pipefail
+
+            ENV_FILE="$APP_ROOT/.env"
+            mkdir -p "$APP_ROOT"
+            touch "$ENV_FILE"
+            chmod 600 "$ENV_FILE"
+
+            get_env() {
+              local key="$1"
+              awk -F= -v key="$key" '$1 == key { sub(/^[^=]*=/, "", $0); print $0; exit }' "$ENV_FILE"
+            }
+
+            upsert_env() {
+              local key="$1"
+              local value="$2"
+              local tmp_file
+              tmp_file="$(mktemp)"
+              awk -v key="$key" -v value="$value" '
+                BEGIN { updated = 0 }
+                index($0, key "=") == 1 { print key "=" value; updated = 1; next }
+                { print }
+                END { if (!updated) print key "=" value }
+              ' "$ENV_FILE" > "$tmp_file"
+              mv "$tmp_file" "$ENV_FILE"
+            }
+
+            ensure_env() {
+              local key="$1"
+              local default_value="$2"
+              local current_value
+              current_value="$(get_env "$key" | tr -d '\r')"
+              if [ -z "$current_value" ]; then
+                upsert_env "$key" "$default_value"
+              fi
+            }
+
+            ensure_random_hex() {
+              local key="$1"
+              local bytes="$2"
+              local current_value
+              current_value="$(get_env "$key" | tr -d '\r')"
+              if [ -z "$current_value" ]; then
+                upsert_env "$key" "$(openssl rand -hex "$bytes")"
+              fi
+            }
+
+            ensure_vapid_keys() {
+              if [ -n "$(get_env "VAPID_PUBLIC_KEY" | tr -d '\r')" ] && [ -n "$(get_env "VAPID_PRIVATE_KEY" | tr -d '\r')" ]; then
+                return
+              fi
+
+              local keys public_key private_key
+              keys="$(docker run --rm node:20-alpine sh -c 'npm --silent install -g web-push >/dev/null 2>&1 && web-push generate-vapid-keys --json')"
+              public_key="$(printf '%s' "$keys" | sed -n 's/.*"publicKey":"\([^"]*\)".*/\1/p')"
+              private_key="$(printf '%s' "$keys" | sed -n 's/.*"privateKey":"\([^"]*\)".*/\1/p')"
+
+              if [ -n "$public_key" ] && [ -n "$private_key" ]; then
+                upsert_env "VAPID_PUBLIC_KEY" "$public_key"
+                upsert_env "VAPID_PRIVATE_KEY" "$private_key"
+              fi
+            }
+
+            ensure_env "POSTGRES_USER" "marcela"
+            ensure_env "POSTGRES_DB" "marcela_glow"
+            ensure_random_hex "POSTGRES_PASSWORD" 32
+            ensure_random_hex "JWT_SECRET" 32
+            ensure_random_hex "BOOTSTRAP_TOKEN" 32
+            ensure_random_hex "PRESCRIPTION_SIGNING_SECRET" 32
+            ensure_random_hex "S3_SECRET_ACCESS_KEY" 32
+            ensure_env "S3_ACCESS_KEY_ID" "marcela"
+            ensure_env "S3_BUCKET" "marcela-files"
+            ensure_env "S3_REGION" "us-east-1"
+            ensure_env "S3_FORCE_PATH_STYLE" "true"
+            ensure_env "VAPID_SUBJECT" "mailto:admin@dramarceladuch.com.br"
+            ensure_vapid_keys
+
+            upsert_env "NODE_ENV" "production"
+            upsert_env "PORT" "3001"
+            upsert_env "DEPLOY_PORT" "$DEPLOY_PORT"
+            upsert_env "EXTERNAL_PORT" "$DEPLOY_PORT"
+            upsert_env "VITE_API_URL" "/api"
+            upsert_env "VITE_TENANT_SLUG" "marcela-duch"
+            upsert_env "PUBLIC_APP_URL" "$CANONICAL_URL"
+            upsert_env "CORS_ORIGIN" "$CANONICAL_URL"
+            upsert_env "FRONTEND_URL" "$CANONICAL_URL"
+            upsert_env "S3_ENDPOINT" "http://minio:9000"
+            upsert_env "S3_PUBLIC_BASE_URL" "$CANONICAL_URL/files"
+
+            POSTGRES_USER_VALUE="$(get_env "POSTGRES_USER" | tr -d '\r')"
+            POSTGRES_PASSWORD_VALUE="$(get_env "POSTGRES_PASSWORD" | tr -d '\r')"
+            POSTGRES_DB_VALUE="$(get_env "POSTGRES_DB" | tr -d '\r')"
+            upsert_env "DATABASE_URL" "postgresql://${POSTGRES_USER_VALUE}:${POSTGRES_PASSWORD_VALUE}@postgres:5432/${POSTGRES_DB_VALUE}?schema=public"
+
+            chmod 600 "$ENV_FILE"
+          ENDSSH
+
+      - name: Deploy on VPS
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+            "APP_ROOT='${{ env.APP_ROOT }}' RELEASE='${{ steps.release.outputs.version }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' bash '${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/.github/scripts/remote-deploy.sh'"
+
+      - name: Configure Nginx (HTTP)
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+            "DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' SITE_NAME='${{ env.SITE_NAME }}' bash -s" <<'ENDSSH'
+            set -euo pipefail
+
+            mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled /var/www/certbot
+            {
+              printf '%s\n' 'server {'
+              printf '%s\n' '    listen 80;'
+              printf '%s\n' "    server_name ${PRIMARY_DOMAIN} ${SECONDARY_DOMAIN};"
+              printf '%s\n' ''
+              printf '%s\n' '    location /.well-known/acme-challenge/ {'
+              printf '%s\n' '        root /var/www/certbot;'
+              printf '%s\n' '    }'
+              printf '%s\n' ''
+              printf '%s\n' '    location / {'
+              printf '%s\n' "        proxy_pass http://127.0.0.1:${DEPLOY_PORT};"
+              printf '%s\n' '        proxy_http_version 1.1;'
+              printf '%s\n' '        proxy_set_header Upgrade $http_upgrade;'
+              printf '%s\n' '        proxy_set_header Connection "upgrade";'
+              printf '%s\n' '        proxy_set_header Host $host;'
+              printf '%s\n' '        proxy_set_header X-Real-IP $remote_addr;'
+              printf '%s\n' '        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;'
+              printf '%s\n' '        proxy_set_header X-Forwarded-Proto $scheme;'
+              printf '%s\n' '        proxy_read_timeout 86400;'
+              printf '%s\n' '    }'
+              printf '%s\n' '}'
+            } > "/etc/nginx/sites-available/${SITE_NAME}"
+
+            ln -sf "/etc/nginx/sites-available/${SITE_NAME}" "/etc/nginx/sites-enabled/${SITE_NAME}"
+            nginx -t
+            systemctl reload nginx
+          ENDSSH
+
+      - name: Obtain SSL certificate
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+            "PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' SSL_EMAIL='${{ env.SSL_EMAIL }}' bash -s" <<'ENDSSH'
+            set -euo pipefail
+
+            mkdir -p /var/www/certbot
+            pkill -f certbot 2>/dev/null || true
+            sleep 2
+
+            if [ ! -f "/etc/letsencrypt/live/${PRIMARY_DOMAIN}/fullchain.pem" ]; then
+              if ! certbot certonly --webroot \
+                -w /var/www/certbot \
+                -d "$PRIMARY_DOMAIN" \
+                -d "$SECONDARY_DOMAIN" \
+                --email "$SSL_EMAIL" \
+                --agree-tos \
+                --non-interactive; then
+                echo "Warning: certbot failed, keeping HTTP-only config for this deploy" >&2
+              fi
+            else
+              echo "Certificate already exists, skipping renewal"
+            fi
+          ENDSSH
+
+      - name: Configure Nginx (HTTPS)
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+            "DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' SITE_NAME='${{ env.SITE_NAME }}' bash -s" <<'ENDSSH'
+            set -euo pipefail
+
+            if [ ! -f "/etc/letsencrypt/live/${PRIMARY_DOMAIN}/fullchain.pem" ]; then
+              echo "SSL cert not found, keeping HTTP-only config"
+              exit 0
+            fi
+
+            {
+              printf '%s\n' 'server {'
+              printf '%s\n' '    listen 80;'
+              printf '%s\n' "    server_name ${PRIMARY_DOMAIN} ${SECONDARY_DOMAIN};"
+              printf '%s\n' "    return 301 ${CANONICAL_URL}\$request_uri;"
+              printf '%s\n' '}'
+              printf '%s\n' ''
+              printf '%s\n' 'server {'
+              printf '%s\n' '    listen 443 ssl http2;'
+              printf '%s\n' "    server_name ${PRIMARY_DOMAIN} ${SECONDARY_DOMAIN};"
+              printf '%s\n' ''
+              printf '%s\n' "    ssl_certificate /etc/letsencrypt/live/${PRIMARY_DOMAIN}/fullchain.pem;"
+              printf '%s\n' "    ssl_certificate_key /etc/letsencrypt/live/${PRIMARY_DOMAIN}/privkey.pem;"
+              printf '%s\n' '    ssl_protocols TLSv1.2 TLSv1.3;'
+              printf '%s\n' '    ssl_ciphers HIGH:!aNULL:!MD5;'
+              printf '%s\n' ''
+              printf '%s\n' '    location / {'
+              printf '%s\n' "        proxy_pass http://127.0.0.1:${DEPLOY_PORT};"
+              printf '%s\n' '        proxy_http_version 1.1;'
+              printf '%s\n' '        proxy_set_header Upgrade $http_upgrade;'
+              printf '%s\n' '        proxy_set_header Connection "upgrade";'
+              printf '%s\n' '        proxy_set_header Host $host;'
+              printf '%s\n' '        proxy_set_header X-Real-IP $remote_addr;'
+              printf '%s\n' '        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;'
+              printf '%s\n' '        proxy_set_header X-Forwarded-Proto $scheme;'
+              printf '%s\n' '        proxy_read_timeout 86400;'
+              printf '%s\n' '    }'
+              printf '%s\n' '}'
+            } > "/etc/nginx/sites-available/${SITE_NAME}"
+
+            nginx -t
+            systemctl reload nginx
+          ENDSSH
+
+      - name: Post-deploy health check
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+        run: |
+          sshpass -e ssh -o StrictHostKeyChecking=no ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+            "APP_ROOT='${{ env.APP_ROOT }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' RELEASE='${{ steps.release.outputs.version }}' bash '${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/.github/scripts/remote-health-check.sh'"
+
+      - name: Notify success
+        run: |
+          echo "Deployment ${{ steps.release.outputs.version }} completed successfully"
+          echo "URL: ${{ env.CANONICAL_URL }}"

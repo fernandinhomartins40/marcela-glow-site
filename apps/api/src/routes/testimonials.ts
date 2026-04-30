@@ -78,7 +78,7 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
     const body = updateSchema.parse(req.body)
 
     const existing = await prisma.testimonial.findFirst({
-      where: { id: req.params.id, tenantId: req.user!.tenantId },
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
     })
 
     if (!existing) {
@@ -86,7 +86,7 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
     }
 
     const testimonial = await prisma.testimonial.update({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       data: body,
     })
 
@@ -103,14 +103,14 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
 router.delete('/:id', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const existing = await prisma.testimonial.findFirst({
-      where: { id: req.params.id, tenantId: req.user!.tenantId },
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
     })
 
     if (!existing) {
       throw new NotFoundError('Depoimento')
     }
 
-    await prisma.testimonial.delete({ where: { id: req.params.id } })
+    await prisma.testimonial.delete({ where: { id: String(req.params.id) } })
 
     res.json({ message: 'Depoimento removido com sucesso' })
   } catch (err) {

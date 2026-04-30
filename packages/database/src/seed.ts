@@ -282,6 +282,66 @@ async function main() {
     console.log(`✅ Inscrita na newsletter: ${sub.email}`)
   }
 
+  const patientPasswordHash = await bcrypt.hash('Paciente@2026', 12)
+  const patient = await prisma.patient.upsert({
+    where: { email_tenantId: { email: 'paciente@exemplo.com', tenantId: tenant.id } },
+    update: { passwordHash: patientPasswordHash },
+    create: {
+      name: 'Paciente VIP Demo',
+      email: 'paciente@exemplo.com',
+      phone: '(11) 90000-0000',
+      passwordHash: patientPasswordHash,
+      notes: 'Paciente demonstrativa para o PWA da area da paciente.',
+      tenantId: tenant.id,
+    },
+  })
+
+  const skinbooster = procedures.find((p) => p.title.includes('Skinbooster'))
+  if (skinbooster) {
+    await prisma.procedureSession.create({
+      data: {
+        patientId: patient.id,
+        procedureId: skinbooster.id,
+        tenantId: tenant.id,
+        notes: 'Evolucao com melhora de luminosidade e hidratacao.',
+        priceCents: 180000,
+      },
+    })
+  }
+
+  await prisma.prescription.create({
+    data: {
+      patientId: patient.id,
+      tenantId: tenant.id,
+      title: 'Cuidados pos-procedimento',
+      instructions: 'Hidratar a pele, evitar sol direto por 48h e usar filtro solar conforme orientacao.',
+      status: 'SENT',
+      sentAt: new Date(),
+    },
+  })
+
+  await prisma.notification.create({
+    data: {
+      patientId: patient.id,
+      tenantId: tenant.id,
+      title: 'Retorno recomendado',
+      body: 'Agende seu retorno de acompanhamento em 30 dias.',
+      channel: 'IN_APP',
+    },
+  })
+
+  await prisma.lead.create({
+    data: {
+      name: 'Lead Instagram',
+      email: 'lead.instagram@example.com',
+      phone: '(11) 98888-1111',
+      origin: 'Instagram',
+      status: 'QUALIFIED',
+      notes: 'Interessada em bioestimuladores.',
+      tenantId: tenant.id,
+    },
+  })
+
   console.log('\n🎉 Seed concluído com sucesso!')
 }
 

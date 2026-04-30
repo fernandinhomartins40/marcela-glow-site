@@ -1,0 +1,12 @@
+{
+  "name": "Minha Jornada Dra. Marcela",
+  "short_name": "Minha Jornada",
+  "description": "Painel VIP de acompanhamento da paciente",
+  "start_url": "/paciente/",
+  "display": "standalone",
+  "background_color": "#fff8f1",
+  "theme_color": "#6f4f45",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

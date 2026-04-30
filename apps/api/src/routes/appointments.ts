@@ -129,7 +129,7 @@ router.get('/', authenticate, async (req: Request, res: Response, next: NextFunc
 router.get('/:id', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const appointment = await prisma.appointment.findFirst({
-      where: { id: req.params.id, tenantId: req.user!.tenantId },
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
       include: {
         procedure: { select: { id: true, title: true, number: true } },
       },
@@ -155,7 +155,7 @@ router.patch('/:id', authenticate, requireAdmin, async (req: Request, res: Respo
 
     // Verify ownership
     const existing = await prisma.appointment.findFirst({
-      where: { id: req.params.id, tenantId: req.user!.tenantId },
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
     })
 
     if (!existing) {
@@ -169,7 +169,7 @@ router.patch('/:id', authenticate, requireAdmin, async (req: Request, res: Respo
     if (body.message !== undefined) data.message = body.message
 
     const appointment = await prisma.appointment.update({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       data,
       include: {
         procedure: { select: { id: true, title: true, number: true } },

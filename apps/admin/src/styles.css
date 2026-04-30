@@ -1,0 +1,39 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #17201b; background: #f6f2ec; }
+button, input { font: inherit; }
+.auth-shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: linear-gradient(135deg, #17201b 0%, #3f483e 58%, #d8b36a 58%); }
+.auth-panel { width: min(920px, 100%); display: grid; grid-template-columns: 1.1fr .9fr; gap: 32px; background: #fffaf2; border-radius: 8px; padding: 36px; box-shadow: 0 24px 80px rgba(23,32,27,.25); }
+.auth-panel h1, header h1 { margin: 6px 0 10px; font-family: Georgia, serif; font-size: 42px; letter-spacing: 0; }
+.eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: 12px; color: #8c6f35; font-weight: 700; }
+.form { display: grid; gap: 14px; }
+label { display: grid; gap: 6px; font-size: 13px; font-weight: 700; }
+input { width: 100%; border: 1px solid #d7cbb8; border-radius: 6px; padding: 12px; background: #fff; }
+button { border: 0; border-radius: 6px; background: #17201b; color: white; padding: 12px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; justify-content: center; min-height: 42px; }
+.link-button { background: transparent; color: #17201b; padding: 6px; }
+.error { color: #a33131; font-weight: 700; }
+.app-shell { min-height: 100vh; display: grid; grid-template-columns: 260px 1fr; }
+aside { background: #17201b; color: white; padding: 22px; display: flex; flex-direction: column; gap: 8px; }
+aside button { justify-content: flex-start; background: transparent; color: #f8f3ea; }
+aside button.active { background: #d8b36a; color: #17201b; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 10px 6px 22px; }
+main { padding: 28px; overflow: auto; }
+header { display: flex; justify-content: space-between; gap: 18px; align-items: center; margin-bottom: 22px; }
+.pill { background: #e9dec9; border-radius: 999px; padding: 8px 12px; font-weight: 700; font-size: 13px; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; margin-bottom: 18px; }
+.stat, .list, .settings, .table article, .kanban > div { background: #fffaf2; border: 1px solid #e2d6c2; border-radius: 8px; padding: 18px; }
+.stat span { display: block; color: #615948; font-size: 13px; }
+.stat strong { display: block; margin-top: 8px; font-size: 28px; }
+.grid { display: grid; gap: 14px; }
+.two { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.three { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.list h2 { margin: 0 0 12px; font-size: 18px; }
+.list p, .kanban p { border-top: 1px solid #eee2cf; margin: 0; padding: 11px 0; }
+.row-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.row-actions button { min-height: 32px; padding: 6px 10px; font-size: 12px; }
+.inline-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 12px; }
+.table { display: grid; gap: 10px; }
+.table article { display: grid; grid-template-columns: 1.2fr 1fr auto; gap: 12px; align-items: center; }
+.kanban { display: grid; grid-template-columns: repeat(5, minmax(160px,1fr)); gap: 12px; overflow: auto; }
+.kanban h3 { font-size: 13px; margin: 0 0 8px; }
+.kanban span { display: block; color: #6e6352; font-size: 12px; margin-top: 4px; }
+@media (max-width: 860px) { .auth-panel, .app-shell, .two, .three, .stats { grid-template-columns: 1fr; } aside { position: static; } header { align-items: flex-start; flex-direction: column; } .table article { grid-template-columns: 1fr; } }

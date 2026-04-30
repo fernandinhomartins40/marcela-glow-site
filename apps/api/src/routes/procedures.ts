@@ -63,7 +63,7 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
     }
 
     const procedure = await prisma.procedure.findFirst({
-      where: { id: req.params.id, tenantId: tenant.id, isActive: true },
+      where: { id: String(req.params.id), tenantId: tenant.id, isActive: true },
     })
 
     if (!procedure) {
@@ -107,7 +107,7 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
 
     // Verify ownership
     const existing = await prisma.procedure.findFirst({
-      where: { id: req.params.id, tenantId: req.user!.tenantId },
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
     })
 
     if (!existing) {
@@ -115,7 +115,7 @@ router.put('/:id', authenticate, requireAdmin, async (req: Request, res: Respons
     }
 
     const procedure = await prisma.procedure.update({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       data: body,
     })
 
@@ -133,7 +133,7 @@ router.delete('/:id', authenticate, requireAdmin, async (req: Request, res: Resp
   try {
     // Verify ownership
     const existing = await prisma.procedure.findFirst({
-      where: { id: req.params.id, tenantId: req.user!.tenantId },
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
     })
 
     if (!existing) {
@@ -141,7 +141,7 @@ router.delete('/:id', authenticate, requireAdmin, async (req: Request, res: Resp
     }
 
     await prisma.procedure.update({
-      where: { id: req.params.id },
+      where: { id: String(req.params.id) },
       data: { isActive: false },
     })
 

@@ -17,6 +17,11 @@ datasource db {
 enum UserRole {
   ADMIN
   STAFF
+  DOCTOR
+  RECEPTION
+  ASSISTANT
+  CONTENT_EDITOR
+  FINANCE
 }
 
 enum AppointmentStatus {
@@ -24,6 +29,92 @@ enum AppointmentStatus {
   CONFIRMED
   CANCELLED
   COMPLETED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  WON
+  LOST
+}
+
+enum RecordType {
+  NOTE
+  EVOLUTION
+  PROCEDURE
+  PHOTO
+}
+
+enum PrescriptionStatus {
+  DRAFT
+  SENT
+  VIEWED
+  SIGNED
+  CANCELLED
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum NotificationChannel {
+  EMAIL
+  PUSH
+  IN_APP
+}
+
+enum MessageSender {
+  STAFF
+  PATIENT
+}
+
+enum Permission {
+  DASHBOARD_READ
+  PATIENT_READ
+  PATIENT_WRITE
+  RECORD_READ
+  RECORD_WRITE
+  APPOINTMENT_READ
+  APPOINTMENT_WRITE
+  LEAD_READ
+  LEAD_WRITE
+  PRESCRIPTION_READ
+  PRESCRIPTION_WRITE
+  PRESCRIPTION_SIGN
+  CMS_READ
+  CMS_WRITE
+  NOTIFICATION_SEND
+  SETTINGS_READ
+  SETTINGS_WRITE
+  USER_MANAGE
+  AUDIT_READ
+  FILE_MANAGE
+}
+
+enum AuthSubjectType {
+  STAFF
+  PATIENT
+}
+
+enum AuditAction {
+  LOGIN
+  LOGOUT
+  READ
+  CREATE
+  UPDATE
+  DELETE
+  EXPORT
+  SIGN
+  SEND
+  REVOKE
+}
+
+enum FileVisibility {
+  STAFF_ONLY
+  PATIENT_VISIBLE
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -48,6 +139,23 @@ model Tenant {
   appointments  Appointment[]
   testimonials  Testimonial[]
   subscribers   NewsletterSubscriber[]
+  patients      Patient[]
+  leads         Lead[]
+  medicalRecords MedicalRecord[]
+  procedureSessions ProcedureSession[]
+  prescriptions Prescription[]
+  attachments   Attachment[]
+  cmsPages      CmsPage[]
+  blogPosts     BlogPost[]
+  notifications Notification[]
+  messages      Message[]
+  clinicSettings ClinicSetting[]
+  authSessions  AuthSession[]
+  auditLogs     AuditLog[]
+  passwordResetTokens PasswordResetToken[]
+  staffInvites  StaffInvite[]
+  pushSubscriptions PushSubscription[]
+  userPermissions UserPermission[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -60,13 +168,36 @@ model User {
   passwordHash String
   name         String
   role         UserRole @default(STAFF)
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
   tenantId     String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  medicalRecords MedicalRecord[]
+  sessions AuthSession[]
+  auditLogs AuditLog[]
+  resetTokens PasswordResetToken[]
+  invitesSent StaffInvite[] @relation("InviteSender")
+  permissions UserPermission[]
+  uploadedAttachments Attachment[]
+  signedPrescriptions Prescription[] @relation("PrescriptionSigner")
 
   @@unique([email, tenantId])
+}
+
+model UserPermission {
+  id         String     @id @default(cuid())
+  userId     String
+  tenantId   String
+  permission Permission
+  createdAt  DateTime   @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permission])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -88,6 +219,7 @@ model Procedure {
 
   tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   appointments Appointment[]
+  sessions     ProcedureSession[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -102,13 +234,17 @@ model Appointment {
   message     String?
   status      AppointmentStatus @default(PENDING)
   procedureId String?
+  patientId   String?
   tenantId    String
   scheduledAt DateTime?
+  source      String?
+  priceCents  Int?
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
   tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   procedure Procedure? @relation(fields: [procedureId], references: [id], onDelete: SetNull)
+  patient   Patient?   @relation(fields: [patientId], references: [id], onDelete: SetNull)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -142,4 +278,294 @@ model NewsletterSubscriber {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@unique([email, tenantId])
+}
+
+model Patient {
+  id           String   @id @default(cuid())
+  name         String
+  email        String
+  phone        String?
+  passwordHash String?
+  isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
+  birthDate    DateTime?
+  notes        String?
+  tenantId     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant        Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointments  Appointment[]
+  records       MedicalRecord[]
+  sessions      ProcedureSession[]
+  prescriptions Prescription[]
+  notifications Notification[]
+  messages      Message[]
+  authSessions  AuthSession[]
+  auditLogs     AuditLog[]
+  resetTokens   PasswordResetToken[]
+  pushSubscriptions PushSubscription[]
+  attachments   Attachment[]
+
+  @@unique([email, tenantId])
+}
+
+model Lead {
+  id          String     @id @default(cuid())
+  name        String
+  email       String?
+  phone       String?
+  origin      String?
+  status      LeadStatus @default(NEW)
+  nextFollowUp DateTime?
+  notes       String?
+  tenantId    String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model MedicalRecord {
+  id          String     @id @default(cuid())
+  title       String
+  type        RecordType @default(NOTE)
+  body        String
+  patientId   String
+  createdById String?
+  tenantId    String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  patient     Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy   User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  attachments Attachment[]
+}
+
+model ProcedureSession {
+  id          String   @id @default(cuid())
+  patientId   String
+  procedureId String?
+  tenantId    String
+  performedAt DateTime @default(now())
+  notes       String?
+  beforePhotoUrl String?
+  afterPhotoUrl  String?
+  priceCents  Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  procedure Procedure? @relation(fields: [procedureId], references: [id], onDelete: SetNull)
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Prescription {
+  id          String             @id @default(cuid())
+  patientId   String
+  tenantId    String
+  title       String
+  instructions String
+  status      PrescriptionStatus @default(DRAFT)
+  sentAt      DateTime?
+  signedAt    DateTime?
+  signedById  String?
+  signatureHash String?
+  signaturePayload Json?
+  verificationCode String? @unique
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  signedBy User?  @relation("PrescriptionSigner", fields: [signedById], references: [id], onDelete: SetNull)
+}
+
+model Attachment {
+  id              String   @id @default(cuid())
+  fileName        String
+  url             String
+  bucket          String?
+  storageKey      String?
+  mimeType        String?
+  sizeBytes       Int?
+  checksum        String?
+  visibility      FileVisibility @default(STAFF_ONLY)
+  medicalRecordId String?
+  patientId       String?
+  uploadedById    String?
+  tenantId        String
+  createdAt       DateTime @default(now())
+
+  medicalRecord MedicalRecord? @relation(fields: [medicalRecordId], references: [id], onDelete: Cascade)
+  patient       Patient?       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  uploadedBy    User?          @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model CmsPage {
+  id        String        @id @default(cuid())
+  slug      String
+  title     String
+  body      String
+  status    ContentStatus @default(DRAFT)
+  tenantId  String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([slug, tenantId])
+}
+
+model BlogPost {
+  id        String        @id @default(cuid())
+  slug      String
+  title     String
+  excerpt   String?
+  body      String
+  coverUrl  String?
+  status    ContentStatus @default(DRAFT)
+  tenantId  String
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([slug, tenantId])
+}
+
+model Notification {
+  id        String              @id @default(cuid())
+  title     String
+  body      String
+  channel   NotificationChannel @default(IN_APP)
+  patientId String?
+  tenantId  String
+  readAt    DateTime?
+  createdAt DateTime            @default(now())
+
+  patient Patient? @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id        String        @id @default(cuid())
+  body      String
+  sender    MessageSender
+  patientId String
+  tenantId  String
+  createdAt DateTime      @default(now())
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model ClinicSetting {
+  id        String   @id @default(cuid())
+  key       String
+  value     Json
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([key, tenantId])
+}
+
+model AuthSession {
+  id          String          @id @default(cuid())
+  subjectType AuthSubjectType
+  userId      String?
+  patientId   String?
+  tenantId    String
+  tokenHash   String
+  userAgent   String?
+  ipAddress   String?
+  revokedAt   DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime        @default(now())
+
+  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patient Patient? @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@index([userId, revokedAt])
+  @@index([patientId, revokedAt])
+}
+
+model AuditLog {
+  id          String          @id @default(cuid())
+  tenantId    String
+  action      AuditAction
+  resource    String
+  resourceId  String?
+  subjectType AuthSubjectType?
+  userId      String?
+  patientId   String?
+  ipAddress   String?
+  userAgent   String?
+  metadata    Json?
+  createdAt   DateTime        @default(now())
+
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  patient Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([resource, resourceId])
+}
+
+model PasswordResetToken {
+  id          String          @id @default(cuid())
+  subjectType AuthSubjectType
+  userId      String?
+  patientId   String?
+  tenantId    String
+  tokenHash   String          @unique
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime        @default(now())
+
+  user    User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patient Patient? @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model StaffInvite {
+  id          String   @id @default(cuid())
+  email       String
+  name        String?
+  role        UserRole @default(STAFF)
+  permissions Permission[]
+  tokenHash   String   @unique
+  tenantId    String
+  invitedById String?
+  acceptedAt  DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  invitedBy User?  @relation("InviteSender", fields: [invitedById], references: [id], onDelete: SetNull)
+
+  @@index([email, tenantId])
+}
+
+model PushSubscription {
+  id          String          @id @default(cuid())
+  endpoint    String          @unique
+  keys        Json
+  subjectType AuthSubjectType
+  patientId   String?
+  tenantId    String
+  userAgent   String?
+  revokedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  patient Patient? @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
