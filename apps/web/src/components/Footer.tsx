@@ -1,4 +1,4 @@
-import { Instagram, Facebook } from "lucide-react";
+import { Instagram, Facebook, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -184,12 +184,20 @@ const Footer = () => {
         <div className="border-t border-background/20 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-background/70">
             <p>© 2024 Dra. Marcela Duch - Todos os direitos reservados</p>
-            <div className="flex gap-6">
+            <div className="flex flex-wrap justify-center gap-6">
               <a href="#" className="hover:text-background transition-colors">
                 Política de Privacidade
               </a>
               <a href="#" className="hover:text-background transition-colors">
                 Termos de Uso
+              </a>
+              <a
+                href="/admin/"
+                className="inline-flex items-center gap-2 hover:text-background transition-colors"
+                aria-label="Acessar painel médico"
+              >
+                <Stethoscope className="w-4 h-4" />
+                Painel MÃ©dico
               </a>
             </div>
           </div>

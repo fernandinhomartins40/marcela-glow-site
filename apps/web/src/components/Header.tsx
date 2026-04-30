@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, UserRound, X } from "lucide-react";
 import logoMD from "@/assets/logo-md.png";
 
 const Header = () => {
@@ -79,14 +79,26 @@ const Header = () => {
           </nav>
 
           {/* CTA Desktop */}
-          <Button
-            variant="cta"
-            size="default"
-            className="hidden lg:inline-flex"
-            onClick={() => scrollToSection("agendamento")}
-          >
-            Agendar
-          </Button>
+          <div className="hidden lg:flex items-center gap-3">
+            <Button
+              variant="cta"
+              size="default"
+              onClick={() => scrollToSection("agendamento")}
+            >
+              Agendar
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="icon"
+              className="rounded-full"
+              title="Área da Paciente"
+            >
+              <a href="/paciente/" aria-label="Acessar área da paciente">
+                <UserRound className="w-4 h-4" />
+              </a>
+            </Button>
+          </div>
 
           {/* Mobile menu button */}
           <button
@@ -117,6 +129,17 @@ const Header = () => {
               onClick={() => scrollToSection("agendamento")}
             >
               Agendar Consulta
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              size="default"
+              className="w-full mt-3"
+            >
+              <a href="/paciente/">
+                <UserRound className="w-4 h-4" />
+                Área da Paciente
+              </a>
             </Button>
           </nav>
         )}
