@@ -154,9 +154,9 @@ function Shell() {
     ['patients', Users, 'Pacientes'],
     ['appointments', CalendarDays, 'Agenda'],
     ['leads', MessageSquare, 'Leads'],
-    ['records', HeartPulse, 'Prontuario'],
+    ['records', HeartPulse, 'Prontuário'],
     ['cms', FileText, 'CMS'],
-    ['security', UserRound, 'Seguranca'],
+    ['security', UserRound, 'Segurança'],
     ['settings', Settings, 'Ajustes'],
   ] as const
 
@@ -171,11 +171,11 @@ function Shell() {
       </aside>
       <main>
         <header>
-          <div><span className="eyebrow">Clinica Dra. Marcela</span><h1>{nav.find(([id]) => id === tab)?.[2]}</h1></div>
+          <div><span className="eyebrow">Clínica Dra. Marcela</span><h1>{nav.find(([id]) => id === tab)?.[2]}</h1></div>
           <span className="pill">RBAC admin/staff</span>
         </header>
         {data.isLoading && <p>Carregando dados reais do backend...</p>}
-        {data.isError && <p className="error">Nao foi possivel carregar a API.</p>}
+        {data.isError && <p className="error">Não foi possível carregar a API.</p>}
         {data.data && <Panel tab={tab} data={data.data} />}
       </main>
     </div>
@@ -204,7 +204,7 @@ function Dashboard({ data }: { data: any }) {
         <Stat label="Faturamento" value={(m.revenueCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} />
       </section>
       <section className="grid two">
-        <List title="Proximos agendamentos" items={data.dashboard.nextAppointments} pick={(a: any) => `${a.patient?.name ?? a.name} - ${a.procedure?.title ?? 'Consulta'}`} />
+        <List title="Próximos agendamentos" items={data.dashboard.nextAppointments} pick={(a: any) => `${a.patient?.name ?? a.name} - ${a.procedure?.title ?? 'Consulta'}`} />
         <List title="Pacientes recentes" items={data.dashboard.recentPatients} pick={(p: any) => `${p.name} - ${p.email}`} />
       </section>
     </>
@@ -216,7 +216,7 @@ function Patients({ patients }: { patients: any[] }) {
 }
 
 function Appointments({ appointments }: { appointments: any[] }) {
-  return <section className="table">{appointments.map((a) => <article key={a.id}><strong>{a.name}</strong><span>{a.procedure?.title ?? 'Avaliacao'}</span><span>{a.status}</span></article>)}</section>
+  return <section className="table">{appointments.map((a) => <article key={a.id}><strong>{a.name}</strong><span>{a.procedure?.title ?? 'Avaliação'}</span><span>{a.status}</span></article>)}</section>
 }
 
 function Leads({ leads }: { leads: any[] }) {
@@ -230,7 +230,7 @@ function Records({ data }: { data: any }) {
   return (
     <section className="grid two">
       <section className="list">
-        <h2>Prescricoes digitais</h2>
+        <h2>Prescrições digitais</h2>
         {data.prescriptions.map((p: any) => (
           <p key={p.id}>
             {p.patient.name} - {p.title} ({p.status})
@@ -242,7 +242,7 @@ function Records({ data }: { data: any }) {
         ))}
       </section>
       <FileUpload patients={data.patients} />
-      <List title="Notificacoes" items={data.notifications} pick={(n: any) => `${n.title} - ${n.channel}`} />
+      <List title="Notificações" items={data.notifications} pick={(n: any) => `${n.title} - ${n.channel}`} />
     </section>
   )
 }
@@ -300,8 +300,8 @@ function Security({ data }: { data: any }) {
   return (
     <section className="grid two">
       <section className="list">
-        <h2>Equipe e sessoes</h2>
-        {data.users.map((u: any) => <p key={u.id}>{u.name} - {u.role}<span>{u.sessions?.length ?? 0} sessoes ativas</span></p>)}
+        <h2>Equipe e sessões</h2>
+        {data.users.map((u: any) => <p key={u.id}>{u.name} - {u.role}<span>{u.sessions?.length ?? 0} sessões ativas</span></p>)}
         <div className="inline-form">
           <input placeholder="email@clinica.com" value={email} onChange={(e) => setEmail(e.target.value)} />
           <button onClick={() => invite.mutate()}>Convidar</button>

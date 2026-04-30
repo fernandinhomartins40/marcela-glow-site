@@ -118,10 +118,10 @@ function Dashboard() {
   })
   const enablePush = useMutation({
     mutationFn: async () => {
-      if (!('serviceWorker' in navigator) || !('PushManager' in window)) throw new Error('Push indisponivel neste navegador')
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) throw new Error('Push indisponível neste navegador')
       const registration = await navigator.serviceWorker.ready
       const { data } = await api.get('/patient/push/public-key')
-      if (!data.publicKey) throw new Error('Push nao configurado no servidor')
+      if (!data.publicKey) throw new Error('Push não configurado no servidor')
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(data.publicKey),
@@ -131,7 +131,7 @@ function Dashboard() {
   })
 
   if (query.isLoading) return <main className="loading">Carregando sua jornada...</main>
-  if (query.isError) return <main className="loading error">Nao foi possivel acessar seus dados.</main>
+  if (query.isError) return <main className="loading error">Não foi possível acessar seus dados.</main>
   const data: any = query.data
   const nextAppointment = data.appointments[0]
   const patientName = data.patient?.name ?? data.profile?.name ?? 'Paciente'
@@ -140,9 +140,9 @@ function Dashboard() {
     <div className="vip-shell">
       <header className="vip-hero">
         <div className="hero-copy">
-          <span className="eyebrow">Experiencia VIP</span>
+          <span className="eyebrow">Experiência VIP</span>
           <h1>Sua jornada de cuidado, {patientName.split(' ')[0]}</h1>
-          <p>Um espaco reservado para acompanhar cada etapa com discricao, proximidade e orientacao medica.</p>
+          <p>Um espaço reservado para acompanhar cada etapa com discrição, proximidade e orientação médica.</p>
           <div className="hero-actions">
             <a href="#concierge">Solicitar cuidado</a>
             <a href="#jornada">Ver jornada</a>
@@ -151,9 +151,9 @@ function Dashboard() {
         <div className="hero-portrait">
           <img src={draEditorial} alt="Dra. Marcela Duch" />
           <div className="appointment-note">
-            <span>Proximo passo</span>
-            <strong>{nextAppointment?.procedure?.title ?? 'Avaliacao personalizada'}</strong>
-            <small>{nextAppointment?.status ?? 'Aguardando sua solicitacao'}</small>
+            <span>Próximo passo</span>
+            <strong>{nextAppointment?.procedure?.title ?? 'Avaliação personalizada'}</strong>
+            <small>{nextAppointment?.status ?? 'Aguardando sua solicitação'}</small>
           </div>
         </div>
         <button className="logout" onClick={() => { localStorage.removeItem('patient_token'); window.location.reload() }}><LogOut size={18} />Sair</button>
@@ -162,7 +162,7 @@ function Dashboard() {
       <section className="vip-metrics" aria-label="Resumo da jornada">
         <Metric icon={CalendarDays} label="Agendamentos" value={data.appointments.length} />
         <Metric icon={Heart} label="Procedimentos" value={data.sessions.length} />
-        <Metric icon={Pill} label="Prescricoes" value={data.prescriptions.length} />
+        <Metric icon={Pill} label="Prescrições" value={data.prescriptions.length} />
         <Metric icon={Bell} label="Lembretes" value={data.notifications.length} />
       </section>
 
@@ -170,17 +170,17 @@ function Dashboard() {
         <section id="concierge" className="concierge-card">
           <div>
             <span className="eyebrow">Concierge da paciente</span>
-            <h2>Como voce deseja ser cuidada agora?</h2>
+            <h2>Como você deseja ser cuidada agora?</h2>
             <p>Escolha um protocolo ou envie uma mensagem direta para a equipe entender seu momento.</p>
           </div>
           <div className="concierge-form">
             <select value={procedureId} onChange={(e) => setProcedureId(e.target.value)}>
-              <option value="">Consulta de avaliacao</option>
+              <option value="">Consulta de avaliação</option>
               {data.procedures.map((p: any) => <option key={p.id} value={p.id}>{p.title}</option>)}
             </select>
-            <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Conte como voce deseja ser cuidada neste momento." />
+            <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Conte como você deseja ser cuidada neste momento." />
             <div className="actions">
-              <button onClick={() => appointment.mutate()}>Solicitar horario <ChevronRight size={17} /></button>
+              <button onClick={() => appointment.mutate()}>Solicitar horário <ChevronRight size={17} /></button>
               <button className="ghost" onClick={() => directMessage.mutate()}><MessageCircle size={17} />Enviar mensagem</button>
             </div>
           </div>
@@ -189,15 +189,15 @@ function Dashboard() {
         <section id="jornada" className="journey-layout">
           <div className="timeline-panel">
             <span className="eyebrow">Linha de cuidado</span>
-            <h2>Sua evolucao</h2>
-            <List title="Proximos cuidados" icon={Sparkles} items={data.appointments} pick={(a: any) => `${a.procedure?.title ?? 'Consulta'} - ${a.status}`} />
-            <List title="Historico de procedimentos" icon={Heart} items={data.sessions} pick={(s: any) => `${s.procedure?.title ?? 'Procedimento'} - ${new Date(s.performedAt).toLocaleDateString('pt-BR')}`} />
+            <h2>Sua evolução</h2>
+            <List title="Próximos cuidados" icon={Sparkles} items={data.appointments} pick={(a: any) => `${a.procedure?.title ?? 'Consulta'} - ${a.status}`} />
+            <List title="Histórico de procedimentos" icon={Heart} items={data.sessions} pick={(s: any) => `${s.procedure?.title ?? 'Procedimento'} - ${new Date(s.performedAt).toLocaleDateString('pt-BR')}`} />
           </div>
 
           <aside className="private-panel">
-            <List title="Prescricoes e orientacoes" icon={Pill} items={data.prescriptions} pick={(p: any) => `${p.title} - ${p.status}`} />
+            <List title="Prescrições e orientações" icon={Pill} items={data.prescriptions} pick={(p: any) => `${p.title} - ${p.status}`} />
             <List title="Arquivos e fotos" icon={UserRound} items={data.attachments ?? []} pick={(a: any) => `${a.fileName} - ${a.mimeType ?? 'arquivo'}`} />
-            <List title="Canal direto" icon={MessageCircle} items={data.messages} pick={(m: any) => `${m.sender === 'PATIENT' ? 'Voce' : 'Equipe'}: ${m.body}`} />
+            <List title="Canal direto" icon={MessageCircle} items={data.messages} pick={(m: any) => `${m.sender === 'PATIENT' ? 'Você' : 'Equipe'}: ${m.body}`} />
             <article className="vip-card list reminder-card">
               <h2><Bell size={19} />Lembretes</h2>
               <button onClick={() => enablePush.mutate()}>Ativar push</button>
