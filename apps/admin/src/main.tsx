@@ -14,8 +14,8 @@ import {
   UserRound,
   Users,
 } from 'lucide-react'
-import draPortrait from '../../web/src/assets/dra-marcela-portrait.jpg'
-import marbleTexture from '../../web/src/assets/marble-texture.jpg'
+import draPortrait from './assets/dra-marcela-portrait.jpg'
+import marbleTexture from './assets/marble-texture.jpg'
 import './styles.css'
 
 const queryClient = new QueryClient()

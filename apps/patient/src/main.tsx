@@ -3,8 +3,8 @@ import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { Bell, CalendarDays, Heart, LogOut, MessageCircle, Pill, Sparkles, UserRound } from 'lucide-react'
-import draEditorial from '../../web/src/assets/dra-marcela-editorial.jpg'
-import marbleTexture from '../../web/src/assets/marble-texture.jpg'
+import draEditorial from './assets/dra-marcela-editorial.jpg'
+import marbleTexture from './assets/marble-texture.jpg'
 import './styles.css'
 
 const queryClient = new QueryClient()
