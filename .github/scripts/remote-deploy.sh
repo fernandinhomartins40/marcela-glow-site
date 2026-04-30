@@ -26,6 +26,9 @@ cd "$RELEASE_DIR"
 echo "Building and starting Docker services for release $RELEASE on port $DEPLOY_PORT..."
 docker compose --env-file "$ENV_FILE" -p dramarcela up -d --build --remove-orphans
 
+echo "Ensuring demo credentials are available..."
+docker compose --env-file "$ENV_FILE" -p dramarcela exec -T api node scripts/seed-demo-users.js
+
 ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
 
 echo "Pruning old Docker artifacts..."
