@@ -3,56 +3,56 @@ import { Button } from "@/components/ui/button";
 const procedures = [
   {
     number: "01",
-    title: "Neck Contour Signature",
-    subtitle: "Assinatura exclusiva",
-    description: "Protocolo proprietário para contorno e firmeza do pescoço — porque o pescoço entrega o que o rosto não revela.",
+    title: "Gerenciamento de Envelhecimento",
+    subtitle: "Prevenção e manutenção",
+    description: "Acompanhamento estratégico para preservar identidade, melhorar viço, firmeza, textura e contorno ao longo do tempo.",
   },
   {
     number: "02",
-    title: "Harmonização Facial",
-    subtitle: "Equilíbrio e proporção",
-    description: "Técnica refinada que respeita a anatomia única, devolvendo equilíbrio sem alterar a identidade do rosto.",
+    title: "Botox Full Face",
+    subtitle: "Toxina botulínica",
+    description: "Tratamento global para suavizar expressões, equilibrar forças musculares e abordar pontos como sorriso gengival, queixo, asas nasais e pescoço.",
   },
   {
     number: "03",
-    title: "Bioestimuladores de Colágeno",
-    subtitle: "Rejuvenescimento progressivo",
-    description: "Estímulo natural à produção de colágeno, com resultados que evoluem ao longo do tempo de forma sutil.",
+    title: "Peptídeos e Regeneração Celular",
+    subtitle: "Estética inteligente",
+    description: "Protocolos com foco em atividade celular, reparação tecidual, longevidade da pele e estímulo progressivo de colágeno.",
   },
   {
     number: "04",
-    title: "Preenchimento Premium",
-    subtitle: "Ácido hialurônico de alta densidade",
-    description: "Hidratação profunda, definição de contornos e suavização de linhas com naturalidade absoluta.",
+    title: "Bioestimuladores e Colágeno",
+    subtitle: "Firmeza progressiva",
+    description: "Indicação personalizada para flacidez facial, pescoço, linha mandibular e áreas corporais, com melhora gradual da sustentação da pele.",
   },
   {
     number: "05",
-    title: "T-Sculptor Body",
-    subtitle: "Remodelagem corporal não invasiva",
-    description: "Tecnologia avançada para definição, firmeza e redução de gordura localizada sem cirurgia.",
+    title: "Harmonização Facial",
+    subtitle: "Identidade preservada",
+    description: "Planejamento de mento, mandíbula, preenchimentos e proporções faciais com foco em equilíbrio, naturalidade e refinamento.",
   },
   {
     number: "06",
-    title: "Skinbooster & Hidratação",
-    subtitle: "Glow editorial",
-    description: "Pele revitalizada, luminosa e uniforme com ativos de última geração e protocolos personalizados.",
+    title: "Corpo, Glúteos e T-Sculptor",
+    subtitle: "Escultura corporal",
+    description: "Protocolos corporais para flacidez, contorno, glúteos e definição, combinando tecnologias e estímulo de colágeno quando indicado.",
   },
 ];
 
 const Procedures = () => {
   return (
-    <section id="procedimentos" className="relative py-24 md:py-40 bg-secondary/40">
-      <div className="container mx-auto px-6 lg:px-10">
+    <section id="procedimentos" className="relative py-16 md:py-40 bg-secondary/40 border-t border-border/70">
+      <div className="container mx-auto px-5 sm:px-6 lg:px-10">
         {/* Cabeçalho */}
-        <div className="max-w-3xl mb-20 animate-fade-in">
-          <p className="label-eyebrow mb-6">Tratamentos exclusivos</p>
-          <h2 className="font-display text-5xl md:text-7xl lg:text-8xl leading-[0.9] tracking-[-0.02em] text-primary">
-            Cada tratamento,
-            <span className="block italic font-light text-accent">uma assinatura.</span>
+        <div className="max-w-3xl mb-10 md:mb-20 animate-fade-in">
+          <p className="label-eyebrow mb-4 md:mb-6">Protocolos médicos</p>
+          <h2 className="font-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl leading-[0.95] md:leading-[0.9] tracking-normal text-primary">
+            Medicina estética,
+            <span className="block italic font-light text-accent">com estratégia.</span>
           </h2>
-          <p className="font-editorial-italic text-xl md:text-2xl text-foreground/70 mt-6 max-w-2xl">
-            Protocolos personalizados para realçar sua beleza natural com a sutileza
-            que define a medicina estética contemporânea.
+          <p className="font-editorial-italic text-lg md:text-2xl text-foreground/70 mt-5 md:mt-6 max-w-2xl">
+            Face, pele, pescoço, corpo e cabelo tratados com plano individual,
+            naturalidade e acompanhamento médico.
           </p>
         </div>
 
@@ -61,19 +61,19 @@ const Procedures = () => {
           {procedures.map((proc, index) => (
             <article
               key={index}
-              className="group relative p-10 lg:p-12 hover:bg-background transition-colors duration-700 animate-fade-in"
+              className="group relative p-6 sm:p-8 lg:p-12 hover:bg-background transition-colors duration-700 animate-fade-in"
               style={{ animationDelay: `${index * 80}ms` }}
             >
-              <div className="flex items-start justify-between mb-8">
+              <div className="flex items-start justify-between gap-4 mb-6 md:mb-8">
                 <span className="font-display text-3xl text-accent/60 group-hover:text-accent transition-colors">
                   {proc.number}
                 </span>
-                <span className="label-eyebrow text-xs">
+                <span className="label-eyebrow text-right text-[0.65rem]">
                   {proc.subtitle}
                 </span>
               </div>
 
-              <h3 className="font-display text-3xl lg:text-4xl text-primary leading-tight mb-4 group-hover:italic transition-all duration-500">
+              <h3 className="font-display text-2xl sm:text-3xl lg:text-4xl text-primary leading-tight mb-4 group-hover:italic transition-all duration-500">
                 {proc.title}
               </h3>
 
@@ -88,9 +88,9 @@ const Procedures = () => {
           ))}
         </div>
 
-        <div className="text-center mt-16 animate-fade-in">
+        <div className="text-center mt-10 md:mt-16 animate-fade-in">
           <Button variant="cta" size="lg">
-            Ver Todos os Tratamentos
+            Ver Todos os Protocolos
           </Button>
         </div>
       </div>

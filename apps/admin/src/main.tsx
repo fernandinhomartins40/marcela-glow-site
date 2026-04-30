@@ -14,6 +14,8 @@ import {
   UserRound,
   Users,
 } from 'lucide-react'
+import draPortrait from '../../web/src/assets/dra-marcela-portrait.jpg'
+import marbleTexture from '../../web/src/assets/marble-texture.jpg'
 import './styles.css'
 
 const queryClient = new QueryClient()
@@ -28,11 +30,30 @@ api.interceptors.request.use((config) => {
 
 type Tab = 'dashboard' | 'patients' | 'appointments' | 'leads' | 'records' | 'cms' | 'security' | 'settings'
 
+const demoAdmin = {
+  label: 'Admin demo',
+  email: 'admin@drmarceladuch.com.br',
+  password: 'Admin@2024!',
+}
+
+const demoStaff = {
+  label: 'Equipe demo',
+  email: 'equipe@drmarceladuch.com.br',
+  password: 'Equipe@2026!',
+}
+
 function Login() {
-  const [email, setEmail] = React.useState('admin@drmarceladuch.com.br')
-  const [password, setPassword] = React.useState('Admin@2024!')
+  const [email, setEmail] = React.useState('')
+  const [password, setPassword] = React.useState('')
   const [mode, setMode] = React.useState<'login' | 'register'>('login')
   const [error, setError] = React.useState('')
+
+  function fillDemo(user: typeof demoAdmin) {
+    setMode('login')
+    setEmail(user.email)
+    setPassword(user.password)
+    setError('')
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
@@ -54,19 +75,34 @@ function Login() {
 
   return (
     <main className="auth-shell">
+      <div className="auth-bg" style={{ backgroundImage: `url(${marbleTexture})` }} />
       <section className="auth-panel">
-        <div>
-          <span className="eyebrow">CRM medico</span>
+        <div className="auth-copy">
+          <span className="eyebrow">CRM médico</span>
           <h1>Dra. Marcela</h1>
-          <p>Operacao clinica, relacionamento, conteudo e acompanhamento de pacientes em um painel seguro.</p>
+          <p>Operação clínica, relacionamento, conteúdo e acompanhamento de pacientes em um painel seguro.</p>
+          <div className="auth-portrait">
+            <img src={draPortrait} alt="Dra. Marcela Duch" />
+          </div>
         </div>
         <form onSubmit={submit} className="form">
-          <label>E-mail<input value={email} onChange={(e) => setEmail(e.target.value)} /></label>
-          <label>Senha<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+          <div>
+            <span className="eyebrow">Acesso da equipe</span>
+            <h2>{mode === 'login' ? 'Entrar no painel' : 'Criar primeiro acesso'}</h2>
+          </div>
+          <div className="demo-actions" aria-label="Usuários de teste">
+            {[demoAdmin, demoStaff].map((user) => (
+              <button key={user.email} type="button" className="demo-button" onClick={() => fillDemo(user)}>
+                {user.label}
+              </button>
+            ))}
+          </div>
+          <label>E-mail<input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@clinica.com" /></label>
+          <label>Senha<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Sua senha" /></label>
           {error && <p className="error">{error}</p>}
           <button type="submit">{mode === 'login' ? 'Entrar' : 'Registrar equipe'}</button>
           <button type="button" className="link-button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
-            {mode === 'login' ? 'Criar primeiro acesso' : 'Ja tenho acesso'}
+            {mode === 'login' ? 'Criar primeiro acesso' : 'Já tenho acesso'}
           </button>
         </form>
       </section>

@@ -10,6 +10,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "check:encoding": "node scripts/check-encoding.js",
     "clean": "turbo run clean",
     "db:migrate": "turbo run db:migrate --filter=@marcela/database",
     "db:seed": "turbo run db:seed --filter=@marcela/database",

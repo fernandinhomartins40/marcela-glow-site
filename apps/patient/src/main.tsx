@@ -3,11 +3,19 @@ import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { Bell, CalendarDays, Heart, LogOut, MessageCircle, Pill, Sparkles, UserRound } from 'lucide-react'
+import draEditorial from '../../web/src/assets/dra-marcela-editorial.jpg'
+import marbleTexture from '../../web/src/assets/marble-texture.jpg'
 import './styles.css'
 
 const queryClient = new QueryClient()
 const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' })
 const tenantSlug = import.meta.env.VITE_TENANT_SLUG || 'marcela-duch'
+
+const demoPatient = {
+  label: 'Paciente demo',
+  email: 'paciente@exemplo.com',
+  password: 'Paciente@2026',
+}
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('patient_token')
@@ -25,10 +33,17 @@ function urlBase64ToUint8Array(value: string) {
 function Auth() {
   const [mode, setMode] = React.useState<'login' | 'register'>('login')
   const [name, setName] = React.useState('')
-  const [email, setEmail] = React.useState('paciente@exemplo.com')
+  const [email, setEmail] = React.useState('')
   const [phone, setPhone] = React.useState('')
-  const [password, setPassword] = React.useState('Paciente@2026')
+  const [password, setPassword] = React.useState('')
   const [error, setError] = React.useState('')
+
+  function fillDemo() {
+    setMode('login')
+    setEmail(demoPatient.email)
+    setPassword(demoPatient.password)
+    setError('')
+  }
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
@@ -44,20 +59,31 @@ function Auth() {
 
   return (
     <main className="auth">
+      <div className="auth-bg" style={{ backgroundImage: `url(${marbleTexture})` }} />
       <section className="intro">
-        <span className="eyebrow">Experiencia VIP</span>
+        <span className="eyebrow">Experiência VIP</span>
         <h1>Minha Jornada</h1>
-        <p>Um espaco reservado para agendamentos, prescricoes, orientacoes e acompanhamento proximo com a equipe da Dra. Marcela.</p>
+        <p>Um espaço reservado para agendamentos, prescrições, orientações e acompanhamento próximo com a equipe da Dra. Marcela.</p>
+        <div className="auth-portrait">
+          <img src={draEditorial} alt="Dra. Marcela Duch" />
+        </div>
       </section>
       <form onSubmit={submit} className="card form">
+        <div>
+          <span className="eyebrow">Área da paciente</span>
+          <h2>{mode === 'login' ? 'Entrar no cuidado' : 'Criar acesso'}</h2>
+        </div>
+        <button type="button" className="demo-button" onClick={fillDemo}>
+          Preencher {demoPatient.label}
+        </button>
         {mode === 'register' && <label>Nome<input value={name} onChange={(e) => setName(e.target.value)} /></label>}
-        <label>E-mail<input value={email} onChange={(e) => setEmail(e.target.value)} /></label>
+        <label>E-mail<input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" /></label>
         {mode === 'register' && <label>Telefone<input value={phone} onChange={(e) => setPhone(e.target.value)} /></label>}
-        <label>Senha<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} /></label>
+        <label>Senha<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Sua senha" /></label>
         {error && <p className="error">{error}</p>}
         <button type="submit">{mode === 'login' ? 'Entrar' : 'Criar acesso'}</button>
         <button type="button" className="ghost" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
-          {mode === 'login' ? 'Quero criar meu acesso' : 'Ja tenho acesso'}
+          {mode === 'login' ? 'Quero criar meu acesso' : 'Já tenho acesso'}
         </button>
       </form>
     </main>

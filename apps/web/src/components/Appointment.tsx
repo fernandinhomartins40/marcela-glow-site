@@ -52,61 +52,61 @@ const Appointment = () => {
   };
 
   return (
-    <section id="agendamento" className="py-20 md:py-32 bg-gradient-to-br from-secondary via-accent to-primary/30 relative overflow-hidden">
+    <section id="agendamento" className="py-16 md:py-32 bg-gradient-to-br from-secondary via-accent to-primary/30 relative overflow-hidden border-t border-border/70">
       {/* Decorative pattern */}
-      <div className="absolute inset-0 opacity-5">
+      <div className="absolute inset-0 hidden opacity-5 md:block">
         <div className="absolute top-0 left-0 w-64 h-64 border-2 border-primary rounded-full" />
         <div className="absolute bottom-0 right-0 w-96 h-96 border-2 border-primary rounded-full" />
       </div>
 
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="grid md:grid-cols-5 gap-12 max-w-6xl mx-auto">
+      <div className="container mx-auto px-5 sm:px-6 lg:px-10 relative z-10">
+        <div className="grid md:grid-cols-5 gap-8 md:gap-12 max-w-6xl mx-auto">
           {/* Left Column - Info */}
           <div className="md:col-span-2 animate-fade-in">
-            <h2 className="text-4xl md:text-5xl font-serif font-bold mb-4 tracking-wide">
-              Agende Sua Consulta
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold mb-4 tracking-wide">
+              Agende Sua Avaliação
             </h2>
-            <p className="text-lg md:text-xl mb-12 leading-relaxed">
-              Dê o primeiro passo para sua melhor versão
+            <p className="text-base md:text-xl mb-8 md:mb-12 leading-relaxed">
+              Entenda qual protocolo faz sentido para o seu momento
             </p>
 
-            <div className="space-y-6">
+            <div className="space-y-5 md:space-y-6">
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Phone className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <Phone className="w-5 h-5 md:w-6 md:h-6 text-primary" />
                 </div>
                 <div>
                   <p className="font-semibold mb-1">Telefone / WhatsApp</p>
-                  <p className="text-foreground/80">(11) 99999-9999</p>
+                  <p className="text-foreground/80">(67) 99944-6066</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Mail className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <Mail className="w-5 h-5 md:w-6 md:h-6 text-primary" />
                 </div>
                 <div>
                   <p className="font-semibold mb-1">E-mail</p>
-                  <p className="text-foreground/80">contato@drmarceladuch.com.br</p>
+                  <p className="text-foreground/80">contato@dramarceladuch.com.br</p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <MapPin className="w-5 h-5 md:w-6 md:h-6 text-primary" />
                 </div>
                 <div>
                   <p className="font-semibold mb-1">Endereço</p>
                   <p className="text-foreground/80">
-                    Av. Exemplo, 1234 - Sala 56<br />
-                    São Paulo - SP
+                    Av. 16, nº 890 - Ágatha Center<br />
+                    Chapadão do Sul - MS
                   </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                  <Clock className="w-5 h-5 md:w-6 md:h-6 text-primary" />
                 </div>
                 <div>
                   <p className="font-semibold mb-1">Horário de Atendimento</p>
@@ -121,8 +121,8 @@ const Appointment = () => {
 
           {/* Right Column - Form */}
           <div className="md:col-span-3 animate-fade-in">
-            <form onSubmit={handleSubmit} className="bg-card/80 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-border/50">
-              <div className="space-y-6">
+            <form onSubmit={handleSubmit} className="bg-card/80 backdrop-blur-sm p-5 sm:p-6 md:p-8 rounded-lg shadow-xl border border-border/50">
+              <div className="space-y-4 md:space-y-6">
                 <div>
                   <Input
                     type="text"
@@ -169,12 +169,14 @@ const Appointment = () => {
                         ))
                       : (
                           <>
-                            <SelectItem value="Neck Contour Signature">Neck Contour Signature</SelectItem>
+                            <SelectItem value="Gerenciamento de Envelhecimento">Gerenciamento de Envelhecimento</SelectItem>
+                            <SelectItem value="Botox Full Face">Botox Full Face</SelectItem>
+                            <SelectItem value="Botox para Hiper-hidrose">Botox para Hiper-hidrose</SelectItem>
+                            <SelectItem value="Peptídeos e Regeneração Celular">Peptídeos e Regeneração Celular</SelectItem>
                             <SelectItem value="Harmonização Facial">Harmonização Facial</SelectItem>
                             <SelectItem value="Bioestimuladores de Colágeno">Bioestimuladores de Colágeno</SelectItem>
-                            <SelectItem value="Preenchimento Premium">Preenchimento Premium</SelectItem>
-                            <SelectItem value="T-Sculptor Body">T-Sculptor Body</SelectItem>
-                            <SelectItem value="Skinbooster & Hidratação">Skinbooster &amp; Hidratação</SelectItem>
+                            <SelectItem value="T-Sculptor e Protocolos Corporais">T-Sculptor e Protocolos Corporais</SelectItem>
+                            <SelectItem value="Skinbooster e Peelings">Skinbooster e Peelings</SelectItem>
                           </>
                         )}
                   </SelectContent>
@@ -198,7 +200,7 @@ const Appointment = () => {
                   className="w-full"
                   disabled={mutation.isPending}
                 >
-                  {mutation.isPending ? "Enviando..." : "Solicitar Agendamento"}
+                  {mutation.isPending ? "Enviando..." : "Solicitar Avaliação"}
                 </Button>
               </div>
             </form>

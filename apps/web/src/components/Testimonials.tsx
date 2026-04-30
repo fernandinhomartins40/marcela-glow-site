@@ -4,10 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { testimonialsApi } from "@/lib/api";
 
 const FALLBACK_TESTIMONIALS = [
-  { id: "1", authorName: "Ana Paula Silva", text: "A Dra. Marcela transformou minha autoestima! O tratamento foi super personalizado e os resultados foram além das minhas expectativas. Ela tem um olhar único para realçar a beleza natural.", rating: 5 },
-  { id: "2", authorName: "Juliana Mendes", text: "Profissional extremamente competente e atenciosa. O ambiente da clínica é maravilhoso e os procedimentos são realizados com todo cuidado e tecnologia de ponta. Super recomendo!", rating: 5 },
-  { id: "3", authorName: "Carla Rodrigues", text: "Fiz o tratamento com T-Sculptor e estou impressionada com os resultados! A Dra. Marcela explicou todo o processo com muita paciência e o resultado ficou incrível, muito natural.", rating: 5 },
-  { id: "4", authorName: "Beatriz Costa", text: "Há anos procurava uma médica que entendesse minha necessidade de manter a naturalidade. A Dra. Marcela é simplesmente perfeita! Técnica impecável e resultado harmonioso.", rating: 5 },
+  { id: "1", authorName: "Ana Paula Silva", text: "Procurei a Dra. Marcela para melhorar a qualidade da pele sem mudar meus traços. O plano foi claro, progressivo e o resultado ficou muito natural.", rating: 5 },
+  { id: "2", authorName: "Juliana Mendes", text: "Fiz Botox com uma abordagem global e adorei a leveza do resultado. Meu rosto ficou descansado, sem perder expressão.", rating: 5 },
+  { id: "3", authorName: "Carla Rodrigues", text: "O acompanhamento para pescoço e linha mandibular fez muita diferença. Gostei da explicação médica e da estratégia por etapas.", rating: 5 },
+  { id: "4", authorName: "Beatriz Costa", text: "Comecei um protocolo corporal com tecnologia e estímulo de colágeno. O atendimento foi cuidadoso e totalmente individualizado.", rating: 5 },
 ];
 
 const Testimonials = () => {
@@ -32,11 +32,11 @@ const Testimonials = () => {
   };
 
   return (
-    <section id="depoimentos" className="py-20 md:py-32 bg-background">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-16 animate-fade-in">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 tracking-wide">
-            O Que Dizem Nossas Pacientes
+    <section id="depoimentos" className="py-16 md:py-32 bg-background border-t border-border/70">
+      <div className="container mx-auto px-5 sm:px-6 lg:px-10">
+        <div className="text-center mb-10 md:mb-16 animate-fade-in">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 tracking-wide">
+            O Que Dizem as Pacientes
           </h2>
         </div>
 
@@ -48,10 +48,10 @@ const Testimonials = () => {
               style={{ transform: `translateX(-${currentIndex * 100}%)` }}
             >
               {testimonials.map((testimonial, index) => (
-                <div key={testimonial.id} className="w-full flex-shrink-0 px-4">
-                  <div className="bg-card p-10 md:p-12 rounded-2xl shadow-lg max-w-3xl mx-auto border border-border/50">
+                <div key={testimonial.id} className="w-full flex-shrink-0 px-0 md:px-4">
+                  <div className="bg-card p-6 sm:p-8 md:p-12 rounded-lg shadow-lg max-w-3xl mx-auto border border-border/50">
                     {/* Quote mark */}
-                    <div className="text-7xl md:text-8xl font-serif text-primary/20 leading-none mb-4">"</div>
+                    <div className="text-5xl md:text-8xl font-serif text-primary/20 leading-none mb-4">"</div>
 
                     {/* Stars */}
                     <div className="flex gap-1 mb-6">
@@ -61,7 +61,7 @@ const Testimonials = () => {
                     </div>
 
                     {/* Testimonial text */}
-                    <p className="text-lg md:text-xl leading-relaxed mb-8 italic text-foreground/90">
+                    <p className="text-base md:text-xl leading-relaxed mb-8 italic text-foreground/90">
                       {testimonial.text}
                     </p>
 
@@ -78,14 +78,14 @@ const Testimonials = () => {
           {/* Navigation Arrows */}
           <button
             onClick={prev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-12 w-12 h-12 rounded-full bg-card shadow-lg flex items-center justify-center hover:bg-accent transition-all hover:scale-110"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-12 hidden w-12 h-12 rounded-full bg-card shadow-lg md:flex items-center justify-center hover:bg-accent transition-all hover:scale-110"
             aria-label="Depoimento anterior"
           >
             <ChevronLeft className="w-6 h-6 text-foreground" />
           </button>
           <button
             onClick={next}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-12 w-12 h-12 rounded-full bg-card shadow-lg flex items-center justify-center hover:bg-accent transition-all hover:scale-110"
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-12 hidden w-12 h-12 rounded-full bg-card shadow-lg md:flex items-center justify-center hover:bg-accent transition-all hover:scale-110"
             aria-label="Próximo depoimento"
           >
             <ChevronRight className="w-6 h-6 text-foreground" />

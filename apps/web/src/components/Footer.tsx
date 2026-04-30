@@ -197,7 +197,7 @@ const Footer = () => {
                 aria-label="Acessar painel médico"
               >
                 <Stethoscope className="w-4 h-4" />
-                Painel MÃ©dico
+            Painel Médico
               </a>
             </div>
           </div>

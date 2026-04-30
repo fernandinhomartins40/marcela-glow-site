@@ -1,4 +1,12 @@
-import { PrismaClient, AppointmentStatus, UserRole } from '@prisma/client'
+import {
+  PrismaClient,
+  AppointmentStatus,
+  LeadStatus,
+  NotificationChannel,
+  Permission,
+  PrescriptionStatus,
+  UserRole,
+} from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
@@ -25,9 +33,10 @@ async function main() {
   console.log(`✅ Tenant criado/encontrado: ${tenant.name} (${tenant.id})`)
 
   // ───────────────────────────────────────────────────────────────────────────
-  // 2. Admin User
+  // 2. Demo staff users
   // ───────────────────────────────────────────────────────────────────────────
-  const passwordHash = await bcrypt.hash('Admin@2024!', 12)
+  const adminPasswordHash = await bcrypt.hash('Admin@2024!', 12)
+  const staffPasswordHash = await bcrypt.hash('Equipe@2026!', 12)
 
   const adminUser = await prisma.user.upsert({
     where: {
@@ -36,16 +45,57 @@ async function main() {
         tenantId: tenant.id,
       },
     },
-    update: {},
+    update: { passwordHash: adminPasswordHash, isActive: true, role: UserRole.ADMIN },
     create: {
       email: 'admin@drmarceladuch.com.br',
-      passwordHash,
+      passwordHash: adminPasswordHash,
       name: 'Dra. Marcela Duch',
       role: UserRole.ADMIN,
       tenantId: tenant.id,
     },
   })
   console.log(`✅ Usuário admin criado/encontrado: ${adminUser.name} (${adminUser.email})`)
+
+  const staffUser = await prisma.user.upsert({
+    where: {
+      email_tenantId: {
+        email: 'equipe@drmarceladuch.com.br',
+        tenantId: tenant.id,
+      },
+    },
+    update: { passwordHash: staffPasswordHash, isActive: true, role: UserRole.STAFF },
+    create: {
+      email: 'equipe@drmarceladuch.com.br',
+      passwordHash: staffPasswordHash,
+      name: 'Equipe Demo',
+      role: UserRole.STAFF,
+      tenantId: tenant.id,
+    },
+  })
+  console.log(`✅ Usuário equipe criado/encontrado: ${staffUser.name} (${staffUser.email})`)
+
+  const staffPermissions = [
+    Permission.DASHBOARD_READ,
+    Permission.PATIENT_READ,
+    Permission.PATIENT_WRITE,
+    Permission.RECORD_READ,
+    Permission.RECORD_WRITE,
+    Permission.APPOINTMENT_READ,
+    Permission.APPOINTMENT_WRITE,
+    Permission.LEAD_READ,
+    Permission.LEAD_WRITE,
+    Permission.PRESCRIPTION_READ,
+    Permission.CMS_READ,
+    Permission.SETTINGS_READ,
+  ]
+
+  for (const permission of staffPermissions) {
+    await prisma.userPermission.upsert({
+      where: { userId_permission: { userId: staffUser.id, permission } },
+      update: {},
+      create: { userId: staffUser.id, tenantId: tenant.id, permission },
+    })
+  }
 
   // ───────────────────────────────────────────────────────────────────────────
   // 3. Procedures
@@ -285,62 +335,102 @@ async function main() {
   const patientPasswordHash = await bcrypt.hash('Paciente@2026', 12)
   const patient = await prisma.patient.upsert({
     where: { email_tenantId: { email: 'paciente@exemplo.com', tenantId: tenant.id } },
-    update: { passwordHash: patientPasswordHash },
+    update: {
+      name: 'Paciente VIP Demo',
+      phone: '(11) 90000-0000',
+      passwordHash: patientPasswordHash,
+      isActive: true,
+      notes: 'Paciente demonstrativa para o PWA da área da paciente.',
+    },
     create: {
       name: 'Paciente VIP Demo',
       email: 'paciente@exemplo.com',
       phone: '(11) 90000-0000',
       passwordHash: patientPasswordHash,
-      notes: 'Paciente demonstrativa para o PWA da area da paciente.',
+      notes: 'Paciente demonstrativa para o PWA da área da paciente.',
       tenantId: tenant.id,
     },
   })
+  console.log(`✅ Paciente demo criado/encontrado: ${patient.name} (${patient.email})`)
 
   const skinbooster = procedures.find((p) => p.title.includes('Skinbooster'))
   if (skinbooster) {
-    await prisma.procedureSession.create({
-      data: {
-        patientId: patient.id,
-        procedureId: skinbooster.id,
-        tenantId: tenant.id,
-        notes: 'Evolucao com melhora de luminosidade e hidratacao.',
-        priceCents: 180000,
-      },
+    const existingSession = await prisma.procedureSession.findFirst({
+      where: { patientId: patient.id, procedureId: skinbooster.id, tenantId: tenant.id },
     })
+    const sessionPayload = {
+      patientId: patient.id,
+      procedureId: skinbooster.id,
+      tenantId: tenant.id,
+      notes: 'Evolução com melhora de luminosidade e hidratação.',
+      priceCents: 180000,
+    }
+
+    if (existingSession) {
+      await prisma.procedureSession.update({ where: { id: existingSession.id }, data: sessionPayload })
+    } else {
+      await prisma.procedureSession.create({ data: sessionPayload })
+    }
   }
 
-  await prisma.prescription.create({
-    data: {
-      patientId: patient.id,
-      tenantId: tenant.id,
-      title: 'Cuidados pos-procedimento',
-      instructions: 'Hidratar a pele, evitar sol direto por 48h e usar filtro solar conforme orientacao.',
-      status: 'SENT',
-      sentAt: new Date(),
-    },
+  const existingPrescription = await prisma.prescription.findFirst({
+    where: { patientId: patient.id, tenantId: tenant.id, title: 'Cuidados pós-procedimento' },
   })
+  const prescriptionPayload = {
+    patientId: patient.id,
+    tenantId: tenant.id,
+    title: 'Cuidados pós-procedimento',
+    instructions: 'Hidratar a pele, evitar sol direto por 48h e usar filtro solar conforme orientação.',
+    status: PrescriptionStatus.SENT,
+    sentAt: new Date(),
+  }
 
-  await prisma.notification.create({
-    data: {
-      patientId: patient.id,
-      tenantId: tenant.id,
-      title: 'Retorno recomendado',
-      body: 'Agende seu retorno de acompanhamento em 30 dias.',
-      channel: 'IN_APP',
-    },
-  })
+  if (existingPrescription) {
+    await prisma.prescription.update({ where: { id: existingPrescription.id }, data: prescriptionPayload })
+  } else {
+    await prisma.prescription.create({ data: prescriptionPayload })
+  }
 
-  await prisma.lead.create({
-    data: {
-      name: 'Lead Instagram',
-      email: 'lead.instagram@example.com',
-      phone: '(11) 98888-1111',
-      origin: 'Instagram',
-      status: 'QUALIFIED',
-      notes: 'Interessada em bioestimuladores.',
-      tenantId: tenant.id,
-    },
+  const existingNotification = await prisma.notification.findFirst({
+    where: { patientId: patient.id, tenantId: tenant.id, title: 'Retorno recomendado' },
   })
+  const notificationPayload = {
+    patientId: patient.id,
+    tenantId: tenant.id,
+    title: 'Retorno recomendado',
+    body: 'Agende seu retorno de acompanhamento em 30 dias.',
+    channel: NotificationChannel.IN_APP,
+  }
+
+  if (existingNotification) {
+    await prisma.notification.update({ where: { id: existingNotification.id }, data: notificationPayload })
+  } else {
+    await prisma.notification.create({ data: notificationPayload })
+  }
+
+  const existingLead = await prisma.lead.findFirst({
+    where: { email: 'lead.instagram@example.com', tenantId: tenant.id },
+  })
+  const leadPayload = {
+    name: 'Lead Instagram',
+    email: 'lead.instagram@example.com',
+    phone: '(11) 98888-1111',
+    origin: 'Instagram',
+    status: LeadStatus.QUALIFIED,
+    notes: 'Interessada em bioestimuladores.',
+    tenantId: tenant.id,
+  }
+
+  if (existingLead) {
+    await prisma.lead.update({ where: { id: existingLead.id }, data: leadPayload })
+  } else {
+    await prisma.lead.create({ data: leadPayload })
+  }
+
+  console.log('\n🔐 Usuários de teste:')
+  console.log('   Admin: admin@drmarceladuch.com.br / Admin@2024!')
+  console.log('   Equipe: equipe@drmarceladuch.com.br / Equipe@2026!')
+  console.log('   Paciente: paciente@exemplo.com / Paciente@2026')
 
   console.log('\n🎉 Seed concluído com sucesso!')
 }
