@@ -2,7 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
-import { Bell, CalendarDays, Heart, LogOut, MessageCircle, Pill, Sparkles, UserRound } from 'lucide-react'
+import { Bell, CalendarDays, ChevronRight, Heart, LogOut, MessageCircle, Pill, Sparkles, UserRound } from 'lucide-react'
 import draEditorial from './assets/dra-marcela-editorial.jpg'
 import marbleTexture from './assets/marble-texture.jpg'
 import './styles.css'
@@ -133,48 +133,80 @@ function Dashboard() {
   if (query.isLoading) return <main className="loading">Carregando sua jornada...</main>
   if (query.isError) return <main className="loading error">Nao foi possivel acessar seus dados.</main>
   const data: any = query.data
+  const nextAppointment = data.appointments[0]
+  const patientName = data.patient?.name ?? data.profile?.name ?? 'Paciente'
 
   return (
-    <div className="shell">
-      <header className="hero">
-        <div>
-          <span className="eyebrow">Area da paciente</span>
-          <h1>Cuidado continuo, no seu ritmo</h1>
-          <p>Consultas, historico, prescricoes e lembretes em um ambiente discreto e pessoal.</p>
+    <div className="vip-shell">
+      <header className="vip-hero">
+        <div className="hero-copy">
+          <span className="eyebrow">Experiencia VIP</span>
+          <h1>Sua jornada de cuidado, {patientName.split(' ')[0]}</h1>
+          <p>Um espaco reservado para acompanhar cada etapa com discricao, proximidade e orientacao medica.</p>
+          <div className="hero-actions">
+            <a href="#concierge">Solicitar cuidado</a>
+            <a href="#jornada">Ver jornada</a>
+          </div>
+        </div>
+        <div className="hero-portrait">
+          <img src={draEditorial} alt="Dra. Marcela Duch" />
+          <div className="appointment-note">
+            <span>Proximo passo</span>
+            <strong>{nextAppointment?.procedure?.title ?? 'Avaliacao personalizada'}</strong>
+            <small>{nextAppointment?.status ?? 'Aguardando sua solicitacao'}</small>
+          </div>
         </div>
         <button className="logout" onClick={() => { localStorage.removeItem('patient_token'); window.location.reload() }}><LogOut size={18} />Sair</button>
       </header>
-      <section className="quick">
+
+      <section className="vip-metrics" aria-label="Resumo da jornada">
         <Metric icon={CalendarDays} label="Agendamentos" value={data.appointments.length} />
         <Metric icon={Heart} label="Procedimentos" value={data.sessions.length} />
         <Metric icon={Pill} label="Prescricoes" value={data.prescriptions.length} />
         <Metric icon={Bell} label="Lembretes" value={data.notifications.length} />
       </section>
-      <section className="grid">
-        <article className="card">
-          <h2><CalendarDays size={19} />Novo agendamento</h2>
-          <select value={procedureId} onChange={(e) => setProcedureId(e.target.value)}>
-            <option value="">Consulta de avaliacao</option>
-            {data.procedures.map((p: any) => <option key={p.id} value={p.id}>{p.title}</option>)}
-          </select>
-          <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Conte como voce deseja ser cuidada neste momento." />
-          <div className="actions">
-            <button onClick={() => appointment.mutate()}>Solicitar horario</button>
-            <button className="ghost" onClick={() => directMessage.mutate()}><MessageCircle size={17} />Enviar mensagem</button>
+
+      <main className="vip-content">
+        <section id="concierge" className="concierge-card">
+          <div>
+            <span className="eyebrow">Concierge da paciente</span>
+            <h2>Como voce deseja ser cuidada agora?</h2>
+            <p>Escolha um protocolo ou envie uma mensagem direta para a equipe entender seu momento.</p>
           </div>
-        </article>
-        <List title="Proximos cuidados" icon={Sparkles} items={data.appointments} pick={(a: any) => `${a.procedure?.title ?? 'Consulta'} - ${a.status}`} />
-        <List title="Historico de procedimentos" icon={Heart} items={data.sessions} pick={(s: any) => `${s.procedure?.title ?? 'Procedimento'} - ${new Date(s.performedAt).toLocaleDateString('pt-BR')}`} />
-        <List title="Prescricoes e orientacoes" icon={Pill} items={data.prescriptions} pick={(p: any) => `${p.title} - ${p.status}`} />
-        <List title="Arquivos e fotos" icon={UserRound} items={data.attachments ?? []} pick={(a: any) => `${a.fileName} - ${a.mimeType ?? 'arquivo'}`} />
-        <List title="Canal direto" icon={MessageCircle} items={data.messages} pick={(m: any) => `${m.sender === 'PATIENT' ? 'Voce' : 'Equipe'}: ${m.body}`} />
-        <article className="card list">
-          <h2><Bell size={19} />Lembretes</h2>
-          <button onClick={() => enablePush.mutate()}>Ativar push</button>
-          {enablePush.isError && <p className="error">{(enablePush.error as Error).message}</p>}
-          {data.notifications.length ? data.notifications.map((n: any) => <p key={n.id}>{n.title}</p>) : <p>Nenhum lembrete por enquanto.</p>}
-        </article>
-      </section>
+          <div className="concierge-form">
+            <select value={procedureId} onChange={(e) => setProcedureId(e.target.value)}>
+              <option value="">Consulta de avaliacao</option>
+              {data.procedures.map((p: any) => <option key={p.id} value={p.id}>{p.title}</option>)}
+            </select>
+            <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Conte como voce deseja ser cuidada neste momento." />
+            <div className="actions">
+              <button onClick={() => appointment.mutate()}>Solicitar horario <ChevronRight size={17} /></button>
+              <button className="ghost" onClick={() => directMessage.mutate()}><MessageCircle size={17} />Enviar mensagem</button>
+            </div>
+          </div>
+        </section>
+
+        <section id="jornada" className="journey-layout">
+          <div className="timeline-panel">
+            <span className="eyebrow">Linha de cuidado</span>
+            <h2>Sua evolucao</h2>
+            <List title="Proximos cuidados" icon={Sparkles} items={data.appointments} pick={(a: any) => `${a.procedure?.title ?? 'Consulta'} - ${a.status}`} />
+            <List title="Historico de procedimentos" icon={Heart} items={data.sessions} pick={(s: any) => `${s.procedure?.title ?? 'Procedimento'} - ${new Date(s.performedAt).toLocaleDateString('pt-BR')}`} />
+          </div>
+
+          <aside className="private-panel">
+            <List title="Prescricoes e orientacoes" icon={Pill} items={data.prescriptions} pick={(p: any) => `${p.title} - ${p.status}`} />
+            <List title="Arquivos e fotos" icon={UserRound} items={data.attachments ?? []} pick={(a: any) => `${a.fileName} - ${a.mimeType ?? 'arquivo'}`} />
+            <List title="Canal direto" icon={MessageCircle} items={data.messages} pick={(m: any) => `${m.sender === 'PATIENT' ? 'Voce' : 'Equipe'}: ${m.body}`} />
+            <article className="vip-card list reminder-card">
+              <h2><Bell size={19} />Lembretes</h2>
+              <button onClick={() => enablePush.mutate()}>Ativar push</button>
+              {enablePush.isError && <p className="error">{(enablePush.error as Error).message}</p>}
+              {data.notifications.length ? data.notifications.map((n: any) => <p key={n.id}>{n.title}</p>) : <p>Nenhum lembrete por enquanto.</p>}
+            </article>
+          </aside>
+        </section>
+      </main>
     </div>
   )
 }
@@ -185,7 +217,7 @@ function Metric({ icon: Icon, label, value }: { icon: any; label: string; value:
 
 function List({ title, icon: Icon, items, pick }: { title: string; icon: any; items: any[]; pick: (item: any) => string }) {
   return (
-    <article className="card list">
+    <article className="vip-card list">
       <h2><Icon size={19} />{title}</h2>
       {items.length ? items.map((item) => <p key={item.id}>{pick(item)}</p>) : <p>Nenhum registro por enquanto.</p>}
     </article>
