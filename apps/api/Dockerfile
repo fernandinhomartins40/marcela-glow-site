@@ -45,6 +45,21 @@ COPY --from=builder /app/apps/api/package.json ./package.json
 COPY --from=builder /app/packages/database/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
+# Replace the workspace symlink with a runtime CommonJS package.
+RUN rm -rf ./node_modules/@marcela/database && \
+    mkdir -p ./node_modules/@marcela/database && \
+    printf '%s\n' \
+      '{"name":"@marcela/database","main":"index.js"}' \
+      > ./node_modules/@marcela/database/package.json && \
+    printf '%s\n' \
+      '"use strict";' \
+      'const prismaClient = require("@prisma/client");' \
+      'const globalForPrisma = globalThis;' \
+      'const prisma = globalForPrisma.__marcelaPrisma || new prismaClient.PrismaClient({ log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"] });' \
+      'if (process.env.NODE_ENV !== "production") globalForPrisma.__marcelaPrisma = prisma;' \
+      'module.exports = { ...prismaClient, prisma };' \
+      > ./node_modules/@marcela/database/index.js
+
 # Entrypoint script
 COPY apps/api/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
