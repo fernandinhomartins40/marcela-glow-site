@@ -34,8 +34,12 @@ ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
 echo "Pruning old Docker artifacts..."
 docker image prune -f >/dev/null || true
 
-echo "Keeping the 5 most recent releases..."
+echo "Keeping the current release and the 4 most recent previous releases..."
 mkdir -p "$APP_ROOT/releases"
-find "$APP_ROOT/releases" -mindepth 1 -maxdepth 1 -type d | sort -r | tail -n +6 | xargs -r rm -rf
+find "$APP_ROOT/releases" -mindepth 1 -maxdepth 1 -type d ! -name "$RELEASE" -printf '%T@ %p\n' | \
+  sort -rn | \
+  tail -n +5 | \
+  cut -d' ' -f2- | \
+  xargs -r rm -rf
 
 echo "Release $RELEASE deployed."
