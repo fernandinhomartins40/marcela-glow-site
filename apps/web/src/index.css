@@ -165,6 +165,48 @@
     color: hsl(var(--accent));
   }
 
+  /* === ESCALA TIPOGRÁFICA ===
+     Um tamanho por nível hierárquico, usado por todas as seções. Antes cada
+     seção escolhia o seu (96px, 72px, 60px para o mesmo nível), o que fazia a
+     página parecer desorganizada. */
+
+  /* Título do hero — único nesta escala, acima de todos os demais */
+  .type-hero {
+    font-size: clamp(3.5rem, 11vw, 8.5rem);
+    line-height: 0.88;
+    letter-spacing: -0.015em;
+  }
+
+  /* Título de seção — mesmo tamanho em todas as seções */
+  .type-section {
+    font-size: clamp(2.25rem, 5.2vw, 4rem);
+    line-height: 0.98;
+    letter-spacing: -0.01em;
+  }
+
+  /* Título dentro de um bloco (cards, sub-blocos) */
+  .type-block {
+    font-size: clamp(1.5rem, 2.6vw, 2.25rem);
+    line-height: 1.08;
+  }
+
+  /* Linha de apoio sob o título de seção */
+  .type-lead {
+    font-size: clamp(1.05rem, 1.7vw, 1.4rem);
+    line-height: 1.45;
+  }
+
+  /* === RITMO VERTICAL ===
+     Duas densidades: seções padrão e seções de respiro. */
+  .section-y {
+    padding-top: clamp(4rem, 9vw, 8rem);
+    padding-bottom: clamp(4rem, 9vw, 8rem);
+  }
+
+  .section-head {
+    margin-bottom: clamp(2.5rem, 5vw, 4.5rem);
+  }
+
   /* Em fundos escuros o bronze perde contraste — clareia o eyebrow e o divisor */
   .bg-espresso .label-eyebrow {
     color: hsl(var(--bronze-light));

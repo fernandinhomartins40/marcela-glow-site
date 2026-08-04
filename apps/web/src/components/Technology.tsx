@@ -32,22 +32,22 @@ const Technology = () => {
   return (
     <section
       id="tecnologias"
-      className="relative py-16 md:py-40 bg-background border-t border-border/70 overflow-hidden"
+      className="relative section-y bg-background overflow-hidden"
     >
       {/* Watermark editorial */}
-      <span className="absolute -top-8 right-0 hidden text-watermark text-[16vw] lg:text-[11vw] font-display pointer-events-none select-none whitespace-nowrap md:block">
+      <span className="absolute top-4 right-0 hidden text-watermark text-[10vw] leading-none font-display pointer-events-none select-none whitespace-nowrap lg:block">
         tecnologia
       </span>
 
       <div className="container mx-auto px-5 sm:px-6 lg:px-10 relative">
         {/* Cabeçalho */}
-        <div className="max-w-3xl mb-12 md:mb-24 animate-fade-in">
-          <p className="label-eyebrow mb-4 md:mb-6">Recursos médicos</p>
-          <h2 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.98] md:leading-[0.95] tracking-normal text-primary">
+        <div className="max-w-3xl section-head animate-fade-in">
+          <p className="label-eyebrow mb-4 md:mb-5">Recursos médicos</p>
+          <h2 className="font-display type-section text-primary">
             Tecnologia
             <span className="block italic font-light text-accent">a serviço do plano.</span>
           </h2>
-          <p className="font-editorial-italic text-lg md:text-2xl text-foreground/70 mt-5 md:mt-6 max-w-2xl leading-snug">
+          <p className="font-editorial-italic type-lead text-foreground/70 mt-5 md:mt-6 max-w-xl">
             Recursos escolhidos conforme a necessidade de cada paciente — nunca o
             contrário.
           </p>
@@ -88,7 +88,7 @@ const Technology = () => {
                   }`}
                 >
                   <p className="label-eyebrow mb-4">{tech.eyebrow}</p>
-                  <h3 className="font-display text-3xl sm:text-4xl md:text-5xl text-primary leading-[1.05] mb-5">
+                  <h3 className="font-display type-block text-primary mb-5">
                     {tech.name}
                   </h3>
                   <div className="divider-luxe mb-6" />

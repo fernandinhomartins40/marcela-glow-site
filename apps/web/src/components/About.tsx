@@ -3,9 +3,9 @@ import draMarcela from "@/assets/dra-marcela-portrait.jpg";
 
 const About = () => {
   return (
-    <section id="sobre" className="relative py-16 md:py-40 bg-background overflow-hidden border-t border-border/70">
-      {/* Watermark */}
-      <span className="absolute -top-10 left-1/2 hidden -translate-x-1/2 text-watermark text-[20vw] lg:text-[14vw] font-display pointer-events-none select-none whitespace-nowrap md:block">
+    <section id="sobre" className="relative section-y bg-background overflow-hidden">
+      {/* Watermark — contido dentro da seção, sem invadir o bloco anterior */}
+      <span className="absolute top-4 left-1/2 hidden -translate-x-1/2 text-watermark text-[11vw] leading-none font-display pointer-events-none select-none whitespace-nowrap lg:block">
         marcela
       </span>
 
@@ -23,8 +23,8 @@ const About = () => {
                 height={1000}
               />
               <div className="absolute inset-3 border border-[hsl(var(--cream))]/40 pointer-events-none" />
-              {/* Tag flutuante */}
-              <div className="absolute -bottom-6 -right-6 bg-primary text-primary-foreground px-6 py-4 hidden md:block">
+              {/* Tag flutuante — tangencia o canto sem cobrir a imagem */}
+              <div className="absolute -bottom-5 -right-5 bg-primary text-primary-foreground px-5 py-3.5 hidden lg:block">
                 <p className="text-[0.65rem] tracking-[0.3em] uppercase opacity-70">CRM/MS</p>
                 <p className="font-display text-2xl">5691</p>
               </div>
@@ -33,15 +33,15 @@ const About = () => {
 
           {/* Conteúdo */}
           <div className="lg:col-span-7 animate-slide-up">
-            <p className="label-eyebrow mb-4 md:mb-6">Dra. Marcela Campanini Duch</p>
-            <h2 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.98] md:leading-[0.95] tracking-normal text-primary mb-2">
+            <p className="label-eyebrow mb-4 md:mb-5">Dra. Marcela Campanini Duch</p>
+            <h2 className="font-display type-section text-primary">
               Saúde, beleza
               <span className="block italic font-light text-accent">e naturalidade.</span>
             </h2>
 
             <div className="divider-luxe my-6 md:my-8" />
 
-            <p className="font-editorial text-lg md:text-2xl leading-relaxed text-foreground/80 mb-6">
+            <p className="font-editorial type-lead text-foreground/80 mb-6">
               A medicina a seu favor: onde saúde e beleza andam juntas. Cada plano
               é construído com análise médica, estratégia e respeito à identidade de
               cada paciente, buscando qualidade de pele, harmonia e evolução natural.

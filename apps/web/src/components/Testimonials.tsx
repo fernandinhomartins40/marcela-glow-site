@@ -36,17 +36,17 @@ const Testimonials = () => {
   return (
     <section
       id="depoimentos"
-      className="relative py-16 md:py-40 bg-secondary/40 border-t border-border/70 overflow-hidden"
+      className="relative section-y bg-[hsl(var(--cream-deep))] border-y border-border overflow-hidden"
     >
       {/* Watermark */}
-      <span className="absolute -top-10 left-1/2 hidden -translate-x-1/2 text-watermark text-[18vw] lg:text-[12vw] font-display pointer-events-none select-none whitespace-nowrap md:block">
+      <span className="absolute top-4 left-1/2 hidden -translate-x-1/2 text-watermark text-[10vw] leading-none font-display pointer-events-none select-none whitespace-nowrap lg:block">
         pacientes
       </span>
 
       <div className="container mx-auto px-5 sm:px-6 lg:px-10 relative">
-        <div className="max-w-3xl mb-12 md:mb-20 animate-fade-in">
-          <p className="label-eyebrow mb-4 md:mb-6">Depoimentos</p>
-          <h2 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.98] md:leading-[0.95] tracking-normal text-primary">
+        <div className="max-w-3xl section-head animate-fade-in">
+          <p className="label-eyebrow mb-4 md:mb-5">Depoimentos</p>
+          <h2 className="font-display type-section text-primary">
             O que dizem
             <span className="block italic font-light text-accent">as pacientes.</span>
           </h2>
@@ -62,7 +62,7 @@ const Testimonials = () => {
               &ldquo;
             </span>
 
-            <p className="font-editorial-italic text-2xl sm:text-3xl md:text-4xl lg:text-[2.75rem] leading-[1.25] text-foreground/85 max-w-3xl mx-auto">
+            <p className="font-editorial-italic text-[clamp(1.4rem,3.2vw,2.4rem)] leading-[1.3] text-foreground/85 max-w-3xl mx-auto text-balance">
               {current.text}
             </p>
 

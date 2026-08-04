@@ -75,7 +75,7 @@ const Appointment = () => {
   return (
     <section
       id="agendamento"
-      className="relative py-16 md:py-40 bg-espresso overflow-hidden"
+      className="relative section-y bg-espresso overflow-hidden"
     >
       {/* Watermark */}
       <span
@@ -89,8 +89,8 @@ const Appointment = () => {
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-20 max-w-6xl mx-auto">
           {/* Coluna de informações */}
           <div className="lg:col-span-5 animate-fade-in">
-            <p className="label-eyebrow mb-4 md:mb-6">Primeiro passo</p>
-            <h2 className="font-display text-4xl sm:text-5xl md:text-6xl leading-[0.98] md:leading-[0.95] tracking-normal text-[hsl(var(--cream))]">
+            <p className="label-eyebrow mb-4 md:mb-5">Primeiro passo</p>
+            <h2 className="font-display type-section text-[hsl(var(--cream))]">
               Agende sua
               <span className="block italic font-light text-[hsl(var(--bronze-light))]">
                 avaliação.
@@ -99,7 +99,7 @@ const Appointment = () => {
 
             <div className="divider-luxe my-6 md:my-8" />
 
-            <p className="font-editorial-italic text-lg md:text-2xl leading-snug text-[hsl(var(--cream))]/70 mb-10 md:mb-14">
+            <p className="font-editorial-italic type-lead text-[hsl(var(--cream))]/70 mb-10 md:mb-14">
               Entenda qual protocolo faz sentido para o seu momento.
             </p>
 

@@ -64,11 +64,11 @@ const Hero = () => {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background/60" />
 
-      {/* Watermark gigante */}
-      <div className="absolute inset-0 hidden items-center justify-center pointer-events-none overflow-hidden sm:flex">
+      {/* Watermark — ancorado no canto inferior esquerdo, atrás do conteúdo */}
+      <div className="absolute bottom-0 left-0 hidden pointer-events-none overflow-hidden lg:block">
         <span
           key={`wm-${currentSlide}`}
-          className="text-watermark font-display text-[28vw] md:text-[22vw] lg:text-[18vw] whitespace-nowrap animate-fade-in select-none"
+          className="block text-watermark font-display text-[11vw] leading-[0.7] whitespace-nowrap animate-fade-in select-none translate-y-[24%] -translate-x-[3%] opacity-45"
         >
           {slide.watermark}
         </span>
@@ -81,11 +81,11 @@ const Hero = () => {
           <div className="lg:col-span-7 z-10 order-2 lg:order-1">
             <div key={`txt-${currentSlide}`} className="animate-slide-up">
               <p className="label-eyebrow mb-4 md:mb-6">{slide.eyebrow}</p>
-              <h1 className="font-display text-6xl min-[380px]:text-7xl sm:text-8xl md:text-9xl lg:text-[9rem] xl:text-[11rem] leading-[0.9] lg:leading-[0.85] tracking-normal text-primary">
+              <h1 className="font-display type-hero text-primary text-balance">
                 <span className="block">{slide.titleTop}</span>
                 <span className="block italic font-light">{slide.titleBottom}</span>
               </h1>
-              <p className="font-editorial-italic text-lg md:text-2xl lg:text-3xl text-foreground/70 mt-5 md:mt-6 max-w-xl leading-snug">
+              <p className="font-editorial-italic type-lead text-foreground/70 mt-6 md:mt-7 max-w-lg">
                 {slide.subtitle}
               </p>
               <div className="grid sm:flex sm:flex-row gap-3 sm:gap-4 mt-8 md:mt-10">

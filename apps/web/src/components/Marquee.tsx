@@ -14,14 +14,14 @@ const Marquee = () => {
   ];
 
   return (
-    <div className="bg-espresso py-4 md:py-8 overflow-hidden border-y border-[hsl(var(--cream))]/10">
-      <div className="flex animate-marquee whitespace-nowrap">
-        {[...messages, ...messages, ...messages].map((message, index) => (
-          <div key={index} className="flex items-center mx-5 md:mx-10">
-            <span className="font-display italic text-xl md:text-3xl text-[hsl(var(--cream))]/90 font-light tracking-wide">
+    <div className="bg-espresso py-4 md:py-6 overflow-x-clip border-y border-[hsl(var(--cream))]/10">
+      <div className="flex w-max animate-marquee whitespace-nowrap" aria-hidden="true">
+        {[...messages, ...messages].map((message, index) => (
+          <div key={index} className="flex items-center shrink-0 mx-5 md:mx-8">
+            <span className="font-display italic text-lg md:text-2xl text-[hsl(var(--cream))]/85 font-light tracking-wide">
               {message}
             </span>
-            <span className="ml-5 text-base text-[hsl(var(--bronze))] md:ml-10 md:text-xl">✦</span>
+            <span className="ml-5 text-sm text-[hsl(var(--bronze))] md:ml-8 md:text-base">✦</span>
           </div>
         ))}
       </div>

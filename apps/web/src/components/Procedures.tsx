@@ -41,30 +41,31 @@ const procedures = [
 
 const Procedures = () => {
   return (
-    <section id="procedimentos" className="relative py-16 md:py-40 bg-secondary/40 border-t border-border/70">
+    <section id="procedimentos" className="relative section-y bg-[hsl(var(--cream-deep))] border-y border-border">
       <div className="container mx-auto px-5 sm:px-6 lg:px-10">
         {/* Cabeçalho */}
-        <div className="max-w-3xl mb-10 md:mb-20 animate-fade-in">
-          <p className="label-eyebrow mb-4 md:mb-6">Protocolos médicos</p>
-          <h2 className="font-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl leading-[0.95] md:leading-[0.9] tracking-normal text-primary">
+        <div className="max-w-3xl section-head animate-fade-in">
+          <p className="label-eyebrow mb-4 md:mb-5">Protocolos médicos</p>
+          <h2 className="font-display type-section text-primary">
             Medicina estética,
             <span className="block italic font-light text-accent">com estratégia.</span>
           </h2>
-          <p className="font-editorial-italic text-lg md:text-2xl text-foreground/70 mt-5 md:mt-6 max-w-2xl">
+          <p className="font-editorial-italic type-lead text-foreground/70 mt-5 md:mt-6 max-w-xl">
             Face, pele, pescoço, corpo e cabelo tratados com plano individual,
             naturalidade e acompanhamento médico.
           </p>
         </div>
 
-        {/* Grid de procedimentos — estilo editorial */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border border-y border-border">
+        {/* Grid de procedimentos — cards em flex-col para alinhar o "Saiba mais"
+            na mesma linha de base, independente do tamanho da descrição. */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 border-t border-l border-border">
           {procedures.map((proc, index) => (
             <article
               key={index}
-              className="group relative p-6 sm:p-8 lg:p-12 hover:bg-background transition-colors duration-700 animate-fade-in"
+              className="group relative flex flex-col p-6 sm:p-8 lg:p-10 border-r border-b border-border hover:bg-background transition-colors duration-700 animate-fade-in"
               style={{ animationDelay: `${index * 80}ms` }}
             >
-              <div className="flex items-start justify-between gap-4 mb-6 md:mb-8">
+              <div className="flex items-baseline justify-between gap-4 mb-6 md:mb-8">
                 <span className="font-display text-3xl text-accent/60 group-hover:text-accent transition-colors">
                   {proc.number}
                 </span>
@@ -73,15 +74,16 @@ const Procedures = () => {
                 </span>
               </div>
 
-              <h3 className="font-display text-2xl sm:text-3xl lg:text-4xl text-primary leading-tight mb-4 group-hover:italic transition-all duration-500">
+              <h3 className="font-display type-block text-primary mb-4 group-hover:italic transition-all duration-500 text-balance">
                 {proc.title}
               </h3>
 
-              <p className="text-sm text-foreground/65 leading-relaxed font-light mb-8">
+              {/* flex-1 faz a descrição ocupar a sobra, alinhando os links no rodapé */}
+              <p className="flex-1 text-sm text-foreground/65 leading-relaxed font-light">
                 {proc.description}
               </p>
 
-              <button className="link-underline text-[0.7rem] tracking-[0.3em] uppercase text-accent font-medium">
+              <button className="link-underline text-[0.7rem] tracking-[0.3em] uppercase text-accent font-medium mt-8 self-start">
                 Saiba mais
               </button>
             </article>
