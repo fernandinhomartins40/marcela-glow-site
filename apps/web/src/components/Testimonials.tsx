@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { testimonialsApi } from "@/lib/api";
 
@@ -31,78 +31,82 @@ const Testimonials = () => {
     setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   };
 
+  const current = testimonials[currentIndex];
+
   return (
-    <section id="depoimentos" className="py-16 md:py-32 bg-background border-t border-border/70">
-      <div className="container mx-auto px-5 sm:px-6 lg:px-10">
-        <div className="text-center mb-10 md:mb-16 animate-fade-in">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 tracking-wide">
-            O Que Dizem as Pacientes
+    <section
+      id="depoimentos"
+      className="relative py-16 md:py-40 bg-secondary/40 border-t border-border/70 overflow-hidden"
+    >
+      {/* Watermark */}
+      <span className="absolute -top-10 left-1/2 hidden -translate-x-1/2 text-watermark text-[18vw] lg:text-[12vw] font-display pointer-events-none select-none whitespace-nowrap md:block">
+        pacientes
+      </span>
+
+      <div className="container mx-auto px-5 sm:px-6 lg:px-10 relative">
+        <div className="max-w-3xl mb-12 md:mb-20 animate-fade-in">
+          <p className="label-eyebrow mb-4 md:mb-6">Depoimentos</p>
+          <h2 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.98] md:leading-[0.95] tracking-normal text-primary">
+            O que dizem
+            <span className="block italic font-light text-accent">as pacientes.</span>
           </h2>
         </div>
 
-        <div className="max-w-5xl mx-auto relative">
-          {/* Testimonials Slider */}
-          <div className="overflow-hidden">
-            <div
-              className="flex transition-transform duration-500 ease-out"
-              style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+        <div className="max-w-4xl mx-auto">
+          {/* Citação editorial */}
+          <blockquote key={current.id} className="animate-fade-in text-center">
+            <span
+              aria-hidden="true"
+              className="font-display block text-6xl md:text-8xl text-accent/30 leading-none mb-2 select-none"
             >
-              {testimonials.map((testimonial, index) => (
-                <div key={testimonial.id} className="w-full flex-shrink-0 px-0 md:px-4">
-                  <div className="bg-card p-6 sm:p-8 md:p-12 rounded-lg shadow-lg max-w-3xl mx-auto border border-border/50">
-                    {/* Quote mark */}
-                    <div className="text-5xl md:text-8xl font-serif text-primary/20 leading-none mb-4">"</div>
+              &ldquo;
+            </span>
 
-                    {/* Stars */}
-                    <div className="flex gap-1 mb-6">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <Star key={i} className="w-5 h-5 fill-primary text-primary" />
-                      ))}
-                    </div>
+            <p className="font-editorial-italic text-2xl sm:text-3xl md:text-4xl lg:text-[2.75rem] leading-[1.25] text-foreground/85 max-w-3xl mx-auto">
+              {current.text}
+            </p>
 
-                    {/* Testimonial text */}
-                    <p className="text-base md:text-xl leading-relaxed mb-8 italic text-foreground/90">
-                      {testimonial.text}
-                    </p>
+            <footer className="mt-8 md:mt-12">
+              <div className="divider-luxe mb-5" />
+              <p className="text-[0.7rem] tracking-[0.3em] uppercase text-primary font-medium">
+                {current.authorName}
+              </p>
+            </footer>
+          </blockquote>
 
-                    {/* Name */}
-                    <p className="font-semibold text-lg text-foreground">
-                      — {testimonial.authorName}
-                    </p>
-                  </div>
-                </div>
+          {/* Navegação */}
+          <div className="flex items-center justify-center gap-6 mt-10 md:mt-16">
+            <button
+              onClick={prev}
+              className="w-11 h-11 border border-foreground/25 flex items-center justify-center hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-500"
+              aria-label="Depoimento anterior"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-3">
+              {testimonials.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentIndex(index)}
+                  className={`h-px transition-all duration-500 ${
+                    index === currentIndex ? "w-10 bg-primary" : "w-5 bg-primary/30"
+                  }`}
+                  aria-label={`Ir para depoimento ${index + 1}`}
+                />
               ))}
+              <span className="ml-2 text-[0.65rem] tracking-[0.3em] uppercase text-muted-foreground">
+                {String(currentIndex + 1).padStart(2, "0")} / {String(testimonials.length).padStart(2, "0")}
+              </span>
             </div>
-          </div>
 
-          {/* Navigation Arrows */}
-          <button
-            onClick={prev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 md:-translate-x-12 hidden w-12 h-12 rounded-full bg-card shadow-lg md:flex items-center justify-center hover:bg-accent transition-all hover:scale-110"
-            aria-label="Depoimento anterior"
-          >
-            <ChevronLeft className="w-6 h-6 text-foreground" />
-          </button>
-          <button
-            onClick={next}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 md:translate-x-12 hidden w-12 h-12 rounded-full bg-card shadow-lg md:flex items-center justify-center hover:bg-accent transition-all hover:scale-110"
-            aria-label="Próximo depoimento"
-          >
-            <ChevronRight className="w-6 h-6 text-foreground" />
-          </button>
-
-          {/* Dots Indicator */}
-          <div className="flex gap-2 justify-center mt-10">
-            {testimonials.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentIndex(index)}
-                className={`w-3 h-3 rounded-full transition-all ${
-                  index === currentIndex ? "bg-primary w-8" : "bg-muted"
-                }`}
-                aria-label={`Ir para depoimento ${index + 1}`}
-              />
-            ))}
+            <button
+              onClick={next}
+              className="w-11 h-11 border border-foreground/25 flex items-center justify-center hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-500"
+              aria-label="Próximo depoimento"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>

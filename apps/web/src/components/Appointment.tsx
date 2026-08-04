@@ -3,10 +3,28 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Phone, Mail, MapPin, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { proceduresApi, appointmentsApi, getErrorMessage } from "@/lib/api";
+
+const contactBlocks = [
+  {
+    label: "Telefone / WhatsApp",
+    lines: ["(67) 99944-6066"],
+  },
+  {
+    label: "E-mail",
+    lines: ["contato@dramarceladuch.com.br"],
+  },
+  {
+    label: "Endereço",
+    lines: ["Av. 16, nº 890 — Ágatha Center", "Chapadão do Sul — MS"],
+  },
+  {
+    label: "Atendimento",
+    lines: ["Segunda a sexta · 9h às 18h", "Sábado · 9h às 13h"],
+  },
+];
 
 const Appointment = () => {
   const [formData, setFormData] = useState({
@@ -51,96 +69,87 @@ const Appointment = () => {
     });
   };
 
+  const fieldClass =
+    "bg-transparent border-0 border-b border-[hsl(var(--cream))]/25 rounded-none px-0 h-12 text-[hsl(var(--cream))] placeholder:text-[hsl(var(--cream))]/45 focus-visible:ring-0 focus-visible:border-[hsl(var(--bronze))] transition-colors duration-500";
+
   return (
-    <section id="agendamento" className="py-16 md:py-32 bg-gradient-to-br from-secondary via-accent to-primary/30 relative overflow-hidden border-t border-border/70">
-      {/* Decorative pattern */}
-      <div className="absolute inset-0 hidden opacity-5 md:block">
-        <div className="absolute top-0 left-0 w-64 h-64 border-2 border-primary rounded-full" />
-        <div className="absolute bottom-0 right-0 w-96 h-96 border-2 border-primary rounded-full" />
-      </div>
+    <section
+      id="agendamento"
+      className="relative py-16 md:py-40 bg-espresso overflow-hidden"
+    >
+      {/* Watermark */}
+      <span
+        className="absolute -bottom-8 left-1/2 hidden -translate-x-1/2 font-display text-[16vw] lg:text-[11vw] pointer-events-none select-none whitespace-nowrap md:block"
+        style={{ color: "hsl(var(--cream) / 0.05)" }}
+      >
+        agendar
+      </span>
 
       <div className="container mx-auto px-5 sm:px-6 lg:px-10 relative z-10">
-        <div className="grid md:grid-cols-5 gap-8 md:gap-12 max-w-6xl mx-auto">
-          {/* Left Column - Info */}
-          <div className="md:col-span-2 animate-fade-in">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold mb-4 tracking-wide">
-              Agende Sua Avaliação
+        <div className="grid lg:grid-cols-12 gap-10 lg:gap-20 max-w-6xl mx-auto">
+          {/* Coluna de informações */}
+          <div className="lg:col-span-5 animate-fade-in">
+            <p className="label-eyebrow mb-4 md:mb-6">Primeiro passo</p>
+            <h2 className="font-display text-4xl sm:text-5xl md:text-6xl leading-[0.98] md:leading-[0.95] tracking-normal text-[hsl(var(--cream))]">
+              Agende sua
+              <span className="block italic font-light text-[hsl(var(--bronze-light))]">
+                avaliação.
+              </span>
             </h2>
-            <p className="text-base md:text-xl mb-8 md:mb-12 leading-relaxed">
-              Entenda qual protocolo faz sentido para o seu momento
+
+            <div className="divider-luxe my-6 md:my-8" />
+
+            <p className="font-editorial-italic text-lg md:text-2xl leading-snug text-[hsl(var(--cream))]/70 mb-10 md:mb-14">
+              Entenda qual protocolo faz sentido para o seu momento.
             </p>
 
-            <div className="space-y-5 md:space-y-6">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Phone className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+            <div className="space-y-6 md:space-y-8">
+              {contactBlocks.map((block) => (
+                <div key={block.label} className="flex items-start gap-5">
+                  <div className="w-8 h-px bg-[hsl(var(--bronze))] mt-3 shrink-0" />
+                  <div>
+                    <p className="text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-2">
+                      {block.label}
+                    </p>
+                    {block.lines.map((line) => (
+                      <p
+                        key={line}
+                        className="text-base font-light tracking-wide text-[hsl(var(--cream))]/85"
+                      >
+                        {line}
+                      </p>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold mb-1">Telefone / WhatsApp</p>
-                  <p className="text-foreground/80">(67) 99944-6066</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Mail className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-                </div>
-                <div>
-                  <p className="font-semibold mb-1">E-mail</p>
-                  <p className="text-foreground/80">contato@dramarceladuch.com.br</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-                </div>
-                <div>
-                  <p className="font-semibold mb-1">Endereço</p>
-                  <p className="text-foreground/80">
-                    Av. 16, nº 890 - Ágatha Center<br />
-                    Chapadão do Sul - MS
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Clock className="w-5 h-5 md:w-6 md:h-6 text-primary" />
-                </div>
-                <div>
-                  <p className="font-semibold mb-1">Horário de Atendimento</p>
-                  <p className="text-foreground/80">
-                    Segunda a Sexta: 9h às 18h<br />
-                    Sábado: 9h às 13h
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* Right Column - Form */}
-          <div className="md:col-span-3 animate-fade-in">
-            <form onSubmit={handleSubmit} className="bg-card/80 backdrop-blur-sm p-5 sm:p-6 md:p-8 rounded-lg shadow-xl border border-border/50">
-              <div className="space-y-4 md:space-y-6">
-                <div>
-                  <Input
-                    type="text"
-                    placeholder="Nome completo *"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="bg-background/50 border-border/50"
-                    required
-                  />
-                </div>
+          {/* Formulário */}
+          <div className="lg:col-span-7 animate-fade-in">
+            <form
+              onSubmit={handleSubmit}
+              className="border border-[hsl(var(--cream))]/15 p-6 sm:p-8 md:p-12"
+            >
+              <p className="label-eyebrow mb-8">Solicitação de avaliação</p>
 
-                <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-7 md:space-y-8">
+                <Input
+                  type="text"
+                  placeholder="Nome completo *"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className={fieldClass}
+                  required
+                />
+
+                <div className="grid md:grid-cols-2 gap-7 md:gap-8">
                   <Input
                     type="email"
                     placeholder="E-mail *"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="bg-background/50 border-border/50"
+                    className={fieldClass}
                     required
                   />
                   <Input
@@ -148,7 +157,7 @@ const Appointment = () => {
                     placeholder="Telefone / WhatsApp *"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="bg-background/50 border-border/50"
+                    className={fieldClass}
                     required
                   />
                 </div>
@@ -157,7 +166,7 @@ const Appointment = () => {
                   value={formData.procedure}
                   onValueChange={(value) => setFormData({ ...formData, procedure: value })}
                 >
-                  <SelectTrigger className="bg-background/50 border-border/50">
+                  <SelectTrigger className={fieldClass}>
                     <SelectValue placeholder="Procedimento de interesse" />
                   </SelectTrigger>
                   <SelectContent>
@@ -186,16 +195,17 @@ const Appointment = () => {
                   placeholder="Mensagem (opcional)"
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className="bg-background/50 border-border/50 min-h-[120px]"
+                  className={`${fieldClass} h-auto min-h-[110px] py-3 resize-none`}
                 />
 
-                <p className="text-sm text-muted-foreground">
-                  * Campos obrigatórios. Ao enviar este formulário, você concorda com nossa política de privacidade.
+                <p className="text-xs leading-relaxed text-[hsl(var(--cream))]/50 font-light">
+                  * Campos obrigatórios. Ao enviar este formulário, você concorda com
+                  nossa política de privacidade.
                 </p>
 
                 <Button
                   type="submit"
-                  variant="cta"
+                  variant="ghostLight"
                   size="lg"
                   className="w-full"
                   disabled={mutation.isPending}

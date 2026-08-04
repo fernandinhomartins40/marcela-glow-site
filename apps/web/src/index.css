@@ -94,6 +94,24 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
     font-feature-settings: "lnum", "kern";
+    text-wrap: balance;
+  }
+
+  /* Evita linhas órfãs em parágrafos editoriais */
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Respeita quem prefere menos animação */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 
   /* Seleção de texto editorial */
@@ -145,6 +163,15 @@
     letter-spacing: 0.3em;
     text-transform: uppercase;
     color: hsl(var(--accent));
+  }
+
+  /* Em fundos escuros o bronze perde contraste — clareia o eyebrow e o divisor */
+  .bg-espresso .label-eyebrow {
+    color: hsl(var(--bronze-light));
+  }
+  .bg-espresso .divider-luxe::before,
+  .bg-espresso .divider-luxe::after {
+    background-color: hsl(var(--bronze-light) / 0.6);
   }
 
   .text-watermark {

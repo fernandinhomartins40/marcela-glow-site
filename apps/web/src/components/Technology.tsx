@@ -1,109 +1,115 @@
-import { Check } from "lucide-react";
+const technologies = [
+  {
+    number: "01",
+    name: "T-Sculptor",
+    eyebrow: "Escultura corporal",
+    monogram: "TS",
+    description:
+      "Tecnologia para escultura corporal que estimula contrações musculares de alta intensidade e pode compor protocolos para contorno, firmeza e melhora corporal.",
+    points: [
+      "Planejamento para abdome, braços, glúteos e contorno corporal",
+      "Associação com bioestimuladores quando há indicação médica",
+      "Estímulo muscular e melhora de definição sem cirurgia",
+      "Plano individual para resultados progressivos e naturais",
+    ],
+  },
+  {
+    number: "02",
+    name: "Peptídeos e Qualidade de Pele",
+    eyebrow: "Regeneração celular",
+    monogram: "PE",
+    description:
+      "Protocolos regenerativos voltados à atividade celular, produção de colágeno, reparação tecidual e melhora real da qualidade da pele.",
+    points: [
+      "Foco em viço, textura, firmeza e resistência da pele",
+      "Abordagem progressiva, consistente e biologicamente sustentada",
+      "Combinação possível com peelings, skinbooster e bioestimuladores",
+    ],
+  },
+];
 
 const Technology = () => {
   return (
-    <section id="tecnologias" className="py-16 md:py-32 bg-secondary/20 border-t border-border/70">
-      <div className="container mx-auto px-5 sm:px-6 lg:px-10">
-        <div className="text-center mb-10 md:mb-16 animate-fade-in">
-          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-4 tracking-wide">
-            Tecnologia e Protocolos Avançados
+    <section
+      id="tecnologias"
+      className="relative py-16 md:py-40 bg-background border-t border-border/70 overflow-hidden"
+    >
+      {/* Watermark editorial */}
+      <span className="absolute -top-8 right-0 hidden text-watermark text-[16vw] lg:text-[11vw] font-display pointer-events-none select-none whitespace-nowrap md:block">
+        tecnologia
+      </span>
+
+      <div className="container mx-auto px-5 sm:px-6 lg:px-10 relative">
+        {/* Cabeçalho */}
+        <div className="max-w-3xl mb-12 md:mb-24 animate-fade-in">
+          <p className="label-eyebrow mb-4 md:mb-6">Recursos médicos</p>
+          <h2 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[0.98] md:leading-[0.95] tracking-normal text-primary">
+            Tecnologia
+            <span className="block italic font-light text-accent">a serviço do plano.</span>
           </h2>
-          <p className="text-lg md:text-xl text-muted-foreground font-light max-w-2xl mx-auto">
-            Recursos médicos para corpo, pele e regeneração, escolhidos conforme a necessidade de cada paciente
+          <p className="font-editorial-italic text-lg md:text-2xl text-foreground/70 mt-5 md:mt-6 max-w-2xl leading-snug">
+            Recursos escolhidos conforme a necessidade de cada paciente — nunca o
+            contrário.
           </p>
         </div>
 
-        <div className="max-w-6xl mx-auto space-y-10 md:space-y-16">
-          {/* T-Sculptor - Principal */}
-          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center animate-fade-in">
-            <div className="order-2 md:order-1">
-              <h3 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold mb-4 text-primary">
-                T-Sculptor
-              </h3>
-              <p className="text-base md:text-lg leading-relaxed mb-6 text-foreground/80">
-                Tecnologia para escultura corporal que estimula contrações musculares
-                de alta intensidade e pode compor protocolos para contorno, firmeza e
-                melhora corporal.
-              </p>
-              
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <Check className="w-4 h-4 text-primary" />
+        {/* Blocos alternados */}
+        <div className="max-w-6xl mx-auto space-y-16 md:space-y-32">
+          {technologies.map((tech, index) => {
+            const reversed = index % 2 === 1;
+            return (
+              <div
+                key={tech.number}
+                className="grid md:grid-cols-12 gap-8 md:gap-16 items-center animate-fade-in"
+              >
+                {/* Monograma */}
+                <div
+                  className={`md:col-span-5 ${
+                    reversed ? "md:order-1" : "md:order-2"
+                  }`}
+                >
+                  <div className="relative aspect-[4/5] max-w-xs mx-auto md:max-w-none bg-marble">
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="font-display text-7xl md:text-8xl lg:text-9xl text-primary/15 tracking-tight select-none">
+                        {tech.monogram}
+                      </span>
+                    </div>
+                    <div className="absolute inset-3 border border-[hsl(var(--cream))]/40 pointer-events-none" />
+                    <div className="absolute top-5 left-5 font-display text-2xl text-accent/70">
+                      {tech.number}
+                    </div>
                   </div>
-                  <p className="text-foreground/80">Planejamento para abdome, braços, glúteos e contorno corporal</p>
                 </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <Check className="w-4 h-4 text-primary" />
-                  </div>
-                  <p className="text-foreground/80">Associação com bioestimuladores quando há indicação médica</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <Check className="w-4 h-4 text-primary" />
-                  </div>
-                  <p className="text-foreground/80">Estímulo muscular e melhora de definição sem cirurgia</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <Check className="w-4 h-4 text-primary" />
-                  </div>
-                  <p className="text-foreground/80">Plano individual para resultados progressivos e naturais</p>
-                </div>
-              </div>
-            </div>
 
-            <div className="order-1 md:order-2">
-              <div className="aspect-[4/3] md:aspect-square rounded-lg bg-gradient-to-br from-secondary to-accent overflow-hidden shadow-xl">
-                <div className="w-full h-full flex items-center justify-center text-5xl md:text-6xl font-serif text-primary/20">
-                  T-S
-                </div>
-              </div>
-            </div>
-          </div>
+                {/* Texto */}
+                <div
+                  className={`md:col-span-7 ${
+                    reversed ? "md:order-2" : "md:order-1"
+                  }`}
+                >
+                  <p className="label-eyebrow mb-4">{tech.eyebrow}</p>
+                  <h3 className="font-display text-3xl sm:text-4xl md:text-5xl text-primary leading-[1.05] mb-5">
+                    {tech.name}
+                  </h3>
+                  <div className="divider-luxe mb-6" />
+                  <p className="font-editorial text-lg md:text-xl leading-relaxed text-foreground/80 mb-8">
+                    {tech.description}
+                  </p>
 
-          {/* Tecnologia Facial */}
-          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center animate-fade-in">
-            <div>
-              <div className="aspect-[4/3] md:aspect-square rounded-lg bg-gradient-to-br from-accent to-muted overflow-hidden shadow-xl">
-                <div className="w-full h-full flex items-center justify-center text-5xl md:text-6xl font-serif text-primary/20">
-                  PE
+                  <div className="space-y-3 md:space-y-4">
+                    {tech.points.map((point, i) => (
+                      <div key={i} className="flex items-start gap-4">
+                        <div className="w-8 h-px bg-accent mt-3 shrink-0" />
+                        <p className="text-base text-foreground/75 font-light tracking-wide">
+                          {point}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <div>
-              <h3 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold mb-4 text-primary">
-                Peptídeos e Qualidade de Pele
-              </h3>
-              <p className="text-base md:text-lg leading-relaxed mb-6 text-foreground/80">
-                Protocolos regenerativos voltados à atividade celular, produção de
-                colágeno, reparação tecidual e melhora real da qualidade da pele.
-              </p>
-              
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <Check className="w-4 h-4 text-primary" />
-                  </div>
-                  <p className="text-foreground/80">Foco em viço, textura, firmeza e resistência da pele</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <Check className="w-4 h-4 text-primary" />
-                  </div>
-                  <p className="text-foreground/80">Abordagem progressiva, consistente e biologicamente sustentada</p>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <Check className="w-4 h-4 text-primary" />
-                  </div>
-                  <p className="text-foreground/80">Combinação possível com peelings, skinbooster e bioestimuladores</p>
-                </div>
-              </div>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </div>
     </section>
