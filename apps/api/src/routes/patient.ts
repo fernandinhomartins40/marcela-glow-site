@@ -234,11 +234,16 @@ router.get('/dashboard', async (req, res, next) => {
   try {
     const patientId = req.user!.userId
     const tenantId = req.user!.tenantId
-    const [appointments, sessions, prescriptions, notifications, messages, attachments] = await Promise.all([
+    const [patient, appointments, sessions, prescriptions, notifications, messages, attachments] = await Promise.all([
+      prisma.patient.findFirst({
+        where: { id: patientId, tenantId },
+        select: { id: true, name: true, email: true, phone: true, birthDate: true },
+      }),
       prisma.appointment.findMany({
         where: { patientId, tenantId },
         include: { procedure: { select: { title: true } } },
-        orderBy: { createdAt: 'desc' },
+        // scheduledAt primeiro (nulls por último) para o painel destacar o próximo atendimento
+        orderBy: [{ scheduledAt: 'asc' }, { createdAt: 'desc' }],
       }),
       prisma.procedureSession.findMany({
         where: { patientId, tenantId },
@@ -250,7 +255,8 @@ router.get('/dashboard', async (req, res, next) => {
       prisma.message.findMany({ where: { patientId, tenantId }, orderBy: { createdAt: 'desc' }, take: 10 }),
       prisma.attachment.findMany({ where: { patientId, tenantId, visibility: 'PATIENT_VISIBLE' }, orderBy: { createdAt: 'desc' }, take: 20 }),
     ])
-    res.json({ appointments, sessions, prescriptions, notifications, messages, attachments })
+    if (!patient) throw new UnauthorizedError()
+    res.json({ patient, appointments, sessions, prescriptions, notifications, messages, attachments })
   } catch (err) {
     next(err)
   }
