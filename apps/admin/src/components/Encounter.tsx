@@ -5,7 +5,6 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronRight,
-  ClipboardList,
   FileText,
   HeartPulse,
   Lock,
@@ -30,7 +29,15 @@ import {
   tenantSlug,
   Toolbar,
 } from '../lib/ui'
-import { clinicDate, clinicDateKey, clinicTime, dateKey, fullDayLabel, statusMeta } from '../lib/schedule'
+import {
+  clinicDate,
+  clinicDateKey,
+  clinicTime,
+  dateKey,
+  fromDateTimeLocalValue,
+  fullDayLabel,
+  statusMeta,
+} from '../lib/schedule'
 import type { Patient } from './Patients'
 
 interface AgendaEntry {
@@ -98,6 +105,7 @@ export function Encounter() {
 function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
   const [date, setDate] = React.useState(() => dateKey(new Date()))
   const [search, setSearch] = React.useState('')
+  const [creating, setCreating] = React.useState(false)
 
   const agenda = useQuery({
     queryKey: ['encounter-agenda', date],
@@ -156,6 +164,11 @@ function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+
+        <button className="primary" onClick={() => setCreating(true)}>
+          <Plus size={15} />
+          Novo atendimento
+        </button>
       </Toolbar>
 
       {/* Resultado da busca avulsa */}
@@ -183,7 +196,7 @@ function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
                     </span>
                   </div>
                   <span className="data-actions">
-                    <PatientOnlyButton patient={p} />
+                    <StartEncounterButton patient={p} onStarted={onOpen} />
                   </span>
                 </article>
               ))}
@@ -199,7 +212,13 @@ function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
       ) : !entries.length ? (
         <EmptyState
           title="Nenhum atendimento neste dia"
-          description="Escolha outra data ou busque a paciente pelo nome para abrir o prontuário sem agendamento."
+          description="Escolha outra data, busque a paciente pelo nome ou abra um novo atendimento."
+          action={
+            <button className="primary" onClick={() => setCreating(true)}>
+              <Plus size={15} />
+              Novo atendimento
+            </button>
+          }
         />
       ) : (
         <div className="data-list">
@@ -246,64 +265,245 @@ function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
           })}
         </div>
       )}
-    </>
-  )
-}
-
-/** Abre o prontuário da paciente sem passar por um agendamento. */
-function PatientOnlyButton({ patient }: { patient: Patient }) {
-  const [open, setOpen] = React.useState(false)
-  return (
-    <>
-      <button onClick={() => setOpen(true)} title="Abrir prontuário">
-        <ClipboardList size={14} />
-      </button>
-      {open && <PatientRecordModal patient={patient} onClose={() => setOpen(false)} />}
-    </>
-  )
-}
-
-function PatientRecordModal({ patient, onClose }: { patient: Patient; onClose: () => void }) {
-  const [creating, setCreating] = React.useState(false)
-  const client = useQueryClient()
-
-  const records = useQuery({
-    queryKey: ['patient-records', patient.id],
-    queryFn: async () => (await api.get(`/admin/patients/${patient.id}`)).data,
-  })
-
-  return (
-    <Modal
-      title={patient.name}
-      subtitle="Prontuário sem vínculo com agendamento"
-      onClose={onClose}
-      wide
-      footer={
-        <>
-          <button onClick={onClose}>Fechar</button>
-          <button className="primary" onClick={() => setCreating(true)}>
-            <Plus size={14} />
-            Novo registro
-          </button>
-        </>
-      }
-    >
-      {records.isLoading ? (
-        <p className="hint">Carregando...</p>
-      ) : (
-        <RecordTimeline records={records.data?.records ?? []} />
-      )}
 
       {creating && (
-        <RecordForm
-          patientId={patient.id}
+        <NewEncounterModal
           onClose={() => setCreating(false)}
-          onSaved={() => {
+          onStarted={(id) => {
             setCreating(false)
-            client.invalidateQueries({ queryKey: ['patient-records', patient.id] })
+            onOpen(id)
           }}
         />
       )}
+    </>
+  )
+}
+
+/**
+ * Abre um atendimento para quem chegou sem agendamento: cria a consulta agora
+ * e entra direto no prontuário, para que o registro nasça vinculado.
+ */
+function StartEncounterButton({
+  patient,
+  onStarted,
+}: {
+  patient: Patient
+  onStarted: (appointmentId: string) => void
+}) {
+  const client = useQueryClient()
+
+  const start = useMutation({
+    mutationFn: async () => {
+      const { data } = await api.post('/appointments/staff', {
+        patientId: patient.id,
+        // Encaixe: começa agora e já nasce confirmado
+        scheduledAt: new Date().toISOString(),
+        status: 'CONFIRMED',
+        message: 'Atendimento sem agendamento prévio',
+      })
+      return data.appointment.id as string
+    },
+    onSuccess: (id) => {
+      client.invalidateQueries({ queryKey: ['encounter-agenda'] })
+      client.invalidateQueries({ queryKey: ['admin'] })
+      onStarted(id)
+    },
+  })
+
+  return (
+    <button
+      className="primary encounter-open"
+      onClick={() => start.mutate()}
+      disabled={start.isPending}
+      title="Iniciar atendimento agora"
+    >
+      <Stethoscope size={14} />
+      {start.isPending ? 'Abrindo...' : 'Atender'}
+    </button>
+  )
+}
+
+/**
+ * Novo atendimento a partir do painel: escolhe uma paciente já cadastrada ou
+ * cadastra na hora, e entra direto no prontuário.
+ */
+function NewEncounterModal({
+  onClose,
+  onStarted,
+}: {
+  onClose: () => void
+  onStarted: (appointmentId: string) => void
+}) {
+  const client = useQueryClient()
+  const [mode, setMode] = React.useState<'existing' | 'new'>('existing')
+  const [search, setSearch] = React.useState('')
+  const [patientId, setPatientId] = React.useState('')
+  const [form, setForm] = React.useState({ name: '', email: '', phone: '', birthDate: '', notes: '' })
+  const [procedureId, setProcedureId] = React.useState('')
+  const [scheduledAt, setScheduledAt] = React.useState(() => {
+    // Agora, no formato do input datetime-local
+    const now = new Date()
+    const pad = (n: number) => String(n).padStart(2, '0')
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
+  })
+
+  const patients = useQuery({
+    queryKey: ['patients', search, false],
+    queryFn: async () => (await api.get('/admin/patients', { params: search ? { search } : {} })).data as Patient[],
+  })
+
+  const procedures = useQuery({
+    queryKey: ['procedures-admin'],
+    queryFn: async () =>
+      (await api.get('/procedures', { params: { tenantSlug } })).data as { id: string; title: string }[],
+  })
+
+  const start = useMutation({
+    mutationFn: async () => {
+      let id = patientId
+
+      // Cadastra a paciente antes, para que o atendimento já nasça vinculado
+      if (mode === 'new') {
+        const { data } = await api.post('/admin/patients', {
+          name: form.name,
+          email: form.email,
+          phone: form.phone || undefined,
+          birthDate: form.birthDate ? new Date(form.birthDate).toISOString() : undefined,
+          notes: form.notes || undefined,
+        })
+        id = data.id
+      }
+
+      const { data } = await api.post('/appointments/staff', {
+        patientId: id,
+        procedureId: procedureId || undefined,
+        scheduledAt: fromDateTimeLocalValue(scheduledAt),
+        status: 'CONFIRMED',
+      })
+      return data.appointment.id as string
+    },
+    onSuccess: (id) => {
+      client.invalidateQueries({ queryKey: ['encounter-agenda'] })
+      client.invalidateQueries({ queryKey: ['patients'] })
+      client.invalidateQueries({ queryKey: ['admin'] })
+      onStarted(id)
+    },
+  })
+
+  const valid =
+    mode === 'existing'
+      ? !!patientId && !!scheduledAt
+      : form.name.trim().length >= 2 && /\S+@\S+\.\S+/.test(form.email) && !!scheduledAt
+
+  return (
+    <Modal
+      title="Novo atendimento"
+      subtitle="Cria a consulta e abre o prontuário"
+      onClose={onClose}
+      footer={
+        <>
+          <button onClick={onClose}>Cancelar</button>
+          <SubmitButton pending={start.isPending} disabled={!valid} onClick={() => start.mutate()}>
+            Iniciar atendimento
+          </SubmitButton>
+        </>
+      }
+    >
+      <div className="form-grid">
+        <div className="segmented" role="tablist">
+          <button
+            role="tab"
+            aria-selected={mode === 'existing'}
+            className={mode === 'existing' ? 'active' : ''}
+            onClick={() => setMode('existing')}
+          >
+            Paciente cadastrada
+          </button>
+          <button
+            role="tab"
+            aria-selected={mode === 'new'}
+            className={mode === 'new' ? 'active' : ''}
+            onClick={() => setMode('new')}
+          >
+            Cadastrar agora
+          </button>
+        </div>
+
+        {mode === 'existing' ? (
+          <>
+            <Field label="Buscar paciente">
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Nome, e-mail ou telefone"
+                autoFocus
+              />
+            </Field>
+            <Field label="Paciente" required>
+              <select value={patientId} onChange={(e) => setPatientId(e.target.value)} size={6}>
+                {patients.data?.slice(0, 40).map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} — {p.email}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            {!patients.data?.length && !patients.isLoading && (
+              <p className="hint">
+                Nenhuma paciente encontrada. Use “Cadastrar agora” para criar o cadastro.
+              </p>
+            )}
+          </>
+        ) : (
+          <>
+            <Field label="Nome completo" required>
+              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus />
+            </Field>
+            <FormRow>
+              <Field label="E-mail" required hint="Usado para o acesso ao portal">
+                <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              </Field>
+              <Field label="Telefone" hint="Com DDD, para o WhatsApp">
+                <input
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  placeholder="(67) 90000-0000"
+                />
+              </Field>
+            </FormRow>
+            <FormRow>
+              <Field label="Data de nascimento">
+                <input
+                  type="date"
+                  value={form.birthDate}
+                  onChange={(e) => setForm({ ...form, birthDate: e.target.value })}
+                />
+              </Field>
+              <Field label="Observações" hint="Alergias, histórico relevante">
+                <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+              </Field>
+            </FormRow>
+          </>
+        )}
+
+        <FormRow>
+          <Field label="Procedimento">
+            <select value={procedureId} onChange={(e) => setProcedureId(e.target.value)}>
+              <option value="">Consulta de avaliação</option>
+              {procedures.data?.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Data e horário" required hint="Já vem preenchido com agora">
+            <input type="datetime-local" value={scheduledAt} onChange={(e) => setScheduledAt(e.target.value)} />
+          </Field>
+        </FormRow>
+
+        {start.isError && <p className="error">{errorMessage(start.error)}</p>}
+      </div>
     </Modal>
   )
 }
