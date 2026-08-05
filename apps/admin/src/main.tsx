@@ -149,9 +149,31 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   return <div className="stat"><span>{label}</span><strong>{value}</strong></div>
 }
 
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'Administradora',
+  STAFF: 'Equipe',
+  DOCTOR: 'Médica',
+  RECEPTION: 'Recepção',
+  ASSISTANT: 'Assistente',
+  CONTENT_EDITOR: 'Conteúdo',
+  FINANCE: 'Financeiro',
+}
+
+function initials(fullName?: string) {
+  if (!fullName) return '—'
+  const parts = fullName.trim().split(/\s+/).filter(Boolean)
+  if (!parts.length) return '—'
+  return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase()
+}
+
 function Shell() {
   const [tab, setTab] = React.useState<Tab>('dashboard')
   const data = useAdminData()
+  const me = useQuery({
+    queryKey: ['me'],
+    queryFn: async () => (await api.get('/auth/me')).data,
+    staleTime: 5 * 60 * 1000,
+  })
   const nav = [
     ['dashboard', LayoutDashboard, 'Dashboard'],
     ['patients', Users, 'Pacientes'],
@@ -175,7 +197,15 @@ function Shell() {
       <main>
         <header>
           <div><span className="eyebrow">Clínica Dra. Marcela</span><h1>{nav.find(([id]) => id === tab)?.[2]}</h1></div>
-          <span className="pill">RBAC admin/staff</span>
+          {me.data && (
+            <div className="who" title={me.data.email}>
+              <span className="who-avatar">{initials(me.data.name)}</span>
+              <span className="who-text">
+                <strong>{me.data.name}</strong>
+                <span>{ROLE_LABELS[me.data.role] ?? me.data.role}</span>
+              </span>
+            </div>
+          )}
         </header>
         {data.isLoading && <p>Carregando dados reais do backend...</p>}
         {data.isError && <p className="error">Não foi possível carregar a API.</p>}
