@@ -58,13 +58,32 @@ export interface Session {
   procedure: { title: string } | null
 }
 
+export type DocumentKind = 'PRESCRIPTION' | 'EXAM_REQUEST' | 'GUIDANCE' | 'CERTIFICATE'
+
+export interface PrescriptionItem {
+  id: string
+  name: string
+  strength: string | null
+  form: string | null
+  route: string | null
+  dose: string | null
+  quantity: string | null
+  notes: string | null
+  control: 'COMMON' | 'ANTIMICROBIAL' | 'CONTROLLED'
+}
+
 export interface Prescription {
   id: string
+  kind: DocumentKind
   title: string
   instructions: string
   status: PrescriptionStatus
   createdAt: string
   sentAt: string | null
+  signedAt: string | null
+  validUntil: string | null
+  verificationCode: string | null
+  items: PrescriptionItem[]
 }
 
 export interface Notification {

@@ -251,7 +251,12 @@ router.get('/dashboard', async (req, res, next) => {
         include: { procedure: { select: { title: true } } },
         orderBy: { performedAt: 'desc' },
       }),
-      prisma.prescription.findMany({ where: { patientId, tenantId }, orderBy: { createdAt: 'desc' } }),
+      // Só documentos já disponibilizados: rascunho não aparece para a paciente
+      prisma.prescription.findMany({
+        where: { patientId, tenantId, status: { in: ['SENT', 'VIEWED', 'SIGNED'] } },
+        include: { items: { orderBy: { displayOrder: 'asc' } } },
+        orderBy: { createdAt: 'desc' },
+      }),
       prisma.notification.findMany({ where: { patientId, tenantId }, orderBy: { createdAt: 'desc' }, take: 8 }),
       prisma.message.findMany({ where: { patientId, tenantId }, orderBy: { createdAt: 'desc' }, take: 10 }),
       prisma.attachment.findMany({ where: { patientId, tenantId, visibility: 'PATIENT_VISIBLE' }, orderBy: { createdAt: 'desc' }, take: 20 }),

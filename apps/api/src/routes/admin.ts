@@ -35,6 +35,10 @@ const recordSchema = z.object({
   title: z.string().min(2),
   type: z.nativeEnum(RecordType).optional(),
   body: z.string().min(2),
+  occurredAt: z.string().datetime({ offset: true }).optional(),
+  complaint: z.string().optional(),
+  plan: z.string().optional(),
+  history: z.string().optional(),
 })
 
 const prescriptionSchema = z.object({
@@ -271,7 +275,13 @@ router.post('/patients/:id/records', requirePermission('RECORD_WRITE'), async (r
     const patient = await prisma.patient.findFirst({ where: { id: String(req.params.id), tenantId: req.user!.tenantId } })
     if (!patient) throw new NotFoundError('Paciente')
     const record = await prisma.medicalRecord.create({
-      data: { ...body, patientId: patient.id, tenantId: req.user!.tenantId, createdById: req.user!.userId },
+      data: {
+        ...body,
+        occurredAt: body.occurredAt ? new Date(body.occurredAt) : new Date(),
+        patientId: patient.id,
+        tenantId: req.user!.tenantId,
+        createdById: req.user!.userId,
+      },
     })
     await audit(req, 'CREATE', 'medicalRecord', record.id, { patientId: patient.id })
     res.status(201).json(record)
@@ -287,9 +297,36 @@ router.put('/records/:id', requirePermission('RECORD_WRITE'), async (req: Reques
       where: { id: String(req.params.id), tenantId: req.user!.tenantId },
     })
     if (!existing) throw new NotFoundError('Registro')
+    // Prontuário fechado é registro clínico definitivo
+    if (existing.lockedAt) {
+      throw new AppError('Registro fechado não pode ser alterado.', 409, 'RECORD_LOCKED')
+    }
 
-    const record = await prisma.medicalRecord.update({ where: { id: existing.id }, data: body })
+    const record = await prisma.medicalRecord.update({
+      where: { id: existing.id },
+      data: { ...body, occurredAt: body.occurredAt ? new Date(body.occurredAt) : undefined },
+    })
     await audit(req, 'UPDATE', 'medicalRecord', record.id, { patientId: existing.patientId })
+    res.json(record)
+  } catch (err) {
+    next(err)
+  }
+})
+
+/** Fecha o registro: a partir daqui vira documento clínico imutável. */
+router.patch('/records/:id/lock', requirePermission('RECORD_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const existing = await prisma.medicalRecord.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+    })
+    if (!existing) throw new NotFoundError('Registro')
+    if (existing.lockedAt) throw new AppError('Registro já está fechado.', 409, 'RECORD_LOCKED')
+
+    const record = await prisma.medicalRecord.update({
+      where: { id: existing.id },
+      data: { lockedAt: new Date() },
+    })
+    await audit(req, 'UPDATE', 'medicalRecord', record.id, { action: 'lock' })
     res.json(record)
   } catch (err) {
     next(err)
@@ -302,6 +339,9 @@ router.delete('/records/:id', requirePermission('RECORD_WRITE'), async (req: Req
       where: { id: String(req.params.id), tenantId: req.user!.tenantId },
     })
     if (!existing) throw new NotFoundError('Registro')
+    if (existing.lockedAt) {
+      throw new AppError('Registro fechado não pode ser excluído.', 409, 'RECORD_LOCKED')
+    }
 
     await prisma.medicalRecord.delete({ where: { id: existing.id } })
     await audit(req, 'DELETE', 'medicalRecord', existing.id, { patientId: existing.patientId })

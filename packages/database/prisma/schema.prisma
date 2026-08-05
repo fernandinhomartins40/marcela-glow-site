@@ -45,6 +45,42 @@ enum RecordType {
   EVOLUTION
   PROCEDURE
   PHOTO
+  ANAMNESIS
+  ASSESSMENT
+}
+
+/// Categoria do item de catálogo clínico reutilizável
+enum CatalogKind {
+  MEDICATION
+  EXAM
+  GUIDANCE
+  RECORD_TEMPLATE
+}
+
+/// Nível de controle sanitário do medicamento.
+/// CONTROLLED e ANTIMICROBIAL exigem assinatura qualificada ICP-Brasil
+/// (Lei 14.063/2020, art. 4º).
+enum MedicationControl {
+  COMMON
+  ANTIMICROBIAL
+  CONTROLLED
+}
+
+enum DocumentKind {
+  PRESCRIPTION
+  EXAM_REQUEST
+  GUIDANCE
+  CERTIFICATE
+}
+
+/// Conformidade da assinatura conforme Lei 14.063/2020
+enum SignatureLevel {
+  /// Assinatura do servidor: garante integridade, não tem fé pública
+  INTERNAL
+  /// Avançada — aceita para medicamentos comuns
+  ADVANCED
+  /// Qualificada ICP-Brasil — exigida para controlados e antimicrobianos
+  QUALIFIED
 }
 
 enum PrescriptionStatus {
@@ -158,6 +194,7 @@ model Tenant {
   userPermissions UserPermission[]
   businessHours BusinessHour[]
   scheduleBlocks ScheduleBlock[]
+  catalogItems  CatalogItem[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -393,6 +430,18 @@ model MedicalRecord {
   patientId   String
   createdById String?
   tenantId    String
+
+  /// Data do atendimento — pode diferir de createdAt quando registrado depois
+  occurredAt  DateTime?
+  /// Queixa principal, em uma linha
+  complaint   String?
+  /// Conduta e plano terapêutico
+  plan        String?
+  /// Alergias, medicações em uso, comorbidades — texto livre por atendimento
+  history     String?
+  /// Prontuário assinado não pode mais ser alterado
+  lockedAt    DateTime?
+
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
@@ -420,11 +469,15 @@ model ProcedureSession {
   tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
+/// Documento clínico entregue à paciente: receita, pedido de exame ou
+/// orientação. O nome permanece Prescription por compatibilidade.
 model Prescription {
   id          String             @id @default(cuid())
   patientId   String
   tenantId    String
+  kind        DocumentKind       @default(PRESCRIPTION)
   title       String
+  /// Texto livre: orientações gerais ou corpo do documento sem itens
   instructions String
   status      PrescriptionStatus @default(DRAFT)
   sentAt      DateTime?
@@ -433,12 +486,88 @@ model Prescription {
   signatureHash String?
   signaturePayload Json?
   verificationCode String? @unique
+
+  /// Nível efetivo da assinatura aplicada — ver enum SignatureLevel
+  signatureLevel SignatureLevel @default(INTERNAL)
+  /// Receita comum vale 30 dias; controlada, 30; antimicrobiano, 10.
+  validUntil     DateTime?
+  /// Registrado quando a paciente abre o documento no portal
+  viewedAt       DateTime?
+
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
 
   patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
   tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   signedBy User?  @relation("PrescriptionSigner", fields: [signedById], references: [id], onDelete: SetNull)
+  items   PrescriptionItem[]
+
+  @@index([tenantId, kind, status])
+  @@index([patientId, createdAt])
+}
+
+/// Catálogo clínico reutilizável: medicamentos, exames, orientações e modelos
+/// de texto. Um modelo só, com `kind` discriminando, porque os quatro
+/// compartilham busca, favoritos e ciclo de vida.
+model CatalogItem {
+  id          String      @id @default(cuid())
+  kind        CatalogKind
+  name        String
+  /// Princípio ativo (medicamento) ou sinônimo de busca (exame)
+  subtitle    String?
+  /// Corpo do texto para GUIDANCE e RECORD_TEMPLATE
+  body        String?
+  isActive    Boolean     @default(true)
+  /// Sobe os mais usados no topo da busca
+  usageCount  Int         @default(0)
+
+  // ── Medicamento ──
+  strength    String?     /// "50mg/mL"
+  form        String?     /// "comprimido", "creme"
+  route       String?     /// "oral", "tópica"
+  defaultDose String?     /// "1 comprimido a cada 8 horas"
+  defaultQty  String?     /// "1 caixa"
+  control     MedicationControl? @default(COMMON)
+
+  // ── Exame ──
+  tussCode    String?
+  preparation String?     /// "jejum de 8 horas"
+
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  prescriptionItems PrescriptionItem[]
+
+  @@index([tenantId, kind, isActive])
+}
+
+/// Item de uma prescrição ou solicitação de exame. Estruturado (não texto
+/// corrido) para que a farmácia leia posologia e quantidade sem ambiguidade.
+model PrescriptionItem {
+  id             String  @id @default(cuid())
+  prescriptionId String
+  /// Origem no catálogo; mantido mesmo se o item for editado à mão
+  catalogItemId  String?
+
+  /// Congelados na emissão: o catálogo pode mudar, o documento não.
+  name        String
+  strength    String?
+  form        String?
+  route       String?
+  dose        String?
+  quantity    String?
+  notes       String?
+  control     MedicationControl @default(COMMON)
+  displayOrder Int              @default(0)
+
+  createdAt DateTime @default(now())
+
+  prescription Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  catalogItem  CatalogItem? @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
+
+  @@index([prescriptionId])
 }
 
 model Attachment {

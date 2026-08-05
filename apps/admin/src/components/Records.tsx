@@ -46,8 +46,12 @@ const PRESCRIPTION_STATUS: Record<string, { label: string; tone: string }> = {
   CANCELLED: { label: 'Cancelada', tone: 'neutral' },
 }
 
+/**
+ * Histórico clínico: procedimentos realizados e prescrições antigas.
+ * Documentos novos são emitidos na aba Documentos.
+ */
 export function Records() {
-  const [section, setSection] = React.useState<Section>('prescriptions')
+  const [section, setSection] = React.useState<Section>('sessions')
 
   return (
     <>
@@ -55,19 +59,19 @@ export function Records() {
         <div className="segmented" role="tablist">
           <button
             role="tab"
-            aria-selected={section === 'prescriptions'}
-            className={section === 'prescriptions' ? 'active' : ''}
-            onClick={() => setSection('prescriptions')}
-          >
-            Prescrições
-          </button>
-          <button
-            role="tab"
             aria-selected={section === 'sessions'}
             className={section === 'sessions' ? 'active' : ''}
             onClick={() => setSection('sessions')}
           >
             Procedimentos realizados
+          </button>
+          <button
+            role="tab"
+            aria-selected={section === 'prescriptions'}
+            className={section === 'prescriptions' ? 'active' : ''}
+            onClick={() => setSection('prescriptions')}
+          >
+            Prescrições
           </button>
         </div>
       </Toolbar>

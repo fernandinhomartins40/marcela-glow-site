@@ -8,6 +8,7 @@ import { z } from 'zod'
 import authRouter from './routes/auth'
 import proceduresRouter from './routes/procedures'
 import appointmentsRouter from './routes/appointments'
+import clinicalRouter from './routes/clinical'
 import testimonialsRouter from './routes/testimonials'
 import newsletterRouter from './routes/newsletter'
 import adminRouter from './routes/admin'
@@ -75,6 +76,7 @@ app.use('/api/appointments', appointmentsRouter)
 app.use('/api/testimonials', testimonialsRouter)
 app.use('/api/newsletter', newsletterRouter)
 app.use('/api/admin', adminRouter)
+app.use('/api/clinical', clinicalRouter)
 app.use('/api/patient', patientRouter)
 
 // ─────────────────────────────────────────────────────────────────────────────
