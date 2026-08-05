@@ -224,6 +224,101 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POST /staff  (equipe) — marca por telefone/balcão, já confirmado
+// ─────────────────────────────────────────────────────────────────────────────
+
+const staffCreateSchema = z.object({
+  /** Paciente já cadastrada; quando ausente, usa os dados avulsos abaixo */
+  patientId: z.string().optional(),
+  name: z.string().min(2).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().min(8).optional(),
+  procedureId: z.string().optional(),
+  scheduledAt: z.string().datetime({ offset: true }),
+  message: z.string().optional(),
+  /** A recepção normalmente já marca confirmado; PENDING fica para triagem */
+  status: z.enum(['PENDING', 'CONFIRMED']).optional().default('CONFIRMED'),
+})
+
+router.post('/staff', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = staffCreateSchema.parse(req.body)
+    const tenantId = req.user!.tenantId
+
+    let patient: { id: string; name: string; email: string; phone: string | null } | null = null
+    if (body.patientId) {
+      patient = await prisma.patient.findFirst({
+        where: { id: body.patientId, tenantId },
+        select: { id: true, name: true, email: true, phone: true },
+      })
+      if (!patient) throw new NotFoundError('Paciente')
+    }
+
+    const name = patient?.name ?? body.name
+    const email = patient?.email ?? body.email
+    const phone = patient?.phone ?? body.phone ?? ''
+    if (!name || !email) {
+      throw new AppError('Informe a paciente ou preencha nome e e-mail.', 400, 'PATIENT_REQUIRED')
+    }
+
+    const startsAt = new Date(body.scheduledAt)
+    // A equipe pode marcar fora do expediente, mas nunca sobre outro atendimento
+    const check = await checkSlotAvailable({
+      tenantId,
+      startsAt,
+      procedureId: body.procedureId,
+      allowOutsideBusinessHours: true,
+    })
+    if (!check.ok) throw new AppError(check.reason!, 409, 'SLOT_UNAVAILABLE')
+
+    const endsAt = await resolveEndsAt(tenantId, startsAt, body.procedureId)
+    const confirmed = body.status === 'CONFIRMED'
+
+    const appointment = await prisma.appointment.create({
+      data: {
+        name,
+        email,
+        phone,
+        message: body.message,
+        tenantId,
+        patientId: patient?.id ?? null,
+        procedureId: body.procedureId || null,
+        scheduledAt: startsAt,
+        endsAt,
+        status: body.status,
+        source: 'staff',
+        confirmedAt: confirmed ? new Date() : null,
+        confirmedById: confirmed && req.user!.subjectType === 'STAFF' ? req.user!.userId : null,
+      },
+      include: APPOINTMENT_INCLUDE,
+    })
+
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: tenantId },
+      select: { name: true, address: true },
+    })
+
+    // Avisa a paciente só quando o horário já está confirmado
+    const whatsapp = confirmed
+      ? await notifyPatient(appointment, tenant!, 'confirmed')
+      : buildWhatsAppLink('confirmed', {
+          patientName: appointment.name,
+          phone: appointment.phone,
+          procedureTitle: appointment.procedure?.title ?? null,
+          scheduledAt: appointment.scheduledAt,
+          clinicName: tenant!.name,
+          clinicAddress: tenant!.address,
+        })
+
+    await audit(req, 'CREATE', 'appointment', appointment.id, { source: 'staff' })
+
+    res.status(201).json({ appointment, whatsapp })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GET /  (equipe)
 // ─────────────────────────────────────────────────────────────────────────────
 

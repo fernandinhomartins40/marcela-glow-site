@@ -18,6 +18,9 @@ import draPortrait from './assets/dra-marcela-portrait.jpg'
 import marbleTexture from './assets/marble-texture.jpg'
 import { Schedule } from './components/Schedule'
 import { ScheduleSettings } from './components/ScheduleSettings'
+import { Patients } from './components/Patients'
+import { Records } from './components/Records'
+import { Cms, Leads, Procedures } from './components/Catalog'
 import './styles.css'
 
 const queryClient = new QueryClient()
@@ -30,7 +33,7 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-type Tab = 'dashboard' | 'patients' | 'appointments' | 'leads' | 'records' | 'cms' | 'security' | 'settings'
+type Tab = 'dashboard' | 'patients' | 'appointments' | 'procedures' | 'leads' | 'records' | 'cms' | 'security' | 'settings'
 
 const demoAdmin = {
   label: 'Admin demo',
@@ -178,8 +181,9 @@ function Shell() {
     ['dashboard', LayoutDashboard, 'Dashboard'],
     ['patients', Users, 'Pacientes'],
     ['appointments', CalendarDays, 'Agenda'],
-    ['leads', MessageSquare, 'Leads'],
     ['records', HeartPulse, 'Prontuário'],
+    ['procedures', Sparkles, 'Procedimentos'],
+    ['leads', MessageSquare, 'Leads'],
     ['cms', FileText, 'CMS'],
     ['security', UserRound, 'Segurança'],
     ['settings', Settings, 'Ajustes'],
@@ -217,10 +221,17 @@ function Shell() {
 
 function Panel({ tab, data }: { tab: Tab; data: any }) {
   if (tab === 'dashboard') return <Dashboard data={data} />
-  if (tab === 'patients') return <Patients patients={data.patients} />
+  if (tab === 'patients') return <Patients />
   if (tab === 'appointments') return <Appointments appointments={data.appointments} />
-  if (tab === 'leads') return <Leads leads={data.leads} />
-  if (tab === 'records') return <Records data={data} />
+  if (tab === 'records')
+    return (
+      <>
+        <Records />
+        <FileUpload patients={data.patients} />
+      </>
+    )
+  if (tab === 'procedures') return <Procedures />
+  if (tab === 'leads') return <Leads />
   if (tab === 'cms') return <Cms cms={data.cms} />
   if (tab === 'security') return <Security data={data} />
   return <SettingsPanel settings={data.settings} />
@@ -244,40 +255,8 @@ function Dashboard({ data }: { data: any }) {
   )
 }
 
-function Patients({ patients }: { patients: any[] }) {
-  return <section className="table">{patients.map((p) => <article key={p.id}><strong>{p.name}</strong><span>{p.email}</span><span>{p.records?.length ?? 0} registros</span></article>)}</section>
-}
-
 function Appointments({ appointments }: { appointments: any[] }) {
   return <Schedule appointments={appointments} />
-}
-
-function Leads({ leads }: { leads: any[] }) {
-  return <section className="kanban">{['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL', 'WON'].map((status) => <div key={status}><h3>{status}</h3>{leads.filter((l) => l.status === status).map((l) => <p key={l.id}>{l.name}<span>{l.origin ?? 'origem direta'}</span></p>)}</div>)}</section>
-}
-
-function Records({ data }: { data: any }) {
-  const client = useQueryClient()
-  const sign = useMutation({ mutationFn: (id: string) => api.patch(`/admin/prescriptions/${id}/sign`), onSuccess: () => client.invalidateQueries({ queryKey: ['admin'] }) })
-  const send = useMutation({ mutationFn: (id: string) => api.patch(`/admin/prescriptions/${id}/send`), onSuccess: () => client.invalidateQueries({ queryKey: ['admin'] }) })
-  return (
-    <section className="grid two">
-      <section className="list">
-        <h2>Prescrições digitais</h2>
-        {data.prescriptions.map((p: any) => (
-          <p key={p.id}>
-            {p.patient.name} - {p.title} ({p.status})
-            <span className="row-actions">
-              <button onClick={() => sign.mutate(p.id)}>Assinar</button>
-              <button onClick={() => send.mutate(p.id)}>Enviar</button>
-            </span>
-          </p>
-        ))}
-      </section>
-      <FileUpload patients={data.patients} />
-      <List title="Notificações" items={data.notifications} pick={(n: any) => `${n.title} - ${n.channel}`} />
-    </section>
-  )
 }
 
 function FileUpload({ patients }: { patients: any[] }) {
@@ -317,10 +296,6 @@ function FileUpload({ patients }: { patients: any[] }) {
       {upload.isError && <p className="error">{(upload.error as Error).message}</p>}
     </section>
   )
-}
-
-function Cms({ cms }: { cms: any }) {
-  return <section className="grid three"><List title="Paginas" items={cms.pages} pick={(p: any) => `${p.title} - ${p.status}`} /><List title="Blog" items={cms.posts} pick={(p: any) => `${p.title} - ${p.status}`} /><List title="Midia" items={cms.media} pick={(m: any) => m.fileName} /></section>
 }
 
 function Security({ data }: { data: any }) {

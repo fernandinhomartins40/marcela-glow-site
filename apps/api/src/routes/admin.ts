@@ -146,11 +146,28 @@ router.get('/dashboard', requirePermission('DASHBOARD_READ'), async (req: Reques
 
 router.get('/patients', requirePermission('PATIENT_READ'), async (req, res, next) => {
   try {
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : ''
+    // Arquivadas ficam fora da lista salvo pedido explícito
+    const includeArchived = req.query.includeArchived === 'true'
+
     const patients = await prisma.patient.findMany({
-      where: { tenantId: req.user!.tenantId },
+      where: {
+        tenantId: req.user!.tenantId,
+        ...(includeArchived ? {} : { isActive: true }),
+        ...(search
+          ? {
+              OR: [
+                { name: { contains: search, mode: 'insensitive' as const } },
+                { email: { contains: search, mode: 'insensitive' as const } },
+                { phone: { contains: search } },
+              ],
+            }
+          : {}),
+      },
       include: {
         appointments: { orderBy: { createdAt: 'desc' }, take: 3 },
         records: { orderBy: { createdAt: 'desc' }, take: 3 },
+        _count: { select: { appointments: true, records: true, sessions: true, prescriptions: true } },
       },
       orderBy: { updatedAt: 'desc' },
     })
@@ -195,6 +212,59 @@ router.get('/patients/:id', requirePermission('PATIENT_READ', 'RECORD_READ'), as
   }
 })
 
+router.put('/patients/:id', requirePermission('PATIENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = patientSchema.partial().parse(req.body)
+    const existing = await prisma.patient.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+    })
+    if (!existing) throw new NotFoundError('Paciente')
+
+    // E-mail é a chave da paciente no tenant: não pode colidir com outra
+    if (body.email && body.email !== existing.email) {
+      const clash = await prisma.patient.findFirst({
+        where: { email: body.email, tenantId: req.user!.tenantId, id: { not: existing.id } },
+      })
+      if (clash) throw new AppError('Já existe uma paciente com este e-mail.', 409, 'EMAIL_IN_USE')
+    }
+
+    const patient = await prisma.patient.update({
+      where: { id: existing.id },
+      data: {
+        ...body,
+        birthDate: body.birthDate ? new Date(body.birthDate) : undefined,
+      },
+    })
+    await audit(req, 'UPDATE', 'patient', patient.id)
+    res.json(patient)
+  } catch (err) {
+    next(err)
+  }
+})
+
+/**
+ * Arquiva em vez de excluir: o histórico clínico precisa sobreviver, e a
+ * exclusão em cascata levaria prontuário, prescrições e anexos junto.
+ */
+router.patch('/patients/:id/archive', requirePermission('PATIENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const isActive = req.body?.isActive === true
+    const existing = await prisma.patient.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+    })
+    if (!existing) throw new NotFoundError('Paciente')
+
+    const patient = await prisma.patient.update({
+      where: { id: existing.id },
+      data: { isActive },
+    })
+    await audit(req, 'UPDATE', 'patient', patient.id, { archived: !isActive })
+    res.json(patient)
+  } catch (err) {
+    next(err)
+  }
+})
+
 router.post('/patients/:id/records', requirePermission('RECORD_WRITE'), async (req, res, next) => {
   try {
     const body = recordSchema.parse(req.body)
@@ -205,6 +275,135 @@ router.post('/patients/:id/records', requirePermission('RECORD_WRITE'), async (r
     })
     await audit(req, 'CREATE', 'medicalRecord', record.id, { patientId: patient.id })
     res.status(201).json(record)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.put('/records/:id', requirePermission('RECORD_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = recordSchema.partial().parse(req.body)
+    const existing = await prisma.medicalRecord.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+    })
+    if (!existing) throw new NotFoundError('Registro')
+
+    const record = await prisma.medicalRecord.update({ where: { id: existing.id }, data: body })
+    await audit(req, 'UPDATE', 'medicalRecord', record.id, { patientId: existing.patientId })
+    res.json(record)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.delete('/records/:id', requirePermission('RECORD_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const existing = await prisma.medicalRecord.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+    })
+    if (!existing) throw new NotFoundError('Registro')
+
+    await prisma.medicalRecord.delete({ where: { id: existing.id } })
+    await audit(req, 'DELETE', 'medicalRecord', existing.id, { patientId: existing.patientId })
+    res.status(204).end()
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Procedimentos realizados (histórico clínico + faturamento)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const sessionSchema = z.object({
+  patientId: z.string().min(1),
+  procedureId: z.string().optional(),
+  performedAt: z.string().datetime({ offset: true }).optional(),
+  notes: z.string().optional(),
+  priceCents: z.number().int().min(0).optional(),
+})
+
+router.get('/sessions', requirePermission('RECORD_READ'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const sessions = await prisma.procedureSession.findMany({
+      where: {
+        tenantId: req.user!.tenantId,
+        ...(req.query.patientId ? { patientId: String(req.query.patientId) } : {}),
+      },
+      include: {
+        procedure: { select: { id: true, title: true } },
+        patient: { select: { id: true, name: true } },
+      },
+      orderBy: { performedAt: 'desc' },
+      take: 200,
+    })
+    res.json(sessions)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.post('/sessions', requirePermission('RECORD_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = sessionSchema.parse(req.body)
+    const patient = await prisma.patient.findFirst({
+      where: { id: body.patientId, tenantId: req.user!.tenantId },
+    })
+    if (!patient) throw new NotFoundError('Paciente')
+
+    const session = await prisma.procedureSession.create({
+      data: {
+        patientId: patient.id,
+        procedureId: body.procedureId || null,
+        performedAt: body.performedAt ? new Date(body.performedAt) : new Date(),
+        notes: body.notes,
+        priceCents: body.priceCents,
+        tenantId: req.user!.tenantId,
+      },
+      include: { procedure: { select: { id: true, title: true } }, patient: { select: { id: true, name: true } } },
+    })
+    await audit(req, 'CREATE', 'procedureSession', session.id, { patientId: patient.id })
+    res.status(201).json(session)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.put('/sessions/:id', requirePermission('RECORD_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = sessionSchema.partial().parse(req.body)
+    const existing = await prisma.procedureSession.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+    })
+    if (!existing) throw new NotFoundError('Procedimento')
+
+    const session = await prisma.procedureSession.update({
+      where: { id: existing.id },
+      data: {
+        procedureId: body.procedureId === undefined ? undefined : body.procedureId || null,
+        performedAt: body.performedAt ? new Date(body.performedAt) : undefined,
+        notes: body.notes,
+        priceCents: body.priceCents,
+      },
+      include: { procedure: { select: { id: true, title: true } }, patient: { select: { id: true, name: true } } },
+    })
+    await audit(req, 'UPDATE', 'procedureSession', session.id)
+    res.json(session)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.delete('/sessions/:id', requirePermission('RECORD_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const existing = await prisma.procedureSession.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+    })
+    if (!existing) throw new NotFoundError('Procedimento')
+
+    await prisma.procedureSession.delete({ where: { id: existing.id } })
+    await audit(req, 'DELETE', 'procedureSession', existing.id)
+    res.status(204).end()
   } catch (err) {
     next(err)
   }
@@ -246,6 +445,21 @@ router.patch('/leads/:id', requirePermission('LEAD_WRITE'), async (req, res, nex
   }
 })
 
+router.delete('/leads/:id', requirePermission('LEAD_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const existing = await prisma.lead.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+    })
+    if (!existing) throw new NotFoundError('Lead')
+
+    await prisma.lead.delete({ where: { id: existing.id } })
+    await audit(req, 'DELETE', 'lead', existing.id)
+    res.status(204).end()
+  } catch (err) {
+    next(err)
+  }
+})
+
 router.get('/prescriptions', requirePermission('PRESCRIPTION_READ'), async (req, res, next) => {
   try {
     const prescriptions = await prisma.prescription.findMany({
@@ -270,6 +484,48 @@ router.post('/prescriptions', requirePermission('PRESCRIPTION_WRITE'), async (re
       },
     })
     res.status(201).json(prescription)
+  } catch (err) {
+    next(err)
+  }
+})
+
+/** Prescrição assinada tem valor legal: só rascunho pode ser alterado. */
+router.put('/prescriptions/:id', requirePermission('PRESCRIPTION_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = prescriptionSchema.partial().parse(req.body)
+    const existing = await prisma.prescription.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+    })
+    if (!existing) throw new NotFoundError('Prescrição')
+    if (existing.signedAt) {
+      throw new AppError('Prescrição assinada não pode ser alterada.', 409, 'ALREADY_SIGNED')
+    }
+
+    const prescription = await prisma.prescription.update({
+      where: { id: existing.id },
+      data: { title: body.title, instructions: body.instructions, status: body.status },
+      include: { patient: { select: { id: true, name: true } } },
+    })
+    await audit(req, 'UPDATE', 'prescription', prescription.id)
+    res.json(prescription)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.delete('/prescriptions/:id', requirePermission('PRESCRIPTION_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const existing = await prisma.prescription.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+    })
+    if (!existing) throw new NotFoundError('Prescrição')
+    if (existing.signedAt) {
+      throw new AppError('Prescrição assinada não pode ser excluída.', 409, 'ALREADY_SIGNED')
+    }
+
+    await prisma.prescription.delete({ where: { id: existing.id } })
+    await audit(req, 'DELETE', 'prescription', existing.id)
+    res.status(204).end()
   } catch (err) {
     next(err)
   }
@@ -384,6 +640,36 @@ router.post('/cms/posts', requirePermission('CMS_WRITE'), async (req, res, next)
       create: { ...body, tenantId: req.user!.tenantId },
     })
     res.status(201).json(post)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.delete('/cms/pages/:id', requirePermission('CMS_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const existing = await prisma.cmsPage.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+    })
+    if (!existing) throw new NotFoundError('Página')
+
+    await prisma.cmsPage.delete({ where: { id: existing.id } })
+    await audit(req, 'DELETE', 'cmsPage', existing.id)
+    res.status(204).end()
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.delete('/cms/posts/:id', requirePermission('CMS_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const existing = await prisma.blogPost.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+    })
+    if (!existing) throw new NotFoundError('Post')
+
+    await prisma.blogPost.delete({ where: { id: existing.id } })
+    await audit(req, 'DELETE', 'blogPost', existing.id)
+    res.status(204).end()
   } catch (err) {
     next(err)
   }

@@ -9,8 +9,10 @@ import {
   Clock,
   MessageCircle,
   Phone,
+  Plus,
   X,
 } from 'lucide-react'
+import { NewAppointment } from './NewAppointment'
 import { addDays } from 'date-fns'
 import {
   clinicDate,
@@ -51,6 +53,7 @@ export function Schedule({ appointments }: { appointments: Appointment[] }) {
   const [anchor, setAnchor] = React.useState(new Date())
   const [selectedDay, setSelectedDay] = React.useState<Date>(new Date())
   const [detail, setDetail] = React.useState<Appointment | null>(null)
+  const [creating, setCreating] = React.useState(false)
 
   const days = weekDays(anchor)
   const byDay = React.useMemo(() => groupByDay(appointments), [appointments])
@@ -101,16 +104,22 @@ export function Schedule({ appointments }: { appointments: Appointment[] }) {
               <ChevronRight size={16} />
             </button>
           </div>
-          <button
-            className="today-button"
-            onClick={() => {
-              const now = new Date()
-              setAnchor(now)
-              setSelectedDay(now)
-            }}
-          >
-            Hoje
-          </button>
+          <div className="toolbar-right">
+            <button
+              className="today-button"
+              onClick={() => {
+                const now = new Date()
+                setAnchor(now)
+                setSelectedDay(now)
+              }}
+            >
+              Hoje
+            </button>
+            <button className="primary" onClick={() => setCreating(true)}>
+              <Plus size={15} />
+              Novo agendamento
+            </button>
+          </div>
         </header>
 
         <WeekGrid
@@ -129,6 +138,15 @@ export function Schedule({ appointments }: { appointments: Appointment[] }) {
       </section>
 
       {detail && <AppointmentDrawer appointment={detail} onClose={() => setDetail(null)} />}
+
+      {creating && (
+        <NewAppointment
+          // Abre já no dia que está selecionado na grade, às 9h
+          defaultDate={`${dateKey(selectedDay)}T09:00`}
+          onClose={() => setCreating(false)}
+          onCreated={() => undefined}
+        />
+      )}
     </div>
   )
 }
