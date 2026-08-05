@@ -21,7 +21,8 @@ button, input, select { font: inherit; }
 .auth-panel { width: min(1040px, 100%); display: grid; grid-template-columns: minmax(0, 1.06fr) minmax(320px, .94fr); gap: 0; position: relative; overflow: hidden; background: rgba(255,250,242,.94); border: 1px solid rgba(216,202,184,.86); border-radius: 8px; box-shadow: 0 28px 90px rgba(47,34,27,.22); }
 .auth-copy { padding: 38px; position: relative; min-height: 610px; display: flex; flex-direction: column; justify-content: space-between; }
 .auth-copy::before { content: "MARCELA"; position: absolute; left: 24px; top: 18px; font-family: "Playfair Display", Georgia, serif; font-size: clamp(76px, 11vw, 142px); line-height: 1; color: rgba(47,34,27,.055); pointer-events: none; }
-.auth-panel h1, header h1 { margin: 8px 0 12px; font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-size: clamp(48px, 8vw, 92px); line-height: .9; font-weight: 500; letter-spacing: 0; color: var(--espresso); }
+/* A tela de login mantém o tom editorial da marca; a área de trabalho, não. */
+.auth-panel h1 { margin: 8px 0 12px; font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-size: clamp(48px, 8vw, 92px); line-height: .9; font-weight: 500; letter-spacing: 0; color: var(--espresso); }
 .auth-panel h2 { margin: 8px 0 0; font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-size: 34px; line-height: 1; font-weight: 500; color: var(--espresso); }
 .auth-panel p { max-width: 520px; color: rgba(47,34,27,.72); font-family: "Cormorant Garamond", Georgia, serif; font-size: 24px; line-height: 1.18; }
 .auth-portrait { position: relative; width: min(360px, 82%); aspect-ratio: 4 / 5; margin-top: 28px; overflow: hidden; align-self: flex-end; }
@@ -42,41 +43,52 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .demo-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .auth-panel .demo-button { min-height: 38px; background: transparent; border: 1px solid rgba(156,130,104,.55); color: var(--espresso); padding: 9px 10px; }
 .error { color: #a33131; font-weight: 700; }
-.app-shell { min-height: 100vh; display: grid; grid-template-columns: 280px 1fr; background: linear-gradient(135deg, rgba(255,250,242,.86), rgba(229,216,199,.84)), radial-gradient(ellipse at 20% 10%, rgba(255,255,255,.68), transparent 42%), var(--marble); }
-aside { background: linear-gradient(180deg, var(--espresso) 0%, var(--espresso-deep) 100%); color: var(--cream-soft); padding: 24px 18px; display: flex; flex-direction: column; gap: 8px; border-right: 1px solid rgba(156,130,104,.38); box-shadow: 18px 0 60px rgba(47,34,27,.13); position: relative; overflow: hidden; }
-aside::before { content: "MD"; position: absolute; right: -18px; bottom: 18px; font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-size: 150px; line-height: .8; color: rgba(246,239,228,.045); pointer-events: none; }
-aside button { justify-content: flex-start; background: transparent; color: rgba(255,250,242,.82); border: 1px solid transparent; position: relative; z-index: 1; }
-aside button:hover { background: rgba(255,250,242,.08); color: var(--cream-soft); }
-aside button.active { background: rgba(246,239,228,.92); color: var(--espresso); border-color: rgba(198,177,156,.72); box-shadow: 0 10px 28px rgba(31,23,19,.26); }
-.brand { display: flex; align-items: center; gap: 10px; padding: 10px 8px 26px; margin-bottom: 4px; border-bottom: 1px solid rgba(246,239,228,.14); position: relative; z-index: 1; }
-.brand strong { font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-size: 24px; font-weight: 500; letter-spacing: 0; }
-main { padding: 30px; overflow: auto; position: relative; }
-main::before { content: "MARCELA"; position: fixed; right: 26px; top: 8px; font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-size: clamp(88px, 14vw, 190px); line-height: 1; color: rgba(47,34,27,.035); pointer-events: none; }
-header { display: flex; justify-content: space-between; gap: 18px; align-items: center; margin-bottom: 26px; position: relative; z-index: 1; }
-header h1 { margin-top: 4px; margin-bottom: 0; font-size: clamp(46px, 6vw, 88px); }
-.pill { background: rgba(255,250,242,.78); border: 1px solid rgba(156,130,104,.32); border-radius: 999px; padding: 8px 12px; font-weight: 700; font-size: 13px; color: var(--espresso); box-shadow: 0 10px 30px rgba(47,34,27,.07); }
-.stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; margin-bottom: 18px; }
-.stat, .list, .settings, .table article, .kanban > div { background: rgba(255,250,242,.84); border: 1px solid rgba(216,202,184,.82); border-radius: 8px; padding: 18px; box-shadow: var(--shadow-soft); backdrop-filter: blur(10px); position: relative; z-index: 1; }
-.stat { min-height: 132px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
-.stat::after { content: ""; position: absolute; right: 18px; top: 18px; width: 42px; height: 1px; background: var(--bronze); opacity: .65; }
-.stat span { display: block; color: var(--text-muted); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; font-weight: 700; }
-.stat strong { display: block; margin-top: 18px; font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-size: 38px; line-height: .95; font-weight: 500; color: var(--espresso); }
-.grid { display: grid; gap: 14px; }
+.app-shell { min-height: 100vh; display: grid; grid-template-columns: 232px 1fr; background: var(--marble); }
+aside { background: var(--espresso); color: var(--cream-soft); padding: 18px 12px; display: flex; flex-direction: column; gap: 3px; border-right: 1px solid rgba(156,130,104,.3); position: relative; }
+aside button { justify-content: flex-start; min-height: 38px; padding: 8px 12px; font-size: 13px; border-radius: 7px; background: transparent; color: rgba(255,250,242,.8); border: 1px solid transparent; position: relative; z-index: 1; }
+aside button:hover { background: rgba(255,250,242,.08); color: var(--cream-soft); transform: none; }
+aside button.active { background: rgba(246,239,228,.94); color: var(--espresso); font-weight: 600; }
+.brand { display: flex; align-items: center; gap: 9px; padding: 6px 10px 16px; margin-bottom: 6px; border-bottom: 1px solid rgba(246,239,228,.14); position: relative; z-index: 1; }
+/* A marca permanece na sidebar — é o único lugar do painel onde ela cabe */
+.brand strong { font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-size: 18px; font-weight: 500; letter-spacing: .02em; }
+/* Área de trabalho: sem watermark decorativo — é uma ferramenta, não uma vitrine */
+main { padding: 26px 30px; overflow: auto; position: relative; }
+header { display: flex; justify-content: space-between; gap: 18px; align-items: center; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid rgba(216,202,184,.7); position: relative; z-index: 1; }
+/* Título da página em sans-serif e escala de painel, não de landing page */
+header h1 { margin: 2px 0 0; font-family: inherit; font-size: 24px; line-height: 1.2; font-weight: 600; letter-spacing: -0.01em; color: var(--espresso); }
+.pill { background: var(--cream-soft); border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px; font-weight: 500; font-size: 12px; color: var(--text-muted); }
+/* Dentro do painel os controles ficam mais compactos que no login.
+   :not(.schedule *) preserva os estilos próprios da agenda. */
+main input, main select { padding: 9px 11px; font-size: 13px; border-radius: 7px; }
+main button:not(.schedule button):not(.drawer button) { min-height: 36px; padding: 8px 14px; font-size: 13px; border-radius: 7px; }
+main label { font-size: 12px; font-weight: 600; }
+main header .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .14em; }
+.stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 16px; }
+.stat, .list, .settings, .table article, .kanban > div { background: var(--cream-soft); border: 1px solid var(--border); border-radius: 8px; padding: 16px; position: relative; z-index: 1; }
+.stat { min-height: 96px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; }
+.stat span { display: block; color: var(--text-muted); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }
+/* Números continuam com a serifada: é um destaque pontual que não atrapalha a leitura */
+.stat strong { display: block; margin-top: 10px; font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-size: 30px; line-height: 1; font-weight: 500; color: var(--espresso); }
+.grid { display: grid; gap: 12px; }
 .two { grid-template-columns: repeat(2, minmax(0,1fr)); }
 .three { grid-template-columns: repeat(3, minmax(0,1fr)); }
-.list h2 { margin: 0 0 14px; font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-size: 28px; line-height: 1; font-weight: 500; color: var(--espresso); }
-.list p, .kanban p { border-top: 1px solid rgba(216,202,184,.72); margin: 0; padding: 12px 0; color: rgba(47,34,27,.82); }
+/* Títulos de bloco em sans-serif: são rótulos de seção, não manchetes */
+.list h2 { margin: 0 0 12px; font-family: inherit; font-size: 15px; line-height: 1.3; font-weight: 600; color: var(--espresso); }
+.list p, .kanban p { border-top: 1px solid var(--border); margin: 0; padding: 10px 0; font-size: 13px; line-height: 1.5; color: rgba(47,34,27,.82); }
+.list p:first-of-type { border-top: 0; padding-top: 0; }
 .row-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.row-actions button { min-height: 32px; padding: 6px 10px; font-size: 12px; }
+.row-actions button { min-height: 30px; padding: 5px 10px; font-size: 12px; }
 .inline-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 12px; }
-.table { display: grid; gap: 10px; }
-.table article { display: grid; grid-template-columns: 1.2fr 1fr auto; gap: 12px; align-items: center; }
-.table strong { font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-size: 24px; line-height: 1; font-weight: 500; }
-.table span, .kanban span { color: var(--text-muted); }
+.table { display: grid; gap: 8px; }
+.table article { display: grid; grid-template-columns: 1.4fr 1fr auto; gap: 12px; align-items: center; padding: 12px 16px; }
+/* Nomes de pacientes precisam ser escaneáveis, não decorativos */
+.table strong { font-family: inherit; font-size: 14px; line-height: 1.35; font-weight: 600; }
+.table span, .kanban span { color: var(--text-muted); font-size: 13px; }
 .kanban { display: grid; grid-template-columns: repeat(5, minmax(160px,1fr)); gap: 12px; overflow: auto; }
-.kanban h3 { font-size: 12px; margin: 0 0 8px; letter-spacing: .18em; text-transform: uppercase; color: var(--bronze); }
-.kanban span { display: block; font-size: 12px; margin-top: 4px; }
-.settings { color: rgba(47,34,27,.78); white-space: pre-wrap; }
+.kanban h3 { font-size: 11px; margin: 0 0 8px; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+.kanban p { font-size: 13px; }
+.kanban span { display: block; font-size: 12px; margin-top: 3px; }
+.settings { color: rgba(47,34,27,.78); white-space: pre-wrap; font-size: 12px; line-height: 1.6; }
 
 /* ── Agenda ──────────────────────────────────────────────────────────────── */
 .schedule { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 18px; align-items: start; }
@@ -87,13 +99,14 @@ header h1 { margin-top: 4px; margin-bottom: 0; font-size: clamp(46px, 6vw, 88px)
 .chip.neutral { background: var(--cream-deep); color: var(--text-muted); }
 
 .schedule-queue { background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px; position: sticky; top: 16px; }
-.schedule-queue header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.schedule-queue h2 { margin: 0; font-size: 15px; letter-spacing: .04em; }
+/* header sem borda aqui: a regra global de header pertence ao topo da página */
+.schedule-queue header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 0; border-bottom: 0; }
+.schedule-queue h2 { margin: 0; font-family: inherit; font-size: 15px; font-weight: 600; letter-spacing: 0; color: var(--espresso); }
 .queue-count { min-width: 22px; height: 22px; padding: 0 7px; border-radius: 999px; background: var(--espresso); color: var(--cream-soft); font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
 .schedule-queue ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-height: 60vh; overflow-y: auto; }
-.queue-card { width: 100%; display: grid; gap: 3px; text-align: left; padding: 11px 12px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: border-color .2s ease, background .2s ease; }
+.queue-card { width: 100%; display: grid; gap: 3px; text-align: left; padding: 11px 12px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; color: var(--espresso); transition: border-color .2s ease, background .2s ease; }
 .queue-card:hover { border-color: var(--bronze); background: #fff; }
-.queue-card strong { font-size: 13px; }
+.queue-card strong { font-size: 13px; font-weight: 600; color: var(--espresso); }
 .queue-card span { font-size: 12px; color: var(--text-muted); }
 .queue-when { display: inline-flex; align-items: center; gap: 5px; }
 .queue-empty { font-size: 13px; color: var(--text-muted); margin: 8px 0; }
@@ -102,7 +115,9 @@ header h1 { margin-top: 4px; margin-bottom: 0; font-size: clamp(46px, 6vw, 88px)
 .schedule-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .week-nav { display: inline-flex; align-items: center; gap: 10px; }
 .week-nav strong { font-size: 14px; min-width: 170px; text-align: center; }
-.week-nav button, .today-button { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; color: var(--espresso); }
+.week-nav button, .today-button { width: 32px; height: 32px; min-height: 32px; padding: 0; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; color: var(--espresso); }
+/* Ícones não podem encolher dentro de botões flex */
+.schedule svg, .drawer svg { flex-shrink: 0; }
 .today-button { width: auto; padding: 0 14px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
 .week-nav button:hover, .today-button:hover { border-color: var(--bronze); }
 
@@ -141,18 +156,23 @@ header h1 { margin-top: 4px; margin-bottom: 0; font-size: clamp(46px, 6vw, 88px)
 
 /* ── Painel lateral do agendamento ───────────────────────────────────────── */
 .drawer-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(31,23,19,.42); display: flex; justify-content: flex-end; }
-.drawer { width: min(440px, 100%); height: 100%; overflow-y: auto; background: var(--marble-soft); border-left: 1px solid var(--border); padding: 22px; display: grid; gap: 18px; align-content: start; }
-.drawer header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.drawer header h2 { margin: 8px 0 3px; font-size: 22px; }
+.drawer { width: min(440px, 100%); height: 100%; overflow-y: auto; background: var(--marble-soft); border-left: 1px solid var(--border); padding: 22px; display: grid; gap: 18px; align-content: start; color: var(--espresso); }
+.drawer p { color: var(--espresso); }
+.drawer header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 0; border-bottom: 0; }
+.drawer header h2 { margin: 8px 0 3px; font-family: inherit; font-size: 19px; font-weight: 600; color: var(--espresso); }
+.drawer h3 { font-family: inherit; }
 .drawer header p { margin: 0; font-size: 13px; color: var(--text-muted); }
 .icon-button { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--border); border-radius: 7px; cursor: pointer; color: var(--espresso); }
 .drawer-facts { display: grid; gap: 12px; margin: 0; padding: 14px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 9px; }
 .drawer-facts dt { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--bronze); margin-bottom: 3px; }
-.drawer-facts dd { margin: 0; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.drawer-facts dd { margin: 0; font-size: 13px; line-height: 1.5; color: var(--espresso); display: flex; align-items: center; gap: 6px; }
+.drawer-facts dd + dd { margin-top: 2px; }
+.drawer-facts .wide { grid-column: 1 / -1; }
+.drawer-facts .wide dd { display: block; }
 .drawer-section { display: grid; gap: 9px; }
 .drawer-section label { font-size: 12px; font-weight: 600; }
 .drawer-section input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--cream-soft); color: var(--espresso); }
-.hint { margin: 0; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.drawer .hint, .hint { margin: 0; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
 .drawer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .drawer-actions button { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; font-size: 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--cream-soft); color: var(--espresso); cursor: pointer; }
 .drawer-actions button:hover:not(:disabled) { border-color: var(--bronze); }
@@ -162,9 +182,9 @@ header h1 { margin-top: 4px; margin-bottom: 0; font-size: clamp(46px, 6vw, 88px)
 .cancel-box { display: grid; gap: 8px; padding: 12px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 8px; }
 .cancel-box input { width: 100%; padding: 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--marble-soft); }
 .cancel-box button { padding: 9px; border: 1px solid var(--border); border-radius: 7px; background: transparent; cursor: pointer; }
-.whatsapp-box { display: grid; gap: 10px; padding: 14px; background: #e8f3ea; border: 1px solid #bcd9c3; border-radius: 9px; }
-.whatsapp-box h3 { margin: 0; font-size: 13px; }
-.whatsapp-box pre { margin: 0; padding: 11px; background: #fff; border: 1px solid #cfe3d4; border-radius: 7px; font-family: inherit; font-size: 12px; line-height: 1.55; white-space: pre-wrap; max-height: 210px; overflow-y: auto; }
+.whatsapp-box { display: grid; gap: 10px; padding: 14px; background: #e8f3ea; border: 1px solid #bcd9c3; border-radius: 9px; color: #1d3d27; }
+.whatsapp-box h3 { margin: 0; font-family: inherit; font-size: 13px; font-weight: 600; color: #1d3d27; }
+.whatsapp-box pre { margin: 0; padding: 11px; background: #fff; border: 1px solid #cfe3d4; border-radius: 7px; font-family: inherit; font-size: 12px; line-height: 1.55; color: var(--espresso); white-space: pre-wrap; max-height: 210px; overflow-y: auto; }
 .whatsapp-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 11px; background: #25623a; border: 0; border-radius: 7px; color: #fff; font-size: 13px; cursor: pointer; }
 .whatsapp-button:hover { background: #1d4c2d; }
 @media (max-width: 1180px) { .schedule { grid-template-columns: 1fr; } .schedule-queue { position: static; max-height: none; } .schedule-queue ul { max-height: 260px; } }
