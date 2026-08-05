@@ -17,6 +17,7 @@ import {
 import draPortrait from './assets/dra-marcela-portrait.jpg'
 import marbleTexture from './assets/marble-texture.jpg'
 import { Schedule } from './components/Schedule'
+import { ScheduleSettings } from './components/ScheduleSettings'
 import './styles.css'
 
 const queryClient = new QueryClient()
@@ -315,7 +316,22 @@ function Security({ data }: { data: any }) {
 }
 
 function SettingsPanel({ settings }: { settings: any }) {
-  return <pre className="settings">{JSON.stringify(settings, null, 2)}</pre>
+  const [showRaw, setShowRaw] = React.useState(false)
+  return (
+    <div className="grid" style={{ gap: 14 }}>
+      <ScheduleSettings />
+      <section className="list">
+        <h2>Configurações brutas</h2>
+        <p className="hint">Valores gravados em ClinicSetting, para conferência.</p>
+        <div className="row-actions">
+          <button onClick={() => setShowRaw((v) => !v)}>
+            {showRaw ? 'Ocultar' : 'Mostrar'}
+          </button>
+        </div>
+        {showRaw && <pre className="settings" style={{ marginTop: 12 }}>{JSON.stringify(settings, null, 2)}</pre>}
+      </section>
+    </div>
+  )
 }
 
 function List({ title, items, pick }: { title: string; items: any[]; pick: (item: any) => string }) {

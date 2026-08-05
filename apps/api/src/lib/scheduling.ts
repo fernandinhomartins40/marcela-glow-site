@@ -194,9 +194,12 @@ export async function getAvailability(params: {
   const procedure = procedureId
     ? await prisma.procedure.findFirst({
         where: { id: procedureId, tenantId },
-        select: { durationMin: true, bufferMin: true },
+        select: { durationMin: true, bufferMin: true, isBookable: true },
       })
     : null
+
+  // Procedimento fechado para agendamento online não oferece horários
+  if (procedure && !procedure.isBookable) return []
 
   const durationMin = procedure?.durationMin ?? 60
   const bufferMin = procedure?.bufferMin ?? 0
@@ -280,7 +283,7 @@ export async function checkSlotAvailable(params: {
   const procedure = procedureId
     ? await prisma.procedure.findFirst({
         where: { id: procedureId, tenantId },
-        select: { durationMin: true, bufferMin: true },
+        select: { durationMin: true, bufferMin: true, isBookable: true },
       })
     : null
 
@@ -288,6 +291,11 @@ export async function checkSlotAvailable(params: {
   const endsAt = new Date(startsAt.getTime() + blockMin * 60000)
 
   if (!allowOutsideBusinessHours) {
+    // A equipe pode agendar qualquer procedimento; o site, só os liberados
+    if (procedure && !procedure.isBookable) {
+      return { ok: false, reason: 'Este procedimento não está disponível para agendamento online.' }
+    }
+
     if (startsAt.getTime() < Date.now() + MIN_LEAD_TIME_MIN * 60000) {
       return { ok: false, reason: 'Escolha um horário com mais antecedência.' }
     }

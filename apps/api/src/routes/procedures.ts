@@ -17,6 +17,10 @@ const createSchema = z.object({
   description: z.string().min(1, 'description é obrigatório'),
   imageUrl: z.string().url('imageUrl deve ser uma URL válida').optional(),
   displayOrder: z.number().int().min(0).optional().default(0),
+  // Base do cálculo de horários livres na agenda
+  durationMin: z.number().int().min(5).max(480).optional(),
+  bufferMin: z.number().int().min(0).max(120).optional(),
+  isBookable: z.boolean().optional(),
 })
 
 const updateSchema = createSchema.partial()
