@@ -113,10 +113,23 @@ const DOC_META: Record<DocumentKind, { label: string; singular: string }> = {
 // Catálogo clínico
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function ClinicalCatalog() {
+/**
+ * @param only Restringe aos tipos indicados. Em Cadastros cada aba já sabe o
+ *        que mostra, então o seletor interno só aparece quando há escolha.
+ */
+export function ClinicalCatalog({ only }: { only?: CatalogKind | CatalogKind[] } = {}) {
   const client = useQueryClient()
-  const [kind, setKind] = React.useState<CatalogKind>('MEDICATION')
+  const allowed = React.useMemo<CatalogKind[]>(
+    () => (only ? (Array.isArray(only) ? only : [only]) : (Object.keys(CATALOG_META) as CatalogKind[])),
+    [only],
+  )
+  const [kind, setKind] = React.useState<CatalogKind>(allowed[0])
   const [search, setSearch] = React.useState('')
+
+  // Ao trocar de aba, volta para o primeiro tipo permitido
+  React.useEffect(() => {
+    if (!allowed.includes(kind)) setKind(allowed[0])
+  }, [allowed, kind])
   const [editing, setEditing] = React.useState<CatalogItem | 'new' | null>(null)
   const [removing, setRemoving] = React.useState<CatalogItem | null>(null)
 
@@ -143,19 +156,21 @@ export function ClinicalCatalog() {
   return (
     <>
       <Toolbar>
-        <div className="segmented" role="tablist">
-          {(Object.keys(CATALOG_META) as CatalogKind[]).map((k) => (
-            <button
-              key={k}
-              role="tab"
-              aria-selected={kind === k}
-              className={kind === k ? 'active' : ''}
-              onClick={() => setKind(k)}
-            >
-              {CATALOG_META[k].label}
-            </button>
-          ))}
-        </div>
+        {allowed.length > 1 && (
+          <div className="segmented" role="tablist">
+            {allowed.map((k) => (
+              <button
+                key={k}
+                role="tab"
+                aria-selected={kind === k}
+                className={kind === k ? 'active' : ''}
+                onClick={() => setKind(k)}
+              >
+                {CATALOG_META[k].label}
+              </button>
+            ))}
+          </div>
+        )}
         <div className="search-box">
           <Search size={15} />
           <input placeholder={`Buscar ${meta.singular}`} value={search} onChange={(e) => setSearch(e.target.value)} />

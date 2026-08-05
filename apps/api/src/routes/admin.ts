@@ -39,6 +39,8 @@ const recordSchema = z.object({
   complaint: z.string().optional(),
   plan: z.string().optional(),
   history: z.string().optional(),
+  /** Consulta que originou o registro; ausente em retorno avulso */
+  appointmentId: z.string().optional(),
 })
 
 const prescriptionSchema = z.object({
@@ -358,6 +360,7 @@ router.delete('/records/:id', requirePermission('RECORD_WRITE'), async (req: Req
 const sessionSchema = z.object({
   patientId: z.string().min(1),
   procedureId: z.string().optional(),
+  appointmentId: z.string().optional(),
   performedAt: z.string().datetime({ offset: true }).optional(),
   notes: z.string().optional(),
   priceCents: z.number().int().min(0).optional(),
@@ -395,6 +398,7 @@ router.post('/sessions', requirePermission('RECORD_WRITE'), async (req: Request,
       data: {
         patientId: patient.id,
         procedureId: body.procedureId || null,
+        appointmentId: body.appointmentId || null,
         performedAt: body.performedAt ? new Date(body.performedAt) : new Date(),
         notes: body.notes,
         priceCents: body.priceCents,

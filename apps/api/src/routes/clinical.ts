@@ -141,6 +141,8 @@ const itemSchema = z.object({
 
 const documentSchema = z.object({
   patientId: z.string().min(1),
+  /** Consulta em que o documento está sendo emitido */
+  appointmentId: z.string().optional(),
   kind: z.enum(['PRESCRIPTION', 'EXAM_REQUEST', 'GUIDANCE', 'CERTIFICATE']).default('PRESCRIPTION'),
   title: z.string().min(2),
   instructions: z.string().default(''),
@@ -185,6 +187,7 @@ router.post('/documents', ...staffOnly, requirePermission('PRESCRIPTION_WRITE'),
     const document = await prisma.prescription.create({
       data: {
         patientId: patient.id,
+        appointmentId: body.appointmentId || null,
         tenantId: req.user!.tenantId,
         kind: body.kind,
         title: body.title,
@@ -465,6 +468,139 @@ router.post('/documents/:id/send', ...staffOnly, requirePermission('PRESCRIPTION
 
     await audit(req, 'SEND', 'prescription', document.id)
     res.json(document)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Atendimento — o fluxo do consultório: agenda do dia → paciente → prontuário
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Consultas do dia, na ordem do horário. Ponto de entrada do atendimento. */
+router.get('/encounters/agenda', ...staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const date = typeof req.query.date === 'string' ? req.query.date : undefined
+    const base = date ? new Date(`${date}T12:00:00Z`) : new Date()
+
+    // Janela ampla em UTC: o filtro fino por data local fica no cliente, que
+    // já sabe o fuso da clínica
+    const start = new Date(base)
+    start.setUTCHours(0, 0, 0, 0)
+    start.setUTCDate(start.getUTCDate() - 1)
+    const end = new Date(base)
+    end.setUTCHours(0, 0, 0, 0)
+    end.setUTCDate(end.getUTCDate() + 2)
+
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        tenantId: req.user!.tenantId,
+        scheduledAt: { gte: start, lt: end },
+        status: { in: ['PENDING', 'CONFIRMED', 'COMPLETED'] },
+      },
+      include: {
+        procedure: { select: { id: true, title: true, durationMin: true } },
+        patient: { select: { id: true, name: true, email: true, phone: true, birthDate: true } },
+        // Mostra na lista o que já foi registrado nesta consulta
+        _count: { select: { records: true, prescriptions: true, sessions: true } },
+      },
+      orderBy: { scheduledAt: 'asc' },
+    })
+
+    res.json(appointments)
+  } catch (err) {
+    next(err)
+  }
+})
+
+/**
+ * Tudo que a médica precisa ver ao atender: dados da paciente, o que foi
+ * registrado nesta consulta e o histórico anterior.
+ */
+router.get('/encounters/:appointmentId', ...staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = req.user!.tenantId
+    const appointment = await prisma.appointment.findFirst({
+      where: { id: String(req.params.appointmentId), tenantId },
+      include: {
+        procedure: { select: { id: true, title: true } },
+        patient: true,
+      },
+    })
+    if (!appointment) throw new NotFoundError('Atendimento')
+    if (!appointment.patientId) {
+      throw new AppError(
+        'Este agendamento não está vinculado a uma paciente cadastrada. Cadastre a paciente antes de iniciar o atendimento.',
+        400,
+        'PATIENT_REQUIRED',
+      )
+    }
+
+    const patientId = appointment.patientId
+
+    const [current, history, documents, sessions] = await Promise.all([
+      // Registros feitos nesta consulta
+      prisma.medicalRecord.findMany({
+        where: { tenantId, appointmentId: appointment.id },
+        orderBy: { createdAt: 'desc' },
+      }),
+      // Histórico anterior, para consulta rápida durante o atendimento
+      prisma.medicalRecord.findMany({
+        where: { tenantId, patientId, appointmentId: { not: appointment.id } },
+        orderBy: { occurredAt: 'desc' },
+        take: 20,
+        include: { appointment: { select: { id: true, scheduledAt: true } } },
+      }),
+      prisma.prescription.findMany({
+        where: { tenantId, patientId },
+        include: { items: { orderBy: { displayOrder: 'asc' } } },
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+      }),
+      prisma.procedureSession.findMany({
+        where: { tenantId, patientId },
+        include: { procedure: { select: { id: true, title: true } } },
+        orderBy: { performedAt: 'desc' },
+        take: 30,
+      }),
+    ])
+
+    await audit(req, 'READ', 'encounter', appointment.id, { patientId, includesMedicalRecord: true })
+
+    res.json({
+      appointment: {
+        id: appointment.id,
+        scheduledAt: appointment.scheduledAt,
+        endsAt: appointment.endsAt,
+        status: appointment.status,
+        message: appointment.message,
+        procedure: appointment.procedure,
+      },
+      patient: appointment.patient,
+      currentRecords: current,
+      history,
+      documents,
+      sessions,
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
+/** Encerra o atendimento: marca a consulta como realizada. */
+router.post('/encounters/:appointmentId/complete', ...staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const existing = await prisma.appointment.findFirst({
+      where: { id: String(req.params.appointmentId), tenantId: req.user!.tenantId },
+    })
+    if (!existing) throw new NotFoundError('Atendimento')
+
+    const appointment = await prisma.appointment.update({
+      where: { id: existing.id },
+      data: { status: 'COMPLETED' },
+    })
+    await audit(req, 'UPDATE', 'appointment', appointment.id, { action: 'complete' })
+    res.json(appointment)
   } catch (err) {
     next(err)
   }

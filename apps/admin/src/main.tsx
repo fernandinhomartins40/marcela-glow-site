@@ -11,6 +11,7 @@ import {
   MessageSquare,
   Settings,
   Sparkles,
+  Stethoscope,
   UserRound,
   Users,
 } from 'lucide-react'
@@ -23,6 +24,7 @@ import { Records } from './components/Records'
 import { Cms, Leads, Procedures } from './components/Catalog'
 import { ClinicalCatalog, ClinicalDocuments } from './components/Clinical'
 import { Certificate } from './components/Certificate'
+import { Encounter } from './components/Encounter'
 import './styles.css'
 
 const queryClient = new QueryClient()
@@ -35,7 +37,17 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-type Tab = 'dashboard' | 'patients' | 'appointments' | 'procedures' | 'leads' | 'records' | 'cms' | 'security' | 'settings'
+type Tab =
+  | 'dashboard'
+  | 'encounter'
+  | 'appointments'
+  | 'patients'
+  | 'records'
+  | 'registry'
+  | 'leads'
+  | 'cms'
+  | 'security'
+  | 'settings'
 
 const demoAdmin = {
   label: 'Admin demo',
@@ -180,11 +192,13 @@ function Shell() {
     staleTime: 5 * 60 * 1000,
   })
   const nav = [
+    // Ordem do dia a dia: atender → agenda → pacientes → histórico → cadastros
     ['dashboard', LayoutDashboard, 'Dashboard'],
-    ['patients', Users, 'Pacientes'],
+    ['encounter', Stethoscope, 'Atendimento'],
     ['appointments', CalendarDays, 'Agenda'],
+    ['patients', Users, 'Pacientes'],
     ['records', HeartPulse, 'Prontuário'],
-    ['procedures', Sparkles, 'Procedimentos'],
+    ['registry', Sparkles, 'Cadastros'],
     ['leads', MessageSquare, 'Leads'],
     ['cms', FileText, 'CMS'],
     ['security', UserRound, 'Segurança'],
@@ -225,8 +239,9 @@ function Panel({ tab, data }: { tab: Tab; data: any }) {
   if (tab === 'dashboard') return <Dashboard data={data} />
   if (tab === 'patients') return <Patients />
   if (tab === 'appointments') return <Appointments appointments={data.appointments} />
+  if (tab === 'encounter') return <Encounter />
   if (tab === 'records') return <ClinicalArea patients={data.patients} />
-  if (tab === 'procedures') return <Procedures />
+  if (tab === 'registry') return <RegistryArea />
   if (tab === 'leads') return <Leads />
   if (tab === 'cms') return <Cms cms={data.cms} />
   if (tab === 'security') return <Security data={data} />
@@ -255,13 +270,15 @@ function Appointments({ appointments }: { appointments: any[] }) {
   return <Schedule appointments={appointments} />
 }
 
-/** Reúne as áreas clínicas: documentos, histórico, catálogo e arquivos. */
+/**
+ * Prontuário: o que já foi produzido — documentos emitidos, procedimentos
+ * realizados e arquivos. O registro clínico em si nasce em Atendimento.
+ */
 function ClinicalArea({ patients }: { patients: any[] }) {
-  const [area, setArea] = React.useState<'documents' | 'history' | 'catalog' | 'files'>('documents')
+  const [area, setArea] = React.useState<'documents' | 'history' | 'files'>('documents')
   const areas = [
     ['documents', 'Documentos'],
-    ['history', 'Histórico clínico'],
-    ['catalog', 'Catálogo clínico'],
+    ['history', 'Procedimentos realizados'],
     ['files', 'Arquivos'],
   ] as const
 
@@ -282,8 +299,43 @@ function ClinicalArea({ patients }: { patients: any[] }) {
       </div>
       {area === 'documents' && <ClinicalDocuments />}
       {area === 'history' && <Records />}
-      {area === 'catalog' && <ClinicalCatalog />}
       {area === 'files' && <FileUpload patients={patients} />}
+    </>
+  )
+}
+
+/**
+ * Cadastros: tudo que alimenta o atendimento — os procedimentos oferecidos e
+ * o catálogo clínico (medicamentos, exames, orientações, modelos).
+ */
+function RegistryArea() {
+  const [area, setArea] = React.useState<'procedures' | 'medications' | 'exams' | 'guidance'>('procedures')
+  const areas = [
+    ['procedures', 'Procedimentos da clínica'],
+    ['medications', 'Medicamentos'],
+    ['exams', 'Exames'],
+    ['guidance', 'Orientações e modelos'],
+  ] as const
+
+  return (
+    <>
+      <div className="area-tabs" role="tablist">
+        {areas.map(([id, label]) => (
+          <button
+            key={id}
+            role="tab"
+            aria-selected={area === id}
+            className={area === id ? 'active' : ''}
+            onClick={() => setArea(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {area === 'procedures' && <Procedures />}
+      {area === 'medications' && <ClinicalCatalog only="MEDICATION" />}
+      {area === 'exams' && <ClinicalCatalog only="EXAM" />}
+      {area === 'guidance' && <ClinicalCatalog only={['GUIDANCE', 'RECORD_TEMPLATE']} />}
     </>
   )
 }

@@ -230,6 +230,54 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
   .qr-box { flex-direction: column; align-items: flex-start; }
 }
 
+/* ── Atendimento ─────────────────────────────────────────────────────────── */
+.day-picker { display: inline-flex; align-items: center; gap: 6px; }
+.day-picker button { width: 32px; height: 32px; min-height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 7px; color: var(--espresso); font-size: 16px; }
+.day-picker .today-button { width: auto; padding: 0 12px; font-size: 12px; }
+.day-picker input { padding: 7px 10px; font-size: 13px; border: 1px solid var(--border); border-radius: 7px; background: var(--cream-soft); color: var(--espresso); }
+.day-heading { margin: 0 0 12px; font-family: inherit; font-size: 14px; font-weight: 600; text-transform: capitalize; }
+
+.encounter-row { grid-template-columns: 62px minmax(0,1fr) auto; }
+.encounter-time { font-size: 14px; font-weight: 600; }
+/* width auto vence a regra de 30px dos botões-ícone de .data-actions */
+.encounter-row .data-actions button.encounter-open,
+main .encounter-row .data-actions button.encounter-open {
+  width: auto; height: auto; min-height: 34px; padding: 7px 14px; gap: 6px;
+  font-size: 12.5px; white-space: nowrap;
+  background: var(--espresso); border-color: var(--espresso); color: var(--cream-soft);
+}
+.encounter-row .data-actions button.encounter-open:disabled { opacity: .45; }
+.warn-text { color: #8a5a22; }
+
+.encounter-header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 16px; margin-bottom: 14px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; }
+.back-button { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 7px 13px; font-size: 13px; background: transparent; border: 1px solid var(--border); border-radius: 7px; color: var(--espresso); }
+.encounter-patient { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.encounter-patient strong { display: block; font-size: 15px; font-weight: 600; }
+.encounter-patient span { display: block; font-size: 12.5px; color: var(--text-muted); }
+.encounter-when { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 12.5px; color: var(--text-muted); }
+
+.patient-alert { padding: 11px 14px; margin-bottom: 14px; background: #fbf0e2; border: 1px solid #e6c99b; border-radius: 8px; font-size: 13px; line-height: 1.55; color: #7d5220; }
+
+.timeline { display: grid; gap: 10px; }
+.timeline-item { padding: 15px 17px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 9px; }
+.timeline-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.timeline-head > div { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.timeline-head strong { font-size: 14px; font-weight: 600; }
+.timeline-date { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.timeline-field { display: grid; gap: 2px; margin: 0 0 9px; font-size: 13px; line-height: 1.55; }
+.timeline-field > span { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+.timeline-body { margin: 0 0 9px; font-size: 13px; line-height: 1.6; white-space: pre-line; }
+.timeline-actions { display: flex; gap: 7px; margin-top: 12px; padding-top: 11px; border-top: 1px solid var(--border); }
+.timeline-actions button { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 6px 11px; font-size: 12px; background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--espresso); }
+.timeline-actions button:hover { border-color: var(--bronze); transform: none; }
+
+@media (max-width: 900px) {
+  .encounter-row { grid-template-columns: 52px minmax(0,1fr); }
+  .encounter-row .data-actions { grid-column: 1 / -1; }
+  .encounter-when { margin-left: 0; width: 100%; }
+  .encounter-header { gap: 12px; }
+}
+
 /* ── Certificado digital ─────────────────────────────────────────────────── */
 .cert-status { display: flex; gap: 13px; align-items: flex-start; padding: 16px 18px; background: #fbf0e2; border: 1px solid #e6c99b; border-radius: 10px; color: #7d5220; }
 .cert-status.active { background: #e6f0e8; border-color: #bcd9c3; color: #2c5236; }

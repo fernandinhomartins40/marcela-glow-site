@@ -305,6 +305,11 @@ model Appointment {
   patient     Patient?   @relation(fields: [patientId], references: [id], onDelete: SetNull)
   confirmedBy User?      @relation("AppointmentConfirmer", fields: [confirmedById], references: [id], onDelete: SetNull)
 
+  // Tudo que foi registrado durante o atendimento
+  records       MedicalRecord[]
+  prescriptions Prescription[]
+  sessions      ProcedureSession[]
+
   @@index([tenantId, scheduledAt])
   @@index([tenantId, status])
 }
@@ -441,6 +446,9 @@ model MedicalRecord {
   history     String?
   /// Prontuário assinado não pode mais ser alterado
   lockedAt    DateTime?
+  /// Consulta que originou o registro. Opcional: retorno por telefone e
+  /// encaixe também geram prontuário, sem passar pela agenda.
+  appointmentId String?
 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -448,7 +456,11 @@ model MedicalRecord {
   patient     Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
   tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   createdBy   User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
   attachments Attachment[]
+
+  @@index([patientId, occurredAt])
+  @@index([appointmentId])
 }
 
 model ProcedureSession {
@@ -461,12 +473,17 @@ model ProcedureSession {
   beforePhotoUrl String?
   afterPhotoUrl  String?
   priceCents  Int?
+  /// Consulta em que o procedimento foi realizado
+  appointmentId String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
   procedure Procedure? @relation(fields: [procedureId], references: [id], onDelete: SetNull)
   tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  @@index([appointmentId])
 }
 
 /// Documento clínico entregue à paciente: receita, pedido de exame ou
@@ -493,6 +510,8 @@ model Prescription {
   validUntil     DateTime?
   /// Registrado quando a paciente abre o documento no portal
   viewedAt       DateTime?
+  /// Consulta em que o documento foi emitido
+  appointmentId  String?
 
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
@@ -500,6 +519,7 @@ model Prescription {
   patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
   tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   signedBy User?  @relation("PrescriptionSigner", fields: [signedById], references: [id], onDelete: SetNull)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
   items   PrescriptionItem[]
 
   @@index([tenantId, kind, status])
