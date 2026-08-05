@@ -34,7 +34,7 @@ import type { Patient } from './Patients'
 
 type CatalogKind = 'MEDICATION' | 'EXAM' | 'GUIDANCE' | 'RECORD_TEMPLATE'
 type Control = 'COMMON' | 'ANTIMICROBIAL' | 'CONTROLLED'
-type DocumentKind = 'PRESCRIPTION' | 'EXAM_REQUEST' | 'GUIDANCE' | 'CERTIFICATE'
+export type DocumentKind = 'PRESCRIPTION' | 'EXAM_REQUEST' | 'GUIDANCE' | 'CERTIFICATE'
 
 export interface CatalogItem {
   id: string
@@ -467,10 +467,9 @@ export function ClinicalDocuments() {
             </button>
           ))}
         </div>
-        <button className="primary" onClick={() => setEditing('new')}>
-          <Plus size={15} />
-          {DOC_META[kind].singular}
-        </button>
+        <span className="hint" style={{ marginLeft: 'auto' }}>
+          Para emitir, abra o atendimento da paciente
+        </span>
       </Toolbar>
 
       {query.isLoading ? (
@@ -478,13 +477,7 @@ export function ClinicalDocuments() {
       ) : !docs.length ? (
         <EmptyState
           title={`Nenhuma ${DOC_META[kind].singular.toLowerCase()}`}
-          description="Documentos assinados ficam disponíveis no portal da paciente com código de verificação."
-          action={
-            <button className="primary" onClick={() => setEditing('new')}>
-              <Plus size={15} />
-              Criar
-            </button>
-          }
+          description="Emita durante a consulta, em Atendimento: o documento já sai com a paciente certa e vinculado ao atendimento. Aqui você assina e envia o que ficou pendente."
         />
       ) : (
         <div className="data-list">
@@ -558,8 +551,9 @@ export function ClinicalDocuments() {
       )}
 
       {signing && (
-        <OtpPrompt
-          document={signing}
+        <SignDocumentPrompt
+          title={signing.title}
+          patientName={signing.patient.name}
           pending={sign.isPending}
           error={sign.isError ? errorMessage(sign.error) : null}
           onCancel={() => setSigning(null)}
@@ -588,14 +582,16 @@ export function ClinicalDocuments() {
  * Pede o código do aplicativo. A autorização é sempre da médica, no momento da
  * assinatura — o sistema não guarda credencial capaz de assinar sozinho.
  */
-function OtpPrompt({
-  document,
+export function SignDocumentPrompt({
+  title,
+  patientName,
   pending,
   error,
   onCancel,
   onConfirm,
 }: {
-  document: ClinicalDocument
+  title: string
+  patientName: string
   pending: boolean
   error: string | null
   onCancel: () => void
@@ -606,7 +602,7 @@ function OtpPrompt({
   return (
     <Modal
       title="Assinar documento"
-      subtitle={`${document.title} — ${document.patient.name}`}
+      subtitle={`${title} — ${patientName}`}
       onClose={onCancel}
       footer={
         <>
@@ -693,18 +689,27 @@ function SignResult({
   )
 }
 
-function DocumentForm({
+/**
+ * @param fixedPatient Emissão dentro do atendimento: a paciente já está
+ *        definida, então some o seletor e não há como errar de paciente.
+ * @param appointmentId Vincula o documento à consulta que o originou.
+ */
+export function DocumentForm({
   kind,
   document,
+  fixedPatient,
+  appointmentId,
   onClose,
   onSaved,
 }: {
   kind: DocumentKind
   document: ClinicalDocument | null
+  fixedPatient?: { id: string; name: string }
+  appointmentId?: string
   onClose: () => void
   onSaved: () => void
 }) {
-  const [patientId, setPatientId] = React.useState(document?.patient.id ?? '')
+  const [patientId, setPatientId] = React.useState(document?.patient.id ?? fixedPatient?.id ?? '')
   const [title, setTitle] = React.useState(document?.title ?? '')
   const [instructions, setInstructions] = React.useState(document?.instructions ?? '')
   const [items, setItems] = React.useState<DocItem[]>(document?.items ?? [])
@@ -713,6 +718,8 @@ function DocumentForm({
   const patients = useQuery({
     queryKey: ['patients', '', false],
     queryFn: async () => (await api.get('/admin/patients')).data as Patient[],
+    // Dentro do atendimento a paciente já é conhecida
+    enabled: !fixedPatient && !document,
   })
 
   // Medicamentos para receita, exames para pedido, orientações para o resto
@@ -727,7 +734,7 @@ function DocumentForm({
 
   const save = useMutation({
     mutationFn: async () => {
-      const payload = { patientId, kind, title, instructions, items }
+      const payload = { patientId, kind, title, instructions, items, ...(appointmentId ? { appointmentId } : {}) }
       if (document) await api.put(`/clinical/documents/${document.id}`, payload)
       else await api.post('/clinical/documents', payload)
     },
@@ -770,7 +777,7 @@ function DocumentForm({
   return (
     <Modal
       title={document ? 'Editar documento' : DOC_META[kind].singular}
-      subtitle={document?.patient.name}
+      subtitle={document?.patient.name ?? fixedPatient?.name}
       onClose={onClose}
       wide
       footer={
@@ -783,7 +790,7 @@ function DocumentForm({
       }
     >
       <div className="form-grid">
-        {!document && (
+        {!document && !fixedPatient && (
           <Field label="Paciente" required>
             <select value={patientId} onChange={(e) => setPatientId(e.target.value)}>
               <option value="">Selecione…</option>

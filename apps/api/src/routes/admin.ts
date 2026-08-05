@@ -204,9 +204,14 @@ router.get('/patients/:id', requirePermission('PATIENT_READ', 'RECORD_READ'), as
       where: { id: String(req.params.id), tenantId: req.user!.tenantId },
       include: {
         appointments: { include: { procedure: true }, orderBy: { createdAt: 'desc' } },
-        records: { include: { attachments: true }, orderBy: { createdAt: 'desc' } },
+        records: {
+          include: { attachments: true, appointment: { select: { id: true, scheduledAt: true } } },
+          orderBy: { createdAt: 'desc' },
+        },
         sessions: { include: { procedure: true }, orderBy: { performedAt: 'desc' } },
-        prescriptions: { orderBy: { createdAt: 'desc' } },
+        // A ficha mostra o documento como ele é: com os itens estruturados
+        prescriptions: { include: { items: true }, orderBy: { createdAt: 'desc' } },
+        attachments: { orderBy: { createdAt: 'desc' } },
         messages: { orderBy: { createdAt: 'desc' }, take: 20 },
       },
     })
@@ -517,20 +522,20 @@ router.get('/prescriptions', requirePermission('PRESCRIPTION_READ'), async (req,
   }
 })
 
-router.post('/prescriptions', requirePermission('PRESCRIPTION_WRITE'), async (req, res, next) => {
-  try {
-    const body = prescriptionSchema.parse(req.body)
-    const prescription = await prisma.prescription.create({
-      data: {
-        ...body,
-        tenantId: req.user!.tenantId,
-        sentAt: body.status === 'SENT' ? new Date() : undefined,
-      },
-    })
-    res.status(201).json(prescription)
-  } catch (err) {
-    next(err)
-  }
+/**
+ * Aposentado em favor de POST /clinical/documents, que emite o documento com
+ * itens estruturados, prazo de validade e checagem do nível de assinatura
+ * exigido pela Lei 14.063/2020. Esta rota criava receita em texto corrido, sem
+ * validade em farmácia — mantida apenas para não quebrar cliente antigo.
+ */
+router.post('/prescriptions', requirePermission('PRESCRIPTION_WRITE'), async (_req: Request, _res: Response, next: NextFunction) => {
+  next(
+    new AppError(
+      'Emita o documento pelo atendimento da paciente: as receitas agora saem com itens estruturados e assinatura válida.',
+      410,
+      'ENDPOINT_RETIRED',
+    ),
+  )
 })
 
 /** Prescrição assinada tem valor legal: só rascunho pode ser alterado. */
@@ -582,6 +587,10 @@ router.patch('/prescriptions/:id/sign', requirePermission('PRESCRIPTION_SIGN'), 
       include: { patient: true },
     })
     if (!existing) throw new NotFoundError('Prescricao')
+    // Reassinar rebaixaria uma assinatura qualificada para a interna
+    if (existing.signedAt) {
+      throw new AppError('Documento já assinado.', 409, 'ALREADY_SIGNED')
+    }
 
     const verificationCode = randomToken(18)
     const payload = {

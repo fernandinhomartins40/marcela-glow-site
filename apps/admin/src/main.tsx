@@ -4,8 +4,8 @@ import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient
 import axios from 'axios'
 import {
   CalendarDays,
+  FileSignature,
   FileText,
-  HeartPulse,
   LayoutDashboard,
   LogOut,
   MessageSquare,
@@ -20,7 +20,6 @@ import marbleTexture from './assets/marble-texture.jpg'
 import { Schedule } from './components/Schedule'
 import { ScheduleSettings } from './components/ScheduleSettings'
 import { Patients } from './components/Patients'
-import { Records } from './components/Records'
 import { Cms, Leads, Procedures } from './components/Catalog'
 import { ClinicalCatalog, ClinicalDocuments } from './components/Clinical'
 import { Certificate } from './components/Certificate'
@@ -42,7 +41,7 @@ type Tab =
   | 'encounter'
   | 'appointments'
   | 'patients'
-  | 'records'
+  | 'documents'
   | 'registry'
   | 'leads'
   | 'cms'
@@ -129,31 +128,28 @@ function Login() {
   )
 }
 
+/**
+ * Só o que o painel consome direto. Pacientes, leads, documentos e catálogo
+ * são carregados pela própria aba, com busca e filtro — não faz sentido puxar
+ * tudo isso a cada abertura do painel.
+ */
 function useAdminData() {
   return useQuery({
     queryKey: ['admin'],
     queryFn: async () => {
-      const [dashboard, patients, appointments, leads, prescriptions, cms, notifications, settings, audit, users] = await Promise.all([
+      const [dashboard, appointments, cms, settings, audit, users] = await Promise.all([
         api.get('/admin/dashboard'),
-        api.get('/admin/patients'),
         // A agenda precisa da semana inteira, não só da primeira página
         api.get('/appointments', { params: { limit: 200 } }),
-        api.get('/admin/leads'),
-        api.get('/admin/prescriptions'),
         api.get('/admin/cms'),
-        api.get('/admin/notifications'),
         api.get('/admin/settings'),
         api.get('/admin/audit'),
         api.get('/admin/users'),
       ])
       return {
         dashboard: dashboard.data,
-        patients: patients.data,
         appointments: appointments.data.data ?? [],
-        leads: leads.data,
-        prescriptions: prescriptions.data,
         cms: cms.data,
-        notifications: notifications.data,
         settings: settings.data,
         audit: audit.data,
         users: users.data,
@@ -192,12 +188,13 @@ function Shell() {
     staleTime: 5 * 60 * 1000,
   })
   const nav = [
-    // Ordem do dia a dia: atender → agenda → pacientes → histórico → cadastros
+    // Ordem do dia a dia: atender → agenda → pacientes → documentos → cadastros.
+    // Prontuário não é um item: ele vive dentro da paciente, onde a médica o procura.
     ['dashboard', LayoutDashboard, 'Dashboard'],
     ['encounter', Stethoscope, 'Atendimento'],
     ['appointments', CalendarDays, 'Agenda'],
     ['patients', Users, 'Pacientes'],
-    ['records', HeartPulse, 'Prontuário'],
+    ['documents', FileSignature, 'Documentos'],
     ['registry', Sparkles, 'Cadastros'],
     ['leads', MessageSquare, 'Leads'],
     ['cms', FileText, 'CMS'],
@@ -240,7 +237,7 @@ function Panel({ tab, data }: { tab: Tab; data: any }) {
   if (tab === 'patients') return <Patients />
   if (tab === 'appointments') return <Appointments appointments={data.appointments} />
   if (tab === 'encounter') return <Encounter />
-  if (tab === 'records') return <ClinicalArea patients={data.patients} />
+  if (tab === 'documents') return <ClinicalDocuments />
   if (tab === 'registry') return <RegistryArea />
   if (tab === 'leads') return <Leads />
   if (tab === 'cms') return <Cms cms={data.cms} />
@@ -268,40 +265,6 @@ function Dashboard({ data }: { data: any }) {
 
 function Appointments({ appointments }: { appointments: any[] }) {
   return <Schedule appointments={appointments} />
-}
-
-/**
- * Prontuário: o que já foi produzido — documentos emitidos, procedimentos
- * realizados e arquivos. O registro clínico em si nasce em Atendimento.
- */
-function ClinicalArea({ patients }: { patients: any[] }) {
-  const [area, setArea] = React.useState<'documents' | 'history' | 'files'>('documents')
-  const areas = [
-    ['documents', 'Documentos'],
-    ['history', 'Procedimentos realizados'],
-    ['files', 'Arquivos'],
-  ] as const
-
-  return (
-    <>
-      <div className="area-tabs" role="tablist">
-        {areas.map(([id, label]) => (
-          <button
-            key={id}
-            role="tab"
-            aria-selected={area === id}
-            className={area === id ? 'active' : ''}
-            onClick={() => setArea(id)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      {area === 'documents' && <ClinicalDocuments />}
-      {area === 'history' && <Records />}
-      {area === 'files' && <FileUpload patients={patients} />}
-    </>
-  )
 }
 
 /**
@@ -337,45 +300,6 @@ function RegistryArea() {
       {area === 'exams' && <ClinicalCatalog only="EXAM" />}
       {area === 'guidance' && <ClinicalCatalog only={['GUIDANCE', 'RECORD_TEMPLATE']} />}
     </>
-  )
-}
-
-function FileUpload({ patients }: { patients: any[] }) {
-  const client = useQueryClient()
-  const [patientId, setPatientId] = React.useState(patients[0]?.id ?? '')
-  const [file, setFile] = React.useState<File | null>(null)
-  const upload = useMutation({
-    mutationFn: async () => {
-      if (!file) return
-      const presign = await api.post('/admin/files/presign', {
-        fileName: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        sizeBytes: file.size,
-        patientId,
-        visibility: 'PATIENT_VISIBLE',
-      })
-      await axios.put(presign.data.uploadUrl, file, { headers: { 'Content-Type': file.type || 'application/octet-stream' } })
-      await api.post('/admin/files/complete', {
-        fileName: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        sizeBytes: file.size,
-        patientId,
-        visibility: 'PATIENT_VISIBLE',
-        storageKey: presign.data.storageKey,
-      })
-    },
-    onSuccess: () => { setFile(null); client.invalidateQueries({ queryKey: ['admin'] }) },
-  })
-  return (
-    <section className="list">
-      <h2>Upload S3</h2>
-      <select value={patientId} onChange={(e) => setPatientId(e.target.value)}>
-        {patients.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-      </select>
-      <input type="file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-      <button onClick={() => upload.mutate()} disabled={!file || !patientId}>Enviar arquivo</button>
-      {upload.isError && <p className="error">{(upload.error as Error).message}</p>}
-    </section>
   )
 }
 

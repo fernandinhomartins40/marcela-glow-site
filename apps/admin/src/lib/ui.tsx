@@ -1,6 +1,6 @@
 import React from 'react'
 import axios from 'axios'
-import { AlertTriangle, Loader2, X } from 'lucide-react'
+import { AlertTriangle, Loader2, Upload, X } from 'lucide-react'
 
 export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' })
 api.interceptors.request.use((config) => {
@@ -169,6 +169,66 @@ export function EmptyState({ title, description, action }: { title: string; desc
 
 export function Toolbar({ children }: { children: React.ReactNode }) {
   return <div className="toolbar">{children}</div>
+}
+
+/**
+ * Envio de arquivo já vinculado à paciente (exame, foto, laudo). O upload vai
+ * direto ao S3 por URL assinada; a API só registra o anexo no fim.
+ */
+export function FileUploadButton({
+  patientId,
+  onUploaded,
+  label = 'Anexar arquivo',
+}: {
+  patientId: string
+  onUploaded?: () => void
+  label?: string
+}) {
+  const inputRef = React.useRef<HTMLInputElement>(null)
+  const [pending, setPending] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+
+  async function upload(file: File) {
+    setPending(true)
+    setError(null)
+    try {
+      const meta = {
+        fileName: file.name,
+        mimeType: file.type || 'application/octet-stream',
+        sizeBytes: file.size,
+        patientId,
+        visibility: 'PATIENT_VISIBLE',
+      }
+      const presign = await api.post('/admin/files/presign', meta)
+      await axios.put(presign.data.uploadUrl, file, { headers: { 'Content-Type': meta.mimeType } })
+      await api.post('/admin/files/complete', { ...meta, storageKey: presign.data.storageKey })
+      onUploaded?.()
+    } catch (err) {
+      setError(errorMessage(err, 'Não foi possível enviar o arquivo.'))
+    } finally {
+      setPending(false)
+      if (inputRef.current) inputRef.current.value = ''
+    }
+  }
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        hidden
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) upload(file)
+        }}
+      />
+      <button className="primary" onClick={() => inputRef.current?.click()} disabled={pending}>
+        {pending ? <Loader2 size={14} className="spin" /> : <Upload size={15} />}
+        {pending ? 'Enviando...' : label}
+      </button>
+      {error && <p className="error">{error}</p>}
+    </>
+  )
 }
 
 export function formatMoney(cents?: number | null) {

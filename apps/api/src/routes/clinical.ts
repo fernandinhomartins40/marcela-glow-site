@@ -538,7 +538,7 @@ router.get('/encounters/:appointmentId', ...staffOnly, async (req: Request, res:
 
     const patientId = appointment.patientId
 
-    const [current, history, documents, sessions] = await Promise.all([
+    const [current, history, documents, sessions, attachments] = await Promise.all([
       // Registros feitos nesta consulta
       prisma.medicalRecord.findMany({
         where: { tenantId, appointmentId: appointment.id },
@@ -563,6 +563,12 @@ router.get('/encounters/:appointmentId', ...staffOnly, async (req: Request, res:
         orderBy: { performedAt: 'desc' },
         take: 30,
       }),
+      // Exames e fotos da paciente, disponíveis durante a consulta
+      prisma.attachment.findMany({
+        where: { tenantId, patientId },
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+      }),
     ])
 
     await audit(req, 'READ', 'encounter', appointment.id, { patientId, includesMedicalRecord: true })
@@ -581,6 +587,7 @@ router.get('/encounters/:appointmentId', ...staffOnly, async (req: Request, res:
       history,
       documents,
       sessions,
+      attachments,
     })
   } catch (err) {
     next(err)

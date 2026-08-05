@@ -2,15 +2,22 @@ import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
+  BookOpen,
   CalendarDays,
   CheckCircle2,
   ChevronRight,
+  Download,
+  FileSignature,
   FileText,
+  FlaskConical,
   HeartPulse,
   Lock,
+  Paperclip,
   Pencil,
+  Pill,
   Plus,
   Search,
+  Send,
   Stethoscope,
   UserRound,
 } from 'lucide-react'
@@ -20,6 +27,7 @@ import {
   EmptyState,
   errorMessage,
   Field,
+  FileUploadButton,
   formatDateBR,
   formatMoney,
   FormRow,
@@ -38,6 +46,7 @@ import {
   fullDayLabel,
   statusMeta,
 } from '../lib/schedule'
+import { DocumentForm, SignDocumentPrompt, type DocumentKind } from './Clinical'
 import type { Patient } from './Patients'
 
 interface AgendaEntry {
@@ -77,6 +86,7 @@ interface Encounter {
   history: MedicalRecord[]
   documents: { id: string; kind: string; title: string; status: string; createdAt: string; items: any[] }[]
   sessions: { id: string; performedAt: string; priceCents: number | null; procedure: { title: string } | null }[]
+  attachments: { id: string; fileName: string; mimeType: string | null; sizeBytes: number | null; createdAt: string }[]
 }
 
 const RECORD_TYPES = [
@@ -514,7 +524,7 @@ function NewEncounterModal({
 
 function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onBack: () => void }) {
   const client = useQueryClient()
-  const [tab, setTab] = React.useState<'record' | 'history' | 'documents' | 'procedures'>('record')
+  const [tab, setTab] = React.useState<'record' | 'history' | 'documents' | 'procedures' | 'files'>('record')
   const [creating, setCreating] = React.useState(false)
   const [editing, setEditing] = React.useState<MedicalRecord | null>(null)
   const [completing, setCompleting] = React.useState(false)
@@ -553,6 +563,7 @@ function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onB
     ['history', `Histórico (${data.history.length})`],
     ['documents', `Documentos (${data.documents.length})`],
     ['procedures', `Procedimentos (${data.sessions.length})`],
+    ['files', `Arquivos (${data.attachments?.length ?? 0})`],
   ] as const
 
   return (
@@ -653,7 +664,7 @@ function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onB
 
       {tab === 'documents' && (
         <EncounterDocuments
-          patientId={patient.id}
+          patient={{ id: patient.id, name: patient.name }}
           appointmentId={appointmentId}
           documents={data.documents}
           onChanged={refresh}
@@ -667,6 +678,10 @@ function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onB
           sessions={data.sessions}
           onChanged={refresh}
         />
+      )}
+
+      {tab === 'files' && (
+        <EncounterFiles patientId={patient.id} attachments={data.attachments ?? []} onChanged={refresh} />
       )}
 
       {(creating || editing) && (
@@ -908,50 +923,206 @@ function RecordForm({
   )
 }
 
-/** Documentos emitidos, com atalho para criar já vinculado a esta consulta. */
+/**
+ * Documentos emitidos na consulta. Emite aqui mesmo: a paciente já está
+ * definida e o documento nasce vinculado a este atendimento — sem trocar de
+ * tela e sem escolher paciente de novo.
+ */
 function EncounterDocuments({
-  patientId,
+  patient,
   appointmentId,
   documents,
   onChanged,
 }: {
-  patientId: string
+  patient: { id: string; name: string }
   appointmentId: string
   documents: Encounter['documents']
   onChanged: () => void
 }) {
+  const [creating, setCreating] = React.useState<DocumentKind | null>(null)
+  const [signing, setSigning] = React.useState<Encounter['documents'][number] | null>(null)
+
+  const sign = useMutation({
+    mutationFn: async ({ id, otp }: { id: string; otp?: string }) =>
+      (await api.post(`/clinical/documents/${id}/sign`, otp ? { otp } : {})).data,
+    onSuccess: () => {
+      setSigning(null)
+      onChanged()
+    },
+  })
+  const send = useMutation({
+    mutationFn: (id: string) => api.post(`/clinical/documents/${id}/send`),
+    onSuccess: onChanged,
+  })
+
+  // Com certificado ativo, a assinatura pede o código do app da médica
+  const signatureConfig = useQuery({
+    queryKey: ['signature-config'],
+    queryFn: async () => (await api.get('/clinical/signature/config')).data as { config: { enabled: boolean } | null },
+  })
+  const cloudReady = Boolean(signatureConfig.data?.config?.enabled)
+
   return (
     <>
       <Toolbar>
-        <span className="toolbar-title">Receitas, exames e orientações</span>
-        <span className="hint" style={{ marginLeft: 'auto' }}>
-          Emita em Prontuário → Documentos
-        </span>
+        <span className="toolbar-title">Emitir para {patient.name.split(' ')[0]}</span>
+        <button className="primary" onClick={() => setCreating('PRESCRIPTION')}>
+          <Pill size={15} />
+          Receita
+        </button>
+        <button className="primary" onClick={() => setCreating('EXAM_REQUEST')}>
+          <FlaskConical size={15} />
+          Pedido de exame
+        </button>
+        <button className="primary" onClick={() => setCreating('GUIDANCE')}>
+          <BookOpen size={15} />
+          Orientações
+        </button>
       </Toolbar>
 
       {!documents.length ? (
-        <EmptyState title="Nenhum documento" description="Receitas e pedidos de exame desta paciente aparecem aqui." />
+        <EmptyState
+          title="Nenhum documento nesta consulta"
+          description="Emita receita, pedido de exame ou orientações. Tudo já sai vinculado a este atendimento."
+          action={
+            <button className="primary" onClick={() => setCreating('PRESCRIPTION')}>
+              <Plus size={15} />
+              Nova receita
+            </button>
+          }
+        />
       ) : (
         <div className="data-list">
-          {documents.map((doc) => (
-            <article key={doc.id} className="data-row">
+          {documents.map((doc) => {
+            const signed = doc.status === 'SIGNED' || doc.status === 'SENT'
+            return (
+              <article key={doc.id} className="data-row">
+                <div className="data-main static">
+                  <span className="data-avatar">
+                    <FileText size={16} />
+                  </span>
+                  <span className="data-text">
+                    <strong>
+                      {doc.title}
+                      <span className={`chip ${doc.status === 'SIGNED' ? 'success' : doc.status === 'SENT' ? 'info' : 'neutral'}`}>
+                        {doc.status === 'SIGNED' ? 'Assinado' : doc.status === 'SENT' ? 'Enviado' : 'Rascunho'}
+                      </span>
+                    </strong>
+                    <span className="data-meta">
+                      <span>{formatDateBR(doc.createdAt)}</span>
+                      {doc.items?.length > 0 && <span>{doc.items.length} item(ns)</span>}
+                    </span>
+                  </span>
+                </div>
+                <span className="data-actions">
+                  <button
+                    onClick={() => (cloudReady ? setSigning(doc) : sign.mutate({ id: doc.id }))}
+                    disabled={signed || sign.isPending}
+                    title={signed ? 'Já assinado' : 'Assinar'}
+                    aria-label="Assinar documento"
+                  >
+                    <FileSignature size={14} />
+                  </button>
+                  <button
+                    onClick={() => send.mutate(doc.id)}
+                    disabled={send.isPending}
+                    title="Enviar à paciente"
+                    aria-label="Enviar documento"
+                  >
+                    <Send size={14} />
+                  </button>
+                </span>
+              </article>
+            )
+          })}
+        </div>
+      )}
+
+      {(sign.isError || send.isError) && <p className="error">{errorMessage(sign.error ?? send.error)}</p>}
+
+      {creating && (
+        <DocumentForm
+          kind={creating}
+          document={null}
+          fixedPatient={patient}
+          appointmentId={appointmentId}
+          onClose={() => setCreating(null)}
+          onSaved={() => {
+            setCreating(null)
+            onChanged()
+          }}
+        />
+      )}
+
+      {signing && (
+        <SignDocumentPrompt
+          title={signing.title}
+          patientName={patient.name}
+          pending={sign.isPending}
+          error={sign.isError ? errorMessage(sign.error) : null}
+          onCancel={() => setSigning(null)}
+          onConfirm={(otp) => sign.mutate({ id: signing.id, otp })}
+        />
+      )}
+    </>
+  )
+}
+
+/** Exames, fotos e laudos da paciente — anexar e abrir sem sair da consulta. */
+function EncounterFiles({
+  patientId,
+  attachments,
+  onChanged,
+}: {
+  patientId: string
+  attachments: Encounter['attachments']
+  onChanged: () => void
+}) {
+  const [opening, setOpening] = React.useState<string | null>(null)
+
+  async function open(id: string) {
+    setOpening(id)
+    try {
+      const { data } = await api.get(`/admin/files/${id}/download`)
+      window.open(data.downloadUrl, '_blank', 'noopener')
+    } finally {
+      setOpening(null)
+    }
+  }
+
+  return (
+    <>
+      <Toolbar>
+        <span className="toolbar-title">Exames, fotos e laudos</span>
+        <FileUploadButton patientId={patientId} onUploaded={onChanged} />
+      </Toolbar>
+
+      {!attachments.length ? (
+        <EmptyState
+          title="Nenhum arquivo"
+          description="Anexe exames trazidos pela paciente ou fotos do antes e depois."
+        />
+      ) : (
+        <div className="data-list">
+          {attachments.map((file) => (
+            <article key={file.id} className="data-row">
               <div className="data-main static">
                 <span className="data-avatar">
-                  <FileText size={16} />
+                  <Paperclip size={16} />
                 </span>
                 <span className="data-text">
-                  <strong>
-                    {doc.title}
-                    <span className={`chip ${doc.status === 'SIGNED' ? 'success' : 'neutral'}`}>
-                      {doc.status === 'SIGNED' ? 'Assinado' : doc.status === 'SENT' ? 'Enviado' : 'Rascunho'}
-                    </span>
-                  </strong>
+                  <strong>{file.fileName}</strong>
                   <span className="data-meta">
-                    <span>{formatDateBR(doc.createdAt)}</span>
-                    {doc.items?.length > 0 && <span>{doc.items.length} item(ns)</span>}
+                    <span>{formatDateBR(file.createdAt)}</span>
+                    {file.sizeBytes != null && <span>{Math.max(1, Math.round(file.sizeBytes / 1024))} KB</span>}
                   </span>
                 </span>
               </div>
+              <span className="data-actions">
+                <button onClick={() => open(file.id)} disabled={opening === file.id} title="Abrir" aria-label="Abrir arquivo">
+                  <Download size={14} />
+                </button>
+              </span>
             </article>
           ))}
         </div>
