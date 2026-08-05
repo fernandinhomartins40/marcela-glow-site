@@ -179,6 +179,53 @@ function initials(fullName?: string) {
   return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase()
 }
 
+/**
+ * A sidebar segue a frequência de uso, não a arquitetura do sistema: o que a
+ * clínica abre todo dia fica no topo, a configuração desce para o rodapé.
+ * O subtítulo de cada item responde "para que serve isto?" sem precisar clicar.
+ */
+const NAV_GROUPS = [
+  {
+    label: 'Dia a dia',
+    items: [
+      ['dashboard', LayoutDashboard, 'Dashboard', 'Visão geral do movimento da clínica'],
+      ['encounter', Stethoscope, 'Atendimento', 'Atender a paciente e registrar o prontuário'],
+      ['appointments', CalendarDays, 'Agenda', 'Consultas marcadas e horários livres'],
+    ],
+  },
+  {
+    label: 'Clínico',
+    items: [
+      ['patients', Users, 'Pacientes', 'Cadastro e prontuário completo de cada paciente'],
+      ['documents', FileSignature, 'Documentos', 'Assinar e enviar receitas e pedidos de exame'],
+      ['registry', Sparkles, 'Cadastros', 'Procedimentos, medicamentos, exames e modelos'],
+    ],
+  },
+  {
+    label: 'Divulgação',
+    items: [
+      ['leads', MessageSquare, 'Leads', 'Contatos interessados vindos do site'],
+      ['cms', FileText, 'Site', 'Textos e publicações do site'],
+    ],
+  },
+  {
+    label: 'Administração',
+    items: [
+      ['security', UserRound, 'Equipe e acessos', 'Quem usa o painel e registro de auditoria'],
+      ['settings', Settings, 'Ajustes', 'Horários de atendimento e certificado digital'],
+    ],
+  },
+] as const satisfies readonly {
+  label: string
+  items: readonly (readonly [Tab, typeof LayoutDashboard, string, string])[]
+}[]
+
+const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items.map((item) => ({ group: group.label, item })))
+
+const labelOf = (tab: Tab) => NAV_ITEMS.find(({ item }) => item[0] === tab)?.item[2] ?? ''
+const hintOf = (tab: Tab) => NAV_ITEMS.find(({ item }) => item[0] === tab)?.item[3] ?? ''
+const groupOf = (tab: Tab) => NAV_ITEMS.find(({ item }) => item[0] === tab)?.group ?? ''
+
 function Shell() {
   const [tab, setTab] = React.useState<Tab>('dashboard')
   const data = useAdminData()
@@ -187,33 +234,45 @@ function Shell() {
     queryFn: async () => (await api.get('/auth/me')).data,
     staleTime: 5 * 60 * 1000,
   })
-  const nav = [
-    // Ordem do dia a dia: atender → agenda → pacientes → documentos → cadastros.
-    // Prontuário não é um item: ele vive dentro da paciente, onde a médica o procura.
-    ['dashboard', LayoutDashboard, 'Dashboard'],
-    ['encounter', Stethoscope, 'Atendimento'],
-    ['appointments', CalendarDays, 'Agenda'],
-    ['patients', Users, 'Pacientes'],
-    ['documents', FileSignature, 'Documentos'],
-    ['registry', Sparkles, 'Cadastros'],
-    ['leads', MessageSquare, 'Leads'],
-    ['cms', FileText, 'CMS'],
-    ['security', UserRound, 'Segurança'],
-    ['settings', Settings, 'Ajustes'],
-  ] as const
-
   return (
     <div className="app-shell">
       <aside>
         <div className="brand"><Sparkles size={22} /><strong>Marcela CRM</strong></div>
-        {nav.map(([id, Icon, label]) => (
-          <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id as Tab)}><Icon size={18} />{label}</button>
-        ))}
-        <button onClick={() => { localStorage.removeItem('admin_token'); window.location.reload() }}><LogOut size={18} />Sair</button>
+
+        <nav className="side-nav">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.label} className="nav-group">
+              <span className="nav-group-label">{group.label}</span>
+              {group.items.map(([id, Icon, label, hint]) => (
+                <button
+                  key={id}
+                  className={tab === id ? 'active' : ''}
+                  onClick={() => setTab(id as Tab)}
+                  title={hint}
+                  aria-current={tab === id ? 'page' : undefined}
+                >
+                  <Icon size={17} />
+                  {label}
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
+
+        <button
+          className="nav-signout"
+          onClick={() => { localStorage.removeItem('admin_token'); window.location.reload() }}
+        >
+          <LogOut size={17} />Sair
+        </button>
       </aside>
       <main>
         <header>
-          <div><span className="eyebrow">Clínica Dra. Marcela</span><h1>{nav.find(([id]) => id === tab)?.[2]}</h1></div>
+          <div>
+            <span className="eyebrow">{groupOf(tab)}</span>
+            <h1>{labelOf(tab)}</h1>
+            {hintOf(tab) && <p className="page-hint">{hintOf(tab)}</p>}
+          </div>
           {me.data && (
             <div className="who" title={me.data.email}>
               <span className="who-avatar">{initials(me.data.name)}</span>

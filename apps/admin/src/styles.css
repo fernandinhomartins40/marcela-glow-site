@@ -43,21 +43,35 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .demo-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .auth-panel .demo-button { min-height: 38px; background: transparent; border: 1px solid rgba(156,130,104,.55); color: var(--espresso); padding: 9px 10px; }
 .error { color: #a33131; font-weight: 700; }
-.app-shell { min-height: 100vh; display: grid; grid-template-columns: 232px 1fr; background: var(--marble); }
-aside { background: var(--espresso); color: var(--cream-soft); padding: 18px 12px; display: flex; flex-direction: column; gap: 3px; border-right: 1px solid rgba(156,130,104,.3); position: relative; }
-aside button { justify-content: flex-start; min-height: 38px; padding: 8px 12px; font-size: 13px; border-radius: 7px; background: transparent; color: rgba(255,250,242,.8); border: 1px solid transparent; position: relative; z-index: 1; }
+.app-shell { min-height: 100vh; display: grid; grid-template-columns: 244px 1fr; background: var(--marble); }
+aside { background: var(--espresso); color: var(--cream-soft); padding: 18px 12px; display: flex; flex-direction: column; border-right: 1px solid rgba(156,130,104,.3); position: relative; }
+aside button { justify-content: flex-start; min-height: 38px; padding: 8px 11px; font-size: 13px; border-radius: 7px; background: transparent; color: rgba(255,250,242,.8); border: 1px solid transparent; position: relative; z-index: 1; gap: 10px; }
 aside button:hover { background: rgba(255,250,242,.08); color: var(--cream-soft); transform: none; }
+aside button svg { flex: none; opacity: .72; }
+aside button:hover svg, aside button.active svg { opacity: 1; }
+/* O item ativo é uma pastilha clara: some do fundo escuro sem precisar de peso extra */
 aside button.active { background: rgba(246,239,228,.94); color: var(--espresso); font-weight: 600; }
+
+/* Navegação agrupada por frequência de uso; rola sozinha se a lista crescer */
+.side-nav { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; margin: 2px -4px 0; padding: 0 4px; flex: 1; }
+.nav-group { display: flex; flex-direction: column; gap: 2px; }
+.nav-group-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,250,242,.36); padding: 0 11px 5px; }
+/* Sair fica colado no rodapé, separado do que é navegação */
+.nav-signout { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(246,239,228,.14); color: rgba(255,250,242,.62) !important; border-radius: 0 !important; }
+.nav-signout:hover { color: var(--cream-soft) !important; }
+/* Subtítulo da página: diz para que serve a tela sem exigir um clique */
+.page-hint { margin: 5px 0 0; font-size: 13px; color: var(--text-muted); max-width: 62ch; line-height: 1.5; }
 .brand { display: flex; align-items: center; gap: 9px; padding: 6px 10px 16px; margin-bottom: 6px; border-bottom: 1px solid rgba(246,239,228,.14); position: relative; z-index: 1; }
 /* A marca permanece na sidebar — é o único lugar do painel onde ela cabe */
 .brand strong { font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-size: 18px; font-weight: 500; letter-spacing: .02em; }
 /* Área de trabalho: sem watermark decorativo — é uma ferramenta, não uma vitrine */
 main { padding: 26px 30px; overflow: auto; position: relative; }
-header { display: flex; justify-content: space-between; gap: 18px; align-items: center; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid rgba(216,202,184,.7); position: relative; z-index: 1; }
+header { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid rgba(216,202,184,.7); position: relative; z-index: 1; }
 /* Título da página em sans-serif e escala de painel, não de landing page */
 header h1 { margin: 2px 0 0; font-family: inherit; font-size: 24px; line-height: 1.2; font-weight: 600; letter-spacing: -0.01em; color: var(--espresso); }
 /* Quem está usando o painel — substitui o antigo badge com jargão técnico */
-.who { display: inline-flex; align-items: center; gap: 9px; }
+/* O header alinha ao topo por causa do subtítulo; o avatar acompanha o título */
+.who { display: inline-flex; align-items: center; gap: 9px; flex: none; margin-top: 4px; }
 .who-avatar { width: 32px; height: 32px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--cream-deep); color: var(--espresso); font-size: 11px; font-weight: 600; }
 .who-text { display: grid; line-height: 1.3; }
 .who-text strong { font-size: 13px; font-weight: 600; }
@@ -465,4 +479,11 @@ main .encounter-row .data-actions button.encounter-open {
   .day-list li button { grid-template-columns: 56px minmax(0,1fr); grid-template-areas: "time body" "chip chip"; row-gap: 6px; }
   .day-list li button .chip { grid-area: chip; justify-self: start; }
 }
-@media (max-width: 860px) { .auth-panel, .app-shell, .two, .three, .stats { grid-template-columns: 1fr; } .auth-shell { padding: 16px; place-items: stretch; } .auth-panel { align-self: center; } .auth-copy { min-height: auto; padding: 28px 24px 20px; } .auth-copy::before { font-size: 68px; } .auth-panel .form { padding: 24px; border-left: 0; border-top: 1px solid rgba(216,202,184,.78); } .auth-portrait { width: min(260px, 76%); align-self: flex-start; } .auth-panel h1 { font-size: 52px; } .auth-panel h2 { font-size: 28px; } .auth-panel p { font-size: 20px; } aside { position: static; } main { padding: 22px 16px; } main::before { display: none; } header { align-items: flex-start; flex-direction: column; } header h1 { font-size: 46px; } .table article { grid-template-columns: 1fr; } }
+@media (max-width: 860px) { .auth-panel, .app-shell, .two, .three, .stats { grid-template-columns: 1fr; } .auth-shell { padding: 16px; place-items: stretch; } .auth-panel { align-self: center; } .auth-copy { min-height: auto; padding: 28px 24px 20px; } .auth-copy::before { font-size: 68px; } .auth-panel .form { padding: 24px; border-left: 0; border-top: 1px solid rgba(216,202,184,.78); } .auth-portrait { width: min(260px, 76%); align-self: flex-start; } .auth-panel h1 { font-size: 52px; } .auth-panel h2 { font-size: 28px; } .auth-panel p { font-size: 20px; } aside { position: static; } main { padding: 22px 16px; } main::before { display: none; } header { align-items: flex-start; flex-direction: column; } header h1 { font-size: 46px; } .table article { grid-template-columns: 1fr; }
+  /* Sem coluna lateral, a navegação vira uma faixa que quebra em linhas */
+  .side-nav { flex-direction: row; flex-wrap: wrap; gap: 6px 18px; overflow: visible; }
+  .nav-group { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 4px; }
+  .nav-group-label { width: 100%; padding: 4px 2px 0; }
+  .nav-signout { margin-top: 10px; padding-top: 10px; }
+  .page-hint { max-width: none; }
+}
