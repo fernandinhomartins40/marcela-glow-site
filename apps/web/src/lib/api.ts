@@ -100,6 +100,29 @@ export interface AppointmentPayload {
   phone: string
   procedure?: string
   message?: string
+  /** ISO 8601 do horário escolhido; ausente quando a paciente só pede contato */
+  scheduledAt?: string
+}
+
+export interface Slot {
+  startsAt: string
+  endsAt: string
+  label: string
+}
+
+export interface DayAvailability {
+  date: string
+  weekdayLabel: string
+  slots: Slot[]
+}
+
+export const availabilityApi = {
+  list: async (procedureId?: string, days = 14): Promise<DayAvailability[]> => {
+    const { data } = await api.get('/appointments/availability', {
+      params: { tenantSlug: TENANT_SLUG, days, ...(procedureId ? { procedureId } : {}) },
+    })
+    return data.days ?? []
+  },
 }
 
 export const appointmentsApi = {

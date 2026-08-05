@@ -9,6 +9,7 @@ import { addDays, addHours, randomToken, sha256, signJson, verifyJsonWithPublicK
 import { audit } from '../lib/audit'
 import { getVapidPublicKey } from '../lib/push'
 import { presignDownload, storageConfigured } from '../lib/storage'
+import { checkSlotAvailable, resolveEndsAt } from '../lib/scheduling'
 
 const router = Router()
 const TENANT_SLUG_DEFAULT = 'marcela-duch'
@@ -270,13 +271,30 @@ router.post('/appointments', async (req, res, next) => {
     })
     if (!patient) throw new UnauthorizedError()
 
+    // Valida o horário no servidor: a lista de slots pode ter ficado obsoleta
+    // entre a escolha da paciente e o envio do formulário.
+    let scheduledAt: Date | null = null
+    let endsAt: Date | null = null
+
+    if (body.scheduledAt) {
+      scheduledAt = new Date(body.scheduledAt)
+      const check = await checkSlotAvailable({
+        tenantId: patient.tenantId,
+        startsAt: scheduledAt,
+        procedureId: body.procedureId,
+      })
+      if (!check.ok) throw new AppError(check.reason!, 409, 'SLOT_UNAVAILABLE')
+      endsAt = await resolveEndsAt(patient.tenantId, scheduledAt, body.procedureId)
+    }
+
     const appointment = await prisma.appointment.create({
       data: {
         name: patient.name,
         email: patient.email,
         phone: patient.phone ?? '',
         message: body.message,
-        scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : undefined,
+        scheduledAt,
+        endsAt,
         procedureId: body.procedureId,
         patientId: patient.id,
         tenantId: patient.tenantId,

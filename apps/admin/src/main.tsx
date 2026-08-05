@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import draPortrait from './assets/dra-marcela-portrait.jpg'
 import marbleTexture from './assets/marble-texture.jpg'
+import { Schedule } from './components/Schedule'
 import './styles.css'
 
 const queryClient = new QueryClient()
@@ -117,7 +118,8 @@ function useAdminData() {
       const [dashboard, patients, appointments, leads, prescriptions, cms, notifications, settings, audit, users] = await Promise.all([
         api.get('/admin/dashboard'),
         api.get('/admin/patients'),
-        api.get('/appointments'),
+        // A agenda precisa da semana inteira, não só da primeira página
+        api.get('/appointments', { params: { limit: 200 } }),
         api.get('/admin/leads'),
         api.get('/admin/prescriptions'),
         api.get('/admin/cms'),
@@ -216,7 +218,7 @@ function Patients({ patients }: { patients: any[] }) {
 }
 
 function Appointments({ appointments }: { appointments: any[] }) {
-  return <section className="table">{appointments.map((a) => <article key={a.id}><strong>{a.name}</strong><span>{a.procedure?.title ?? 'Avaliação'}</span><span>{a.status}</span></article>)}</section>
+  return <Schedule appointments={appointments} />
 }
 
 function Leads({ leads }: { leads: any[] }) {

@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { CalendarPlus, Loader2, Send } from 'lucide-react'
 import { api, getErrorMessage, type Procedure } from '@/lib/api'
 import { Feedback, Panel } from './ui'
+import { SlotPicker } from './SlotPicker'
 
 type Intent = 'appointment' | 'message'
 
@@ -15,6 +16,7 @@ export function RequestCare({ procedures }: { procedures: Procedure[] }) {
   const client = useQueryClient()
   const [intent, setIntent] = React.useState<Intent>('appointment')
   const [procedureId, setProcedureId] = React.useState('')
+  const [slot, setSlot] = React.useState<string | null>(null)
   const [message, setMessage] = React.useState('')
   const [feedback, setFeedback] = React.useState('')
 
@@ -23,6 +25,7 @@ export function RequestCare({ procedures }: { procedures: Procedure[] }) {
       if (intent === 'appointment') {
         await api.post('/patient/appointments', {
           procedureId: procedureId || undefined,
+          scheduledAt: slot || undefined,
           message: message || undefined,
         })
       } else {
@@ -32,12 +35,16 @@ export function RequestCare({ procedures }: { procedures: Procedure[] }) {
     onSuccess: () => {
       setFeedback(
         intent === 'appointment'
-          ? 'Solicitação enviada. A equipe entrará em contato para confirmar o horário.'
+          ? slot
+            ? 'Horário solicitado! Você receberá o aviso aqui assim que a equipe confirmar.'
+            : 'Solicitação enviada. A equipe entrará em contato para combinar o horário.'
           : 'Mensagem enviada. A equipe responderá em breve.',
       )
       setMessage('')
       setProcedureId('')
+      setSlot(null)
       client.invalidateQueries({ queryKey: ['patient-dashboard'] })
+      client.invalidateQueries({ queryKey: ['availability'] })
     },
   })
 
@@ -99,6 +106,16 @@ export function RequestCare({ procedures }: { procedures: Procedure[] }) {
                 </option>
               ))}
             </select>
+          </div>
+        )}
+
+        {!isMessage && (
+          <div>
+            <span className="block text-sm font-medium text-foreground mb-2.5">
+              Escolha um horário
+              <span className="ml-1 font-normal text-muted-foreground">(opcional)</span>
+            </span>
+            <SlotPicker procedureId={procedureId || undefined} value={slot} onChange={setSlot} />
           </div>
         )}
 

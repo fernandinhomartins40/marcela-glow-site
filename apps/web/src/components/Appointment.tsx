@@ -4,8 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { proceduresApi, appointmentsApi, getErrorMessage } from "@/lib/api";
+import SlotPicker from "@/components/SlotPicker";
 
 const contactBlocks = [
   {
@@ -34,6 +35,9 @@ const Appointment = () => {
     procedure: "",
     message: "",
   });
+  const [slot, setSlot] = useState<string | null>(null);
+
+  const queryClient = useQueryClient();
 
   const { data: procedures = [] } = useQuery({
     queryKey: ["procedures"],
@@ -41,11 +45,20 @@ const Appointment = () => {
     staleTime: 5 * 60 * 1000,
   });
 
+  // O select guarda o título; o cálculo de horários precisa do id do procedimento
+  const selectedProcedureId = procedures.find((p) => p.title === formData.procedure)?.id;
+
   const mutation = useMutation({
     mutationFn: appointmentsApi.create,
     onSuccess: () => {
-      toast.success("Solicitação enviada com sucesso! Entraremos em contato em breve.");
+      toast.success(
+        slot
+          ? "Horário solicitado! Entraremos em contato para confirmar."
+          : "Solicitação enviada com sucesso! Entraremos em contato em breve.",
+      );
       setFormData({ name: "", email: "", phone: "", procedure: "", message: "" });
+      setSlot(null);
+      queryClient.invalidateQueries({ queryKey: ["availability"] });
     },
     onError: (error) => {
       toast.error(getErrorMessage(error));
@@ -66,6 +79,7 @@ const Appointment = () => {
       phone: formData.phone,
       procedure: formData.procedure || undefined,
       message: formData.message || undefined,
+      scheduledAt: slot || undefined,
     });
   };
 
@@ -190,6 +204,15 @@ const Appointment = () => {
                         )}
                   </SelectContent>
                 </Select>
+
+                <div>
+                  <p className="label-eyebrow mb-3">Horário de preferência</p>
+                  <SlotPicker
+                    procedureId={selectedProcedureId}
+                    value={slot}
+                    onChange={setSlot}
+                  />
+                </div>
 
                 <Textarea
                   placeholder="Mensagem (opcional)"

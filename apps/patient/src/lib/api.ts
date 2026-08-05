@@ -110,6 +110,26 @@ export interface DashboardData {
   procedures: Procedure[]
 }
 
+export interface Slot {
+  startsAt: string
+  endsAt: string
+  label: string
+}
+
+export interface DayAvailability {
+  date: string
+  weekdayLabel: string
+  slots: Slot[]
+}
+
+/** Horários livres para o procedimento escolhido. */
+export async function fetchAvailability(procedureId?: string, days = 14): Promise<DayAvailability[]> {
+  const { data } = await api.get('/appointments/availability', {
+    params: { tenantSlug, days, ...(procedureId ? { procedureId } : {}) },
+  })
+  return data.days ?? []
+}
+
 export async function fetchDashboard(): Promise<DashboardData> {
   const [dashboard, procedures] = await Promise.all([
     api.get('/patient/dashboard'),

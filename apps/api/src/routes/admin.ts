@@ -584,4 +584,126 @@ router.put('/settings', requirePermission('SETTINGS_WRITE'), async (req, res, ne
   }
 })
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Expediente da clínica
+// ─────────────────────────────────────────────────────────────────────────────
+
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
+
+const businessHoursSchema = z.object({
+  hours: z.array(
+    z.object({
+      weekday: z.number().int().min(0).max(6),
+      startTime: z.string().regex(TIME_RE, 'Use o formato HH:MM'),
+      endTime: z.string().regex(TIME_RE, 'Use o formato HH:MM'),
+      isActive: z.boolean().optional().default(true),
+    }),
+  ),
+})
+
+router.get('/business-hours', staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const hours = await prisma.businessHour.findMany({
+      where: { tenantId: req.user!.tenantId },
+      orderBy: [{ weekday: 'asc' }, { startTime: 'asc' }],
+    })
+    res.json(hours)
+  } catch (err) {
+    next(err)
+  }
+})
+
+/** Substitui o expediente inteiro — mais simples que diferenciar cada faixa. */
+router.put('/business-hours', staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = businessHoursSchema.parse(req.body)
+
+    for (const hour of body.hours) {
+      if (hour.startTime >= hour.endTime) {
+        throw new AppError(
+          `O horário de término deve ser depois do início (dia ${hour.weekday}).`,
+          400,
+          'INVALID_RANGE',
+        )
+      }
+    }
+
+    const tenantId = req.user!.tenantId
+    const hours = await prisma.$transaction(async (tx: any) => {
+      await tx.businessHour.deleteMany({ where: { tenantId } })
+      await tx.businessHour.createMany({
+        data: body.hours.map((hour) => ({ ...hour, tenantId })),
+      })
+      return tx.businessHour.findMany({
+        where: { tenantId },
+        orderBy: [{ weekday: 'asc' }, { startTime: 'asc' }],
+      })
+    })
+
+    await audit(req, 'UPDATE', 'business_hours', undefined, { count: hours.length })
+    res.json(hours)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bloqueios de agenda (férias, feriados, almoço)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const blockSchema = z.object({
+  startsAt: z.string().datetime({ offset: true }),
+  endsAt: z.string().datetime({ offset: true }),
+  reason: z.string().max(200).optional(),
+})
+
+router.get('/schedule-blocks', staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const from = req.query.from ? new Date(String(req.query.from)) : new Date()
+    const blocks = await prisma.scheduleBlock.findMany({
+      where: { tenantId: req.user!.tenantId, endsAt: { gte: from } },
+      orderBy: { startsAt: 'asc' },
+    })
+    res.json(blocks)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.post('/schedule-blocks', staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = blockSchema.parse(req.body)
+    const startsAt = new Date(body.startsAt)
+    const endsAt = new Date(body.endsAt)
+
+    if (endsAt <= startsAt) {
+      throw new AppError('O fim do bloqueio deve ser depois do início.', 400, 'INVALID_RANGE')
+    }
+
+    const block = await prisma.scheduleBlock.create({
+      data: { tenantId: req.user!.tenantId, startsAt, endsAt, reason: body.reason },
+    })
+
+    await audit(req, 'CREATE', 'schedule_block', block.id, { reason: body.reason })
+    res.status(201).json(block)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.delete('/schedule-blocks/:id', staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const existing = await prisma.scheduleBlock.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+    })
+    if (!existing) throw new NotFoundError('Bloqueio')
+
+    await prisma.scheduleBlock.delete({ where: { id: existing.id } })
+    await audit(req, 'DELETE', 'schedule_block', existing.id)
+    res.status(204).end()
+  } catch (err) {
+    next(err)
+  }
+})
+
 export default router

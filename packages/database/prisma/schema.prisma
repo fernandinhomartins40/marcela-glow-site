@@ -156,6 +156,8 @@ model Tenant {
   staffInvites  StaffInvite[]
   pushSubscriptions PushSubscription[]
   userPermissions UserPermission[]
+  businessHours BusinessHour[]
+  scheduleBlocks ScheduleBlock[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -183,6 +185,7 @@ model User {
   permissions UserPermission[]
   uploadedAttachments Attachment[]
   signedPrescriptions Prescription[] @relation("PrescriptionSigner")
+  confirmedAppointments Appointment[] @relation("AppointmentConfirmer")
 
   @@unique([email, tenantId])
 }
@@ -213,6 +216,12 @@ model Procedure {
   imageUrl     String?
   isActive     Boolean  @default(true)
   displayOrder Int      @default(0)
+  /// Duração do atendimento em minutos — base para o cálculo de horários livres
+  durationMin  Int      @default(60)
+  /// Intervalo de limpeza/preparo somado após o atendimento
+  bufferMin    Int      @default(0)
+  /// Se false, o procedimento não é oferecido no agendamento online
+  isBookable   Boolean  @default(true)
   tenantId     String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -237,14 +246,64 @@ model Appointment {
   patientId   String?
   tenantId    String
   scheduledAt DateTime?
+  /// Fim do atendimento — derivado da duração do procedimento na confirmação.
+  /// Persistido para que a checagem de conflito não dependa da duração atual.
+  endsAt      DateTime?
   source      String?
   priceCents  Int?
+
+  // Rastreio da confirmação
+  confirmedAt   DateTime?
+  confirmedById String?
+  cancelledAt   DateTime?
+  cancelReason  String?
+  /// Marca quando a equipe disparou o aviso por WhatsApp
+  notifiedAt    DateTime?
+
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
-  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  procedure Procedure? @relation(fields: [procedureId], references: [id], onDelete: SetNull)
-  patient   Patient?   @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  tenant      Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  procedure   Procedure? @relation(fields: [procedureId], references: [id], onDelete: SetNull)
+  patient     Patient?   @relation(fields: [patientId], references: [id], onDelete: SetNull)
+  confirmedBy User?      @relation("AppointmentConfirmer", fields: [confirmedById], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, scheduledAt])
+  @@index([tenantId, status])
+}
+
+/// Expediente semanal da clínica. Um registro por faixa de atendimento;
+/// dias sem registro são considerados fechados.
+model BusinessHour {
+  id        String   @id @default(cuid())
+  tenantId  String
+  /// 0 = domingo … 6 = sábado
+  weekday   Int
+  /// "09:00" — hora local da clínica
+  startTime String
+  /// "18:00"
+  endTime   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, weekday])
+}
+
+/// Períodos indisponíveis: férias, feriados, almoço, compromissos pessoais.
+model ScheduleBlock {
+  id        String   @id @default(cuid())
+  tenantId  String
+  startsAt  DateTime
+  endsAt    DateTime
+  reason    String?
+  createdAt DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, startsAt])
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

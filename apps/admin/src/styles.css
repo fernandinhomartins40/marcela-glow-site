@@ -77,5 +77,104 @@ header h1 { margin-top: 4px; margin-bottom: 0; font-size: clamp(46px, 6vw, 88px)
 .kanban h3 { font-size: 12px; margin: 0 0 8px; letter-spacing: .18em; text-transform: uppercase; color: var(--bronze); }
 .kanban span { display: block; font-size: 12px; margin-top: 4px; }
 .settings { color: rgba(47,34,27,.78); white-space: pre-wrap; }
+
+/* ── Agenda ──────────────────────────────────────────────────────────────── */
+.schedule { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 18px; align-items: start; }
+.chip { display: inline-flex; align-items: center; height: 22px; padding: 0 10px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .04em; }
+.chip.success { background: #e4efe6; color: #33613f; }
+.chip.warning { background: #f7ecdc; color: #8a5a22; }
+.chip.info    { background: #e6ecf2; color: #3c556e; }
+.chip.neutral { background: var(--cream-deep); color: var(--text-muted); }
+
+.schedule-queue { background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px; position: sticky; top: 16px; }
+.schedule-queue header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.schedule-queue h2 { margin: 0; font-size: 15px; letter-spacing: .04em; }
+.queue-count { min-width: 22px; height: 22px; padding: 0 7px; border-radius: 999px; background: var(--espresso); color: var(--cream-soft); font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+.schedule-queue ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-height: 60vh; overflow-y: auto; }
+.queue-card { width: 100%; display: grid; gap: 3px; text-align: left; padding: 11px 12px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: border-color .2s ease, background .2s ease; }
+.queue-card:hover { border-color: var(--bronze); background: #fff; }
+.queue-card strong { font-size: 13px; }
+.queue-card span { font-size: 12px; color: var(--text-muted); }
+.queue-when { display: inline-flex; align-items: center; gap: 5px; }
+.queue-empty { font-size: 13px; color: var(--text-muted); margin: 8px 0; }
+
+.schedule-main { display: grid; gap: 14px; }
+.schedule-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.week-nav { display: inline-flex; align-items: center; gap: 10px; }
+.week-nav strong { font-size: 14px; min-width: 170px; text-align: center; }
+.week-nav button, .today-button { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; color: var(--espresso); }
+.today-button { width: auto; padding: 0 14px; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+.week-nav button:hover, .today-button:hover { border-color: var(--bronze); }
+
+.week-grid { background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.week-head, .week-body { display: grid; grid-template-columns: 52px repeat(6, minmax(0, 1fr)); }
+.week-head { border-bottom: 1px solid var(--border); }
+.day-head { display: grid; gap: 2px; padding: 9px 4px; background: transparent; border: 0; border-left: 1px solid var(--border); cursor: pointer; color: var(--espresso); }
+.day-head span { font-size: 10px; letter-spacing: .12em; color: var(--text-muted); }
+.day-head strong { font-size: 17px; font-weight: 500; }
+.day-head.selected { background: var(--cream-deep); }
+.day-head.today strong { color: var(--bronze); }
+.week-body { position: relative; height: 420px; }
+.hour-col { border-right: 1px solid var(--border); }
+.hour-mark { height: calc(100% / 13); position: relative; }
+.hour-mark span { position: absolute; top: -6px; right: 6px; font-size: 10px; color: var(--text-muted); }
+.day-col { position: relative; border-left: 1px solid var(--border); }
+.hour-slot { height: calc(100% / 13); border-bottom: 1px solid rgba(216,202,184,.45); }
+.event { position: absolute; left: 3px; right: 3px; display: grid; align-content: start; gap: 1px; padding: 3px 5px; border: 0; border-left: 3px solid; border-radius: 5px; cursor: pointer; overflow: hidden; text-align: left; font-size: 10px; line-height: 1.25; }
+.event strong { font-size: 10px; font-weight: 600; }
+.event span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.event.success { background: #e4efe6; border-color: #4a7d58; color: #2c5236; }
+.event.warning { background: #f7ecdc; border-color: #b8813c; color: #7d5220; }
+.event.info    { background: #e6ecf2; border-color: #5a7794; color: #36506b; }
+.event.neutral { background: var(--cream-deep); border-color: var(--bronze); color: var(--text-muted); }
+
+.day-list { background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.day-list h3 { margin: 0 0 12px; font-size: 14px; text-transform: capitalize; }
+.day-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.day-list li button { width: 100%; display: grid; grid-template-columns: 64px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; text-align: left; }
+.day-list li button:hover { border-color: var(--bronze); background: #fff; }
+.slot-time { display: grid; font-size: 13px; font-weight: 600; }
+.slot-time small { font-size: 11px; font-weight: 400; color: var(--text-muted); }
+.slot-body { display: grid; gap: 2px; min-width: 0; }
+.slot-body strong { font-size: 13px; }
+.slot-body span { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Painel lateral do agendamento ───────────────────────────────────────── */
+.drawer-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(31,23,19,.42); display: flex; justify-content: flex-end; }
+.drawer { width: min(440px, 100%); height: 100%; overflow-y: auto; background: var(--marble-soft); border-left: 1px solid var(--border); padding: 22px; display: grid; gap: 18px; align-content: start; }
+.drawer header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.drawer header h2 { margin: 8px 0 3px; font-size: 22px; }
+.drawer header p { margin: 0; font-size: 13px; color: var(--text-muted); }
+.icon-button { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--border); border-radius: 7px; cursor: pointer; color: var(--espresso); }
+.drawer-facts { display: grid; gap: 12px; margin: 0; padding: 14px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 9px; }
+.drawer-facts dt { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--bronze); margin-bottom: 3px; }
+.drawer-facts dd { margin: 0; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.drawer-section { display: grid; gap: 9px; }
+.drawer-section label { font-size: 12px; font-weight: 600; }
+.drawer-section input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--cream-soft); color: var(--espresso); }
+.hint { margin: 0; font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+.drawer-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.drawer-actions button { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; font-size: 12px; border: 1px solid var(--border); border-radius: 7px; background: var(--cream-soft); color: var(--espresso); cursor: pointer; }
+.drawer-actions button:hover:not(:disabled) { border-color: var(--bronze); }
+.drawer-actions button:disabled { opacity: .5; cursor: not-allowed; }
+.drawer-actions .primary { background: var(--espresso); border-color: var(--espresso); color: var(--cream-soft); }
+.drawer-actions .danger { color: #a33131; }
+.cancel-box { display: grid; gap: 8px; padding: 12px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 8px; }
+.cancel-box input { width: 100%; padding: 9px; border: 1px solid var(--border); border-radius: 7px; background: var(--marble-soft); }
+.cancel-box button { padding: 9px; border: 1px solid var(--border); border-radius: 7px; background: transparent; cursor: pointer; }
+.whatsapp-box { display: grid; gap: 10px; padding: 14px; background: #e8f3ea; border: 1px solid #bcd9c3; border-radius: 9px; }
+.whatsapp-box h3 { margin: 0; font-size: 13px; }
+.whatsapp-box pre { margin: 0; padding: 11px; background: #fff; border: 1px solid #cfe3d4; border-radius: 7px; font-family: inherit; font-size: 12px; line-height: 1.55; white-space: pre-wrap; max-height: 210px; overflow-y: auto; }
+.whatsapp-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 11px; background: #25623a; border: 0; border-radius: 7px; color: #fff; font-size: 13px; cursor: pointer; }
+.whatsapp-button:hover { background: #1d4c2d; }
+@media (max-width: 1180px) { .schedule { grid-template-columns: 1fr; } .schedule-queue { position: static; max-height: none; } .schedule-queue ul { max-height: 260px; } }
 @media (max-width: 980px) { .stats { grid-template-columns: repeat(2, minmax(0,1fr)); } .three { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+/* Em telas estreitas a grade semanal fica ilegível: rola horizontalmente */
+@media (max-width: 760px) {
+  .week-grid { overflow-x: auto; }
+  .week-head, .week-body { min-width: 560px; }
+  .drawer { width: 100%; }
+  .day-list li button { grid-template-columns: 56px minmax(0,1fr); grid-template-areas: "time body" "chip chip"; row-gap: 6px; }
+  .day-list li button .chip { grid-area: chip; justify-self: start; }
+}
 @media (max-width: 860px) { .auth-panel, .app-shell, .two, .three, .stats { grid-template-columns: 1fr; } .auth-shell { padding: 16px; place-items: stretch; } .auth-panel { align-self: center; } .auth-copy { min-height: auto; padding: 28px 24px 20px; } .auth-copy::before { font-size: 68px; } .auth-panel .form { padding: 24px; border-left: 0; border-top: 1px solid rgba(216,202,184,.78); } .auth-portrait { width: min(260px, 76%); align-self: flex-start; } .auth-panel h1 { font-size: 52px; } .auth-panel h2 { font-size: 28px; } .auth-panel p { font-size: 20px; } aside { position: static; } main { padding: 22px 16px; } main::before { display: none; } header { align-items: flex-start; flex-direction: column; } header h1 { font-size: 46px; } .table article { grid-template-columns: 1fr; } }
