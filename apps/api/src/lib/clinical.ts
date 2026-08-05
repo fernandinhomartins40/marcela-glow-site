@@ -83,14 +83,21 @@ const LEVEL_RANK: Record<SignatureLevel, number> = { INTERNAL: 0, ADVANCED: 1, Q
  * ainda não existe — a variável fica preparada para quando existir.
  */
 export function availableSignatureLevel(): SignatureLevel {
-  if (process.env.ICP_BRASIL_PROVIDER) return 'QUALIFIED'
   if (process.env.PRESCRIPTION_SIGNING_PRIVATE_KEY) return 'ADVANCED'
   return 'INTERNAL'
 }
 
-export function checkCompliance(kind: DocumentKind, items: PrescriptionItemInput[]): ComplianceCheck {
+/**
+ * @param cloudReady true quando há certificado em nuvem configurado e testado —
+ *        nesse caso o documento pode alcançar assinatura qualificada.
+ */
+export function checkCompliance(
+  kind: DocumentKind,
+  items: PrescriptionItemInput[],
+  cloudReady = false,
+): ComplianceCheck {
   const required = requiredSignatureLevel(kind, items)
-  const available = availableSignatureLevel()
+  const available: SignatureLevel = cloudReady ? 'QUALIFIED' : availableSignatureLevel()
   const compliant = LEVEL_RANK[available] >= LEVEL_RANK[required]
 
   if (compliant) return { required, available, compliant }

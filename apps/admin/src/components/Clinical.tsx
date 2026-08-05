@@ -410,9 +410,20 @@ export function ClinicalDocuments() {
     client.invalidateQueries({ queryKey: ['admin'] })
   }
 
+  const [signing, setSigning] = React.useState<ClinicalDocument | null>(null)
+
+  // Sabe se há certificado ativo: define se pede o código do app ao assinar
+  const signatureConfig = useQuery({
+    queryKey: ['signature-config'],
+    queryFn: async () => (await api.get('/clinical/signature/config')).data as { config: { enabled: boolean } | null },
+  })
+  const cloudReady = Boolean(signatureConfig.data?.config?.enabled)
+
   const sign = useMutation({
-    mutationFn: async (id: string) => (await api.post(`/clinical/documents/${id}/sign`)).data,
+    mutationFn: async ({ id, otp }: { id: string; otp?: string }) =>
+      (await api.post(`/clinical/documents/${id}/sign`, otp ? { otp } : {})).data,
     onSuccess: (data) => {
+      setSigning(null)
       setSignResult({ compliance: data.compliance, url: data.verificationUrl, qr: data.qrCodeDataUrl })
       refresh()
     },
@@ -495,7 +506,7 @@ export function ClinicalDocuments() {
                     </button>
                   )}
                   <button
-                    onClick={() => sign.mutate(doc.id)}
+                    onClick={() => (cloudReady ? setSigning(doc) : sign.mutate({ id: doc.id }))}
                     disabled={signed || sign.isPending}
                     title={signed ? 'Já assinada' : 'Assinar'}
                     aria-label="Assinar documento"
@@ -531,6 +542,16 @@ export function ClinicalDocuments() {
         />
       )}
 
+      {signing && (
+        <OtpPrompt
+          document={signing}
+          pending={sign.isPending}
+          error={sign.isError ? errorMessage(sign.error) : null}
+          onCancel={() => setSigning(null)}
+          onConfirm={(otp) => sign.mutate({ id: signing.id, otp })}
+        />
+      )}
+
       {signResult && <SignResult result={signResult} onClose={() => setSignResult(null)} />}
 
       {removing && (
@@ -545,6 +566,67 @@ export function ClinicalDocuments() {
         />
       )}
     </>
+  )
+}
+
+/**
+ * Pede o código do aplicativo. A autorização é sempre da médica, no momento da
+ * assinatura — o sistema não guarda credencial capaz de assinar sozinho.
+ */
+function OtpPrompt({
+  document,
+  pending,
+  error,
+  onCancel,
+  onConfirm,
+}: {
+  document: ClinicalDocument
+  pending: boolean
+  error: string | null
+  onCancel: () => void
+  onConfirm: (otp: string) => void
+}) {
+  const [otp, setOtp] = React.useState('')
+
+  return (
+    <Modal
+      title="Assinar documento"
+      subtitle={`${document.title} — ${document.patient.name}`}
+      onClose={onCancel}
+      footer={
+        <>
+          <button onClick={onCancel}>Cancelar</button>
+          <SubmitButton pending={pending} disabled={otp.length < 6} onClick={() => onConfirm(otp)}>
+            Assinar
+          </SubmitButton>
+        </>
+      }
+    >
+      <div className="form-grid">
+        <div className="legal-ok">
+          <ShieldCheck size={17} />
+          <div>
+            <strong>Assinatura qualificada ICP-Brasil</strong>
+            <p>
+              Abra o aplicativo do seu certificado, gere o código de 6 dígitos e informe abaixo. O
+              documento sai com validade legal em farmácia.
+            </p>
+          </div>
+        </div>
+
+        <Field label="Código do aplicativo" required>
+          <input
+            value={otp}
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 8))}
+            placeholder="000000"
+            inputMode="numeric"
+            autoFocus
+          />
+        </Field>
+
+        {error && <p className="error">{error}</p>}
+      </div>
+    </Modal>
   )
 }
 

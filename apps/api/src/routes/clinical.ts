@@ -16,6 +16,16 @@ import {
   validUntilFor,
   type DocumentKind,
 } from '../lib/clinical'
+import {
+  hashContent,
+  loadConfig,
+  PROVIDERS,
+  saveConfig,
+  signHash,
+  SignatureError,
+  testConnection,
+  toPublic,
+} from '../lib/cloudSignature'
 
 const router = Router()
 const staffOnly = [authenticate, requireRole('ADMIN', 'STAFF')]
@@ -169,7 +179,8 @@ router.post('/documents', ...staffOnly, requirePermission('PRESCRIPTION_WRITE'),
     })
     if (!patient) throw new NotFoundError('Paciente')
 
-    const compliance = checkCompliance(body.kind as DocumentKind, body.items)
+    const cloudConfig = await loadConfig(req.user!.tenantId)
+    const compliance = checkCompliance(body.kind as DocumentKind, body.items, Boolean(cloudConfig?.enabled))
 
     const document = await prisma.prescription.create({
       data: {
@@ -292,7 +303,8 @@ router.post('/documents/:id/sign', ...staffOnly, requirePermission('PRESCRIPTION
     if (existing.signedAt) throw new AppError('Documento já assinado.', 409, 'ALREADY_SIGNED')
 
     const kind = existing.kind as DocumentKind
-    const compliance = checkCompliance(kind, existing.items)
+    const cloudConfig = await loadConfig(req.user!.tenantId)
+    const compliance = checkCompliance(kind, existing.items, Boolean(cloudConfig?.enabled))
 
     const signer = await prisma.user.findUnique({
       where: { id: req.user!.userId },
@@ -332,8 +344,39 @@ router.post('/documents/:id/sign', ...staffOnly, requirePermission('PRESCRIPTION
       verificationCode,
     }
 
+    // Com certificado em nuvem configurado e OTP informado, assina de verdade
+    // com a chave da médica — é o que dá validade em farmácia.
+    const otp = String(req.body?.otp ?? '').trim()
+    let cloudSignature: { signature: string; certificateAlias: string; algorithm: string } | null = null
+    let effectiveLevel = availableSignatureLevel()
+
+    if (cloudConfig?.enabled && cloudConfig.clientSecret && otp) {
+      try {
+        cloudSignature = await signHash(
+          cloudConfig,
+          otp,
+          hashContent(JSON.stringify(payload)),
+          `${DOCUMENT_LABELS[kind]} — ${existing.patient.name}`,
+        )
+        effectiveLevel = 'QUALIFIED'
+      } catch (err) {
+        if (err instanceof SignatureError) {
+          throw new AppError(err.message, 400, 'SIGNATURE_FAILED')
+        }
+        throw err
+      }
+    } else if (cloudConfig?.enabled && !otp && compliance.required === 'QUALIFIED') {
+      // Documento exige qualificada e o certificado existe: pede o código
+      throw new AppError(
+        'Informe o código do aplicativo para assinar com o certificado digital.',
+        400,
+        'OTP_REQUIRED',
+      )
+    }
+
     const rsaSignature = signJsonWithPrivateKey(payload, process.env.PRESCRIPTION_SIGNING_PRIVATE_KEY)
     const signatureHash =
+      cloudSignature?.signature ??
       rsaSignature ??
       signJson(payload, process.env.PRESCRIPTION_SIGNING_SECRET || process.env.JWT_SECRET || 'change-this-secret')
 
@@ -348,33 +391,43 @@ router.post('/documents/:id/sign', ...staffOnly, requirePermission('PRESCRIPTION
         signedById: req.user!.userId,
         signatureHash,
         verificationCode,
-        signatureLevel: availableSignatureLevel(),
+        signatureLevel: effectiveLevel,
         validUntil,
         signaturePayload: {
           ...payload,
           verificationUrl,
           qrCodeDataUrl,
-          algorithm: rsaSignature ? 'RSA-SHA256' : 'HMAC-SHA256',
-          signatureLevel: availableSignatureLevel(),
+          algorithm: cloudSignature?.algorithm ?? (rsaSignature ? 'RSA-SHA256' : 'HMAC-SHA256'),
+          signatureLevel: effectiveLevel,
+          certificateAlias: cloudSignature?.certificateAlias ?? null,
           compliance: {
             required: compliance.required,
-            available: compliance.available,
-            compliant: compliance.compliant,
-            warning: compliance.warning ?? null,
+            // Depois de assinar, o "disponível" é o que foi de fato aplicado
+            available: effectiveLevel,
+            compliant: effectiveLevel === 'QUALIFIED' || compliance.compliant,
+            warning: effectiveLevel === 'QUALIFIED' ? null : compliance.warning ?? null,
           },
         },
       },
       include: DOCUMENT_INCLUDE,
     })
 
+    const finalCompliance = {
+      ...compliance,
+      available: effectiveLevel,
+      compliant: effectiveLevel === 'QUALIFIED' || compliance.compliant,
+      warning: effectiveLevel === 'QUALIFIED' ? undefined : compliance.warning,
+    }
+
     await audit(req, 'SIGN', 'prescription', document.id, {
       kind,
       control: highestControl(existing.items),
-      signatureLevel: availableSignatureLevel(),
-      compliant: compliance.compliant,
+      signatureLevel: effectiveLevel,
+      compliant: finalCompliance.compliant,
+      qualified: Boolean(cloudSignature),
     })
 
-    res.json({ document, compliance, verificationUrl, qrCodeDataUrl })
+    res.json({ document, compliance: finalCompliance, verificationUrl, qrCodeDataUrl })
   } catch (err) {
     next(err)
   }
@@ -412,6 +465,119 @@ router.post('/documents/:id/send', ...staffOnly, requirePermission('PRESCRIPTION
 
     await audit(req, 'SEND', 'prescription', document.id)
     res.json(document)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Certificado digital em nuvem (assinatura qualificada ICP-Brasil)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const providerConfigSchema = z.object({
+  provider: z.enum(['BIRDID', 'VIDAAS', 'SAFEID', 'CUSTOM']),
+  clientId: z.string().min(1),
+  /** Vazio = manter o segredo já gravado */
+  clientSecret: z.string().optional(),
+  cpf: z.string().min(11),
+  certificateAlias: z.string().optional(),
+  tokenUrl: z.string().url().optional().or(z.literal('')),
+  signUrl: z.string().url().optional().or(z.literal('')),
+  enabled: z.boolean().optional().default(false),
+})
+
+/** Catálogo de provedores para a tela montar as instruções. */
+router.get('/signature/providers', ...staffOnly, async (_req: Request, res: Response) => {
+  res.json(
+    Object.values(PROVIDERS).map((p) => ({
+      id: p.id,
+      label: p.label,
+      consoleUrl: p.consoleUrl,
+      passwordLabel: p.passwordLabel,
+      notes: p.notes,
+    })),
+  )
+})
+
+router.get('/signature/config', ...staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const config = await loadConfig(req.user!.tenantId)
+    res.json({
+      config: toPublic(config),
+      // A tela precisa saber o que o servidor consegue fazer hoje
+      currentLevel: availableSignatureLevel(),
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.put('/signature/config', ...staffOnly, requireRole('ADMIN'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = providerConfigSchema.parse(req.body)
+    const existing = await loadConfig(req.user!.tenantId)
+
+    // Segredo em branco no formulário significa "não mexer"
+    const clientSecret = body.clientSecret || existing?.clientSecret || ''
+    if (!clientSecret) {
+      throw new AppError('Informe o client secret fornecido pelo provedor.', 400, 'SECRET_REQUIRED')
+    }
+
+    await saveConfig(req.user!.tenantId, {
+      provider: body.provider,
+      clientId: body.clientId,
+      clientSecret,
+      cpf: body.cpf.replace(/\D/g, ''),
+      certificateAlias: body.certificateAlias || existing?.certificateAlias,
+      tokenUrl: body.tokenUrl || undefined,
+      signUrl: body.signUrl || undefined,
+      enabled: body.enabled ?? false,
+      lastTestAt: existing?.lastTestAt,
+      lastTestOk: existing?.lastTestOk,
+    })
+
+    await audit(req, 'UPDATE', 'signature_config', undefined, { provider: body.provider })
+    res.json({ config: toPublic(await loadConfig(req.user!.tenantId)) })
+  } catch (err) {
+    next(err)
+  }
+})
+
+/** Confirma credenciais e OTP assinando um hash descartável. */
+router.post('/signature/test', ...staffOnly, requireRole('ADMIN'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const otp = String(req.body?.otp ?? '').trim()
+    if (!otp) throw new AppError('Informe o código do aplicativo.', 400, 'OTP_REQUIRED')
+
+    const config = await loadConfig(req.user!.tenantId)
+    if (!config?.clientId || !config.clientSecret) {
+      throw new AppError('Configure o provedor antes de testar.', 400, 'NOT_CONFIGURED')
+    }
+
+    try {
+      const result = await testConnection(config, otp)
+      await saveConfig(req.user!.tenantId, {
+        ...config,
+        // O alias vem do provedor: guarda para as próximas assinaturas
+        certificateAlias: result.certificateAlias || config.certificateAlias,
+        enabled: true,
+        lastTestAt: new Date().toISOString(),
+        lastTestOk: true,
+      })
+      await audit(req, 'UPDATE', 'signature_config', undefined, { test: 'ok' })
+      res.json({ ok: true, certificateAlias: result.certificateAlias, algorithm: result.algorithm })
+    } catch (err) {
+      await saveConfig(req.user!.tenantId, {
+        ...config,
+        lastTestAt: new Date().toISOString(),
+        lastTestOk: false,
+      })
+      if (err instanceof SignatureError) {
+        res.status(400).json({ ok: false, message: err.message })
+        return
+      }
+      throw err
+    }
   } catch (err) {
     next(err)
   }

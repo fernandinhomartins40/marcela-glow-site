@@ -22,6 +22,7 @@ import { Patients } from './components/Patients'
 import { Records } from './components/Records'
 import { Cms, Leads, Procedures } from './components/Catalog'
 import { ClinicalCatalog, ClinicalDocuments } from './components/Clinical'
+import { Certificate } from './components/Certificate'
 import './styles.css'
 
 const queryClient = new QueryClient()
@@ -350,19 +351,48 @@ function Security({ data }: { data: any }) {
 
 function SettingsPanel({ settings }: { settings: any }) {
   const [showRaw, setShowRaw] = React.useState(false)
+  const [area, setArea] = React.useState<'schedule' | 'certificate'>('schedule')
+
   return (
     <div className="grid" style={{ gap: 14 }}>
-      <ScheduleSettings />
-      <section className="list">
-        <h2>Configurações brutas</h2>
-        <p className="hint">Valores gravados em ClinicSetting, para conferência.</p>
-        <div className="row-actions">
-          <button onClick={() => setShowRaw((v) => !v)}>
-            {showRaw ? 'Ocultar' : 'Mostrar'}
-          </button>
-        </div>
-        {showRaw && <pre className="settings" style={{ marginTop: 12 }}>{JSON.stringify(settings, null, 2)}</pre>}
-      </section>
+      <div className="area-tabs" role="tablist">
+        <button
+          role="tab"
+          aria-selected={area === 'schedule'}
+          className={area === 'schedule' ? 'active' : ''}
+          onClick={() => setArea('schedule')}
+        >
+          Agenda
+        </button>
+        <button
+          role="tab"
+          aria-selected={area === 'certificate'}
+          className={area === 'certificate' ? 'active' : ''}
+          onClick={() => setArea('certificate')}
+        >
+          Certificado digital
+        </button>
+      </div>
+
+      {area === 'certificate' ? (
+        <Certificate />
+      ) : (
+        <>
+          <ScheduleSettings />
+          <section className="list">
+            <h2>Configurações brutas</h2>
+            <p className="hint">Valores gravados em ClinicSetting, para conferência.</p>
+            <div className="row-actions">
+              <button onClick={() => setShowRaw((v) => !v)}>{showRaw ? 'Ocultar' : 'Mostrar'}</button>
+            </div>
+            {showRaw && (
+              <pre className="settings" style={{ marginTop: 12 }}>
+                {JSON.stringify(settings, null, 2)}
+              </pre>
+            )}
+          </section>
+        </>
+      )}
     </div>
   )
 }
