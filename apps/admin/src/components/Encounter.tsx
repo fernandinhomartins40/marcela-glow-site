@@ -31,6 +31,7 @@ import {
   formatDateBR,
   formatMoney,
   FormRow,
+  maskPhone,
   Modal,
   parseMoney,
   SubmitButton,
@@ -47,7 +48,7 @@ import {
   statusMeta,
 } from '../lib/schedule'
 import { DocumentForm, SignDocumentPrompt, type DocumentKind } from './Clinical'
-import type { Patient } from './Patients'
+import { ClinicalAlerts, type Patient } from './Patients'
 
 interface AgendaEntry {
   id: string
@@ -81,7 +82,7 @@ interface Encounter {
     message: string | null
     procedure: { id: string; title: string } | null
   }
-  patient: Patient & { birthDate: string | null; notes: string | null }
+  patient: Patient
   currentRecords: MedicalRecord[]
   history: MedicalRecord[]
   documents: { id: string; kind: string; title: string; status: string; createdAt: string; items: any[] }[]
@@ -259,16 +260,19 @@ function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
                 </div>
 
                 <span className="data-actions">
-                  <button
-                    className="primary encounter-open"
-                    onClick={() => onOpen(entry.id)}
-                    disabled={noPatient}
-                    title={noPatient ? 'Cadastre a paciente para atender' : 'Abrir atendimento'}
-                  >
-                    <Stethoscope size={14} />
-                    Atender
-                    <ChevronRight size={14} />
-                  </button>
+                  {noPatient ? (
+                    <LinkPatientButton appointmentId={entry.id} />
+                  ) : (
+                    <button
+                      className="primary encounter-open"
+                      onClick={() => onOpen(entry.id)}
+                      title="Abrir atendimento"
+                    >
+                      <Stethoscope size={14} />
+                      Atender
+                      <ChevronRight size={14} />
+                    </button>
+                  )}
                 </span>
               </article>
             )
@@ -286,6 +290,35 @@ function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
         />
       )}
     </>
+  )
+}
+
+/**
+ * Pedido que chegou pela landing antes de existir cadastro com aquele e-mail.
+ * Cria a ficha a partir dos dados do próprio pedido e libera o atendimento —
+ * antes o botão ficava desabilitado sem nenhuma saída na tela.
+ */
+function LinkPatientButton({ appointmentId }: { appointmentId: string }) {
+  const client = useQueryClient()
+
+  const link = useMutation({
+    mutationFn: () => api.post(`/appointments/${appointmentId}/link-patient`, {}),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ['encounter-agenda'] })
+      client.invalidateQueries({ queryKey: ['patients'] })
+      client.invalidateQueries({ queryKey: ['admin'] })
+    },
+  })
+
+  return (
+    <button
+      onClick={() => link.mutate()}
+      disabled={link.isPending}
+      title="Criar o cadastro da paciente com os dados do pedido"
+    >
+      <UserRound size={14} />
+      {link.isPending ? 'Cadastrando...' : 'Cadastrar paciente'}
+    </button>
   )
 }
 
@@ -348,7 +381,14 @@ function NewEncounterModal({
   const [mode, setMode] = React.useState<'existing' | 'new'>('existing')
   const [search, setSearch] = React.useState('')
   const [patientId, setPatientId] = React.useState('')
-  const [form, setForm] = React.useState({ name: '', email: '', phone: '', birthDate: '', notes: '' })
+  const [form, setForm] = React.useState({
+    name: '',
+    email: '',
+    phone: '',
+    birthDate: '',
+    allergies: '',
+    notes: '',
+  })
   const [procedureId, setProcedureId] = React.useState('')
   const [scheduledAt, setScheduledAt] = React.useState(() => {
     // Agora, no formato do input datetime-local
@@ -372,13 +412,15 @@ function NewEncounterModal({
     mutationFn: async () => {
       let id = patientId
 
-      // Cadastra a paciente antes, para que o atendimento já nasça vinculado
+      // Cadastra a paciente antes, para que o atendimento já nasça vinculado.
+      // Cadastro mínimo: a ficha completa se preenche depois, em Pacientes.
       if (mode === 'new') {
         const { data } = await api.post('/admin/patients', {
           name: form.name,
           email: form.email,
-          phone: form.phone || undefined,
+          phone: form.phone.replace(/\D/g, '') || undefined,
           birthDate: form.birthDate ? new Date(form.birthDate).toISOString() : undefined,
+          allergies: form.allergies || undefined,
           notes: form.notes || undefined,
         })
         id = data.id
@@ -476,8 +518,9 @@ function NewEncounterModal({
               <Field label="Telefone" hint="Com DDD, para o WhatsApp">
                 <input
                   value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  onChange={(e) => setForm({ ...form, phone: maskPhone(e.target.value) })}
                   placeholder="(67) 90000-0000"
+                  inputMode="numeric"
                 />
               </Field>
             </FormRow>
@@ -489,10 +532,13 @@ function NewEncounterModal({
                   onChange={(e) => setForm({ ...form, birthDate: e.target.value })}
                 />
               </Field>
-              <Field label="Observações" hint="Alergias, histórico relevante">
-                <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+              <Field label="Alergias" hint="Vira alerta no atendimento">
+                <input value={form.allergies} onChange={(e) => setForm({ ...form, allergies: e.target.value })} />
               </Field>
             </FormRow>
+            <Field label="Observações" hint="Histórico relevante; a ficha completa pode ser preenchida depois">
+              <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+            </Field>
           </>
         )}
 
@@ -540,8 +586,24 @@ function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onB
     client.invalidateQueries({ queryKey: ['admin'] })
   }
 
+  const [lockOnComplete, setLockOnComplete] = React.useState(false)
+
+  // O que ficou aberto nesta consulta, para avisar antes de encerrar
+  const pending = useQuery({
+    queryKey: ['encounter-pending', appointmentId],
+    queryFn: async () =>
+      (await api.get(`/clinical/encounters/${appointmentId}/pending`)).data as {
+        openRecords: number
+        draftDocuments: number
+        unsentDocuments: number
+        hasRecords: boolean
+      },
+    enabled: completing,
+  })
+
   const complete = useMutation({
-    mutationFn: () => api.post(`/clinical/encounters/${appointmentId}/complete`),
+    mutationFn: () =>
+      api.post(`/clinical/encounters/${appointmentId}/complete`, { lockRecords: lockOnComplete }),
     onSuccess: () => {
       setCompleting(false)
       refresh()
@@ -603,8 +665,11 @@ function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onB
         )}
       </div>
 
+      {/* Alergias e gestação antes de qualquer prescrição */}
+      <ClinicalAlerts patient={patient} />
+
       {patient.notes && (
-        <div className="patient-alert">
+        <div className="patient-alert neutral">
           <strong>Observações da paciente:</strong> {patient.notes}
         </div>
       )}
@@ -702,14 +767,63 @@ function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onB
       )}
 
       {completing && (
-        <ConfirmDialog
+        <Modal
           title="Encerrar atendimento?"
-          message="A consulta será marcada como realizada. Os registros continuam editáveis até serem fechados."
-          confirmLabel="Encerrar"
-          pending={complete.isPending}
-          onCancel={() => setCompleting(false)}
-          onConfirm={() => complete.mutate()}
-        />
+          subtitle="A consulta será marcada como realizada"
+          onClose={() => setCompleting(false)}
+          footer={
+            <>
+              <button onClick={() => setCompleting(false)}>Cancelar</button>
+              <SubmitButton pending={complete.isPending} onClick={() => complete.mutate()}>
+                Encerrar
+              </SubmitButton>
+            </>
+          }
+        >
+          <div className="form-grid">
+            {pending.isLoading ? (
+              <p className="hint">Conferindo pendências...</p>
+            ) : (
+              <>
+                {!pending.data?.hasRecords && (
+                  <p className="warn-text">
+                    Nenhuma evolução foi registrada nesta consulta.
+                  </p>
+                )}
+                {!!pending.data?.draftDocuments && (
+                  <p className="warn-text">
+                    {pending.data.draftDocuments} documento(s) ainda em rascunho — não foram
+                    assinados nem entregues à paciente.
+                  </p>
+                )}
+                {!!pending.data?.unsentDocuments && (
+                  <p className="warn-text">
+                    {pending.data.unsentDocuments} documento(s) assinado(s) mas não enviado(s) ao
+                    portal da paciente.
+                  </p>
+                )}
+
+                {!!pending.data?.openRecords && (
+                  <label className="toolbar-check">
+                    <input
+                      type="checkbox"
+                      checked={lockOnComplete}
+                      onChange={(e) => setLockOnComplete(e.target.checked)}
+                    />
+                    Fechar {pending.data.openRecords} registro(s) desta consulta — depois de
+                    fechados não podem mais ser editados
+                  </label>
+                )}
+
+                {!pending.data?.draftDocuments &&
+                  !pending.data?.unsentDocuments &&
+                  pending.data?.hasRecords && <p className="hint">Nada pendente nesta consulta.</p>}
+              </>
+            )}
+
+            {complete.isError && <p className="error">{errorMessage(complete.error)}</p>}
+          </div>
+        </Modal>
       )}
     </>
   )

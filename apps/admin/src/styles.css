@@ -263,6 +263,19 @@ main .encounter-row .data-actions button.encounter-open {
 .encounter-row .data-actions button.encounter-open:disabled { opacity: .45; }
 .warn-text { color: #8a5a22; }
 
+/* Subtítulo que separa blocos dentro de um formulário longo */
+.form-section-title { margin: 6px 0 0; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+
+/* Aviso acionável dentro do painel lateral (ex.: pedido sem cadastro) */
+.drawer-section.warn-box { background: #fbf0e2; border: 1px solid #e6c99b; border-radius: 8px; padding: 13px 15px; }
+.drawer-section.warn-box p { margin: 0 0 10px; font-size: 13px; line-height: 1.55; color: #7d5220; }
+
+/* Canceladas do dia: fora da lista principal, mas ainda alcançáveis */
+.cancelled-list { margin-top: 14px; }
+.cancelled-list summary { padding: 7px 0; font-size: 12.5px; color: var(--text-muted); cursor: pointer; }
+.cancelled-list ul { margin-top: 6px; }
+.cancelled-list button { opacity: .7; }
+
 .encounter-header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 16px; margin-bottom: 14px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; }
 .back-button { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 7px 13px; font-size: 13px; background: transparent; border: 1px solid var(--border); border-radius: 7px; color: var(--espresso); }
 .encounter-patient { display: flex; align-items: center; gap: 11px; min-width: 0; }
@@ -270,7 +283,13 @@ main .encounter-row .data-actions button.encounter-open {
 .encounter-patient span { display: block; font-size: 12.5px; color: var(--text-muted); }
 .encounter-when { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 12.5px; color: var(--text-muted); }
 
-.patient-alert { padding: 11px 14px; margin-bottom: 14px; background: #fbf0e2; border: 1px solid #e6c99b; border-radius: 8px; font-size: 13px; line-height: 1.55; color: #7d5220; }
+.patient-alert { display: flex; align-items: flex-start; gap: 8px; padding: 11px 14px; margin-bottom: 14px; background: #fbf0e2; border: 1px solid #e6c99b; border-radius: 8px; font-size: 13px; line-height: 1.55; color: #7d5220; }
+.patient-alert svg { flex-shrink: 0; margin-top: 2px; }
+/* Alergia e gestação: precisam ser vistas antes de prescrever */
+.patient-alert.critical { background: #fbe9e7; border-color: #e0b0aa; color: #8d3a2e; }
+.patient-alert.neutral  { background: var(--cream-deep); border-color: var(--border); color: var(--text-muted); }
+.clinical-alerts { display: grid; gap: 8px; margin-bottom: 14px; }
+.clinical-alerts .patient-alert { margin-bottom: 0; }
 
 .timeline { display: grid; gap: 10px; }
 .timeline-item { padding: 15px 17px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 9px; }
@@ -379,6 +398,7 @@ main .encounter-row .data-actions button.encounter-open {
 .chip.warning { background: #f7ecdc; color: #8a5a22; }
 .chip.info    { background: #e6ecf2; color: #3c556e; }
 .chip.neutral { background: var(--cream-deep); color: var(--text-muted); }
+.chip.danger  { display: inline-flex; gap: 4px; background: #fbe9e7; color: #8d3a2e; }
 
 .schedule-queue { background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px; position: sticky; top: 16px; }
 /* header sem borda aqui: a regra global de header pertence ao topo da página */

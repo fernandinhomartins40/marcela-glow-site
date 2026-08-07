@@ -1,7 +1,10 @@
 import {
   PrismaClient,
   AppointmentStatus,
+  BloodType,
+  Gender,
   LeadStatus,
+  MaritalStatus,
   NotificationChannel,
   Permission,
   PrescriptionStatus,
@@ -333,21 +336,46 @@ async function main() {
   }
 
   const patientPasswordHash = await bcrypt.hash('Paciente@2026', 12)
+  // Ficha completa: serve de exemplo do que o cadastro comporta e exercita os
+  // alertas clínicos. Telefone e CPF em dígitos crus, como a API grava.
+  const patientProfile = {
+    name: 'Paciente VIP Demo',
+    phone: '11900000000',
+    isActive: true,
+    notes: 'Paciente demonstrativa para o PWA da área da paciente.',
+    birthDate: new Date('1990-05-14T00:00:00.000Z'),
+    cpf: '52998224725',
+    socialName: null,
+    gender: Gender.FEMALE,
+    maritalStatus: MaritalStatus.MARRIED,
+    occupation: 'Advogada',
+    nationality: 'Brasileira',
+    zipCode: '79560000',
+    street: 'Rua das Acácias',
+    streetNumber: '450',
+    district: 'Centro',
+    city: 'Chapadão do Sul',
+    state: 'MS',
+    emergencyName: 'Ana Demo',
+    emergencyPhone: '11988887777',
+    emergencyRelation: 'Irmã',
+    allergies: 'Dipirona, penicilina',
+    medications: 'Levotiroxina 50mcg',
+    conditions: 'Hipotireoidismo',
+    bloodType: BloodType.O_POSITIVE,
+    skinType: 'Fototipo III, sensível',
+    referralSource: 'Instagram',
+    lgpdConsentAt: new Date(),
+    imageConsentAt: new Date(),
+  }
+
   const patient = await prisma.patient.upsert({
     where: { email_tenantId: { email: 'paciente@exemplo.com', tenantId: tenant.id } },
-    update: {
-      name: 'Paciente VIP Demo',
-      phone: '(11) 90000-0000',
-      passwordHash: patientPasswordHash,
-      isActive: true,
-      notes: 'Paciente demonstrativa para o PWA da área da paciente.',
-    },
+    update: { ...patientProfile, passwordHash: patientPasswordHash },
     create: {
-      name: 'Paciente VIP Demo',
+      ...patientProfile,
       email: 'paciente@exemplo.com',
-      phone: '(11) 90000-0000',
       passwordHash: patientPasswordHash,
-      notes: 'Paciente demonstrativa para o PWA da área da paciente.',
       tenantId: tenant.id,
     },
   })

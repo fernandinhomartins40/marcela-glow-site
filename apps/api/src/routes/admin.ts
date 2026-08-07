@@ -1,25 +1,125 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
-import QRCode from 'qrcode'
 import { prisma, LeadStatus, RecordType, PrescriptionStatus, ContentStatus, Permission, UserRole, FileVisibility } from '@marcela/database'
-import { authenticate, requirePermission, requireRole } from '../middleware/auth'
+import { authenticate, requirePermission, requireStaff } from '../middleware/auth'
 import { AppError, NotFoundError } from '../lib/errors'
 import { audit } from '../lib/audit'
-import { addDays, randomToken, sha256, signJson, signJsonWithPrivateKey } from '../lib/security'
+import { addDays, randomToken, sha256 } from '../lib/security'
 import { buildStorageKey, presignDownload, presignUpload, publicFileUrl, s3Bucket, storageConfigured } from '../lib/storage'
 import { sendPatientPush } from '../lib/push'
 
 const router = Router()
-const staffOnly = [authenticate, requireRole('ADMIN', 'STAFF')]
+const staffOnly = [authenticate, requireStaff]
+
+/**
+ * Campos de texto opcionais da ficha. String vazia vinda do formulário vira
+ * null para que "apagar o campo" realmente apague — com `undefined` o Prisma
+ * ignora a chave e o valor antigo permanece.
+ */
+const optionalText = (max = 200) =>
+  z
+    .string()
+    .max(max)
+    .trim()
+    .optional()
+    .transform((value) => (value ? value : null))
+
+const optionalDate = z
+  .string()
+  .optional()
+  .transform((value) => (value ? new Date(value) : null))
 
 const patientSchema = z.object({
-  name: z.string().min(2),
+  name: z.string().min(2).max(150),
   email: z.string().email(),
-  phone: z.string().optional(),
-  birthDate: z.string().optional(),
-  notes: z.string().optional(),
+  phone: optionalText(30),
+  birthDate: optionalDate,
+  notes: optionalText(2000),
+
+  // Identificação
+  cpf: z
+    .string()
+    .optional()
+    .transform((value) => {
+      const digits = (value ?? '').replace(/\D/g, '')
+      return digits ? digits : null
+    })
+    .refine((value) => value === null || value.length === 11, 'CPF deve ter 11 dígitos'),
+  rg: optionalText(30),
+  socialName: optionalText(150),
+  gender: z.enum(['FEMALE', 'MALE', 'NON_BINARY', 'UNDISCLOSED']).nullish(),
+  maritalStatus: z.enum(['SINGLE', 'MARRIED', 'DIVORCED', 'WIDOWED', 'STABLE_UNION']).nullish(),
+  occupation: optionalText(120),
+  nationality: optionalText(60),
+
+  // Endereço
+  zipCode: z
+    .string()
+    .optional()
+    .transform((value) => {
+      const digits = (value ?? '').replace(/\D/g, '')
+      return digits ? digits : null
+    })
+    .refine((value) => value === null || value.length === 8, 'CEP deve ter 8 dígitos'),
+  street: optionalText(200),
+  streetNumber: optionalText(20),
+  complement: optionalText(100),
+  district: optionalText(100),
+  city: optionalText(100),
+  state: z
+    .string()
+    .optional()
+    .transform((value) => (value ? value.toUpperCase().trim() : null))
+    .refine((value) => value === null || /^[A-Z]{2}$/.test(value), 'UF deve ter 2 letras'),
+
+  // Contato de emergência
+  emergencyName: optionalText(150),
+  emergencyPhone: optionalText(30),
+  emergencyRelation: optionalText(60),
+
+  // Clínico de base
+  allergies: optionalText(1000),
+  medications: optionalText(1000),
+  conditions: optionalText(1000),
+  surgeries: optionalText(1000),
+  bloodType: z
+    .enum([
+      'A_POSITIVE', 'A_NEGATIVE', 'B_POSITIVE', 'B_NEGATIVE',
+      'AB_POSITIVE', 'AB_NEGATIVE', 'O_POSITIVE', 'O_NEGATIVE',
+    ])
+    .nullish(),
+  isPregnant: z.boolean().optional(),
+  isBreastfeeding: z.boolean().optional(),
+  skinType: optionalText(60),
+
+  // Administrativo
+  insuranceName: optionalText(120),
+  insuranceNumber: optionalText(60),
+  referralSource: optionalText(120),
+  referredBy: optionalText(150),
+  // O formulário manda um booleano; o banco guarda o instante do aceite
+  lgpdConsent: z.boolean().optional(),
+  imageConsent: z.boolean().optional(),
 })
+
+type PatientInput = z.infer<typeof patientSchema>
+
+/**
+ * Converte o corpo validado em dados do Prisma. Os consentimentos chegam como
+ * booleano e viram data: é o instante do aceite que serve de prova (LGPD).
+ */
+function toPatientData(body: Partial<PatientInput>) {
+  const { lgpdConsent, imageConsent, name, email, ...rest } = body
+
+  return {
+    ...rest,
+    ...(name !== undefined ? { name } : {}),
+    ...(email !== undefined ? { email } : {}),
+    ...(lgpdConsent !== undefined ? { lgpdConsentAt: lgpdConsent ? new Date() : null } : {}),
+    ...(imageConsent !== undefined ? { imageConsentAt: imageConsent ? new Date() : null } : {}),
+  }
+}
 
 const leadSchema = z.object({
   name: z.string().min(2),
@@ -164,8 +264,11 @@ router.get('/patients', requirePermission('PATIENT_READ'), async (req, res, next
           ? {
               OR: [
                 { name: { contains: search, mode: 'insensitive' as const } },
+                { socialName: { contains: search, mode: 'insensitive' as const } },
                 { email: { contains: search, mode: 'insensitive' as const } },
                 { phone: { contains: search } },
+                // A recepção busca pelo documento como a paciente o dita
+                ...(search.replace(/\D/g, '') ? [{ cpf: { contains: search.replace(/\D/g, '') } }] : []),
               ],
             }
           : {}),
@@ -183,16 +286,52 @@ router.get('/patients', requirePermission('PATIENT_READ'), async (req, res, next
   }
 })
 
+/**
+ * Liga à paciente os agendamentos que chegaram pela landing antes de existir
+ * cadastro com aquele e-mail. Sem isso o pedido fica órfão e o atendimento não
+ * abre, mesmo depois de a recepção cadastrar a paciente.
+ */
+async function linkOrphanAppointments(tenantId: string, patientId: string, email: string) {
+  const { count } = await prisma.appointment.updateMany({
+    where: { tenantId, patientId: null, email },
+    data: { patientId },
+  })
+  return count
+}
+
 router.post('/patients', requirePermission('PATIENT_WRITE'), async (req, res, next) => {
   try {
     const body = patientSchema.parse(req.body)
-    const patient = await prisma.patient.upsert({
-      where: { email_tenantId: { email: body.email, tenantId: req.user!.tenantId } },
-      update: { ...body, birthDate: body.birthDate ? new Date(body.birthDate) : undefined },
-      create: { ...body, birthDate: body.birthDate ? new Date(body.birthDate) : undefined, tenantId: req.user!.tenantId },
+    const tenantId = req.user!.tenantId
+
+    // Não usa upsert: sobrescrever silenciosamente uma paciente existente já
+    // apagou dados de cadastro. Colisão de e-mail é erro, não atualização.
+    const clash = await prisma.patient.findUnique({
+      where: { email_tenantId: { email: body.email, tenantId } },
     })
-    await audit(req, 'CREATE', 'patient', patient.id)
-    res.status(201).json(patient)
+    if (clash) {
+      throw new AppError(
+        `Já existe uma paciente cadastrada com este e-mail (${clash.name}).`,
+        409,
+        'EMAIL_IN_USE',
+      )
+    }
+
+    if (body.cpf) {
+      const cpfClash = await prisma.patient.findFirst({ where: { cpf: body.cpf, tenantId } })
+      if (cpfClash) {
+        throw new AppError(`Este CPF já está cadastrado para ${cpfClash.name}.`, 409, 'CPF_IN_USE')
+      }
+    }
+
+    const patient = await prisma.patient.create({
+      data: { ...toPatientData(body), name: body.name, email: body.email, tenantId },
+    })
+
+    const linked = await linkOrphanAppointments(tenantId, patient.id, patient.email)
+
+    await audit(req, 'CREATE', 'patient', patient.id, linked ? { linkedAppointments: linked } : undefined)
+    res.status(201).json({ ...patient, linkedAppointments: linked })
   } catch (err) {
     next(err)
   }
@@ -226,28 +365,40 @@ router.get('/patients/:id', requirePermission('PATIENT_READ', 'RECORD_READ'), as
 router.put('/patients/:id', requirePermission('PATIENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = patientSchema.partial().parse(req.body)
+    const tenantId = req.user!.tenantId
     const existing = await prisma.patient.findFirst({
-      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+      where: { id: String(req.params.id), tenantId },
     })
     if (!existing) throw new NotFoundError('Paciente')
 
     // E-mail é a chave da paciente no tenant: não pode colidir com outra
     if (body.email && body.email !== existing.email) {
       const clash = await prisma.patient.findFirst({
-        where: { email: body.email, tenantId: req.user!.tenantId, id: { not: existing.id } },
+        where: { email: body.email, tenantId, id: { not: existing.id } },
       })
       if (clash) throw new AppError('Já existe uma paciente com este e-mail.', 409, 'EMAIL_IN_USE')
     }
 
+    // CPF também é único: duas fichas com o mesmo CPF são a mesma pessoa
+    if (body.cpf && body.cpf !== existing.cpf) {
+      const clash = await prisma.patient.findFirst({
+        where: { cpf: body.cpf, tenantId, id: { not: existing.id } },
+      })
+      if (clash) {
+        throw new AppError(`Este CPF já está cadastrado para ${clash.name}.`, 409, 'CPF_IN_USE')
+      }
+    }
+
     const patient = await prisma.patient.update({
       where: { id: existing.id },
-      data: {
-        ...body,
-        birthDate: body.birthDate ? new Date(body.birthDate) : undefined,
-      },
+      data: toPatientData(body),
     })
+
+    // Trocou o e-mail: pedidos antigos com o novo endereço passam a ser dela
+    const linked = body.email ? await linkOrphanAppointments(tenantId, patient.id, patient.email) : 0
+
     await audit(req, 'UPDATE', 'patient', patient.id)
-    res.json(patient)
+    res.json({ ...patient, linkedAppointments: linked })
   } catch (err) {
     next(err)
   }
@@ -580,55 +731,20 @@ router.delete('/prescriptions/:id', requirePermission('PRESCRIPTION_WRITE'), asy
   }
 })
 
-router.patch('/prescriptions/:id/sign', requirePermission('PRESCRIPTION_SIGN'), async (req, res, next) => {
-  try {
-    const existing = await prisma.prescription.findFirst({
-      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
-      include: { patient: true },
-    })
-    if (!existing) throw new NotFoundError('Prescricao')
-    // Reassinar rebaixaria uma assinatura qualificada para a interna
-    if (existing.signedAt) {
-      throw new AppError('Documento já assinado.', 409, 'ALREADY_SIGNED')
-    }
-
-    const verificationCode = randomToken(18)
-    const payload = {
-      id: existing.id,
-      patientId: existing.patientId,
-      title: existing.title,
-      instructions: existing.instructions,
-      signedById: req.user!.userId,
-      signedAt: new Date().toISOString(),
-      verificationCode,
-    }
-    const certificateSignature = signJsonWithPrivateKey(payload, process.env.PRESCRIPTION_SIGNING_PRIVATE_KEY)
-    const signatureHash = certificateSignature || signJson(payload, process.env.PRESCRIPTION_SIGNING_SECRET || process.env.JWT_SECRET || 'change-this-secret')
-    const verificationUrl = `${process.env.PUBLIC_APP_URL || ''}/api/patient/prescriptions/verify/${verificationCode}`
-    const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl)
-
-    const prescription = await prisma.prescription.update({
-      where: { id: existing.id },
-      data: {
-        status: 'SIGNED',
-        signedAt: new Date(),
-        signedById: req.user!.userId,
-        signatureHash,
-        verificationCode,
-        signaturePayload: {
-          ...payload,
-          verificationUrl,
-          qrCodeDataUrl,
-          algorithm: certificateSignature ? 'RSA-SHA256' : 'HMAC-SHA256',
-          certificatePem: process.env.PRESCRIPTION_SIGNING_CERTIFICATE?.replace(/\\n/g, '\n') ?? null,
-        },
-      },
-    })
-    await audit(req, 'SIGN', 'prescription', prescription.id, { patientId: prescription.patientId })
-    res.json(prescription)
-  } catch (err) {
-    next(err)
-  }
+/**
+ * Aposentada junto com POST /prescriptions. Assinava um payload sem itens
+ * estruturados nem checagem do nível exigido pela Lei 14.063/2020, e apontava o
+ * QR code para uma rota de verificação paralela. Assinar agora é
+ * POST /clinical/documents/:id/sign.
+ */
+router.patch('/prescriptions/:id/sign', requirePermission('PRESCRIPTION_SIGN'), async (_req: Request, _res: Response, next: NextFunction) => {
+  next(
+    new AppError(
+      'Assine o documento pelo atendimento da paciente, para que a receita saia com assinatura válida e código de verificação.',
+      410,
+      'ENDPOINT_RETIRED',
+    ),
+  )
 })
 
 router.patch('/prescriptions/:id/send', requirePermission('PRESCRIPTION_WRITE'), async (req, res, next) => {
@@ -940,7 +1056,7 @@ const businessHoursSchema = z.object({
   ),
 })
 
-router.get('/business-hours', staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/business-hours', requirePermission('APPOINTMENT_READ'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const hours = await prisma.businessHour.findMany({
       where: { tenantId: req.user!.tenantId },
@@ -953,7 +1069,7 @@ router.get('/business-hours', staffOnly, async (req: Request, res: Response, nex
 })
 
 /** Substitui o expediente inteiro — mais simples que diferenciar cada faixa. */
-router.put('/business-hours', staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+router.put('/business-hours', requirePermission('SETTINGS_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = businessHoursSchema.parse(req.body)
 
@@ -996,7 +1112,7 @@ const blockSchema = z.object({
   reason: z.string().max(200).optional(),
 })
 
-router.get('/schedule-blocks', staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/schedule-blocks', requirePermission('APPOINTMENT_READ'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const from = req.query.from ? new Date(String(req.query.from)) : new Date()
     const blocks = await prisma.scheduleBlock.findMany({
@@ -1009,7 +1125,7 @@ router.get('/schedule-blocks', staffOnly, async (req: Request, res: Response, ne
   }
 })
 
-router.post('/schedule-blocks', staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/schedule-blocks', requirePermission('APPOINTMENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = blockSchema.parse(req.body)
     const startsAt = new Date(body.startsAt)
@@ -1030,7 +1146,7 @@ router.post('/schedule-blocks', staffOnly, async (req: Request, res: Response, n
   }
 })
 
-router.delete('/schedule-blocks/:id', staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/schedule-blocks/:id', requirePermission('APPOINTMENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const existing = await prisma.scheduleBlock.findFirst({
       where: { id: String(req.params.id), tenantId: req.user!.tenantId },

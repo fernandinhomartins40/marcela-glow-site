@@ -231,6 +231,55 @@ export function FileUploadButton({
   )
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Máscaras — a recepção digita só os números; a pontuação aparece sozinha.
+// Guardamos sempre os dígitos crus: a API normaliza e o banco compara sem
+// depender de formatação.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export function maskCPF(value: string): string {
+  const d = value.replace(/\D/g, '').slice(0, 11)
+  return d
+    .replace(/^(\d{3})(\d)/, '$1.$2')
+    .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2')
+}
+
+export function maskCEP(value: string): string {
+  const d = value.replace(/\D/g, '').slice(0, 8)
+  return d.replace(/^(\d{5})(\d)/, '$1-$2')
+}
+
+export function maskPhone(value: string): string {
+  const d = value.replace(/\D/g, '').slice(0, 11)
+  if (d.length <= 10) {
+    return d.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{4})(\d{1,4})$/, '$1-$2')
+  }
+  return d.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d{5})(\d{1,4})$/, '$1-$2')
+}
+
+/**
+ * Validação real do CPF pelos dígitos verificadores. Erro de digitação num
+ * documento que vai para receita e atestado precisa ser pego no cadastro.
+ */
+export function isValidCPF(value: string): boolean {
+  const d = value.replace(/\D/g, '')
+  if (d.length !== 11 || /^(\d)\1{10}$/.test(d)) return false
+
+  const digit = (slice: number) => {
+    let sum = 0
+    for (let i = 0; i < slice; i++) sum += Number(d[i]) * (slice + 1 - i)
+    const rest = (sum * 10) % 11
+    return rest === 10 ? 0 : rest
+  }
+
+  return digit(9) === Number(d[9]) && digit(10) === Number(d[10])
+}
+
+export function formatCPF(value?: string | null) {
+  return value ? maskCPF(value) : '—'
+}
+
 export function formatMoney(cents?: number | null) {
   if (cents == null) return '—'
   return (cents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })

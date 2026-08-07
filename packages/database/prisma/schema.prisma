@@ -40,6 +40,33 @@ enum LeadStatus {
   LOST
 }
 
+enum Gender {
+  FEMALE
+  MALE
+  NON_BINARY
+  /// Registrado como "prefere não informar"
+  UNDISCLOSED
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+  STABLE_UNION
+}
+
+enum BloodType {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+}
+
 enum RecordType {
   NOTE
   EVOLUTION
@@ -391,6 +418,55 @@ model Patient {
   lastLoginAt  DateTime?
   birthDate    DateTime?
   notes        String?
+
+  // ── Identificação ──
+  /// Só dígitos. Identifica a paciente em receita e atestado e separa homônimas.
+  cpf          String?
+  rg           String?
+  /// Como a paciente quer ser chamada, quando difere do nome civil (Lei 14.320/2022)
+  socialName   String?
+  gender       Gender?
+  maritalStatus MaritalStatus?
+  occupation   String?
+  nationality  String?
+
+  // ── Endereço ──
+  /// Só dígitos
+  zipCode      String?
+  street       String?
+  streetNumber String?
+  complement   String?
+  district     String?
+  city         String?
+  /// Sigla de duas letras
+  state        String?
+
+  // ── Contato de emergência ──
+  emergencyName     String?
+  emergencyPhone    String?
+  emergencyRelation String?
+
+  // ── Dados clínicos de base ──
+  /// Campos da paciente, não do atendimento: precisam estar à mão ao prescrever.
+  allergies       String?
+  medications     String?
+  conditions      String?
+  surgeries       String?
+  bloodType       BloodType?
+  isPregnant      Boolean  @default(false)
+  isBreastfeeding Boolean  @default(false)
+  skinType        String?
+
+  // ── Administrativo ──
+  insuranceName   String?
+  insuranceNumber String?
+  /// Como conheceu a clínica: Instagram, indicação, busca…
+  referralSource  String?
+  referredBy      String?
+  /// Consentimentos: guardam o instante para valer como prova (LGPD, art. 8º)
+  lgpdConsentAt   DateTime?
+  imageConsentAt  DateTime?
+
   tenantId     String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -409,6 +485,8 @@ model Patient {
   attachments   Attachment[]
 
   @@unique([email, tenantId])
+  @@unique([cpf, tenantId])
+  @@index([tenantId, name])
 }
 
 model Lead {
