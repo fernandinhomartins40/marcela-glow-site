@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import QRCode from 'qrcode'
 import { prisma } from '@marcela/database'
-import { authenticate, requirePermission, requireRole } from '../middleware/auth'
+import { authenticate, requirePermission, requireRole, requireStaff } from '../middleware/auth'
 import { AppError, NotFoundError } from '../lib/errors'
 import { audit } from '../lib/audit'
 import { randomToken, signJson, signJsonWithPrivateKey } from '../lib/security'
@@ -14,6 +14,7 @@ import {
   formatItemLine,
   highestControl,
   validUntilFor,
+  verifySignaturePayload,
   type DocumentKind,
 } from '../lib/clinical'
 import {
@@ -28,7 +29,7 @@ import {
 } from '../lib/cloudSignature'
 
 const router = Router()
-const staffOnly = [authenticate, requireRole('ADMIN', 'STAFF')]
+const staffOnly = [authenticate, requireStaff]
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Catálogo clínico
@@ -50,7 +51,7 @@ const catalogSchema = z.object({
   isActive: z.boolean().optional(),
 })
 
-router.get('/catalog', ...staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/catalog', ...staffOnly, requirePermission('RECORD_READ'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const kind = req.query.kind ? String(req.query.kind) : undefined
     const search = typeof req.query.search === 'string' ? req.query.search.trim() : ''
@@ -79,7 +80,7 @@ router.get('/catalog', ...staffOnly, async (req: Request, res: Response, next: N
   }
 })
 
-router.post('/catalog', ...staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/catalog', ...staffOnly, requirePermission('RECORD_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = catalogSchema.parse(req.body)
     const item = await prisma.catalogItem.create({
@@ -92,7 +93,7 @@ router.post('/catalog', ...staffOnly, async (req: Request, res: Response, next: 
   }
 })
 
-router.put('/catalog/:id', ...staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+router.put('/catalog/:id', ...staffOnly, requirePermission('RECORD_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = catalogSchema.partial().parse(req.body)
     const existing = await prisma.catalogItem.findFirst({
@@ -108,7 +109,7 @@ router.put('/catalog/:id', ...staffOnly, async (req: Request, res: Response, nex
   }
 })
 
-router.delete('/catalog/:id', ...staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/catalog/:id', ...staffOnly, requirePermission('RECORD_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const existing = await prisma.catalogItem.findFirst({
       where: { id: String(req.params.id), tenantId: req.user!.tenantId },
@@ -155,7 +156,7 @@ const DOCUMENT_INCLUDE = {
   signedBy: { select: { id: true, name: true } },
 }
 
-router.get('/documents', ...staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/documents', ...staffOnly, requirePermission('PRESCRIPTION_READ'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const documents = await prisma.prescription.findMany({
       where: {
@@ -478,7 +479,7 @@ router.post('/documents/:id/send', ...staffOnly, requirePermission('PRESCRIPTION
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Consultas do dia, na ordem do horário. Ponto de entrada do atendimento. */
-router.get('/encounters/agenda', ...staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/encounters/agenda', ...staffOnly, requirePermission('APPOINTMENT_READ'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const date = typeof req.query.date === 'string' ? req.query.date : undefined
     const base = date ? new Date(`${date}T12:00:00Z`) : new Date()
@@ -517,7 +518,7 @@ router.get('/encounters/agenda', ...staffOnly, async (req: Request, res: Respons
  * Tudo que a médica precisa ver ao atender: dados da paciente, o que foi
  * registrado nesta consulta e o histórico anterior.
  */
-router.get('/encounters/:appointmentId', ...staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/encounters/:appointmentId', ...staffOnly, requirePermission('RECORD_READ'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = req.user!.tenantId
     const appointment = await prisma.appointment.findFirst({
@@ -594,20 +595,75 @@ router.get('/encounters/:appointmentId', ...staffOnly, async (req: Request, res:
   }
 })
 
-/** Encerra o atendimento: marca a consulta como realizada. */
-router.post('/encounters/:appointmentId/complete', ...staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+/** O que ficou por terminar na consulta — a tela avisa antes de encerrar. */
+router.get('/encounters/:appointmentId/pending', ...staffOnly, requirePermission('RECORD_READ'), async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const tenantId = req.user!.tenantId
+    const appointment = await prisma.appointment.findFirst({
+      where: { id: String(req.params.appointmentId), tenantId },
+      select: { id: true },
+    })
+    if (!appointment) throw new NotFoundError('Atendimento')
+
+    res.json(await pendingWork(tenantId, appointment.id))
+  } catch (err) {
+    next(err)
+  }
+})
+
+/** Registros abertos e documentos não entregues desta consulta. */
+async function pendingWork(tenantId: string, appointmentId: string) {
+  const [openRecords, draftDocuments, unsentDocuments, records] = await Promise.all([
+    prisma.medicalRecord.count({ where: { tenantId, appointmentId, lockedAt: null } }),
+    prisma.prescription.count({ where: { tenantId, appointmentId, status: 'DRAFT' } }),
+    // Assinado mas nunca disponibilizado: a paciente não recebeu
+    prisma.prescription.count({ where: { tenantId, appointmentId, status: 'SIGNED', sentAt: null } }),
+    prisma.medicalRecord.count({ where: { tenantId, appointmentId } }),
+  ])
+
+  return { openRecords, draftDocuments, unsentDocuments, hasRecords: records > 0 }
+}
+
+const completeSchema = z.object({
+  /** Fecha de uma vez os registros desta consulta, tornando-os definitivos */
+  lockRecords: z.boolean().optional().default(false),
+})
+
+/**
+ * Encerra o atendimento. Devolve o que ficou pendente para que a tela mostre —
+ * marcar como realizada sem avisar de receita em rascunho fazia o documento
+ * nunca chegar à paciente.
+ */
+router.post('/encounters/:appointmentId/complete', ...staffOnly, requirePermission('RECORD_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = completeSchema.parse(req.body ?? {})
+    const tenantId = req.user!.tenantId
+
     const existing = await prisma.appointment.findFirst({
-      where: { id: String(req.params.appointmentId), tenantId: req.user!.tenantId },
+      where: { id: String(req.params.appointmentId), tenantId },
     })
     if (!existing) throw new NotFoundError('Atendimento')
+
+    const pending = await pendingWork(tenantId, existing.id)
+
+    if (body.lockRecords && pending.openRecords > 0) {
+      await prisma.medicalRecord.updateMany({
+        where: { tenantId, appointmentId: existing.id, lockedAt: null },
+        data: { lockedAt: new Date() },
+      })
+      await audit(req, 'UPDATE', 'medicalRecord', existing.id, {
+        action: 'lock-on-complete',
+        count: pending.openRecords,
+      })
+    }
 
     const appointment = await prisma.appointment.update({
       where: { id: existing.id },
       data: { status: 'COMPLETED' },
     })
-    await audit(req, 'UPDATE', 'appointment', appointment.id, { action: 'complete' })
-    res.json(appointment)
+
+    await audit(req, 'UPDATE', 'appointment', appointment.id, { action: 'complete', ...pending })
+    res.json({ appointment, pending, lockedRecords: body.lockRecords ? pending.openRecords : 0 })
   } catch (err) {
     next(err)
   }
@@ -630,7 +686,7 @@ const providerConfigSchema = z.object({
 })
 
 /** Catálogo de provedores para a tela montar as instruções. */
-router.get('/signature/providers', ...staffOnly, async (_req: Request, res: Response) => {
+router.get('/signature/providers', ...staffOnly, requirePermission('PRESCRIPTION_SIGN'), async (_req: Request, res: Response) => {
   res.json(
     Object.values(PROVIDERS).map((p) => ({
       id: p.id,
@@ -642,7 +698,7 @@ router.get('/signature/providers', ...staffOnly, async (_req: Request, res: Resp
   )
 })
 
-router.get('/signature/config', ...staffOnly, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/signature/config', ...staffOnly, requirePermission('PRESCRIPTION_SIGN'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const config = await loadConfig(req.user!.tenantId)
     res.json({
@@ -748,9 +804,15 @@ router.get('/verify/:code', async (req: Request, res: Response, next: NextFuncti
 
     const expired = document.validUntil ? document.validUntil < new Date() : false
 
+    // Confere de fato a assinatura: um documento adulterado no banco precisa
+    // reprovar aqui, que é onde a farmácia checa.
+    const valid = document.signaturePayload
+      ? verifySignaturePayload(document.signaturePayload as Record<string, unknown>, document.signatureHash ?? '')
+      : false
+
     // Resposta pública: só o necessário para conferir o documento em mãos
     res.json({
-      valid: true,
+      valid,
       expired,
       kind: document.kind,
       kindLabel: DOCUMENT_LABELS[document.kind as DocumentKind],

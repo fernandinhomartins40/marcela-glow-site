@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { prisma, AppointmentStatus } from '@marcela/database'
-import { authenticate, requireAdmin } from '../middleware/auth'
+import { authenticate, requirePermission, requireStaff } from '../middleware/auth'
 import { AppError, NotFoundError } from '../lib/errors'
 import { audit } from '../lib/audit'
 import { sendPatientPush } from '../lib/push'
@@ -240,7 +240,7 @@ const staffCreateSchema = z.object({
   status: z.enum(['PENDING', 'CONFIRMED']).optional().default('CONFIRMED'),
 })
 
-router.post('/staff', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/staff', authenticate, requireStaff, requirePermission('APPOINTMENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = staffCreateSchema.parse(req.body)
     const tenantId = req.user!.tenantId
@@ -322,7 +322,7 @@ router.post('/staff', authenticate, async (req: Request, res: Response, next: Ne
 // GET /  (equipe)
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', authenticate, requireStaff, requirePermission('APPOINTMENT_READ'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { status, from, to, page, limit } = listQuerySchema.parse(req.query)
     const skip = (page - 1) * limit
@@ -368,7 +368,7 @@ router.get('/', authenticate, async (req: Request, res: Response, next: NextFunc
 // GET /:id  (equipe)
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/:id', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id', authenticate, requireStaff, requirePermission('APPOINTMENT_READ'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const appointment = await prisma.appointment.findFirst({
       where: { id: String(req.params.id), tenantId: req.user!.tenantId },
@@ -389,7 +389,7 @@ const confirmSchema = z.object({
   scheduledAt: z.string().datetime({ offset: true }).optional(),
 })
 
-router.post('/:id/confirm', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:id/confirm', authenticate, requireStaff, requirePermission('APPOINTMENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = confirmSchema.parse(req.body)
     const tenantId = req.user!.tenantId
@@ -464,7 +464,7 @@ router.post('/:id/confirm', authenticate, async (req: Request, res: Response, ne
 
 const cancelSchema = z.object({ reason: z.string().max(300).optional() })
 
-router.post('/:id/cancel', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:id/cancel', authenticate, requireStaff, requirePermission('APPOINTMENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = cancelSchema.parse(req.body)
     const tenantId = req.user!.tenantId
@@ -503,7 +503,7 @@ router.post('/:id/cancel', authenticate, async (req: Request, res: Response, nex
 // POST /:id/notified  (equipe) — registra que o WhatsApp foi disparado
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.post('/:id/notified', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+router.post('/:id/notified', authenticate, requireStaff, requirePermission('APPOINTMENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const existing = await prisma.appointment.findFirst({
       where: { id: String(req.params.id), tenantId: req.user!.tenantId },
@@ -531,7 +531,7 @@ const whatsappQuerySchema = z.object({
   kind: z.enum(['confirmed', 'rescheduled', 'cancelled', 'reminder']).optional().default('reminder'),
 })
 
-router.get('/:id/whatsapp', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+router.get('/:id/whatsapp', authenticate, requireStaff, requirePermission('APPOINTMENT_READ'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { kind } = whatsappQuerySchema.parse(req.query)
 
@@ -563,10 +563,74 @@ router.get('/:id/whatsapp', authenticate, async (req: Request, res: Response, ne
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POST /:id/link-patient  (equipe) — liga o agendamento a uma paciente
+// ─────────────────────────────────────────────────────────────────────────────
+
+const linkPatientSchema = z.object({
+  /** Paciente existente; ausente, cadastra a partir dos dados do agendamento */
+  patientId: z.string().optional(),
+})
+
+/**
+ * Pedido vindo da landing nasce sem `patientId` quando ainda não existe
+ * cadastro com aquele e-mail. Sem este vínculo o atendimento não abre, e não
+ * havia como criá-lo depois — o agendamento ficava num beco sem saída.
+ */
+router.post('/:id/link-patient', authenticate, requireStaff, requirePermission('PATIENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = linkPatientSchema.parse(req.body)
+    const tenantId = req.user!.tenantId
+
+    const existing = await prisma.appointment.findFirst({
+      where: { id: String(req.params.id), tenantId },
+    })
+    if (!existing) throw new NotFoundError('Agendamento')
+    if (existing.patientId) {
+      throw new AppError('Este agendamento já está vinculado a uma paciente.', 409, 'ALREADY_LINKED')
+    }
+
+    let patient
+    if (body.patientId) {
+      patient = await prisma.patient.findFirst({
+        where: { id: body.patientId, tenantId },
+      })
+      if (!patient) throw new NotFoundError('Paciente')
+    } else {
+      // Reaproveita cadastro com o mesmo e-mail; senão, cria a partir do pedido
+      patient = await prisma.patient.upsert({
+        where: { email_tenantId: { email: existing.email, tenantId } },
+        update: {},
+        create: {
+          name: existing.name,
+          email: existing.email,
+          phone: existing.phone || null,
+          tenantId,
+        },
+      })
+    }
+
+    const appointment = await prisma.appointment.update({
+      where: { id: existing.id },
+      data: { patientId: patient.id },
+      include: APPOINTMENT_INCLUDE,
+    })
+
+    await audit(req, 'UPDATE', 'appointment', appointment.id, {
+      action: 'link-patient',
+      patientId: patient.id,
+    })
+
+    res.json({ appointment, patient })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PATCH /:id  (admin) — edição direta; mantido para compatibilidade
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.patch('/:id', authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/:id', authenticate, requireStaff, requirePermission('APPOINTMENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = updateSchema.parse(req.body)
     const tenantId = req.user!.tenantId

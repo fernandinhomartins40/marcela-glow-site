@@ -238,14 +238,18 @@ function DayList({
   appointments: Appointment[]
   onSelectAppointment: (appointment: Appointment) => void
 }) {
+  // Cancelada não é atendimento do dia: sai da lista, mas continua acessível
+  const active = appointments.filter((a) => a.status !== 'CANCELLED')
+  const cancelled = appointments.filter((a) => a.status === 'CANCELLED')
+
   return (
     <section className="day-list">
       <h3>{fullDayLabel(day)}</h3>
-      {appointments.length === 0 ? (
+      {active.length === 0 ? (
         <p className="queue-empty">Nenhum atendimento neste dia.</p>
       ) : (
         <ul>
-          {appointments.map((appointment) => {
+          {active.map((appointment) => {
             const meta = statusMeta(appointment.status)
             return (
               <li key={appointment.id}>
@@ -264,6 +268,28 @@ function DayList({
             )
           })}
         </ul>
+      )}
+
+      {cancelled.length > 0 && (
+        <details className="cancelled-list">
+          <summary>
+            {cancelled.length} cancelada{cancelled.length > 1 ? 's' : ''} neste dia
+          </summary>
+          <ul>
+            {cancelled.map((appointment) => (
+              <li key={appointment.id}>
+                <button onClick={() => onSelectAppointment(appointment)}>
+                  <span className="slot-time">{clinicTime(appointment.scheduledAt)}</span>
+                  <span className="slot-body">
+                    <strong>{appointment.name}</strong>
+                    <span>{appointment.cancelReason ?? 'Sem motivo registrado'}</span>
+                  </span>
+                  <span className="chip neutral">Cancelada</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
     </section>
   )
@@ -322,6 +348,15 @@ function AppointmentDrawer({
       return data as WhatsAppLink
     },
     onSuccess: (data) => setWhatsapp(data),
+  })
+
+  // Pedido da landing sem cadastro correspondente: sem isso o atendimento não abre
+  const linkPatient = useMutation({
+    mutationFn: () => api.post(`/appointments/${appointment.id}/link-patient`, {}),
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ['patients'] })
+      refresh()
+    },
   })
 
   /** Abre o WhatsApp e marca que a paciente foi avisada. */
@@ -389,6 +424,23 @@ function AppointmentDrawer({
             </div>
           )}
         </dl>
+
+        {!appointment.patient && appointment.status !== 'CANCELLED' && (
+          <section className="drawer-section warn-box">
+            <p>
+              Este pedido não tem cadastro de paciente. Sem o cadastro não é possível
+              abrir o atendimento nem registrar o prontuário.
+            </p>
+            <button
+              className="primary"
+              onClick={() => linkPatient.mutate()}
+              disabled={linkPatient.isPending}
+            >
+              {linkPatient.isPending ? 'Cadastrando...' : 'Cadastrar e vincular paciente'}
+            </button>
+            {linkPatient.isError && <p className="error">{errorMessage(linkPatient.error)}</p>}
+          </section>
+        )}
 
         {appointment.status !== 'CANCELLED' && (
           <section className="drawer-section">

@@ -5,7 +5,8 @@ import { prisma } from '@marcela/database'
 import { signToken } from '../lib/jwt'
 import { authenticate, requirePatient } from '../middleware/auth'
 import { AppError, UnauthorizedError } from '../lib/errors'
-import { addDays, addHours, randomToken, sha256, signJson, verifyJsonWithPublicKey } from '../lib/security'
+import { addDays, addHours, randomToken, sha256 } from '../lib/security'
+import { verifySignaturePayload } from '../lib/clinical'
 import { audit } from '../lib/audit'
 import { getVapidPublicKey } from '../lib/push'
 import { presignDownload, storageConfigured } from '../lib/storage'
@@ -94,18 +95,42 @@ router.post('/auth/register', async (req: Request, res: Response, next: NextFunc
     const tenant = await tenantBySlug(body.tenantSlug)
     const passwordHash = await bcrypt.hash(body.password, 12)
 
-    const patient = await prisma.patient.upsert({
+    const existing = await prisma.patient.findUnique({
       where: { email_tenantId: { email: body.email, tenantId: tenant.id } },
-      update: { name: body.name, phone: body.phone, passwordHash },
-      create: { name: body.name, email: body.email, phone: body.phone, passwordHash, tenantId: tenant.id },
     })
 
+    // Cadastro feito pela clínica ainda não tem senha: este registro é a
+    // ativação do acesso. Já tendo senha, trocá-la aqui entregaria o prontuário
+    // a quem apenas soubesse o e-mail — recuperação de senha é o caminho.
+    if (existing?.passwordHash) {
+      throw new AppError(
+        'Já existe uma conta com este e-mail. Faça login ou use "esqueci minha senha".',
+        409,
+        'ACCOUNT_EXISTS',
+      )
+    }
+
+    const patient = existing
+      ? await prisma.patient.update({
+          where: { id: existing.id },
+          data: {
+            passwordHash,
+            // Não sobrescreve o cadastro da clínica com dados do formulário
+            phone: existing.phone ?? body.phone,
+          },
+        })
+      : await prisma.patient.create({
+          data: { name: body.name, email: body.email, phone: body.phone, passwordHash, tenantId: tenant.id },
+        })
+
+    const token = await createPatientSession(req, patient)
+    await prisma.patient.update({ where: { id: patient.id }, data: { lastLoginAt: new Date() } })
+
     res.status(201).json({
-      token: await createPatientSession(req, patient),
+      token,
       patient: { id: patient.id, name: patient.name, email: patient.email, phone: patient.phone },
       tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug },
     })
-    await prisma.patient.update({ where: { id: patient.id }, data: { lastLoginAt: new Date() } })
   } catch (err) {
     next(err)
   }
@@ -123,12 +148,14 @@ router.post('/auth/login', async (req, res, next) => {
     const ok = await bcrypt.compare(body.password, patient.passwordHash)
     if (!ok) throw new UnauthorizedError('Credenciais invalidas')
 
+    const token = await createPatientSession(req, patient)
+    await prisma.patient.update({ where: { id: patient.id }, data: { lastLoginAt: new Date() } })
+
     res.json({
-      token: await createPatientSession(req, patient),
+      token,
       patient: { id: patient.id, name: patient.name, email: patient.email, phone: patient.phone },
       tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug },
     })
-    await prisma.patient.update({ where: { id: patient.id }, data: { lastLoginAt: new Date() } })
     await prisma.auditLog.create({
       data: {
         tenantId: tenant.id,
@@ -179,28 +206,35 @@ router.get('/push/public-key', (_req, res) => {
   res.json({ publicKey: getVapidPublicKey() })
 })
 
+/**
+ * Verificação pública de documento assinado. Mantida no caminho antigo porque
+ * QR codes já impressos apontam para cá; a conferência da assinatura é a mesma
+ * de /clinical/verify/:code, que sabe ler os dois formatos de payload.
+ */
 router.get('/prescriptions/verify/:code', async (req, res, next) => {
   try {
     const prescription = await prisma.prescription.findUnique({
       where: { verificationCode: req.params.code },
       include: { patient: { select: { name: true, email: true } }, signedBy: { select: { name: true, email: true } } },
     })
-    if (!prescription || !prescription.signatureHash || !prescription.signaturePayload) throw new AppError('Prescricao nao encontrada', 404, 'NOT_FOUND')
-    const payload = prescription.signaturePayload as any
-    const signedPayload = {
-      id: payload.id,
-      patientId: payload.patientId,
-      title: payload.title,
-      instructions: payload.instructions,
-      signedById: payload.signedById,
-      signedAt: payload.signedAt,
-      verificationCode: payload.verificationCode,
+    if (!prescription || !prescription.signatureHash || !prescription.signaturePayload) {
+      throw new AppError('Prescricao nao encontrada', 404, 'NOT_FOUND')
     }
-    const valid =
-      payload.algorithm === 'RSA-SHA256'
-        ? verifyJsonWithPublicKey(signedPayload, prescription.signatureHash, payload.certificatePem)
-        : signJson(signedPayload, process.env.PRESCRIPTION_SIGNING_SECRET || process.env.JWT_SECRET || 'change-this-secret') === prescription.signatureHash
-    res.json({ valid, id: prescription.id, title: prescription.title, patient: prescription.patient, signedBy: prescription.signedBy, signedAt: prescription.signedAt, signatureHash: prescription.signatureHash, algorithm: payload.algorithm, certificatePem: payload.certificatePem })
+
+    const payload = prescription.signaturePayload as Record<string, unknown>
+    const valid = verifySignaturePayload(payload, prescription.signatureHash)
+
+    res.json({
+      valid,
+      id: prescription.id,
+      title: prescription.title,
+      patient: prescription.patient,
+      signedBy: prescription.signedBy,
+      signedAt: prescription.signedAt,
+      signatureHash: prescription.signatureHash,
+      algorithm: payload.algorithm,
+      certificatePem: payload.certificatePem ?? null,
+    })
   } catch (err) {
     next(err)
   }
@@ -343,43 +377,6 @@ router.get('/files/:id/download', async (req, res, next) => {
     const downloadUrl = storageConfigured && attachment.storageKey ? await presignDownload(attachment.storageKey) : attachment.url
     await audit(req, 'READ', 'attachment', attachment.id)
     res.json({ downloadUrl })
-  } catch (err) {
-    next(err)
-  }
-})
-
-router.get('/prescriptions/verify/:code', async (req, res, next) => {
-  try {
-    const prescription = await prisma.prescription.findUnique({
-      where: { verificationCode: req.params.code },
-      include: { patient: { select: { name: true, email: true } }, signedBy: { select: { name: true, email: true } } },
-    })
-    if (!prescription || !prescription.signatureHash || !prescription.signaturePayload) throw new AppError('Prescricao nao encontrada', 404, 'NOT_FOUND')
-    const payload = prescription.signaturePayload as any
-    const signedPayload = {
-      id: payload.id,
-      patientId: payload.patientId,
-      title: payload.title,
-      instructions: payload.instructions,
-      signedById: payload.signedById,
-      signedAt: payload.signedAt,
-      verificationCode: payload.verificationCode,
-    }
-    const valid =
-      payload.algorithm === 'RSA-SHA256'
-        ? verifyJsonWithPublicKey(signedPayload, prescription.signatureHash, payload.certificatePem)
-        : signJson(signedPayload, process.env.PRESCRIPTION_SIGNING_SECRET || process.env.JWT_SECRET || 'change-this-secret') === prescription.signatureHash
-    res.json({
-      valid,
-      id: prescription.id,
-      title: prescription.title,
-      patient: prescription.patient,
-      signedBy: prescription.signedBy,
-      signedAt: prescription.signedAt,
-      signatureHash: prescription.signatureHash,
-      algorithm: payload.algorithm,
-      certificatePem: payload.certificatePem,
-    })
   } catch (err) {
     next(err)
   }

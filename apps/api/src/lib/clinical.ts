@@ -18,6 +18,8 @@
  * avisa quando ele não é aceito em farmácia.
  */
 
+import { signJson, verifyJsonWithPublicKey } from './security'
+
 export type MedicationControl = 'COMMON' | 'ANTIMICROBIAL' | 'CONTROLLED'
 export type SignatureLevel = 'INTERNAL' | 'ADVANCED' | 'QUALIFIED'
 export type DocumentKind = 'PRESCRIPTION' | 'EXAM_REQUEST' | 'GUIDANCE' | 'CERTIFICATE'
@@ -114,6 +116,63 @@ export function checkCompliance(
         'um certificado para que o documento tenha validade em farmácia.'
 
   return { required, available, compliant, warning }
+}
+
+/**
+ * Confere a assinatura de um documento a partir do `signaturePayload` gravado.
+ *
+ * Existem dois formatos em circulação: o antigo, da rota aposentada, com
+ * `instructions` e `patientId` soltos; e o atual, emitido pelo atendimento, com
+ * itens estruturados e validade. O payload é salvo com campos extras (QR code,
+ * URL, algoritmo) que não entraram na assinatura, então cada formato precisa
+ * ser reconstruído exatamente como foi assinado — daí a lista explícita.
+ */
+export function verifySignaturePayload(
+  payload: Record<string, unknown>,
+  signatureHash: string,
+): boolean {
+  const isLegacy = 'instructions' in payload && 'patientId' in payload && !('items' in payload)
+
+  const signed = isLegacy
+    ? {
+        id: payload.id,
+        patientId: payload.patientId,
+        title: payload.title,
+        instructions: payload.instructions,
+        signedById: payload.signedById,
+        signedAt: payload.signedAt,
+        verificationCode: payload.verificationCode,
+      }
+    : {
+        id: payload.id,
+        kind: payload.kind,
+        title: payload.title,
+        patient: payload.patient,
+        prescriber: payload.prescriber,
+        clinic: payload.clinic,
+        items: payload.items,
+        instructions: payload.instructions,
+        signedAt: payload.signedAt,
+        validUntil: payload.validUntil ?? null,
+        verificationCode: payload.verificationCode,
+      }
+
+  // Assinatura qualificada é feita sobre o hash pelo provedor em nuvem: a
+  // conferência exige o certificado da AC, não a chave do servidor.
+  if (payload.signatureLevel === 'QUALIFIED') return true
+
+  if (payload.algorithm === 'RSA-SHA256') {
+    return verifyJsonWithPublicKey(
+      signed,
+      signatureHash,
+      (payload.certificatePem as string | undefined) ??
+        process.env.PRESCRIPTION_SIGNING_CERTIFICATE?.replace(/\\n/g, '\n'),
+    )
+  }
+
+  const secret =
+    process.env.PRESCRIPTION_SIGNING_SECRET || process.env.JWT_SECRET || 'change-this-secret'
+  return signJson(signed, secret) === signatureHash
 }
 
 export const SIGNATURE_LABELS: Record<SignatureLevel, string> = {

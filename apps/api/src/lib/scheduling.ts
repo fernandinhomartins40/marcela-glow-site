@@ -132,18 +132,31 @@ interface BusyInterval {
   end: Date
 }
 
+/**
+ * Folga usada para alcançar atendimentos que começaram antes da janela e ainda
+ * estão em curso. `endsAt` pode ser nulo em registros antigos, e nesse caso a
+ * duração é derivada do procedimento — por isso o filtro não pode depender só
+ * dele. Cobre com sobra a consulta mais longa da clínica.
+ */
+const MAX_APPOINTMENT_MIN = Number(process.env.BOOKING_MAX_DURATION_MINUTES || 8 * 60)
+
 async function loadBusyIntervals(
   tenantId: string,
   rangeStart: Date,
   rangeEnd: Date,
   ignoreAppointmentId?: string,
 ): Promise<BusyInterval[]> {
+  // Uma consulta que começou antes de `rangeStart` e termina depois dele ocupa
+  // a janela mesmo sem começar dentro dela. Filtrar só por `scheduledAt >=
+  // rangeStart` deixava marcar em cima de um atendimento em andamento.
+  const lookBack = new Date(rangeStart.getTime() - MAX_APPOINTMENT_MIN * 60000)
+
   const [appointments, blocks] = await Promise.all([
     prisma.appointment.findMany({
       where: {
         tenantId,
         status: { in: [...BLOCKING_STATUSES] },
-        scheduledAt: { not: null, gte: rangeStart, lt: rangeEnd },
+        scheduledAt: { not: null, gte: lookBack, lt: rangeEnd },
         ...(ignoreAppointmentId ? { id: { not: ignoreAppointmentId } } : {}),
       },
       select: {
@@ -167,6 +180,9 @@ async function loadBusyIntervals(
     const fallbackMin =
       (appointment.procedure?.durationMin ?? 60) + (appointment.procedure?.bufferMin ?? 0)
     const end = appointment.endsAt ?? new Date(start.getTime() + fallbackMin * 60000)
+    // O lookback traz consultas anteriores à janela; só interessam as que ainda
+    // estavam em curso quando ela começa.
+    if (end <= rangeStart) continue
     busy.push({ start, end })
   }
 

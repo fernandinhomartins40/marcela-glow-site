@@ -94,6 +94,26 @@ export function requireAdmin(req: Request, _res: Response, next: NextFunction): 
   next()
 }
 
+/**
+ * Libera qualquer integrante da equipe, seja qual for o papel. O que cada um
+ * pode fazer é decidido por `requirePermission`, que lê as permissões efetivas
+ * do papel (ver lib/permissions). Listar papéis à mão aqui já derrubou DOCTOR,
+ * RECEPTION e ASSISTANT de rotas que as permissões deles autorizavam.
+ */
+export function requireStaff(req: Request, _res: Response, next: NextFunction): void {
+  if (!req.user) {
+    next(new UnauthorizedError())
+    return
+  }
+
+  if (req.user.subjectType !== 'STAFF') {
+    next(new ForbiddenError('Apenas a equipe da clínica pode acessar este recurso'))
+    return
+  }
+
+  next()
+}
+
 export function requireRole(...roles: string[]) {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.user) {
