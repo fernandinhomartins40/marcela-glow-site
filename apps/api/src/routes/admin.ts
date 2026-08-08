@@ -30,6 +30,24 @@ const optionalDate = z
   .optional()
   .transform((value) => (value ? new Date(value) : null))
 
+/**
+ * Valida o CPF pelos dígitos verificadores. A checagem existe também na tela,
+ * mas precisa estar aqui: a API é chamada pelo painel, pelo portal e por
+ * integração, e um documento errado vai parar em receita e atestado.
+ */
+function isValidCPF(digits: string): boolean {
+  if (digits.length !== 11 || /^(\d)\1{10}$/.test(digits)) return false
+
+  const verifier = (length: number) => {
+    let sum = 0
+    for (let i = 0; i < length; i++) sum += Number(digits[i]) * (length + 1 - i)
+    const rest = (sum * 10) % 11
+    return rest === 10 ? 0 : rest
+  }
+
+  return verifier(9) === Number(digits[9]) && verifier(10) === Number(digits[10])
+}
+
 const patientSchema = z.object({
   name: z.string().min(2).max(150),
   email: z.string().email(),
@@ -45,7 +63,7 @@ const patientSchema = z.object({
       const digits = (value ?? '').replace(/\D/g, '')
       return digits ? digits : null
     })
-    .refine((value) => value === null || value.length === 11, 'CPF deve ter 11 dígitos'),
+    .refine((value) => value === null || isValidCPF(value), 'CPF inválido'),
   rg: optionalText(30),
   socialName: optionalText(150),
   gender: z.enum(['FEMALE', 'MALE', 'NON_BINARY', 'UNDISCLOSED']).nullish(),

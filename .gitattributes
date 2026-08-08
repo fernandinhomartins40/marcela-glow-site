@@ -1,0 +1,34 @@
+# O projeto é editado no Windows e executado em containers Linux. Sem isto, o
+# checkout converte para CRLF e o `#!/bin/sh` do entrypoint vira `#!/bin/sh\r`:
+# o container não encontra o interpretador, a API não sobe e as migrations nunca
+# rodam. Estes arquivos precisam de LF em qualquer sistema.
+*.sh            text eol=lf
+Dockerfile      text eol=lf
+*.Dockerfile    text eol=lf
+docker-entrypoint.sh text eol=lf
+*.yml           text eol=lf
+*.yaml          text eol=lf
+*.conf          text eol=lf
+*.sql           text eol=lf
+*.prisma        text eol=lf
+
+# Demais fontes: LF no repositório, normalização automática no checkout
+*.ts            text
+*.tsx           text
+*.js            text
+*.jsx           text
+*.json          text
+*.css           text
+*.md            text
+*.html          text
+
+# Binários não devem ser tocados
+*.png           binary
+*.jpg           binary
+*.jpeg          binary
+*.gif           binary
+*.ico           binary
+*.webp          binary
+*.woff          binary
+*.woff2         binary
+*.pdf           binary

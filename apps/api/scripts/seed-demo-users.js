@@ -80,7 +80,7 @@ async function main() {
     where: { email_tenantId: { email: "paciente@exemplo.com", tenantId: tenant.id } },
     update: {
       name: "Paciente VIP Demo",
-      phone: "(11) 90000-0000",
+      phone: "11900000000",
       passwordHash: patientPasswordHash,
       isActive: true,
       notes: "Paciente demonstrativa para o PWA da área da paciente.",
@@ -88,13 +88,31 @@ async function main() {
     create: {
       name: "Paciente VIP Demo",
       email: "paciente@exemplo.com",
-      phone: "(11) 90000-0000",
+      phone: "11900000000",
       passwordHash: patientPasswordHash,
       isActive: true,
       notes: "Paciente demonstrativa para o PWA da área da paciente.",
       tenantId: tenant.id,
     },
   });
+
+  // Expediente da clínica.
+  //
+  // Sem BusinessHour, getAvailability devolve lista vazia e o agendamento
+  // online não oferece nenhum horário — o site sobe funcionando, mas ninguém
+  // consegue marcar consulta. Só cria se não houver nenhum: alteração feita
+  // pela clínica em Configurações não pode ser desfeita a cada deploy.
+  const existingHours = await prisma.businessHour.count({ where: { tenantId: tenant.id } });
+  if (existingHours === 0) {
+    await prisma.businessHour.createMany({
+      // Segunda a sexta, 08:00–12:00 e 13:30–18:00
+      data: [1, 2, 3, 4, 5].flatMap((weekday) => [
+        { tenantId: tenant.id, weekday, startTime: "08:00", endTime: "12:00", isActive: true },
+        { tenantId: tenant.id, weekday, startTime: "13:30", endTime: "18:00", isActive: true },
+      ]),
+    });
+    console.log("Expediente padrão criado (seg-sex, 08:00-12:00 e 13:30-18:00).");
+  }
 
   console.log("Demo credentials ensured:");
   console.log(`- Admin: ${admin.email} / Admin@2024!`);

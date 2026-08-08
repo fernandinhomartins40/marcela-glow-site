@@ -62,8 +62,14 @@ RUN rm -rf ./node_modules/@marcela/database && \
       > ./node_modules/@marcela/database/index.js
 
 # Entrypoint script
+#
+# O sed remove CR: com o arquivo em CRLF o shebang vira "#!/bin/sh\r", o
+# container responde "no such file or directory" e a API não sobe — junto com
+# ela, o `prisma migrate deploy` que roda aqui. O .gitattributes já força LF,
+# mas isto garante a imagem mesmo num checkout mal configurado.
 COPY apps/api/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh && \
+    chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # Non-root user
 RUN addgroup --system --gid 1001 nodejs && \
