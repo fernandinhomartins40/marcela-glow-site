@@ -311,18 +311,35 @@ jobs:
             set -euo pipefail
 
             mkdir -p /var/www/certbot
-            pkill -f certbot 2>/dev/null || true
-            sleep 2
+
+            # A VPS hospeda dezenas de domínios e roda certbot.timer/snap timer.
+            # Um `pkill -f certbot` aqui abortava a renovação de OUTROS sites no
+            # meio do caminho. Em vez de matar, espera o lock liberar.
+            wait_for_certbot() {
+              local waited=0
+              while pgrep -x certbot >/dev/null 2>&1 || pgrep -f '/usr/bin/certbot' >/dev/null 2>&1; do
+                if [ "$waited" -ge 180 ]; then
+                  echo "Outro certbot segue rodando após 180s; pulando etapa de SSL." >&2
+                  return 1
+                fi
+                echo "Aguardando outra instância do certbot terminar (${waited}s)..."
+                sleep 10
+                waited=$((waited + 10))
+              done
+              return 0
+            }
 
             if [ ! -f "/etc/letsencrypt/live/${PRIMARY_DOMAIN}/fullchain.pem" ]; then
-              if ! certbot certonly --webroot \
-                -w /var/www/certbot \
-                -d "$PRIMARY_DOMAIN" \
-                -d "$SECONDARY_DOMAIN" \
-                --email "$SSL_EMAIL" \
-                --agree-tos \
-                --non-interactive; then
-                echo "Warning: certbot failed, keeping HTTP-only config for this deploy" >&2
+              if wait_for_certbot; then
+                if ! certbot certonly --webroot \
+                  -w /var/www/certbot \
+                  -d "$PRIMARY_DOMAIN" \
+                  -d "$SECONDARY_DOMAIN" \
+                  --email "$SSL_EMAIL" \
+                  --agree-tos \
+                  --non-interactive; then
+                  echo "Warning: certbot failed, keeping HTTP-only config for this deploy" >&2
+                fi
               fi
             else
               echo "Certificate already exists, skipping issuance"
@@ -351,8 +368,45 @@ jobs:
               echo "Cron de renovação criado em /etc/cron.d/certbot-dramarcela."
             fi
 
-            certbot renew --dry-run --webroot -w /var/www/certbot 2>&1 | tail -5 || \
-              echo "Aviso: teste de renovação falhou; confira o acme-challenge." >&2
+            # ─────────────────────────────────────────────────────────────────
+            # Conferência do acme-challenge — sem `certbot renew --dry-run`
+            #
+            # O dry-run sem `--cert-name` revalidava os ~24 domínios da VPS a
+            # cada deploy: demorava minutos e bastava um dos outros sites estar
+            # com DNS errado para o comando sair com 1. Pior: quando um dos
+            # timers do certbot rodava junto, ele abortava com "Another instance
+            # of Certbot is already running" — e, sendo o último comando do
+            # step, esse exit 1 matava o job ANTES do "Configure Nginx (HTTPS)",
+            # deixando o site preso na configuração HTTP-only.
+            #
+            # O que interessa aqui é só uma coisa: o webroot do desafio está
+            # sendo servido? Isso se verifica com um GET, sem tocar na Let's
+            # Encrypt nem competir por lock.
+            # ─────────────────────────────────────────────────────────────────
+            CHALLENGE_DIR=/var/www/certbot/.well-known/acme-challenge
+            mkdir -p "$CHALLENGE_DIR"
+            TOKEN="deploy-check-$(date +%s)"
+            printf '%s' "$TOKEN" > "$CHALLENGE_DIR/$TOKEN"
+
+            CHALLENGE_OK=0
+            for domain in "$PRIMARY_DOMAIN" "$SECONDARY_DOMAIN"; do
+              if [ "$(curl -fsS --max-time 15 "http://${domain}/.well-known/acme-challenge/${TOKEN}" 2>/dev/null)" = "$TOKEN" ]; then
+                echo "acme-challenge acessível em ${domain}."
+                CHALLENGE_OK=1
+              else
+                echo "Aviso: acme-challenge NÃO responde em ${domain}; a renovação pode falhar." >&2
+              fi
+            done
+            rm -f "$CHALLENGE_DIR/$TOKEN"
+
+            if [ "$CHALLENGE_OK" -ne 1 ]; then
+              echo "Aviso: nenhum domínio serviu o desafio. Confira o bloco /.well-known no nginx." >&2
+            fi
+
+            # Este step nunca deve derrubar o deploy: a aplicação já está no ar e
+            # o certificado atual continua válido. `exit 0` explícito para que
+            # nenhum aviso acima vire falha de job.
+            exit 0
           ENDSSH
 
       - name: Configure Nginx (HTTPS)
@@ -366,6 +420,13 @@ jobs:
             if [ ! -f "/etc/letsencrypt/live/${PRIMARY_DOMAIN}/fullchain.pem" ]; then
               echo "SSL cert not found, keeping HTTP-only config"
               exit 0
+            fi
+
+            # Cópia da config que está no ar, para restaurar se o nginx -t reprovar
+            BACKUP_CONF=""
+            if [ -f "/etc/nginx/sites-available/${SITE_NAME}" ]; then
+              BACKUP_CONF="/tmp/${SITE_NAME}.nginx.bak"
+              cp "/etc/nginx/sites-available/${SITE_NAME}" "$BACKUP_CONF"
             fi
 
             # HTTP/2 mudou de sintaxe no nginx 1.25.1: antes era um parâmetro do
@@ -434,8 +495,23 @@ jobs:
               printf '%s\n' '}'
             } > "/etc/nginx/sites-available/${SITE_NAME}"
 
-            nginx -t
+            ln -sfn "/etc/nginx/sites-available/${SITE_NAME}" "/etc/nginx/sites-enabled/${SITE_NAME}"
+
+            # `nginx -t` valida TODOS os vhosts da VPS. Um erro em site de outro
+            # projeto reprovaria o teste e nos deixaria sem reload — por isso, ao
+            # falhar, restauramos a nossa config anterior e conferimos se o
+            # problema era nosso antes de decidir.
+            if ! nginx -t 2>/tmp/nginx-test.log; then
+              cat /tmp/nginx-test.log >&2
+              if [ -f "$BACKUP_CONF" ]; then
+                echo "nginx -t falhou: restaurando a config anterior do ${SITE_NAME}." >&2
+                cp "$BACKUP_CONF" "/etc/nginx/sites-available/${SITE_NAME}"
+              fi
+              exit 1
+            fi
+
             systemctl reload nginx
+            echo "HTTPS configurado para ${PRIMARY_DOMAIN} e ${SECONDARY_DOMAIN}."
           ENDSSH
 
       - name: Post-deploy health check
@@ -444,6 +520,66 @@ jobs:
         run: |
           sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
             "APP_ROOT='${{ env.APP_ROOT }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' RELEASE='${{ steps.release.outputs.version }}' bash '${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/.github/scripts/remote-health-check.sh'"
+
+      # ───────────────────────────────────────────────────────────────────────
+      # Verificação pelo domínio público
+      #
+      # O health check acima fala com 127.0.0.1:3095 e por isso enxergava tudo
+      # "no ar" mesmo com o site inacessível de fora: a config do nginx do host
+      # ficou HTTP-only depois que o step de SSL abortou, e sem nenhum vhost
+      # nosso na 443 o domínio caía no certificado de OUTRO projeto da VPS.
+      # Este passo roda do runner, atravessando DNS, TLS e nginx de verdade.
+      # ───────────────────────────────────────────────────────────────────────
+      - name: Verify public HTTPS
+        run: |
+          set -euo pipefail
+
+          fail=0
+
+          echo "Conferindo o certificado servido em ${{ env.PRIMARY_DOMAIN }} ..."
+          cert_subject="$(echo | openssl s_client \
+            -connect "${{ env.PRIMARY_DOMAIN }}:443" \
+            -servername "${{ env.PRIMARY_DOMAIN }}" 2>/dev/null \
+            | openssl x509 -noout -subject 2>/dev/null || true)"
+          echo "  $cert_subject"
+          if ! printf '%s' "$cert_subject" | grep -q "${{ env.PRIMARY_DOMAIN }}"; then
+            echo "::error::A porta 443 está servindo um certificado que não é de ${{ env.PRIMARY_DOMAIN }}. O vhost HTTPS provavelmente não foi aplicado." >&2
+            fail=1
+          fi
+
+          check_public() {
+            local url="$1"
+            local label="$2"
+            local code
+            code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 "$url" 2>/dev/null || echo 000)"
+            if [ "$code" = "200" ]; then
+              echo "  ok      $label -> $url"
+            else
+              echo "::error::$label respondeu HTTP $code em $url" >&2
+              fail=1
+            fi
+          }
+
+          check_public "${{ env.CANONICAL_URL }}/" "site publico"
+          check_public "${{ env.CANONICAL_URL }}/admin/" "painel da clinica"
+          check_public "${{ env.CANONICAL_URL }}/paciente/" "portal da paciente"
+          check_public "${{ env.CANONICAL_URL }}/api/health" "api"
+
+          echo "Conferindo o redirecionamento de HTTP para HTTPS ..."
+          redirect_code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 25 \
+            "http://${{ env.PRIMARY_DOMAIN }}/" 2>/dev/null || echo 000)"
+          if [ "$redirect_code" = "301" ] || [ "$redirect_code" = "308" ]; then
+            echo "  ok      HTTP redireciona ($redirect_code)"
+          else
+            echo "::warning::HTTP respondeu $redirect_code em vez de redirecionar para HTTPS." >&2
+          fi
+
+          if [ "$fail" -ne 0 ]; then
+            echo "O site não está acessível pelo domínio público." >&2
+            exit 1
+          fi
+
+          echo "Site acessível por HTTPS com o certificado correto."
 
       - name: Notify success
         run: |
