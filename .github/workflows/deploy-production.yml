@@ -368,6 +368,21 @@ jobs:
               exit 0
             fi
 
+            # HTTP/2 mudou de sintaxe no nginx 1.25.1: antes era um parâmetro do
+            # `listen`, depois virou a diretiva `http2`. Emitir a forma errada
+            # aborta o `nginx -t` — a antiga só gera aviso nas versões novas,
+            # mas a nova é "unknown directive" nas antigas.
+            NGINX_VERSION="$(nginx -v 2>&1 | sed -n 's#.*nginx/\([0-9.]*\).*#\1#p')"
+            if [ -n "$NGINX_VERSION" ] && \
+               [ "$(printf '%s\n1.25.1\n' "$NGINX_VERSION" | sort -V | head -n1)" = "1.25.1" ]; then
+              HTTP2_LISTEN='    listen 443 ssl;'
+              HTTP2_DIRECTIVE='    http2 on;'
+            else
+              HTTP2_LISTEN='    listen 443 ssl http2;'
+              HTTP2_DIRECTIVE=''
+            fi
+            echo "nginx ${NGINX_VERSION:-desconhecido}: usando '${HTTP2_DIRECTIVE:-listen ... http2}'"
+
             {
               printf '%s\n' 'server {'
               printf '%s\n' '    listen 80;'
@@ -386,8 +401,9 @@ jobs:
               printf '%s\n' '}'
               printf '%s\n' ''
               printf '%s\n' 'server {'
-              printf '%s\n' '    listen 443 ssl;'
-              printf '%s\n' '    http2 on;'
+              printf '%s\n' "$HTTP2_LISTEN"
+              # `[ … ] && printf` devolveria 1 aqui e o `set -e` mataria o deploy
+              if [ -n "$HTTP2_DIRECTIVE" ]; then printf '%s\n' "$HTTP2_DIRECTIVE"; fi
               printf '%s\n' "    server_name ${PRIMARY_DOMAIN} ${SECONDARY_DOMAIN};"
               printf '%s\n' ''
               printf '%s\n' "    ssl_certificate /etc/letsencrypt/live/${PRIMARY_DOMAIN}/fullchain.pem;"
