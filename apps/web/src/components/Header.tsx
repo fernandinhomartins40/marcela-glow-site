@@ -43,35 +43,41 @@ const Header = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           {/* Logo MD */}
+          {/* `shrink-0` + `whitespace-nowrap`: sem eles o flex espremia a marca
+              até "Dra. Marcela Duch" quebrar em duas linhas, engordando o
+              header e empurrando a navegação por cima do botão de agendar. */}
           <button
             onClick={() => scrollToSection("home")}
-            className="flex items-center gap-3 group"
+            className="flex shrink-0 items-center gap-2 lg:gap-3 group"
             aria-label="Dra. Marcela Duch"
           >
             <img
               src={logoMD}
               alt="MD - Dra. Marcela Duch"
-              className="h-10 md:h-12 w-auto transition-transform duration-500 group-hover:scale-105"
+              className="h-9 sm:h-10 md:h-12 w-auto shrink-0 transition-transform duration-500 group-hover:scale-105"
               width={48}
               height={48}
             />
-            <div className="hidden sm:flex flex-col leading-tight">
-              <span className="font-display text-base md:text-lg tracking-[0.25em] uppercase text-primary">
+            <div className="hidden sm:flex flex-col leading-tight whitespace-nowrap">
+              <span className="font-display text-sm lg:text-base xl:text-lg tracking-[0.14em] lg:tracking-[0.18em] xl:tracking-[0.25em] uppercase text-primary">
                 Dra. Marcela Duch
               </span>
-              <span className="text-[0.6rem] tracking-[0.3em] uppercase text-muted-foreground">
+              <span className="text-[0.55rem] xl:text-[0.6rem] tracking-[0.2em] xl:tracking-[0.3em] uppercase text-muted-foreground">
                 Médica · CRM/MS 5691
               </span>
             </div>
           </button>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-5 xl:gap-8">
+          {/* Em 1024px os seis itens com tracking de desktop somavam 522px e,
+              com a marca e o CTA, estouravam a linha. O espaçamento cresce por
+              faixa: apertado no notebook, folgado no monitor grande. */}
+          <nav className="hidden lg:flex min-w-0 items-center justify-center gap-3 xl:gap-6 2xl:gap-8">
             {links.map((link) => (
               <button
                 key={link.id}
                 onClick={() => scrollToSection(link.id)}
-                className="link-underline whitespace-nowrap text-[0.65rem] xl:text-[0.7rem] tracking-[0.16em] xl:tracking-[0.25em] uppercase font-medium text-foreground/80 hover:text-foreground transition-colors"
+                className="link-underline whitespace-nowrap text-[0.6rem] xl:text-[0.65rem] 2xl:text-[0.7rem] tracking-[0.1em] xl:tracking-[0.16em] 2xl:tracking-[0.25em] uppercase font-medium text-foreground/80 hover:text-foreground transition-colors"
               >
                 {link.label}
               </button>
@@ -79,10 +85,11 @@ const Header = () => {
           </nav>
 
           {/* CTA Desktop */}
-          <div className="hidden lg:flex items-center gap-2 xl:gap-3">
+          <div className="hidden lg:flex shrink-0 items-center gap-2 xl:gap-3">
             <Button
               variant="cta"
-              size="default"
+              size="sm"
+              className="xl:h-12 xl:px-7 xl:text-sm"
               onClick={() => scrollToSection("agendamento")}
             >
               Agendar
