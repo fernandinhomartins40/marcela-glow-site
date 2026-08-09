@@ -77,7 +77,7 @@ function HomeSection({ data, onRequest }: { data: DashboardData; onRequest: () =
     <div className="space-y-6">
       <NextAppointment appointment={next} onRequest={onRequest} />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <SummaryStat icon={CalendarDays} label="Consultas" value={data.appointments.length} />
         <SummaryStat icon={Heart} label="Procedimentos" value={data.sessions.length} />
         <SummaryStat icon={FileText} label="Prescrições" value={data.prescriptions.length} />

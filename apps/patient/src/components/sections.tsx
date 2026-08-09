@@ -327,7 +327,7 @@ export function DashboardSkeleton() {
   return (
     <div className="space-y-6" aria-busy="true" aria-label="Carregando seus dados">
       <div className="h-44 rounded-lg bg-secondary animate-pulse" />
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="h-28 rounded-lg bg-secondary animate-pulse" />
         ))}
