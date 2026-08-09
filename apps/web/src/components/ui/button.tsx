@@ -5,7 +5,10 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium tracking-[0.2em] uppercase ring-offset-background transition-all duration-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0",
+  // `max-w-full` + quebra de palavra: o rótulo longo ("Ver Todos os Protocolos")
+  // com tracking largo media 350px e furava a viewport de 360px, criando scroll
+  // horizontal na página inteira. Sem `whitespace-nowrap` o texto acomoda.
+  "inline-flex max-w-full items-center justify-center gap-2 break-words text-center text-xs sm:text-sm font-medium tracking-[0.14em] sm:tracking-[0.2em] uppercase ring-offset-background transition-all duration-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -26,11 +29,14 @@ const buttonVariants = cva(
         ghostLight:
           "border border-[hsl(var(--cream))]/40 text-[hsl(var(--cream))] hover:bg-[hsl(var(--cream))] hover:text-primary backdrop-blur-sm",
       },
+      // Altura e respiro horizontal crescem com a tela: o padding fixo do
+      // desktop era o que estourava a largura no celular. `min-h` garante o
+      // alvo de toque de 44px recomendado mesmo quando a altura encolhe.
       size: {
-        default: "h-12 px-7 py-3",
-        sm: "h-10 px-5 text-xs",
-        lg: "h-14 px-10 text-sm",
-        icon: "h-10 w-10",
+        default: "min-h-11 h-auto px-5 py-3 sm:px-7",
+        sm: "min-h-10 h-auto px-4 py-2 text-xs sm:px-5",
+        lg: "min-h-12 h-auto px-6 py-3.5 sm:min-h-14 sm:px-10",
+        icon: "h-11 w-11 shrink-0 sm:h-10 sm:w-10",
       },
     },
     defaultVariants: {

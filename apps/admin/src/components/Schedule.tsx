@@ -168,62 +168,66 @@ function WeekGrid({
 
   return (
     <div className="week-grid">
-      <div className="week-head">
-        <div className="hour-col" />
-        {days.map((day) => (
-          <button
-            key={day.toISOString()}
-            className={`day-head ${dateKey(day) === dateKey(selectedDay) ? 'selected' : ''} ${isToday(day) ? 'today' : ''}`}
-            onClick={() => onSelectDay(day)}
-          >
-            <span>{dayLabel(day)}</span>
-            <strong>{day.getDate()}</strong>
-          </button>
-        ))}
-      </div>
-
-      <div className="week-body">
-        <div className="hour-col">
-          {GRID_HOURS.map((hour) => (
-            <div key={hour} className="hour-mark">
-              <span>{String(hour).padStart(2, '0')}h</span>
-            </div>
+      {/* Cabeçalho e corpo dividem o MESMO container de rolagem: em telas
+          estreitas os dias rolam juntos e a coluna continua sob o seu dia. */}
+      <div className="week-scroll">
+        <div className="week-head">
+          <div className="hour-col" />
+          {days.map((day) => (
+            <button
+              key={day.toISOString()}
+              className={`day-head ${dateKey(day) === dateKey(selectedDay) ? 'selected' : ''} ${isToday(day) ? 'today' : ''}`}
+              onClick={() => onSelectDay(day)}
+            >
+              <span>{dayLabel(day)}</span>
+              <strong>{day.getDate()}</strong>
+            </button>
           ))}
         </div>
 
-        {days.map((day) => {
-          const items = (byDay.get(dateKey(day)) ?? []).filter((a) => a.status !== 'CANCELLED')
-          return (
-            <div key={day.toISOString()} className="day-col">
-              {GRID_HOURS.map((hour) => (
-                <div key={hour} className="hour-slot" />
-              ))}
+        <div className="week-body">
+          <div className="hour-col">
+            {GRID_HOURS.map((hour) => (
+              <div key={hour} className="hour-mark">
+                <span>{String(hour).padStart(2, '0')}h</span>
+              </div>
+            ))}
+          </div>
 
-              {items.map((appointment) => {
-                const startMin = minutesFromMidnight(appointment.scheduledAt!)
-                const endMin = appointment.endsAt
-                  ? minutesFromMidnight(appointment.endsAt)
-                  : startMin + 60
-                const top = ((startMin - GRID_START_HOUR * 60) / totalMinutes) * 100
-                const height = ((endMin - startMin) / totalMinutes) * 100
-                if (top < 0 || top > 100) return null
+          {days.map((day) => {
+            const items = (byDay.get(dateKey(day)) ?? []).filter((a) => a.status !== 'CANCELLED')
+            return (
+              <div key={day.toISOString()} className="day-col">
+                {GRID_HOURS.map((hour) => (
+                  <div key={hour} className="hour-slot" />
+                ))}
 
-                return (
-                  <button
-                    key={appointment.id}
-                    className={`event ${statusMeta(appointment.status).tone}`}
-                    style={{ top: `${top}%`, height: `${Math.max(height, 4)}%` }}
-                    onClick={() => onSelectAppointment(appointment)}
-                    title={`${clinicTime(appointment.scheduledAt)} · ${appointment.name}`}
-                  >
-                    <strong>{clinicTime(appointment.scheduledAt)}</strong>
-                    <span>{appointment.name}</span>
-                  </button>
-                )
-              })}
-            </div>
-          )
-        })}
+                {items.map((appointment) => {
+                  const startMin = minutesFromMidnight(appointment.scheduledAt!)
+                  const endMin = appointment.endsAt
+                    ? minutesFromMidnight(appointment.endsAt)
+                    : startMin + 60
+                  const top = ((startMin - GRID_START_HOUR * 60) / totalMinutes) * 100
+                  const height = ((endMin - startMin) / totalMinutes) * 100
+                  if (top < 0 || top > 100) return null
+
+                  return (
+                    <button
+                      key={appointment.id}
+                      className={`event ${statusMeta(appointment.status).tone}`}
+                      style={{ top: `${top}%`, height: `${Math.max(height, 4)}%` }}
+                      onClick={() => onSelectAppointment(appointment)}
+                      title={`${clinicTime(appointment.scheduledAt)} · ${appointment.name}`}
+                    >
+                      <strong>{clinicTime(appointment.scheduledAt)}</strong>
+                      <span>{appointment.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

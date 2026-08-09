@@ -5,9 +5,26 @@ export default {
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
+    /* Estágio extra abaixo de 640px: metade dos celulares em uso tem 360-390px
+       de largura e o primeiro breakpoint do Tailwind só chega em 640. */
+    screens: {
+      xs: "480px",
+      sm: "640px",
+      md: "768px",
+      lg: "1024px",
+      xl: "1280px",
+      "2xl": "1440px",
+    },
     container: {
       center: true,
-      padding: "2rem",
+      /* Respiro proporcional: 2rem fixos apertavam o texto no celular e
+         sobravam no desktop. */
+      padding: {
+        DEFAULT: "1.25rem",
+        sm: "1.5rem",
+        lg: "2rem",
+        xl: "2.5rem",
+      },
       screens: {
         "2xl": "1400px",
       },

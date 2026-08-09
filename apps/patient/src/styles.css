@@ -66,6 +66,23 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* Nada empurra a página para os lados: conteúdo largo rola dentro do seu
+     próprio bloco, nunca arrastando o layout inteiro. */
+  html, body {
+    @apply max-w-full overflow-x-hidden;
+  }
+
+  img, svg, video, canvas {
+    @apply max-w-full h-auto;
+  }
+
+  /* E-mail e URL sem espaço quebram em vez de esticar a coluna. Restrito a
+     blocos de texto: aplicar em todo `span` quebraria rótulos curtos no meio
+     da palavra sem necessidade. */
+  p, dd, li, blockquote {
+    overflow-wrap: anywhere;
+  }
+
   /* Serifada reservada a títulos e números de destaque */
   h1, h2, h3 {
     @apply font-display;

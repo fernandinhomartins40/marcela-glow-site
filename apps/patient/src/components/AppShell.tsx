@@ -29,9 +29,11 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-background">
       {/* Navegação lateral — desktop */}
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-60 flex-col border-r border-border bg-card">
+      <aside className="hidden md:flex fixed inset-y-0 left-0 w-[13.5rem] lg:w-60 flex-col border-r border-border bg-card">
         <div className="px-6 py-6 border-b border-border">
-          <p className="font-display text-[0.95rem] tracking-[0.14em] uppercase text-primary leading-tight whitespace-nowrap">
+          {/* Sem `whitespace-nowrap`: a sidebar encolhe em tablet e o nome
+              precisa poder quebrar em duas linhas em vez de vazar a coluna. */}
+          <p className="font-display text-[0.95rem] tracking-[0.14em] uppercase text-primary leading-tight">
             Dra. Marcela Duch
           </p>
           <p className="mt-1 text-[0.6rem] tracking-[0.25em] uppercase text-muted-foreground">
@@ -92,7 +94,7 @@ export function AppShell({
       </aside>
 
       {/* Topo — mobile */}
-      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-5 h-16 bg-card border-b border-border">
+      <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-5 h-16 bg-card border-b border-border">
         <div className="min-w-0">
           <p className="font-display text-sm tracking-[0.2em] uppercase text-primary truncate">
             Dra. Marcela Duch
@@ -107,17 +109,17 @@ export function AppShell({
       </header>
 
       {/* Conteúdo */}
-      <div className="lg:pl-60">
-        <main className="mx-auto max-w-5xl px-5 sm:px-6 lg:px-10 py-6 sm:py-8 lg:pb-12">
+      <div className="md:pl-[13.5rem] lg:pl-60">
+        <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-10 py-6 sm:py-8 lg:pb-12">
           {children}
           {/* Espaçador: garante que a navegação fixa do mobile não cubra o fim do conteúdo */}
-          <div className="h-24 lg:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} aria-hidden="true" />
+          <div className="h-24 md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} aria-hidden="true" />
         </main>
       </div>
 
       {/* Navegação inferior — mobile */}
       <nav
-        className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-card border-t border-border"
+        className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-card border-t border-border"
         aria-label="Navegação principal"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >

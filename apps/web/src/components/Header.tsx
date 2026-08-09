@@ -40,7 +40,7 @@ const Header = () => {
           : "bg-transparent"
       }`}
     >
-      <div className="container mx-auto px-6 lg:px-10 py-4">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-3 sm:py-4">
         <div className="flex items-center justify-between">
           {/* Logo MD */}
           <button
@@ -66,12 +66,12 @@ const Header = () => {
           </button>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-5 xl:gap-8">
             {links.map((link) => (
               <button
                 key={link.id}
                 onClick={() => scrollToSection(link.id)}
-                className="link-underline text-[0.7rem] tracking-[0.25em] uppercase font-medium text-foreground/80 hover:text-foreground transition-colors"
+                className="link-underline whitespace-nowrap text-[0.65rem] xl:text-[0.7rem] tracking-[0.16em] xl:tracking-[0.25em] uppercase font-medium text-foreground/80 hover:text-foreground transition-colors"
               >
                 {link.label}
               </button>
@@ -79,7 +79,7 @@ const Header = () => {
           </nav>
 
           {/* CTA Desktop */}
-          <div className="hidden lg:flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-2 xl:gap-3">
             <Button
               variant="cta"
               size="default"
@@ -102,7 +102,7 @@ const Header = () => {
 
           {/* Mobile menu button */}
           <button
-            className="lg:hidden p-2"
+            className="lg:hidden -mr-2 p-3 shrink-0"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Menu"
           >

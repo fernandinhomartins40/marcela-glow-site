@@ -91,6 +91,22 @@
     font-feature-settings: "ss01", "salt";
   }
 
+  /* Nenhuma seção arrasta a página para os lados. O marquee e os carrosséis
+     são propositalmente mais largos que a tela e já rolam por conta própria;
+     esta regra impede que isso vire scroll horizontal do documento. */
+  html, body {
+    @apply max-w-full overflow-x-hidden;
+  }
+
+  img, svg, video, canvas {
+    @apply max-w-full;
+  }
+
+  /* E-mail, URL e nome composto quebram em vez de esticar a coluna */
+  p, dd, li, blockquote {
+    overflow-wrap: anywhere;
+  }
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
     font-feature-settings: "lnum", "kern";
