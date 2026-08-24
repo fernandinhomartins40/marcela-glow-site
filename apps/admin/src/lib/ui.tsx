@@ -168,9 +168,20 @@ export function ConfirmDialog({
   )
 }
 
-export function EmptyState({ title, description, action }: { title: string; description?: string; action?: React.ReactNode }) {
+export function EmptyState({
+  icon: Icon,
+  title,
+  description,
+  action,
+}: {
+  icon?: LucideIcon
+  title: string
+  description?: string
+  action?: React.ReactNode
+}) {
   return (
     <div className="empty-state">
+      {Icon && <Icon size={22} aria-hidden="true" className="empty-icon" />}
       <p className="empty-title">{title}</p>
       {description && <p className="empty-desc">{description}</p>}
       {action}
@@ -652,4 +663,87 @@ export function PatientSearchSelect({
       )}
     </>
   )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Papéis e permissões — vocabulário da clínica, não o do banco
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const ROLE_LABELS: Record<string, string> = {
+  ADMIN: 'Administradora',
+  STAFF: 'Equipe',
+  DOCTOR: 'Médica',
+  RECEPTION: 'Recepção',
+  ASSISTANT: 'Assistente',
+  CONTENT_EDITOR: 'Conteúdo',
+  FINANCE: 'Financeiro',
+}
+
+export const ROLE_HINTS: Record<string, string> = {
+  ADMIN: 'Acesso total, inclusive à gestão da equipe.',
+  DOCTOR: 'Prontuário, prescrição e assinatura digital.',
+  STAFF: 'Agenda, leads e leitura das fichas.',
+  RECEPTION: 'Agenda, leads e cadastro de pacientes.',
+  ASSISTANT: 'Leitura de fichas e anexos, sem editar.',
+  CONTENT_EDITOR: 'Somente o conteúdo do site.',
+  FINANCE: 'Números e configurações, sem dado clínico.',
+}
+
+/**
+ * As permissões vêm do banco em MAIÚSCULA_COM_UNDERSCORE. Ninguém da clínica
+ * decide sobre "PRESCRIPTION_SIGN" — decide sobre "assinar receita".
+ */
+export const PERMISSION_GROUPS: { id: string; label: string; items: { id: string; label: string }[] }[] = [
+  {
+    id: 'clinico',
+    label: 'Clínico',
+    items: [
+      { id: 'PATIENT_READ', label: 'Ver pacientes' },
+      { id: 'PATIENT_WRITE', label: 'Cadastrar e editar pacientes' },
+      { id: 'RECORD_READ', label: 'Ver prontuário' },
+      { id: 'RECORD_WRITE', label: 'Escrever no prontuário' },
+      { id: 'PRESCRIPTION_READ', label: 'Ver receitas' },
+      { id: 'PRESCRIPTION_WRITE', label: 'Emitir receitas' },
+      { id: 'PRESCRIPTION_SIGN', label: 'Assinar receitas digitalmente' },
+    ],
+  },
+  {
+    id: 'agenda',
+    label: 'Agenda e relacionamento',
+    items: [
+      { id: 'APPOINTMENT_READ', label: 'Ver agenda' },
+      { id: 'APPOINTMENT_WRITE', label: 'Marcar e alterar horários' },
+      { id: 'LEAD_READ', label: 'Ver leads' },
+      { id: 'LEAD_WRITE', label: 'Trabalhar os leads' },
+      { id: 'NOTIFICATION_SEND', label: 'Enviar avisos às pacientes' },
+    ],
+  },
+  {
+    id: 'site',
+    label: 'Site e arquivos',
+    items: [
+      { id: 'CMS_READ', label: 'Ver o conteúdo do site' },
+      { id: 'CMS_WRITE', label: 'Editar o site' },
+      { id: 'FILE_MANAGE', label: 'Enviar e baixar arquivos' },
+    ],
+  },
+  {
+    id: 'administracao',
+    label: 'Administração',
+    items: [
+      { id: 'DASHBOARD_READ', label: 'Ver o painel de números' },
+      { id: 'SETTINGS_READ', label: 'Ver configurações' },
+      { id: 'SETTINGS_WRITE', label: 'Alterar configurações' },
+      { id: 'USER_MANAGE', label: 'Gerenciar a equipe e os acessos' },
+      { id: 'AUDIT_READ', label: 'Ler o registro de auditoria' },
+    ],
+  },
+]
+
+export function permissionLabel(id: string) {
+  for (const group of PERMISSION_GROUPS) {
+    const found = group.items.find((item) => item.id === id)
+    if (found) return found.label
+  }
+  return id
 }

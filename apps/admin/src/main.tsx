@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { api, errorMessage, tenantSlug } from './lib/ui'
+import { api, errorMessage, ROLE_LABELS, tenantSlug } from './lib/ui'
 import {
   CalendarDays,
   FileSignature,
@@ -23,6 +23,7 @@ import { Schedule } from './components/Schedule'
 import { ScheduleSettings } from './components/ScheduleSettings'
 import { Patients } from './components/Patients'
 import { Cms, Leads, Procedures } from './components/Catalog'
+import { Team } from './components/Team'
 import { ClinicalCatalog, ClinicalDocuments } from './components/Clinical'
 import { Certificate } from './components/Certificate'
 import { Encounter } from './components/Encounter'
@@ -154,16 +155,6 @@ function useAdminData() {
 
 function Stat({ label, value }: { label: string; value: string | number }) {
   return <div className="stat"><span>{label}</span><strong>{value}</strong></div>
-}
-
-const ROLE_LABELS: Record<string, string> = {
-  ADMIN: 'Administradora',
-  STAFF: 'Equipe',
-  DOCTOR: 'Médica',
-  RECEPTION: 'Recepção',
-  ASSISTANT: 'Assistente',
-  CONTENT_EDITOR: 'Conteúdo',
-  FINANCE: 'Financeiro',
 }
 
 function initials(fullName?: string) {
@@ -324,13 +315,13 @@ function Shell() {
         </header>
         {data.isLoading && <p>Carregando dados reais do backend...</p>}
         {data.isError && <p className="error">Não foi possível carregar a API.</p>}
-        {data.data && <Panel tab={tab} data={data.data} />}
+        {data.data && <Panel tab={tab} data={data.data} currentUserId={me.data?.id} />}
       </main>
     </div>
   )
 }
 
-function Panel({ tab, data }: { tab: Tab; data: any }) {
+function Panel({ tab, data, currentUserId }: { tab: Tab; data: any; currentUserId?: string }) {
   if (tab === 'dashboard') return <Dashboard data={data} />
   if (tab === 'patients') return <Patients />
   if (tab === 'appointments') return <Appointments appointments={data.appointments} />
@@ -339,7 +330,7 @@ function Panel({ tab, data }: { tab: Tab; data: any }) {
   if (tab === 'registry') return <RegistryArea />
   if (tab === 'leads') return <Leads />
   if (tab === 'cms') return <Cms cms={data.cms} />
-  if (tab === 'security') return <Security data={data} />
+  if (tab === 'security') return <Security data={data} currentUserId={currentUserId} />
   return <SettingsPanel settings={data.settings} />
 }
 
@@ -401,25 +392,50 @@ function RegistryArea() {
   )
 }
 
-function Security({ data }: { data: any }) {
-  const client = useQueryClient()
-  const [email, setEmail] = React.useState('')
-  const invite = useMutation({
-    mutationFn: () => api.post('/admin/invites', { email, role: 'STAFF', permissions: ['PATIENT_READ', 'APPOINTMENT_READ'] }),
-    onSuccess: () => { setEmail(''); client.invalidateQueries({ queryKey: ['admin'] }) },
-  })
+/**
+ * Duas coisas distintas sob a mesma aba: quem tem acesso, e o que já foi feito
+ * com ele. A auditoria só faz sentido ao lado de quem a gerou.
+ */
+function Security({ data, currentUserId }: { data: any; currentUserId?: string }) {
+  const [area, setArea] = React.useState<'equipe' | 'auditoria'>('equipe')
+
   return (
-    <section className="grid two">
-      <section className="list">
-        <h2>Equipe e sessões</h2>
-        {data.users.map((u: any) => <p key={u.id}>{u.name} - {u.role}<span>{u.sessions?.length ?? 0} sessões ativas</span></p>)}
-        <div className="inline-form">
-          <input placeholder="email@clinica.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <button onClick={() => invite.mutate()}>Convidar</button>
+    <div className="grid" style={{ gap: 14 }}>
+      <div className="area-tabs" role="tablist" aria-label="Equipe e acessos">
+        <button
+          role="tab"
+          aria-selected={area === 'equipe'}
+          aria-controls="painel-equipe"
+          className={area === 'equipe' ? 'active' : ''}
+          onClick={() => setArea('equipe')}
+        >
+          Equipe e permissões
+        </button>
+        <button
+          role="tab"
+          aria-selected={area === 'auditoria'}
+          aria-controls="painel-auditoria"
+          className={area === 'auditoria' ? 'active' : ''}
+          onClick={() => setArea('auditoria')}
+        >
+          Auditoria LGPD
+        </button>
+      </div>
+
+      {area === 'equipe' ? (
+        <div id="painel-equipe" role="tabpanel">
+          <Team currentUserId={currentUserId} />
         </div>
-      </section>
-      <List title="Auditoria LGPD" items={data.audit} pick={(a: any) => `${a.action} ${a.resource} - ${a.user?.name ?? a.patient?.name ?? 'sistema'}`} />
-    </section>
+      ) : (
+        <div id="painel-auditoria" role="tabpanel">
+          <List
+            title="Registro de acessos"
+            items={data.audit}
+            pick={(a: any) => `${a.action} ${a.resource} - ${a.user?.name ?? a.patient?.name ?? 'sistema'}`}
+          />
+        </div>
+      )}
+    </div>
   )
 }
 

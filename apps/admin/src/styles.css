@@ -31,7 +31,9 @@ button, input, select { font: inherit; }
 .eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: 11px; color: var(--bronze); font-weight: 700; }
 .form { display: grid; gap: 14px; }
 label { display: grid; gap: 6px; font-size: 13px; font-weight: 700; }
-input, select { width: 100%; border: 1px solid rgba(156,130,104,.38); border-radius: 6px; padding: 12px; background: rgba(255,250,242,.92); color: var(--espresso); outline: 0; transition: border-color .25s ease, box-shadow .25s ease, background .25s ease; }
+/* Checkbox e radio ficam de fora: `width: 100%` e o padding transformavam
+   a caixinha num retângulo da largura do formulário. */
+input:not([type=checkbox]):not([type=radio]), select { width: 100%; border: 1px solid rgba(156,130,104,.38); border-radius: 6px; padding: 12px; background: rgba(255,250,242,.92); color: var(--espresso); outline: 0; transition: border-color .25s ease, box-shadow .25s ease, background .25s ease; }
 input:focus, select:focus { border-color: var(--bronze); box-shadow: 0 0 0 3px rgba(156,130,104,.16); background: #fffaf2; }
 .auth-panel .form { padding: 38px; align-content: center; background: rgba(246,239,228,.82); border-left: 1px solid rgba(216,202,184,.78); }
 button { border: 0; border-radius: 6px; background: var(--espresso); color: var(--cream-soft); padding: 12px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; justify-content: center; min-height: 42px; transition: background .25s ease, color .25s ease, border-color .25s ease, transform .25s ease; }
@@ -87,7 +89,7 @@ header h1 { margin: 2px 0 0; font-family: inherit; font-size: 24px; line-height:
 .who-text span { font-size: 11px; color: var(--text-muted); }
 /* Dentro do painel os controles ficam mais compactos que no login.
    :not(.schedule *) preserva os estilos próprios da agenda. */
-main input, main select { padding: 9px 11px; font-size: 13px; border-radius: 7px; }
+main input:not([type=checkbox]):not([type=radio]), main select { padding: 9px 11px; font-size: 13px; border-radius: 7px; }
 main button:not(.schedule button):not(.drawer button) { min-height: 36px; padding: 8px 14px; font-size: 13px; border-radius: 7px; }
 main label { font-size: 12px; font-weight: 600; }
 main header .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .14em; }
@@ -154,22 +156,42 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .data-actions button:disabled { opacity: .35; }
 
 .empty-state { padding: 40px 20px; text-align: center; background: var(--cream-soft); border: 1px dashed var(--border); border-radius: 10px; }
+.empty-icon { display: block; margin: 0 auto 10px; color: var(--bronze); opacity: .75; }
 .empty-title { margin: 0; font-size: 14px; font-weight: 600; }
 .empty-desc { margin: 6px auto 16px; max-width: 380px; font-size: 13px; color: var(--text-muted); line-height: 1.55; }
 
-.drawer-wide { width: min(680px, 100%); }
 .drawer-body { display: grid; gap: 14px; }
 .drawer-footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 14px; border-top: 1px solid var(--border); }
 .drawer-footer button { min-height: 38px; padding: 9px 16px; font-size: 13px; background: var(--cream-soft); border: 1px solid var(--border); color: var(--espresso); border-radius: 7px; }
 .drawer-footer .primary { background: var(--espresso); border-color: var(--espresso); color: var(--cream-soft); }
 
 .form-grid { display: grid; gap: 14px; }
+
+/* ── Permissões por papel ─────────────────────────────────────────────────── */
+/* Duas colunas no desktop porque são vinte itens: em coluna única a lista
+   passa da altura da tela e a comparação entre grupos se perde. */
+.perm-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.perm-group { display: block; min-width: 0; margin: 0; padding: 12px 13px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 9px; }
+.perm-group-body { display: grid; gap: 7px; }
+.perm-group legend { padding: 0 4px; font-size: 10.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+/* Um checkbox avulso num formulário, fora do quadro de permissões. */
+.check-row { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 1.45; cursor: pointer; }
+.check-row input { flex: none; margin-top: 2px; accent-color: var(--espresso); }
+.perm-item { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 1.45; cursor: pointer; }
+.perm-item input { flex: none; margin-top: 2px; accent-color: var(--espresso); }
+/* Sem isto o rótulo não encolhe: o item flex assume a largura do texto inteiro
+   e o rótulo escapa para dentro da coluna vizinha. */
+.perm-item > span:not(.perm-source) { flex: 1 1 auto; min-width: 0; }
+/* O que o papel já concede fica marcado e travado: desmarcar não teria efeito,
+   porque o papel devolveria a permissão na leitura seguinte. */
+.perm-item.by-role { color: var(--text-muted); cursor: default; }
+.perm-source { margin-left: auto; padding-left: 8px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--bronze); white-space: nowrap; }
 .form-row { display: grid; gap: 12px; }
 .field { display: grid; gap: 5px; }
 .field-label { font-size: 12px; font-weight: 600; }
 .field-label em { color: #a33131; font-style: normal; }
 .field-hint { font-size: 11.5px; color: var(--text-muted); line-height: 1.45; }
-.field input, .field select, .field textarea { width: 100%; padding: 9px 11px; font-size: 13px; border: 1px solid var(--border); border-radius: 7px; background: var(--cream-soft); color: var(--espresso); outline: 0; }
+.field input:not([type=checkbox]):not([type=radio]), .field select, .field textarea { width: 100%; padding: 9px 11px; font-size: 13px; border: 1px solid var(--border); border-radius: 7px; background: var(--cream-soft); color: var(--espresso); outline: 0; }
 .field textarea { resize: vertical; font-family: inherit; line-height: 1.55; }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--bronze); box-shadow: 0 0 0 3px rgba(156,130,104,.15); }
 .field input:disabled { opacity: .6; }
@@ -492,6 +514,9 @@ main .data-actions button.encounter-open {
 /* ── Painel lateral do agendamento ───────────────────────────────────────── */
 .drawer-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(31,23,19,.42); display: flex; justify-content: flex-end; }
 .drawer { width: min(440px, 100%); height: 100%; overflow-y: auto; background: var(--marble-soft); border-left: 1px solid var(--border); padding: 22px; display: grid; gap: 18px; align-content: start; color: var(--espresso); }
+/* Depois de `.drawer`: mesma especificidade, então a ordem decide. Antes
+   dela o `wide` nunca teve efeito e o formulário largo transbordava. */
+.drawer.drawer-wide { width: min(680px, 100%); }
 .drawer p { color: var(--espresso); }
 .drawer header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 0; border-bottom: 0; }
 .drawer header h2 { margin: 8px 0 3px; font-family: inherit; font-size: 19px; font-weight: 600; color: var(--espresso); }
@@ -572,6 +597,7 @@ main .data-actions button.encounter-open {
      no meio do vazio. No celular ele volta para o canto, sobre o cabeçalho. */
   .drawer header { position: relative; padding-right: 40px; }
   .drawer header .icon-button { position: absolute; top: 0; right: 0; }
+  .perm-groups { grid-template-columns: minmax(0, 1fr); }
   .segmented { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
   .segmented button { width: 100%; }
   /* Mesma razão no rodapé: "Cancelar" e o botão de ação se sobrepunham. */
@@ -689,7 +715,7 @@ main .data-actions button.encounter-open {
     min-height: 40px;
   }
   .row-actions button { min-height: 40px; }
-  main input, main select, main button { min-height: 42px; }
+  main input:not([type=checkbox]):not([type=radio]), main select, main button { min-height: 42px; }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

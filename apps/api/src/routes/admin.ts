@@ -8,6 +8,7 @@ import { audit } from '../lib/audit'
 import { addDays, randomToken, sha256 } from '../lib/security'
 import { buildStorageKey, presignDownload, presignUpload, publicFileUrl, s3Bucket, storageConfigured } from '../lib/storage'
 import { sendPatientPush } from '../lib/push'
+import { rolePermissions } from '../lib/permissions'
 
 const router = Router()
 const staffOnly = [authenticate, requireStaff]
@@ -1029,10 +1030,131 @@ router.get('/users', requirePermission('USER_MANAGE'), async (req, res, next) =>
   try {
     const users = await prisma.user.findMany({
       where: { tenantId: req.user!.tenantId },
-      include: { permissions: true, sessions: { where: { revokedAt: null }, take: 5, orderBy: { createdAt: 'desc' } } },
+      include: {
+        permissions: true,
+        sessions: { where: { revokedAt: null }, take: 5, orderBy: { createdAt: 'desc' } },
+        _count: { select: { sessions: { where: { revokedAt: null } } } },
+      },
       orderBy: { name: 'asc' },
     })
     res.json(users)
+  } catch (err) {
+    next(err)
+  }
+})
+
+const userUpdateSchema = z.object({
+  name: z.string().min(2).optional(),
+  role: z.nativeEnum(UserRole).optional(),
+  isActive: z.boolean().optional(),
+  /** Substitui o conjunto inteiro de exceções — não é um acréscimo. */
+  permissions: z.array(z.nativeEnum(Permission)).optional(),
+})
+
+/**
+ * Duas travas que o painel sozinho não garante: ninguém rebaixa ou desliga a
+ * própria conta (sairia da tela sem poder desfazer), e a clínica nunca fica
+ * sem administrador ativo — sem ADMIN não há quem gerencie a equipe de volta.
+ */
+async function assertTenantKeepsAdmin(tenantId: string, userId: string, next: { role?: UserRole; isActive?: boolean }) {
+  const target = await prisma.user.findFirst({ where: { id: userId, tenantId } })
+  if (!target || target.role !== 'ADMIN') return
+  const stillAdmin = (next.role ?? target.role) === 'ADMIN' && (next.isActive ?? target.isActive)
+  if (stillAdmin) return
+
+  const others = await prisma.user.count({
+    where: { tenantId, role: 'ADMIN', isActive: true, id: { not: userId } },
+  })
+  if (others === 0) {
+    throw new AppError(
+      'A clínica precisa de pelo menos um administrador ativo. Promova outra pessoa antes de alterar esta conta.',
+      409,
+      'LAST_ADMIN',
+    )
+  }
+}
+
+router.patch('/users/:id', requirePermission('USER_MANAGE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = userUpdateSchema.parse(req.body)
+    const tenantId = req.user!.tenantId
+    const id = String(req.params.id)
+
+    const target = await prisma.user.findFirst({ where: { id, tenantId } })
+    if (!target) throw new NotFoundError('Usuario')
+
+    if (id === req.user!.userId && (body.role !== undefined || body.isActive !== undefined)) {
+      throw new AppError(
+        'Você não pode alterar o próprio papel nem desativar a própria conta. Peça a outro administrador.',
+        409,
+        'SELF_DEMOTION',
+      )
+    }
+
+    await assertTenantKeepsAdmin(tenantId, id, { role: body.role, isActive: body.isActive })
+
+    const user = await prisma.$transaction(async (tx) => {
+      const updated = await tx.user.update({
+        where: { id },
+        data: {
+          ...(body.name !== undefined ? { name: body.name } : {}),
+          ...(body.role !== undefined ? { role: body.role } : {}),
+          ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),
+        },
+      })
+
+      if (body.permissions) {
+        // O papel já concede o seu conjunto; guardar aqui o que ele daria de
+        // graça faria a exceção sobreviver a uma troca de papel.
+        const fromRole = new Set(rolePermissions[updated.role] ?? [])
+        const extras = body.permissions.filter((permission) => !fromRole.has(permission))
+        await tx.userPermission.deleteMany({ where: { userId: id } })
+        if (extras.length) {
+          await tx.userPermission.createMany({
+            data: extras.map((permission) => ({ userId: id, tenantId, permission })),
+            skipDuplicates: true,
+          })
+        }
+      }
+
+      return tx.user.findUniqueOrThrow({
+        where: { id },
+        include: {
+          permissions: true,
+          sessions: { where: { revokedAt: null }, take: 5, orderBy: { createdAt: 'desc' } },
+        },
+      })
+    })
+
+    // Desativar não basta: a sessão aberta continuaria valendo até expirar.
+    if (body.isActive === false) {
+      await prisma.authSession.updateMany({
+        where: { userId: id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      })
+    }
+
+    await audit(req, 'UPDATE', 'user', id, {
+      role: body.role,
+      isActive: body.isActive,
+      permissions: body.permissions,
+    })
+    res.json(user)
+  } catch (err) {
+    next(err)
+  }
+})
+
+/** Catálogo que o painel usa para montar a tela — evita duplicar a lista lá. */
+router.get('/roles', requirePermission('USER_MANAGE'), async (_req: Request, res: Response, next: NextFunction) => {
+  try {
+    res.json({
+      roles: Object.values(UserRole).map((role) => ({
+        id: role,
+        permissions: rolePermissions[role] ?? [],
+      })),
+      permissions: Object.values(Permission),
+    })
   } catch (err) {
     next(err)
   }
@@ -1079,6 +1201,25 @@ router.post('/invites/accept', async (req, res, next) => {
     })
     await prisma.staffInvite.update({ where: { id: invite.id }, data: { acceptedAt: new Date() } })
     res.json({ message: 'Convite aceito' })
+  } catch (err) {
+    next(err)
+  }
+})
+
+/** "Desconectar de todos os aparelhos" — o caso real é celular perdido. */
+router.post('/users/:id/revoke-sessions', requirePermission('USER_MANAGE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = req.user!.tenantId
+    const id = String(req.params.id)
+    const target = await prisma.user.findFirst({ where: { id, tenantId } })
+    if (!target) throw new NotFoundError('Usuario')
+
+    const { count } = await prisma.authSession.updateMany({
+      where: { userId: id, revokedAt: null },
+      data: { revokedAt: new Date() },
+    })
+    await audit(req, 'REVOKE', 'authSession', id, { all: true, count })
+    res.json({ revoked: count })
   } catch (err) {
     next(err)
   }
