@@ -1,6 +1,6 @@
 import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FileText, Globe, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
+import { FileText, Globe, Pencil, Plus, Sparkles, Trash2, UserPlus, UserRound } from 'lucide-react'
 import {
   api,
   Chip,
@@ -249,6 +249,10 @@ interface Lead {
   status: string
   notes: string | null
   nextFollowUp: string | null
+  /** Preenchidos quando o contato já virou ficha — a origem fica preservada. */
+  patientId: string | null
+  convertedAt: string | null
+  patient: { id: string; name: string } | null
 }
 
 const LEAD_COLUMNS = [
@@ -264,6 +268,7 @@ export function Leads() {
   const client = useQueryClient()
   const [editing, setEditing] = React.useState<Lead | 'new' | null>(null)
   const [removing, setRemoving] = React.useState<Lead | null>(null)
+  const [converting, setConverting] = React.useState<Lead | null>(null)
 
   const query = useQuery({
     queryKey: ['leads'],
@@ -283,6 +288,15 @@ export function Leads() {
     mutationFn: (id: string) => api.delete(`/admin/leads/${id}`),
     onSuccess: () => {
       setRemoving(null)
+      refresh()
+    },
+  })
+  const convert = useMutation({
+    mutationFn: (id: string) => api.post(`/admin/leads/${id}/convert`),
+    onSuccess: () => {
+      setConverting(null)
+      // A ficha nova precisa aparecer na aba Pacientes sem exigir recarga
+      client.invalidateQueries({ queryKey: ['patients'] })
       refresh()
     },
   })
@@ -316,7 +330,33 @@ export function Leads() {
                     <strong>{lead.name}</strong>
                     <span>{lead.origin ?? 'origem direta'}</span>
                     {lead.phone && <span>{lead.phone}</span>}
+                    {lead.patient && (
+                      <Chip
+                        tone="success"
+                        icon={UserRound}
+                        title={`Ficha de paciente: ${lead.patient.name}`}
+                      >
+                        {/* Repetir o nome que já está em negrito acima não diria
+                            nada; só vale mostrar quando o vínculo caiu numa ficha
+                            de nome diferente (mesmo e-mail, cadastro anterior). */}
+                        {lead.patient.name === lead.name ? 'Já é paciente' : lead.patient.name}
+                      </Chip>
+                    )}
                     <div className="lead-actions">
+                      {!lead.patient && (
+                        <button
+                          onClick={() => setConverting(lead)}
+                          title={
+                            lead.email
+                              ? 'Converter em paciente'
+                              : 'Precisa de e-mail para virar ficha'
+                          }
+                          aria-label={`Converter ${lead.name} em paciente`}
+                          disabled={!lead.email}
+                        >
+                          <UserPlus size={13} />
+                        </button>
+                      )}
                       <select
                         value={lead.status}
                         onChange={(e) => move.mutate({ id: lead.id, status: e.target.value })}
@@ -363,6 +403,21 @@ export function Leads() {
           pending={remove.isPending}
           onCancel={() => setRemoving(null)}
           onConfirm={() => remove.mutate(removing.id)}
+        />
+      )}
+
+      {converting && (
+        <ConfirmDialog
+          title="Converter em paciente?"
+          message={
+            `Cria a ficha de ${converting.name} com os dados do contato e marca o lead como ganho. ` +
+            'Se já existir uma paciente com este e-mail, o contato é apenas vinculado a ela.' +
+            (convert.isError ? ` — ${errorMessage(convert.error, 'Não foi possível converter.')}` : '')
+          }
+          confirmLabel="Converter"
+          pending={convert.isPending}
+          onCancel={() => setConverting(null)}
+          onConfirm={() => convert.mutate(converting.id)}
         />
       )}
     </>

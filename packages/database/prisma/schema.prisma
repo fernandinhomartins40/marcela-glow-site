@@ -209,6 +209,8 @@ model Tenant {
   prescriptions Prescription[]
   attachments   Attachment[]
   cmsPages      CmsPage[]
+  landingContent LandingContent[]
+  landingImages  LandingImage[]
   blogPosts     BlogPost[]
   notifications Notification[]
   messages      Message[]
@@ -393,6 +395,68 @@ model Testimonial {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
+/// Seções editáveis da landing. O identificador espelha o componente que a
+/// renderiza, para o preview do painel e a página nunca divergirem.
+enum LandingSection {
+  HERO
+  ABOUT
+  PROCEDURES
+  TECHNOLOGY
+  TESTIMONIALS
+  APPOINTMENT
+  FOOTER
+  SEO
+}
+
+/// Conteúdo de uma seção da landing.
+///
+/// `content` é Json porque cada seção tem uma forma própria (o Hero tem
+/// slides, o Rodapé tem redes sociais e horários) e uma coluna por campo
+/// exigiria migration a cada texto novo. O formato de cada seção é validado
+/// por schema Zod na API — o Json é o meio de guardar, não a ausência de
+/// contrato.
+model LandingContent {
+  id          String         @id @default(cuid())
+  section     LandingSection
+  content     Json
+  /// Seção oculta continua guardada: desligar não é apagar.
+  isVisible   Boolean        @default(true)
+  /// Ordem de exibição na página; Header e Rodapé ignoram.
+  position    Int            @default(0)
+  tenantId    String
+  updatedById String?
+  updatedAt   DateTime       @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([section, tenantId])
+}
+
+/// Imagem da landing, já recortada no formato que a seção usa.
+///
+/// Separada de `Attachment` de propósito: aquele é documento clínico de uma
+/// paciente, privado e sob retenção da LGPD. Estas são públicas, servidas pelo
+/// nginx em /files/, e podem ser trocadas por quem edita o site sem qualquer
+/// acesso a prontuário.
+model LandingImage {
+  id         String   @id @default(cuid())
+  /// Onde a imagem é usada: "hero.0", "about.portrait", "footer.logo"
+  slot       String
+  storageKey String
+  width      Int
+  height     Int
+  sizeBytes  Int
+  mimeType   String
+  /// Texto alternativo — obrigatório para leitor de tela
+  alt        String
+  tenantId   String
+  createdAt  DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([slot, tenantId])
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // NewsletterSubscriber  (email marketing opt-ins)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -483,6 +547,7 @@ model Patient {
   resetTokens   PasswordResetToken[]
   pushSubscriptions PushSubscription[]
   attachments   Attachment[]
+  leads         Lead[]
 
   @@unique([email, tenantId])
   @@unique([cpf, tenantId])
@@ -498,11 +563,21 @@ model Lead {
   status      LeadStatus @default(NEW)
   nextFollowUp DateTime?
   notes       String?
+
+  /// Ficha criada a partir deste contato. Sem isto a origem se perdia na
+  /// conversão: a mesma pessoa virava dois registros sem ligação, e não havia
+  /// como saber de qual campanha uma paciente tinha vindo.
+  patientId   String?
+  convertedAt DateTime?
+
   tenantId    String
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status])
 }
 
 model MedicalRecord {

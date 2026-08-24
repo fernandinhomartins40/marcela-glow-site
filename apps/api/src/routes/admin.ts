@@ -629,7 +629,12 @@ router.delete('/sessions/:id', requirePermission('RECORD_WRITE'), async (req: Re
 
 router.get('/leads', requirePermission('LEAD_READ'), async (req, res, next) => {
   try {
-    const leads = await prisma.lead.findMany({ where: { tenantId: req.user!.tenantId }, orderBy: { updatedAt: 'desc' } })
+    const leads = await prisma.lead.findMany({
+      where: { tenantId: req.user!.tenantId },
+      orderBy: { updatedAt: 'desc' },
+      // O cartão mostra o vínculo com a ficha quando o contato já foi convertido
+      include: { patient: { select: { id: true, name: true } } },
+    })
     res.json(leads)
   } catch (err) {
     next(err)
@@ -658,6 +663,67 @@ router.patch('/leads/:id', requirePermission('LEAD_WRITE'), async (req, res, nex
       data: { ...body, nextFollowUp: body.nextFollowUp ? new Date(body.nextFollowUp as string) : undefined },
     })
     res.json(lead)
+  } catch (err) {
+    next(err)
+  }
+})
+
+/**
+ * Converte um lead em paciente, guardando o vínculo.
+ *
+ * Sem isto a mesma pessoa virava dois registros sem ligação: a origem se
+ * perdia na conversão e não dava para saber de qual campanha uma paciente
+ * tinha vindo. Quando já existe cadastro com aquele e-mail, vincula ao
+ * existente em vez de falhar — a recepção costuma cadastrar antes de mexer
+ * no quadro de leads, e duplicar seria o pior desfecho.
+ */
+router.post('/leads/:id/convert', requirePermission('PATIENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = req.user!.tenantId
+    const lead = await prisma.lead.findFirst({ where: { id: String(req.params.id), tenantId } })
+    if (!lead) throw new NotFoundError('Lead')
+
+    if (lead.patientId) {
+      throw new AppError('Este contato já foi convertido em paciente.', 409, 'LEAD_ALREADY_CONVERTED')
+    }
+    if (!lead.email) {
+      throw new AppError(
+        'O contato precisa de e-mail para virar cadastro — é ele que dá acesso ao portal.',
+        400,
+        'LEAD_WITHOUT_EMAIL',
+      )
+    }
+
+    // Já cadastrada? Vincula em vez de duplicar.
+    const existing = await prisma.patient.findUnique({
+      where: { email_tenantId: { email: lead.email, tenantId } },
+    })
+
+    const patient =
+      existing ??
+      (await prisma.patient.create({
+        data: {
+          name: lead.name,
+          email: lead.email,
+          phone: lead.phone?.replace(/\D/g, '') || null,
+          // O quadro de leads registra de onde veio; a ficha herda isso
+          referralSource: lead.origin ?? null,
+          notes: lead.notes ?? null,
+          tenantId,
+        },
+      }))
+
+    const updated = await prisma.lead.update({
+      where: { id: lead.id },
+      data: { patientId: patient.id, convertedAt: new Date(), status: 'WON' },
+    })
+
+    await audit(req, existing ? 'UPDATE' : 'CREATE', 'patient', patient.id, {
+      fromLeadId: lead.id,
+      linkedToExisting: Boolean(existing),
+    })
+
+    res.status(201).json({ lead: updated, patient, linkedToExisting: Boolean(existing) })
   } catch (err) {
     next(err)
   }
