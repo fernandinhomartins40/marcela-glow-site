@@ -135,6 +135,40 @@
     background-color: hsl(var(--primary));
     color: hsl(var(--primary-foreground));
   }
+
+  /* === BARRAS DE ROLAGEM ===
+     A barra nativa do Windows entra branca/cinza e corta a paleta bege da
+     página. Aqui ela vira um traço de bronze sobre o creme, fino e sem setas.
+     Firefox usa `scrollbar-*`; os demais usam os pseudo-elementos WebKit. */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--bronze) / 0.55) hsl(var(--cream-deep) / 0.5);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: hsl(var(--cream-deep) / 0.45);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--bronze) / 0.55);
+    border: 3px solid transparent;
+    background-clip: padding-box;
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--bronze) / 0.85);
+  }
+
+  /* O quadrado onde as duas barras se cruzam ficava branco */
+  ::-webkit-scrollbar-corner {
+    background-color: transparent;
+  }
 }
 
 @layer utilities {
@@ -298,6 +332,53 @@
   .link-underline:hover::after {
     transform: scaleX(1);
     transform-origin: left;
+  }
+
+  /* === BARRAS DE ROLAGEM POR CONTEXTO ===
+     Duas variantes sobre a regra global: uma para as superfícies escuras
+     (seção de agendamento) e uma fina para listas em superfície clara. */
+
+  /* Fundo espresso: o bronze escuro sumia; aqui a barra vira creme translúcido */
+  .scrollbar-on-dark {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--cream) / 0.28) transparent;
+  }
+  .scrollbar-on-dark::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  .scrollbar-on-dark::-webkit-scrollbar-track {
+    background-color: hsl(var(--cream) / 0.07);
+    border-radius: 999px;
+  }
+  .scrollbar-on-dark::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--cream) / 0.28);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  .scrollbar-on-dark::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--bronze-light) / 0.7);
+  }
+
+  /* Listas internas em superfície clara (popover do select, por exemplo) */
+  .scrollbar-slim {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--bronze) / 0.45) transparent;
+  }
+  .scrollbar-slim::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-slim::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+  .scrollbar-slim::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--bronze) / 0.45);
+    border-radius: 999px;
+  }
+  .scrollbar-slim::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--bronze) / 0.75);
   }
 
   /* Divisor decorativo */

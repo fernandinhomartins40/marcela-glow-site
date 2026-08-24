@@ -27,6 +27,21 @@ const contactBlocks = [
   },
 ];
 
+/** "quinta-feira, 4 de setembro, às 14:30" — confirma a escolha por extenso */
+function formatChosenSlot(startsAt: string) {
+  const date = new Date(startsAt);
+  const day = new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(date);
+  const time = new Intl.DateTimeFormat("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+  return `${day}, às ${time}`;
+}
+
 const Appointment = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -102,7 +117,7 @@ const Appointment = () => {
       <div className="container mx-auto px-5 sm:px-6 lg:px-10 relative z-10">
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-20 max-w-6xl mx-auto">
           {/* Coluna de informações */}
-          <div className="lg:col-span-5 animate-fade-in">
+          <div className="lg:col-span-5 min-w-0 animate-fade-in">
             <p className="label-eyebrow mb-4 md:mb-5">Primeiro passo</p>
             <h2 className="font-display type-section text-[hsl(var(--cream))]">
               Agende sua
@@ -140,7 +155,7 @@ const Appointment = () => {
           </div>
 
           {/* Formulário */}
-          <div className="lg:col-span-7 animate-fade-in">
+          <div className="lg:col-span-7 min-w-0 animate-fade-in">
             <form
               onSubmit={handleSubmit}
               className="border border-[hsl(var(--cream))]/15 p-6 sm:p-8 md:p-12"
@@ -206,19 +221,49 @@ const Appointment = () => {
                 </Select>
 
                 <div>
-                  <p className="label-eyebrow mb-3">Horário de preferência</p>
+                  <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                    <p className="label-eyebrow">
+                      Horário de preferência
+                      <span className="ml-2 normal-case tracking-normal text-[hsl(var(--cream))]/40">
+                        (opcional)
+                      </span>
+                    </p>
+                    {slot && (
+                      <button
+                        type="button"
+                        onClick={() => setSlot(null)}
+                        className="text-xs tracking-wide text-[hsl(var(--cream))]/50 underline underline-offset-4 transition-colors hover:text-[hsl(var(--cream))]"
+                      >
+                        limpar
+                      </button>
+                    )}
+                  </div>
+
                   <SlotPicker
                     procedureId={selectedProcedureId}
                     value={slot}
                     onChange={setSlot}
                   />
+
+                  {slot && (
+                    <p className="mt-3 flex items-start gap-2.5 text-sm font-light text-[hsl(var(--cream))]/75">
+                      <span className="mt-2 h-px w-5 shrink-0 bg-[hsl(var(--bronze))]" />
+                      <span>
+                        Você escolheu{" "}
+                        <span className="text-[hsl(var(--cream))]">
+                          {formatChosenSlot(slot)}
+                        </span>
+                        .
+                      </span>
+                    </p>
+                  )}
                 </div>
 
                 <Textarea
                   placeholder="Mensagem (opcional)"
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className={`${fieldClass} h-auto min-h-[110px] py-3 resize-none`}
+                  className={`${fieldClass} scrollbar-on-dark h-auto min-h-[110px] py-3 resize-none`}
                 />
 
                 <p className="text-xs leading-relaxed text-[hsl(var(--cream))]/50 font-light">
