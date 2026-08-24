@@ -64,6 +64,10 @@ interface AgendaEntry {
   scheduledAt: string | null
   status: string
   name: string
+  /* Dados que a pessoa digitou no pedido do site — é por eles que a ficha
+     nasce quando ainda não existe cadastro. */
+  email: string
+  phone: string | null
   procedure: { id: string; title: string } | null
   patient: { id: string; name: string; email: string; phone: string | null; birthDate: string | null } | null
   _count: { records: number; prescriptions: number; sessions: number }
@@ -265,10 +269,10 @@ function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
                 }
                 actions={
                   noPatient ? (
-                    <LinkPatientButton appointmentId={entry.id} />
+                    <LinkPatientButton entry={entry} />
                   ) : (
                     <button
-                      className="primary encounter-open"
+                      className="primary encounter-open data-action-label"
                       onClick={() => onOpen(entry.id)}
                       title="Abrir atendimento"
                     >
@@ -299,30 +303,104 @@ function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
 
 /**
  * Pedido que chegou pela landing antes de existir cadastro com aquele e-mail.
- * Cria a ficha a partir dos dados do próprio pedido e libera o atendimento —
- * antes o botão ficava desabilitado sem nenhuma saída na tela.
+ * Sem vínculo o atendimento não abre, então aqui estão as duas saídas: criar a
+ * ficha com os dados do próprio pedido, ou apontar para uma paciente que já
+ * existe — caso comum de quem preencheu o site com outro e-mail.
  */
-function LinkPatientButton({ appointmentId }: { appointmentId: string }) {
+function LinkPatientButton({ entry }: { entry: AgendaEntry }) {
+  const [open, setOpen] = React.useState(false)
+  return (
+    <>
+      <button
+        className="data-action-label"
+        onClick={() => setOpen(true)}
+        title="Vincular este pedido a uma paciente"
+      >
+        <UserRound size={14} />
+        Vincular paciente
+      </button>
+      {open && <LinkPatientModal entry={entry} onClose={() => setOpen(false)} />}
+    </>
+  )
+}
+
+function LinkPatientModal({ entry, onClose }: { entry: AgendaEntry; onClose: () => void }) {
   const client = useQueryClient()
+  const [mode, setMode] = React.useState<'new' | 'existing'>('new')
+  const [picked, setPicked] = React.useState<PatientOption | null>(null)
 
   const link = useMutation({
-    mutationFn: () => api.post(`/appointments/${appointmentId}/link-patient`, {}),
+    mutationFn: () =>
+      api.post(
+        `/appointments/${entry.id}/link-patient`,
+        mode === 'existing' ? { patientId: picked!.id } : {},
+      ),
     onSuccess: () => {
       client.invalidateQueries({ queryKey: ['encounter-agenda'] })
       client.invalidateQueries({ queryKey: ['patients'] })
       client.invalidateQueries({ queryKey: ['admin'] })
+      onClose()
     },
   })
 
+  const valid = mode === 'new' || !!picked
+
   return (
-    <button
-      onClick={() => link.mutate()}
-      disabled={link.isPending}
-      title="Criar o cadastro da paciente com os dados do pedido"
+    <Modal
+      title="Vincular paciente"
+      subtitle={`Pedido de ${entry.name} — ${entry.email}${entry.phone ? ` · ${maskPhone(entry.phone)}` : ''}`}
+      onClose={onClose}
+      footer={
+        <>
+          <button onClick={onClose}>Cancelar</button>
+          <SubmitButton pending={link.isPending} disabled={!valid} onClick={() => link.mutate()}>
+            Vincular
+          </SubmitButton>
+        </>
+      }
     >
-      <UserRound size={14} />
-      {link.isPending ? 'Cadastrando...' : 'Cadastrar paciente'}
-    </button>
+      <div className="form-grid">
+        {/* Duas opções excludentes, não abas: não há painel para o `tab`
+            anunciar, então o leitor de tela recebe isto como escolha. */}
+        <div className="segmented" role="radiogroup" aria-label="Como vincular">
+          <button
+            role="radio"
+            aria-checked={mode === 'new'}
+            className={mode === 'new' ? 'active' : ''}
+            onClick={() => setMode('new')}
+          >
+            Cadastrar com estes dados
+          </button>
+          <button
+            role="radio"
+            aria-checked={mode === 'existing'}
+            className={mode === 'existing' ? 'active' : ''}
+            onClick={() => setMode('existing')}
+          >
+            Já é paciente
+          </button>
+        </div>
+
+        {mode === 'existing' ? (
+          <Field label="Paciente" required>
+            <PatientSearchSelect
+              value={picked}
+              onChange={setPicked}
+              autoFocus
+              emptyHint="Nenhuma ficha encontrada — use “Cadastrar com estes dados”."
+            />
+          </Field>
+        ) : (
+          <p className="hint">
+            Cria a ficha com o nome, e-mail e telefone do pedido. Se já existir
+            cadastro com este e-mail, o agendamento é ligado a ele em vez de
+            duplicar.
+          </p>
+        )}
+
+        {link.isError && <p className="error">{errorMessage(link.error, 'Não foi possível vincular.')}</p>}
+      </div>
+    </Modal>
   )
 }
 
@@ -359,7 +437,7 @@ function StartEncounterButton({
 
   return (
     <button
-      className="primary encounter-open"
+      className="primary encounter-open data-action-label"
       onClick={() => start.mutate()}
       disabled={start.isPending}
       title="Iniciar atendimento agora"
@@ -462,18 +540,20 @@ function NewEncounterModal({
       }
     >
       <div className="form-grid">
-        <div className="segmented" role="tablist">
+        {/* Escolha excludente, não abas: sem tabpanel o `tab` mente ao leitor
+            de tela sobre o que vem a seguir. */}
+        <div className="segmented" role="radiogroup" aria-label="Origem da paciente">
           <button
-            role="tab"
-            aria-selected={mode === 'existing'}
+            role="radio"
+            aria-checked={mode === 'existing'}
             className={mode === 'existing' ? 'active' : ''}
             onClick={() => setMode('existing')}
           >
             Paciente cadastrada
           </button>
           <button
-            role="tab"
-            aria-selected={mode === 'new'}
+            role="radio"
+            aria-checked={mode === 'new'}
             className={mode === 'new' ? 'active' : ''}
             onClick={() => setMode('new')}
           >

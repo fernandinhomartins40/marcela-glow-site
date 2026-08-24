@@ -48,13 +48,15 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: clamp(196px, 17vw, 244px) minmax(0, 1fr); background: var(--marble); }
 /* `minmax(0,1fr)` acima é o que permite o conteúdo encolher: com `1fr` puro o
    mínimo automático do grid é o tamanho do conteúdo, e a coluna estoura. */
-aside { background: var(--espresso); color: var(--cream-soft); padding: 18px 12px; display: flex; flex-direction: column; border-right: 1px solid rgba(156,130,104,.3); position: relative; }
-aside button { justify-content: flex-start; min-height: 38px; padding: 8px 11px; font-size: 13px; border-radius: 7px; background: transparent; color: rgba(255,250,242,.8); border: 1px solid transparent; position: relative; z-index: 1; gap: 10px; }
-aside button:hover { background: rgba(255,250,242,.08); color: var(--cream-soft); transform: none; }
-aside button svg { flex: none; opacity: .72; }
-aside button:hover svg, aside button.active svg { opacity: 1; }
+/* `.app-nav` e não `aside`: o Modal também é um <aside>, e estas regras
+   vazavam para dentro de todo formulário sobreposto. */
+.app-nav { background: var(--espresso); color: var(--cream-soft); padding: 18px 12px; display: flex; flex-direction: column; border-right: 1px solid rgba(156,130,104,.3); position: relative; }
+.app-nav button { justify-content: flex-start; min-height: 38px; padding: 8px 11px; font-size: 13px; border-radius: 7px; background: transparent; color: rgba(255,250,242,.8); border: 1px solid transparent; position: relative; z-index: 1; gap: 10px; }
+.app-nav button:hover { background: rgba(255,250,242,.08); color: var(--cream-soft); transform: none; }
+.app-nav button svg { flex: none; opacity: .72; }
+.app-nav button:hover svg, .app-nav button.active svg { opacity: 1; }
 /* O item ativo é uma pastilha clara: some do fundo escuro sem precisar de peso extra */
-aside button.active { background: rgba(246,239,228,.94); color: var(--espresso); font-weight: 600; }
+.app-nav button.active { background: rgba(246,239,228,.94); color: var(--espresso); font-weight: 600; }
 
 /* Navegação agrupada por frequência de uso; rola sozinha se a lista crescer */
 .side-nav { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; margin: 2px -4px 0; padding: 0 4px; flex: 1; }
@@ -266,14 +268,21 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 
 .encounter-row { grid-template-columns: 62px minmax(0,1fr) auto; }
 .encounter-time { font-size: 14px; font-weight: 600; }
-/* width auto vence a regra de 30px dos botões-ícone de .data-actions */
-.encounter-row .data-actions button.encounter-open,
-main .encounter-row .data-actions button.encounter-open {
+/* `.data-actions button` é quadrado de 30px porque a maioria só tem ícone.
+   Botão que carrega rótulo precisa da largura do texto, senão o rótulo
+   transborda e o ícone escorrega para fora — marque-o com esta classe. */
+.data-actions button.data-action-label,
+main .data-actions button.data-action-label {
   width: auto; height: auto; min-height: 34px; padding: 7px 14px; gap: 6px;
   font-size: 12.5px; white-space: nowrap;
+}
+/* O mesmo "Atender" aparece na agenda e na busca avulsa, que não é
+   `.encounter-row` — prender o estilo à linha deixava um dos dois cinza. */
+.data-actions button.encounter-open,
+main .data-actions button.encounter-open {
   background: var(--espresso); border-color: var(--espresso); color: var(--cream-soft);
 }
-.encounter-row .data-actions button.encounter-open:disabled { opacity: .45; }
+.data-actions button.encounter-open:disabled { opacity: .45; }
 .warn-text { color: #8a5a22; }
 
 /* Subtítulo que separa blocos dentro de um formulário longo */
@@ -409,7 +418,7 @@ main .encounter-row .data-actions button.encounter-open {
    notebook os 240px fixos custavam ~40px de cada coluna de dia, que é
    justamente onde o nome da paciente deixava de caber. */
 .schedule { display: grid; grid-template-columns: clamp(196px, 19vw, 300px) minmax(0, 1fr); gap: clamp(10px, 1.2vw, 18px); align-items: start; }
-.chip { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 10px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .04em; }
+.chip { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; height: 22px; padding: 0 10px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .04em; }
 .chip.success { background: #e4efe6; color: #33613f; }
 .chip.warning { background: #f7ecdc; color: #8a5a22; }
 .chip.info    { background: #e6ecf2; color: #3c556e; }
@@ -557,6 +566,17 @@ main .encounter-row .data-actions button.encounter-open {
 /* Celular: tudo em coluna única */
 @media (max-width: 640px) {
   .drawer { width: 100%; }
+  /* Dois rótulos lado a lado não cabem em 390px: o texto se espreme numa
+     coluna de uma palavra. Cada opção ocupa a linha inteira. */
+  /* Título e subtítulo já ocupam a largura toda; o X abaixo deles fica solto
+     no meio do vazio. No celular ele volta para o canto, sobre o cabeçalho. */
+  .drawer header { position: relative; padding-right: 40px; }
+  .drawer header .icon-button { position: absolute; top: 0; right: 0; }
+  .segmented { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
+  .segmented button { width: 100%; }
+  /* Mesma razão no rodapé: "Cancelar" e o botão de ação se sobrepunham. */
+  .drawer-footer { flex-direction: column-reverse; }
+  .drawer-footer button { width: 100%; }
   .day-list li button { grid-template-columns: 56px minmax(0,1fr); grid-template-areas: "time body" "chip chip"; row-gap: 6px; }
   .day-list li button .chip { grid-area: chip; justify-self: start; }
   .stats, .two, .three, .duration-row { grid-template-columns: minmax(0,1fr); }
@@ -595,7 +615,7 @@ main .encounter-row .data-actions button.encounter-open {
 
   /* A lateral sai do fluxo e vira gaveta: os onze itens de navegação não
      cabem numa faixa sem empurrar o conteúdo para fora da primeira tela. */
-  aside {
+  .app-nav {
     position: fixed;
     inset: 0 auto 0 0;
     z-index: 60;
@@ -605,7 +625,7 @@ main .encounter-row .data-actions button.encounter-open {
     overflow-y: auto;
     box-shadow: 0 0 40px rgba(47,34,27,.3);
   }
-  .nav-open aside { transform: translateX(0); }
+  .nav-open .app-nav { transform: translateX(0); }
 
   .nav-scrim {
     display: block;
@@ -681,7 +701,7 @@ main .encounter-row .data-actions button.encounter-open {
 html, body { max-width: 100%; overflow-x: hidden; }
 /* A gaveta desliza; quem pede menos movimento recebe o corte seco. */
 @media (prefers-reduced-motion: reduce) {
-  aside { transition: none; }
+  .app-nav { transition: none; }
 }
 /* Mídia nunca ultrapassa o container que a contém. Os ícones ficam de fora:
    o lucide já emite width/height no próprio <svg>, e o `height: auto` daqui

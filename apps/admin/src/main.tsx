@@ -256,7 +256,7 @@ function Shell() {
         aria-label="Fechar navegação"
         tabIndex={-1}
       />
-      <aside>
+      <aside className="app-nav">
         <div className="brand">
           <Sparkles size={22} aria-hidden="true" />
           <strong>Marcela CRM</strong>

@@ -1,4 +1,5 @@
 import React from 'react'
+import ReactDOM from 'react-dom'
 import axios from 'axios'
 import { useQuery } from '@tanstack/react-query'
 import { useDebounced } from './useDebounced'
@@ -45,7 +46,11 @@ export function Modal({
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  return (
+  /* Renderiza no <body>, não onde foi chamado. Um modal aberto de dentro de
+     `.data-actions` (cujos botões são quadrados de 30px) herdava aquele CSS e
+     saía com os próprios botões espremidos — o formulário dependia do lugar
+     em que a chamada estava escrita. */
+  return ReactDOM.createPortal(
     <div className="drawer-backdrop" onClick={onClose}>
       <aside
         className={`drawer ${wide ? 'drawer-wide' : ''}`}
@@ -66,7 +71,8 @@ export function Modal({
         <div className="drawer-body">{children}</div>
         {footer && <div className="drawer-footer">{footer}</div>}
       </aside>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
@@ -138,7 +144,8 @@ export function ConfirmDialog({
   pending?: boolean
   danger?: boolean
 }) {
-  return (
+  // Mesmo motivo do Modal: fora da árvore de quem chamou (ver acima).
+  return ReactDOM.createPortal(
     <div className="drawer-backdrop confirm-backdrop" onClick={onCancel}>
       <div className="confirm-box" onClick={(e) => e.stopPropagation()} role="alertdialog" aria-label={title}>
         <div className={`confirm-icon ${danger ? 'danger' : ''}`}>
@@ -156,7 +163,8 @@ export function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
