@@ -1,39 +1,62 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useLanding, useSection } from "@/hooks/useLanding";
 import draEditorial from "@/assets/dra-marcela-editorial.jpg";
 import draPortrait from "@/assets/dra-marcela-portrait.jpg";
 import marble from "@/assets/marble-texture.jpg";
 
-const slides = [
-  {
-    image: draEditorial,
-    eyebrow: "Medicina estética & saúde da pele",
-    titleTop: "Beleza",
-    titleBottom: "com estratégia",
-    subtitle: "Tratamentos personalizados para preservar identidade, melhorar qualidade de pele e acompanhar cada fase com naturalidade.",
-    watermark: "PELE",
-  },
-  {
-    image: draPortrait,
-    eyebrow: "Envelhecimento inteligente",
-    titleTop: "Evoluir",
-    titleBottom: "sem exageros",
-    subtitle: "Gerenciamento de envelhecimento, Botox, bioestimuladores e protocolos regenerativos guiados por análise médica.",
-    watermark: "TEMPO",
-  },
-  {
-    image: marble,
-    eyebrow: "Face · Pele · Pescoço · Corpo",
-    titleTop: "Saúde",
-    titleBottom: "e beleza",
-    subtitle: "A medicina a seu favor: onde saúde, autoestima e naturalidade caminham juntas.",
-    watermark: "SAÚDE",
-  },
-];
+/* As imagens que vêm no build. Cada slide usa a sua enquanto o painel não
+   enviar outra — o site nunca abre com espaço vazio no lugar da foto. */
+const FALLBACK_IMAGES = [draEditorial, draPortrait, marble];
+
+interface HeroSlide {
+  eyebrow: string;
+  titleTop: string;
+  titleBottom: string;
+  subtitle: string;
+  watermark: string;
+}
+
+interface HeroContent {
+  slides: HeroSlide[];
+  primaryCta: string;
+  secondaryCta: string;
+}
+
+const FALLBACK: HeroContent = {
+  slides: [
+    {
+      eyebrow: "Medicina estética & saúde da pele",
+      titleTop: "Beleza",
+      titleBottom: "com estratégia",
+      subtitle: "Tratamentos personalizados para preservar identidade, melhorar qualidade de pele e acompanhar cada fase com naturalidade.",
+      watermark: "PELE",
+    },
+    {
+      eyebrow: "Envelhecimento inteligente",
+      titleTop: "Evoluir",
+      titleBottom: "sem exageros",
+      subtitle: "Gerenciamento de envelhecimento, Botox, bioestimuladores e protocolos regenerativos guiados por análise médica.",
+      watermark: "TEMPO",
+    },
+    {
+      eyebrow: "Face · Pele · Pescoço · Corpo",
+      titleTop: "Saúde",
+      titleBottom: "e beleza",
+      subtitle: "A medicina a seu favor: onde saúde, autoestima e naturalidade caminham juntas.",
+      watermark: "SAÚDE",
+    },
+  ],
+  primaryCta: "Agendar Avaliação",
+  secondaryCta: "Conheça os Protocolos",
+};
 
 const Hero = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const { content, isVisible } = useSection<HeroContent>("HERO", FALLBACK);
+  const { data: landing } = useLanding();
+  const slides = content.slides.length ? content.slides : FALLBACK.slides;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -50,7 +73,13 @@ const Hero = () => {
     element?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const slide = slides[currentSlide];
+  /* O painel pode reduzir a quantidade de slides enquanto a página está aberta;
+     sem isto o índice antigo apontaria para fora da lista. */
+  const index = Math.min(currentSlide, slides.length - 1);
+  const slide = slides[index];
+  const image = landing?.images?.[`hero.${index}`];
+
+  if (!isVisible) return null;
 
   return (
     <section
@@ -67,7 +96,7 @@ const Hero = () => {
       {/* Watermark — ancorado no canto inferior esquerdo, atrás do conteúdo */}
       <div className="absolute bottom-0 left-0 hidden pointer-events-none overflow-hidden lg:block">
         <span
-          key={`wm-${currentSlide}`}
+          key={`wm-${index}`}
           className="block text-watermark font-display text-[11vw] leading-[0.7] whitespace-nowrap animate-fade-in select-none translate-y-[24%] -translate-x-[3%] opacity-45"
         >
           {slide.watermark}
@@ -79,7 +108,7 @@ const Hero = () => {
         <div className="grid lg:grid-cols-12 gap-6 md:gap-8 w-full items-center">
           {/* Texto à esquerda */}
           <div className="lg:col-span-7 z-10 order-2 lg:order-1">
-            <div key={`txt-${currentSlide}`} className="animate-slide-up">
+            <div key={`txt-${index}`} className="animate-slide-up">
               <p className="label-eyebrow mb-4 md:mb-6">{slide.eyebrow}</p>
               <h1 className="font-display type-hero text-primary text-balance">
                 <span className="block">{slide.titleTop}</span>
@@ -94,14 +123,14 @@ const Hero = () => {
                   size="lg"
                   onClick={() => scrollToSection("agendamento")}
                 >
-                  Agendar Avaliação
+                  {content.primaryCta}
                 </Button>
                 <Button
                   variant="outline"
                   size="lg"
                   onClick={() => scrollToSection("procedimentos")}
                 >
-                  Conheça os Protocolos
+                  {content.secondaryCta}
                 </Button>
               </div>
             </div>
@@ -110,12 +139,12 @@ const Hero = () => {
           {/* Imagem à direita */}
           <div className="lg:col-span-5 z-10 order-1 lg:order-2">
             <div
-              key={`img-${currentSlide}`}
+              key={`img-${index}`}
               className="relative aspect-[4/5] max-w-[72vw] min-[420px]:max-w-xs sm:max-w-sm md:max-w-md mx-auto lg:max-w-none animate-reveal"
             >
               <img
-                src={slide.image}
-                alt={`${slide.titleTop} ${slide.titleBottom}`}
+                src={image?.url ?? FALLBACK_IMAGES[index % FALLBACK_IMAGES.length]}
+                alt={image?.alt ?? `${slide.titleTop} ${slide.titleBottom}`}
                 className="absolute inset-0 w-full h-full object-cover"
                 loading="eager"
                 fetchPriority="high"
@@ -150,13 +179,13 @@ const Hero = () => {
             key={i}
             onClick={() => setCurrentSlide(i)}
             className={`h-px transition-all duration-500 ${
-              i === currentSlide ? "w-12 bg-primary" : "w-6 bg-primary/30"
+              i === index ? "w-12 bg-primary" : "w-6 bg-primary/30"
             }`}
             aria-label={`Slide ${i + 1}`}
           />
         ))}
         <span className="ml-3 text-[0.65rem] tracking-[0.3em] uppercase text-muted-foreground">
-          {String(currentSlide + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
+          {String(index + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
         </span>
       </div>
     </section>

@@ -52,10 +52,13 @@ const SlotPicker = ({
   procedureId,
   value,
   onChange,
+  disclaimer,
 }: {
   procedureId?: string;
   value: string | null;
   onChange: (startsAt: string | null) => void;
+  /** Explica o que acontece depois do envio; vem do painel. */
+  disclaimer?: string;
 }) => {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -228,10 +231,8 @@ const SlotPicker = ({
           ))}
 
           <p className="border-t border-[hsl(var(--cream))]/10 pt-4 text-xs font-light leading-relaxed text-[hsl(var(--cream))]/45">
-            O horário fica reservado como{" "}
-            <span className="text-[hsl(var(--cream))]/70">solicitação</span> até a
-            equipe confirmar — você recebe o aviso por WhatsApp e na Área da
-            Paciente.
+            {disclaimer ??
+              "O horário fica reservado como solicitação até a equipe confirmar — você recebe o aviso por WhatsApp e na Área da Paciente."}
           </p>
         </div>
       )}

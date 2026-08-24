@@ -177,5 +177,21 @@ export const newsletterApi = {
   },
 }
 
+// ─── Landing ─────────────────────────────────────────────────────────────────
+
+export interface LandingResponse {
+  sections: Record<string, { content: unknown; isVisible: boolean }>
+  images: Record<string, { url: string; width: number; height: number; alt: string }>
+}
+
+export const landingApi = {
+  get: async (): Promise<LandingResponse> => {
+    const { data } = await api.get<LandingResponse>('/landing', {
+      params: { tenantSlug: TENANT_SLUG },
+    })
+    return data
+  },
+}
+
 export { getErrorMessage }
 export default api

@@ -5,7 +5,36 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { newsletterApi, getErrorMessage } from "@/lib/api";
+import { useImage, useSection } from "@/hooks/useLanding";
 import logoMD from "@/assets/logo-md.png";
+
+interface FooterContent {
+  tagline: string;
+  address: string;
+  phone: string | null;
+  email: string | null;
+  instagram: string | null;
+  newsletterTitle: string;
+  newsletterLead: string;
+}
+
+const FALLBACK: FooterContent = {
+  tagline: "Medicina estética e saúde da pele, com estratégia e naturalidade.",
+  address: "Av. 16, nº 890 — Ágatha Center, Chapadão do Sul — MS",
+  phone: "67999446066",
+  email: "contato@dramarceladuch.com.br",
+  instagram: "dramarceladuch",
+  newsletterTitle: "Receba novidades",
+  newsletterLead: "Conteúdos sobre saúde da pele e envelhecimento inteligente.",
+};
+
+/** (67) 99944-6066 — como se lê, não como se disca. */
+function formatPhone(digits: string) {
+  const only = digits.replace(/\D/g, "").replace(/^55/, "");
+  if (only.length === 11) return `(${only.slice(0, 2)}) ${only.slice(2, 7)}-${only.slice(7)}`;
+  if (only.length === 10) return `(${only.slice(0, 2)}) ${only.slice(2, 6)}-${only.slice(6)}`;
+  return digits;
+}
 
 const quickLinks = [
   { id: "home", label: "Início" },
@@ -17,6 +46,9 @@ const quickLinks = [
 
 const Footer = () => {
   const [email, setEmail] = useState("");
+  const { content } = useSection<FooterContent>("FOOTER", FALLBACK);
+  const logo = useImage("footer.logo", logoMD, "MD - Dra. Marcela Duch");
+  const whatsapp = content.phone ? content.phone.replace(/\D/g, "") : null;
 
   const mutation = useMutation({
     mutationFn: newsletterApi.subscribe,
@@ -54,8 +86,8 @@ const Footer = () => {
           <div className="md:col-span-3">
             <div className="flex items-center gap-3 mb-6">
               <img
-                src={logoMD}
-                alt="MD - Dra. Marcela Duch"
+                src={logo.src}
+                alt={logo.alt}
                 className="h-12 w-auto brightness-0 invert opacity-90"
                 width={48}
                 height={48}
@@ -69,12 +101,12 @@ const Footer = () => {
               Médica · CRM/MS 5691
             </p>
             <p className="font-editorial-italic text-lg text-[hsl(var(--cream))]/60 leading-snug max-w-xs">
-              Medicina estética e saúde da pele, com estratégia e naturalidade.
+              {content.tagline}
             </p>
 
             <div className="flex gap-3 mt-8">
               <a
-                href="https://www.instagram.com/dramarceladuch/"
+                href={`https://www.instagram.com/${content.instagram ?? "dramarceladuch"}/`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 border border-[hsl(var(--cream))]/25 flex items-center justify-center text-[hsl(var(--cream))] hover:bg-[hsl(var(--cream))] hover:text-[hsl(var(--espresso))] hover:border-[hsl(var(--cream))] transition-all duration-500"
@@ -83,7 +115,7 @@ const Footer = () => {
                 <Instagram className="w-4 h-4" />
               </a>
               <a
-                href="https://wa.me/5567999446066"
+                href={`https://wa.me/55${whatsapp ?? "67999446066"}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 border border-[hsl(var(--cream))]/25 flex items-center justify-center text-[hsl(var(--cream))] hover:bg-[hsl(var(--cream))] hover:text-[hsl(var(--espresso))] hover:border-[hsl(var(--cream))] transition-all duration-500"
@@ -121,20 +153,19 @@ const Footer = () => {
                 <p className="text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-1.5">
                   Endereço
                 </p>
-                <p>Av. 16, nº 890 — Ágatha Center</p>
-                <p>Chapadão do Sul — MS</p>
+                <p>{content.address}</p>
               </li>
               <li>
                 <p className="text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-1.5">
                   Telefone
                 </p>
                 <a
-                  href="https://wa.me/5567999446066"
+                  href={`https://wa.me/55${whatsapp ?? "67999446066"}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="link-underline hover:text-[hsl(var(--cream))] transition-colors"
                 >
-                  (67) 99944-6066
+                  {formatPhone(whatsapp ?? "67999446066")}
                 </a>
               </li>
               <li>
@@ -142,10 +173,10 @@ const Footer = () => {
                   E-mail
                 </p>
                 <a
-                  href="mailto:contato@dramarceladuch.com.br"
+                  href={`mailto:${content.email ?? FALLBACK.email}`}
                   className="link-underline hover:text-[hsl(var(--cream))] transition-colors break-all"
                 >
-                  contato@dramarceladuch.com.br
+                  {content.email ?? FALLBACK.email}
                 </a>
               </li>
               <li>
@@ -160,9 +191,9 @@ const Footer = () => {
 
           {/* Newsletter */}
           <div className="md:col-span-3">
-            <p className="label-eyebrow mb-6">Receba novidades</p>
+            <p className="label-eyebrow mb-6">{content.newsletterTitle}</p>
             <p className="text-sm font-light tracking-wide text-[hsl(var(--cream))]/70 mb-6 leading-relaxed">
-              Conteúdos sobre saúde da pele e envelhecimento inteligente.
+              {content.newsletterLead}
             </p>
             <form onSubmit={handleNewsletter} className="space-y-4">
               <Input

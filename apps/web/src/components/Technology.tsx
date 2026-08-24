@@ -1,4 +1,29 @@
-const technologies = [
+import { useSection } from "@/hooks/useLanding";
+
+interface TechItem {
+  number: string;
+  name: string;
+  eyebrow: string;
+  monogram: string;
+  description: string;
+  points: string[];
+}
+
+interface TechContent {
+  eyebrow: string;
+  titleTop: string;
+  titleBottom: string;
+  lead: string;
+  items: TechItem[];
+  watermark: string;
+}
+
+const FALLBACK: TechContent = {
+  eyebrow: "Recursos médicos",
+  titleTop: "Tecnologia",
+  titleBottom: "a serviço do plano.",
+  lead: "Recursos escolhidos conforme a necessidade de cada paciente — nunca o contrário.",
+  items: [
   {
     number: "01",
     name: "T-Sculptor",
@@ -26,9 +51,16 @@ const technologies = [
       "Combinação possível com peelings, skinbooster e bioestimuladores",
     ],
   },
-];
+],
+  watermark: "tecnologia",
+};
 
 const Technology = () => {
+  const { content, isVisible } = useSection<TechContent>("TECHNOLOGY", FALLBACK);
+  const technologies = content.items.length ? content.items : FALLBACK.items;
+
+  if (!isVisible) return null;
+
   return (
     <section
       id="tecnologias"
@@ -36,20 +68,19 @@ const Technology = () => {
     >
       {/* Watermark editorial */}
       <span className="absolute top-4 right-0 hidden text-watermark text-[10vw] leading-none font-display pointer-events-none select-none whitespace-nowrap lg:block">
-        tecnologia
+        {content.watermark}
       </span>
 
       <div className="container mx-auto px-5 sm:px-6 lg:px-10 relative">
         {/* Cabeçalho */}
         <div className="max-w-3xl section-head animate-fade-in">
-          <p className="label-eyebrow mb-4 md:mb-5">Recursos médicos</p>
+          <p className="label-eyebrow mb-4 md:mb-5">{content.eyebrow}</p>
           <h2 className="font-display type-section text-primary">
-            Tecnologia
-            <span className="block italic font-light text-accent">a serviço do plano.</span>
+            {content.titleTop}
+            <span className="block italic font-light text-accent">{content.titleBottom}</span>
           </h2>
           <p className="font-editorial-italic type-lead text-foreground/70 mt-5 md:mt-6 max-w-xl">
-            Recursos escolhidos conforme a necessidade de cada paciente — nunca o
-            contrário.
+            {content.lead}
           </p>
         </div>
 

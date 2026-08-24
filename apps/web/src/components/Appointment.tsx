@@ -7,6 +7,26 @@ import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { proceduresApi, appointmentsApi, getErrorMessage } from "@/lib/api";
 import SlotPicker from "@/components/SlotPicker";
+import { useSection } from "@/hooks/useLanding";
+
+interface AppointmentContent {
+  eyebrow: string;
+  titleTop: string;
+  titleBottom: string;
+  lead: string;
+  disclaimer: string;
+  whatsapp: string | null;
+}
+
+const FALLBACK: AppointmentContent = {
+  eyebrow: "Primeiro passo",
+  titleTop: "Agende sua",
+  titleBottom: "avaliação.",
+  lead: "Entenda qual protocolo faz sentido para o seu momento.",
+  disclaimer:
+    "O horário fica reservado como solicitação até a equipe confirmar — você recebe o aviso por WhatsApp e na Área da Paciente.",
+  whatsapp: null,
+};
 
 const contactBlocks = [
   {
@@ -43,6 +63,7 @@ function formatChosenSlot(startsAt: string) {
 }
 
 const Appointment = () => {
+  const { content, isVisible } = useSection<AppointmentContent>("APPOINTMENT", FALLBACK);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -101,6 +122,8 @@ const Appointment = () => {
   const fieldClass =
     "bg-transparent border-0 border-b border-[hsl(var(--cream))]/25 rounded-none px-0 h-12 text-[hsl(var(--cream))] placeholder:text-[hsl(var(--cream))]/45 focus-visible:ring-0 focus-visible:border-[hsl(var(--bronze))] transition-colors duration-500";
 
+  if (!isVisible) return null;
+
   return (
     <section
       id="agendamento"
@@ -118,18 +141,18 @@ const Appointment = () => {
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-20 max-w-6xl mx-auto">
           {/* Coluna de informações */}
           <div className="lg:col-span-5 min-w-0 animate-fade-in">
-            <p className="label-eyebrow mb-4 md:mb-5">Primeiro passo</p>
+            <p className="label-eyebrow mb-4 md:mb-5">{content.eyebrow}</p>
             <h2 className="font-display type-section text-[hsl(var(--cream))]">
-              Agende sua
+              {content.titleTop}
               <span className="block italic font-light text-[hsl(var(--bronze-light))]">
-                avaliação.
+                {content.titleBottom}
               </span>
             </h2>
 
             <div className="divider-luxe my-6 md:my-8" />
 
             <p className="font-editorial-italic type-lead text-[hsl(var(--cream))]/70 mb-10 md:mb-14">
-              Entenda qual protocolo faz sentido para o seu momento.
+              {content.lead}
             </p>
 
             <div className="space-y-6 md:space-y-8">
@@ -243,6 +266,7 @@ const Appointment = () => {
                     procedureId={selectedProcedureId}
                     value={slot}
                     onChange={setSlot}
+                    disclaimer={content.disclaimer}
                   />
 
                   {slot && (

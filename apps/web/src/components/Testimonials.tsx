@@ -2,6 +2,19 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { testimonialsApi } from "@/lib/api";
+import { useSection } from "@/hooks/useLanding";
+
+interface TestimonialsContent {
+  eyebrow: string;
+  titleTop: string;
+  titleBottom: string;
+}
+
+const FALLBACK: TestimonialsContent = {
+  eyebrow: "Depoimentos",
+  titleTop: "O que dizem",
+  titleBottom: "as pacientes.",
+};
 
 const FALLBACK_TESTIMONIALS = [
   { id: "1", authorName: "Ana Paula Silva", text: "Procurei a Dra. Marcela para melhorar a qualidade da pele sem mudar meus traços. O plano foi claro, progressivo e o resultado ficou muito natural.", rating: 5 },
@@ -12,6 +25,7 @@ const FALLBACK_TESTIMONIALS = [
 
 const Testimonials = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const { content, isVisible } = useSection<TestimonialsContent>("TESTIMONIALS", FALLBACK);
 
   const { data: apiTestimonials } = useQuery({
     queryKey: ["testimonials"],
@@ -31,7 +45,12 @@ const Testimonials = () => {
     setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
   };
 
-  const current = testimonials[currentIndex];
+  /* A lista pode encolher entre uma busca e outra; o índice antigo apontaria
+     para fora dela. */
+  const activeIndex = Math.min(currentIndex, testimonials.length - 1);
+  const current = testimonials[activeIndex];
+
+  if (!isVisible) return null;
 
   return (
     <section
@@ -45,10 +64,10 @@ const Testimonials = () => {
 
       <div className="container mx-auto px-5 sm:px-6 lg:px-10 relative">
         <div className="max-w-3xl section-head animate-fade-in">
-          <p className="label-eyebrow mb-4 md:mb-5">Depoimentos</p>
+          <p className="label-eyebrow mb-4 md:mb-5">{content.eyebrow}</p>
           <h2 className="font-display type-section text-primary">
-            O que dizem
-            <span className="block italic font-light text-accent">as pacientes.</span>
+            {content.titleTop}
+            <span className="block italic font-light text-accent">{content.titleBottom}</span>
           </h2>
         </div>
 
@@ -90,13 +109,13 @@ const Testimonials = () => {
                   key={index}
                   onClick={() => setCurrentIndex(index)}
                   className={`h-px transition-all duration-500 ${
-                    index === currentIndex ? "w-10 bg-primary" : "w-5 bg-primary/30"
+                    index === activeIndex ? "w-10 bg-primary" : "w-5 bg-primary/30"
                   }`}
                   aria-label={`Ir para depoimento ${index + 1}`}
                 />
               ))}
               <span className="ml-2 text-[0.65rem] tracking-[0.3em] uppercase text-muted-foreground">
-                {String(currentIndex + 1).padStart(2, "0")} / {String(testimonials.length).padStart(2, "0")}
+                {String(activeIndex + 1).padStart(2, "0")} / {String(testimonials.length).padStart(2, "0")}
               </span>
             </div>
 

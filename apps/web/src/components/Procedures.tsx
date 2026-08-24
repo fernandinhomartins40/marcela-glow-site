@@ -1,6 +1,27 @@
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { proceduresApi } from "@/lib/api";
+import { useSection } from "@/hooks/useLanding";
 
-const procedures = [
+interface ProceduresContent {
+  eyebrow: string;
+  titleTop: string;
+  titleBottom: string;
+  lead: string;
+  ctaLabel: string;
+}
+
+const FALLBACK: ProceduresContent = {
+  eyebrow: "Protocolos médicos",
+  titleTop: "Medicina estética,",
+  titleBottom: "com estratégia.",
+  lead: "Face, pele, pescoço, corpo e cabelo tratados com plano individual, naturalidade e acompanhamento médico.",
+  ctaLabel: "Ver Todos os Protocolos",
+};
+
+/* Os protocolos têm cadastro próprio no painel; esta lista é o que o site
+   mostra enquanto a API não responde. */
+const FALLBACK_PROCEDURES = [
   {
     number: "01",
     title: "Gerenciamento de Envelhecimento",
@@ -40,19 +61,36 @@ const procedures = [
 ];
 
 const Procedures = () => {
+  const { content, isVisible } = useSection<ProceduresContent>("PROCEDURES", FALLBACK);
+  const { data } = useQuery({
+    queryKey: ["procedures"],
+    queryFn: () => proceduresApi.list(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const procedures = data?.length
+    ? data.map((item) => ({
+        number: item.number,
+        title: item.title,
+        subtitle: item.subtitle,
+        description: item.description,
+      }))
+    : FALLBACK_PROCEDURES;
+
+  if (!isVisible) return null;
+
   return (
     <section id="procedimentos" className="relative section-y bg-[hsl(var(--cream-deep))] border-y border-border">
       <div className="container mx-auto px-5 sm:px-6 lg:px-10">
         {/* Cabeçalho */}
         <div className="max-w-3xl section-head animate-fade-in">
-          <p className="label-eyebrow mb-4 md:mb-5">Protocolos médicos</p>
+          <p className="label-eyebrow mb-4 md:mb-5">{content.eyebrow}</p>
           <h2 className="font-display type-section text-primary">
-            Medicina estética,
-            <span className="block italic font-light text-accent">com estratégia.</span>
+            {content.titleTop}
+            <span className="block italic font-light text-accent">{content.titleBottom}</span>
           </h2>
           <p className="font-editorial-italic type-lead text-foreground/70 mt-5 md:mt-6 max-w-xl">
-            Face, pele, pescoço, corpo e cabelo tratados com plano individual,
-            naturalidade e acompanhamento médico.
+            {content.lead}
           </p>
         </div>
 
@@ -92,7 +130,7 @@ const Procedures = () => {
 
         <div className="text-center mt-10 md:mt-16 animate-fade-in">
           <Button variant="cta" size="lg">
-            Ver Todos os Protocolos
+            {content.ctaLabel}
           </Button>
         </div>
       </div>
