@@ -167,6 +167,97 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 
 .form-grid { display: grid; gap: 14px; }
 
+/* ── Gerenciador da landing ───────────────────────────────────────────────── */
+/* Oito seções não cabem numa fila de abas sem virar rolagem horizontal; a
+   lista lateral mostra as oito de uma vez e ainda cabe o subtítulo de cada. */
+.landing-layout { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 18px; align-items: start; }
+.landing-nav { display: grid; gap: 2px; position: sticky; top: 0; }
+.landing-nav button, main .landing-nav button { display: flex; align-items: flex-start; gap: 9px; width: 100%; min-height: 0; padding: 9px 11px; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 8px; color: var(--text-muted); }
+.landing-nav button:hover:not(.active) { background: var(--cream-soft); color: var(--espresso); transform: none; }
+.landing-nav button.active { background: var(--cream-soft); border-color: var(--border); color: var(--espresso); }
+.landing-nav svg { flex: none; margin-top: 2px; }
+.landing-nav-text { display: grid; gap: 1px; min-width: 0; }
+.landing-nav-text strong { font-size: 13px; font-weight: 600; }
+.landing-nav-text em { font-size: 11px; font-style: normal; line-height: 1.35; color: var(--text-muted); }
+.landing-panel { min-width: 0; }
+
+.landing-split { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; align-items: start; }
+.landing-form { display: grid; gap: 14px; min-width: 0; }
+.landing-preview { position: sticky; top: 0; min-width: 0; padding: 14px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; }
+.landing-preview-title { margin: 0 0 10px; font-size: 10.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+
+.preview-stack { display: grid; gap: 12px; }
+.preview-card { display: grid; gap: 6px; padding: 12px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 8px; }
+.preview-image { width: 100%; max-height: 150px; object-fit: cover; border-radius: 6px; }
+.preview-logo { width: 48px; height: 48px; object-fit: contain; }
+.preview-eyebrow { margin: 0; font-size: 9.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--bronze); }
+.preview-title { margin: 0; font-family: var(--font-display, inherit); font-size: 19px; line-height: 1.15; color: var(--espresso); }
+.preview-title em { display: block; font-weight: 300; }
+.preview-subtitle { margin: 0; font-size: 13px; font-weight: 600; }
+.preview-text { margin: 0; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+.preview-meta { margin: 0; font-size: 11px; color: var(--text-muted); }
+.preview-bullet { position: relative; margin: 0; padding-left: 16px; font-size: 11.5px; line-height: 1.5; color: var(--text-muted); }
+.preview-bullet::before { content: ''; position: absolute; left: 0; top: 9px; width: 10px; height: 1px; background: var(--bronze); }
+.preview-sub { display: grid; gap: 4px; padding-top: 9px; border-top: 1px solid var(--border); }
+.preview-buttons { display: flex; flex-wrap: wrap; gap: 7px; margin: 0; }
+.preview-btn-solid, .preview-btn-ghost { padding: 6px 12px; font-size: 11px; border-radius: 6px; }
+.preview-btn-solid { background: var(--espresso); color: var(--cream-soft); }
+.preview-btn-ghost { border: 1px solid var(--border); color: var(--espresso); }
+
+/* Resultado de busca — o formato que todo mundo reconhece. */
+.serp-preview { display: grid; gap: 3px; padding: 12px 13px; background: #fff; border: 1px solid var(--border); border-radius: 8px; }
+.serp-url { margin: 0; font-size: 11.5px; color: #4d5156; }
+.serp-title { margin: 0; font-size: 16px; line-height: 1.3; color: #1a0dab; }
+.serp-desc { margin: 0; font-size: 12px; line-height: 1.5; color: #4d5156; }
+
+/* Listas editáveis */
+.string-list, .repeat-list { display: grid; gap: 8px; }
+.string-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px; }
+.string-row button, main .string-row button { width: 32px; height: 32px; min-height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--border); border-radius: 7px; color: var(--espresso); }
+.string-add, main .string-add { justify-self: start; display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 6px 12px; font-size: 12px; background: transparent; border: 1px dashed var(--border); border-radius: 7px; color: var(--text-muted); }
+.string-add:hover, main .string-add:hover { border-color: var(--bronze); color: var(--espresso); transform: none; }
+.repeat-item { min-width: 0; margin: 0; padding: 12px 13px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 9px; }
+.repeat-item legend { padding: 0 4px; font-size: 10.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+.repeat-item-body { display: grid; gap: 11px; }
+.repeat-remove, main .repeat-remove { justify-self: start; display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 5px 11px; font-size: 12px; background: transparent; border: 1px solid var(--border); border-radius: 7px; color: #a33131; }
+
+/* Imagem de um slot */
+.image-field { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: start; padding: 11px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 9px; }
+.image-field-thumb { position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--cream-deep); border-radius: 7px; }
+.image-field-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.image-field-empty { color: var(--bronze); opacity: .5; }
+.image-field-text { display: grid; gap: 4px; min-width: 0; }
+.image-field-text strong { font-size: 13px; }
+.image-field-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 3px; }
+.image-field-actions button, main .image-field-actions button { min-height: 30px; padding: 5px 12px; font-size: 12px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 7px; color: var(--espresso); }
+
+/* ── Recorte de imagem ────────────────────────────────────────────────────── */
+.crop-drop { display: grid; justify-items: center; gap: 5px; padding: 28px 20px; text-align: center; background: var(--cream-soft); border: 1px dashed var(--border); border-radius: 10px; cursor: pointer; transition: border-color .2s ease; }
+.crop-drop:hover { border-color: var(--bronze); }
+.crop-drop input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.crop-drop svg { color: var(--bronze); }
+.crop-drop strong { font-size: 13.5px; }
+.crop-drop > span { font-size: 12px; color: var(--text-muted); }
+.crop-current img { display: block; width: 100%; max-width: 220px; margin: 0 auto 8px; object-fit: cover; border: 1px solid var(--border); border-radius: 8px; }
+
+/* O quadro É a área recortada: o que sobra da imagem fica escondido pelo
+   overflow, então o que se vê aqui é exatamente o que o site vai mostrar. */
+.crop-frame { position: relative; overflow: hidden; width: 100%; max-width: 420px; margin: 0 auto; background: var(--cream-deep); border: 1px solid var(--border); border-radius: 8px; cursor: grab; touch-action: none; user-select: none; }
+.crop-frame:active { cursor: grabbing; }
+/* Terços: o mesmo enquadramento que a câmera do celular sugere. */
+.crop-guides { position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(to right, transparent 33.33%, rgba(255,250,242,.35) 33.33%, rgba(255,250,242,.35) calc(33.33% + 1px), transparent calc(33.33% + 1px), transparent 66.66%, rgba(255,250,242,.35) 66.66%, rgba(255,250,242,.35) calc(66.66% + 1px), transparent calc(66.66% + 1px)),
+    linear-gradient(to bottom, transparent 33.33%, rgba(255,250,242,.35) 33.33%, rgba(255,250,242,.35) calc(33.33% + 1px), transparent calc(33.33% + 1px), transparent 66.66%, rgba(255,250,242,.35) 66.66%, rgba(255,250,242,.35) calc(66.66% + 1px), transparent calc(66.66% + 1px)); }
+.crop-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.crop-controls button, main .crop-controls button { width: 30px; height: 30px; min-height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 7px; color: var(--espresso); }
+.crop-controls button:disabled { opacity: .35; }
+.crop-zoom { min-width: 44px; font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.crop-controls .crop-reset, main .crop-controls .crop-reset { width: auto; height: auto; min-height: 30px; margin-left: auto; padding: 5px 12px; font-size: 12px; }
+.crop-weight { margin: 0; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+.crop-weight strong { color: #8a5a22; font-weight: 600; }
+.crop-error { display: flex; align-items: flex-start; gap: 7px; font-weight: 400; line-height: 1.5; }
+
 /* ── Permissões por papel ─────────────────────────────────────────────────── */
 /* Duas colunas no desktop porque são vinte itens: em coluna única a lista
    passa da altura da tela e a comparação entre grupos se perde. */
@@ -598,6 +689,13 @@ main .data-actions button.encounter-open {
   .drawer header { position: relative; padding-right: 40px; }
   .drawer header .icon-button { position: absolute; top: 0; right: 0; }
   .perm-groups { grid-template-columns: minmax(0, 1fr); }
+  /* A lista de seções vira uma fila rolável acima do formulário, e a prévia
+     desce para o fim: lado a lado, nenhum dos dois teria largura útil. */
+  .landing-layout { grid-template-columns: minmax(0, 1fr); }
+  .landing-nav { position: static; grid-auto-flow: column; grid-auto-columns: minmax(150px, auto); overflow-x: auto; padding-bottom: 4px; }
+  .landing-split { grid-template-columns: minmax(0, 1fr); }
+  .landing-preview { position: static; }
+  .image-field { grid-template-columns: 72px minmax(0, 1fr); }
   .segmented { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
   .segmented button { width: 100%; }
   /* Mesma razão no rodapé: "Cancelar" e o botão de ação se sobrepunham. */

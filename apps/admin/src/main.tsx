@@ -24,6 +24,7 @@ import { ScheduleSettings } from './components/ScheduleSettings'
 import { Patients } from './components/Patients'
 import { Cms, Leads, Procedures } from './components/Catalog'
 import { Team } from './components/Team'
+import { Landing } from './components/Landing'
 import { ClinicalCatalog, ClinicalDocuments } from './components/Clinical'
 import { Certificate } from './components/Certificate'
 import { Encounter } from './components/Encounter'
@@ -190,7 +191,7 @@ const NAV_GROUPS = [
     label: 'Divulgação',
     items: [
       ['leads', MessageSquare, 'Leads', 'Contatos interessados vindos do site'],
-      ['cms', FileText, 'Site', 'Textos e publicações do site'],
+      ['cms', FileText, 'Site', 'Conteúdo da landing page e publicações'],
     ],
   },
   {
@@ -329,7 +330,7 @@ function Panel({ tab, data, currentUserId }: { tab: Tab; data: any; currentUserI
   if (tab === 'documents') return <ClinicalDocuments />
   if (tab === 'registry') return <RegistryArea />
   if (tab === 'leads') return <Leads />
-  if (tab === 'cms') return <Cms cms={data.cms} />
+  if (tab === 'cms') return <SiteArea cms={data.cms} />
   if (tab === 'security') return <Security data={data} currentUserId={currentUserId} />
   return <SettingsPanel settings={data.settings} />
 }
@@ -389,6 +390,49 @@ function RegistryArea() {
       {area === 'exams' && <ClinicalCatalog only="EXAM" />}
       {area === 'guidance' && <ClinicalCatalog only={['GUIDANCE', 'RECORD_TEMPLATE']} />}
     </>
+  )
+}
+
+/**
+ * A aba Site cobre duas coisas de naturezas diferentes: a landing page, que é
+ * uma página só com seções fixas, e as publicações, que são muitas e livres.
+ */
+function SiteArea({ cms }: { cms: any }) {
+  const [area, setArea] = React.useState<'landing' | 'publicacoes'>('landing')
+
+  return (
+    <div className="grid" style={{ gap: 14 }}>
+      <div className="area-tabs" role="tablist" aria-label="Conteúdo do site">
+        <button
+          role="tab"
+          aria-selected={area === 'landing'}
+          aria-controls="painel-landing"
+          className={area === 'landing' ? 'active' : ''}
+          onClick={() => setArea('landing')}
+        >
+          Landing page
+        </button>
+        <button
+          role="tab"
+          aria-selected={area === 'publicacoes'}
+          aria-controls="painel-publicacoes"
+          className={area === 'publicacoes' ? 'active' : ''}
+          onClick={() => setArea('publicacoes')}
+        >
+          Páginas e publicações
+        </button>
+      </div>
+
+      {area === 'landing' ? (
+        <div id="painel-landing" role="tabpanel">
+          <Landing />
+        </div>
+      ) : (
+        <div id="painel-publicacoes" role="tabpanel">
+          <Cms cms={cms} />
+        </div>
+      )}
+    </div>
   )
 }
 
