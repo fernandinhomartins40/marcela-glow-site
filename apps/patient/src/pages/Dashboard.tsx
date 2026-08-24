@@ -23,6 +23,11 @@ export function Dashboard() {
   const data = query.data
   const patientName = data?.patient?.name ?? null
   const greeting = firstName(patientName)
+  /* O AppShell já desenhava o marcador de pendências, mas ninguém alimentava o
+     número — ele nunca aparecia. `Message` não tem estado de leitura na API;
+     as notificações têm, e são justamente os avisos de consulta que a paciente
+     precisa ver ao abrir o portal. */
+  const unread = data?.notifications.filter((n) => !n.readAt).length ?? 0
 
   function navigate(id: SectionId) {
     setSection(id)
@@ -30,7 +35,7 @@ export function Dashboard() {
   }
 
   return (
-    <AppShell active={section} onNavigate={navigate} patientName={patientName}>
+    <AppShell active={section} onNavigate={navigate} patientName={patientName} pending={unread}>
       {query.isLoading && <DashboardSkeleton />}
 
       {query.isError && (

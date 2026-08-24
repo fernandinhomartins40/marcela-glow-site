@@ -1,5 +1,6 @@
 import { addDays, format, isSameDay, parseISO, startOfWeek } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import type { Tone } from './tone'
 
 export const CLINIC_TZ = 'America/Campo_Grande'
 
@@ -30,7 +31,7 @@ export interface WhatsAppLink {
   unavailableReason?: string
 }
 
-const STATUS_META: Record<AppointmentStatus, { label: string; tone: string }> = {
+const STATUS_META: Record<AppointmentStatus, { label: string; tone: Tone }> = {
   PENDING: { label: 'Aguardando', tone: 'warning' },
   CONFIRMED: { label: 'Confirmada', tone: 'success' },
   CANCELLED: { label: 'Cancelada', tone: 'neutral' },
@@ -38,7 +39,7 @@ const STATUS_META: Record<AppointmentStatus, { label: string; tone: string }> = 
 }
 
 export function statusMeta(status: AppointmentStatus) {
-  return STATUS_META[status] ?? { label: status, tone: 'neutral' }
+  return STATUS_META[status] ?? { label: status, tone: 'neutral' as const }
 }
 
 /** Hora local da clínica ("14:30"). */

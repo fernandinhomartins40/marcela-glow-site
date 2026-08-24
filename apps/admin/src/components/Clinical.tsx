@@ -8,7 +8,6 @@ import {
   Pencil,
   Pill,
   Plus,
-  Search,
   Send,
   ShieldCheck,
   Trash2,
@@ -16,15 +15,21 @@ import {
 } from 'lucide-react'
 import {
   api,
+  Chip,
   ConfirmDialog,
+  DataList,
+  DataRow,
   EmptyState,
   errorMessage,
   Field,
   formatDateBR,
   FormRow,
   Modal,
+  RowAction,
+  SearchBox,
   SubmitButton,
   Toolbar,
+  type Tone,
 } from '../lib/ui'
 import type { Patient } from './Patients'
 
@@ -96,7 +101,7 @@ const CATALOG_META: Record<CatalogKind, { label: string; singular: string; icon:
   RECORD_TEMPLATE: { label: 'Modelos', singular: 'modelo', icon: FileSignature },
 }
 
-const CONTROL_META: Record<Control, { label: string; tone: string }> = {
+const CONTROL_META: Record<Control, { label: string; tone: Tone }> = {
   COMMON: { label: 'Comum', tone: 'neutral' },
   ANTIMICROBIAL: { label: 'Antimicrobiano', tone: 'warning' },
   CONTROLLED: { label: 'Controlado', tone: 'warning' },
@@ -171,10 +176,7 @@ export function ClinicalCatalog({ only }: { only?: CatalogKind | CatalogKind[] }
             ))}
           </div>
         )}
-        <div className="search-box">
-          <Search size={15} />
-          <input placeholder={`Buscar ${meta.singular}`} value={search} onChange={(e) => setSearch(e.target.value)} />
-        </div>
+        <SearchBox value={search} onChange={setSearch} placeholder={`Buscar ${meta.singular}`} />
         <button className="primary" onClick={() => setEditing('new')}>
           <Plus size={15} />
           Novo
@@ -195,42 +197,36 @@ export function ClinicalCatalog({ only }: { only?: CatalogKind | CatalogKind[] }
           }
         />
       ) : (
-        <div className="data-list">
+        <DataList>
           {items.map((item) => (
-            <article key={item.id} className="data-row">
-              <div className="data-main static">
-                <span className="data-avatar">
-                  <Icon size={16} />
-                </span>
-                <span className="data-text">
-                  <strong>
-                    {item.name}
-                    {item.control && item.control !== 'COMMON' && (
-                      <span className={`chip ${CONTROL_META[item.control].tone}`}>
-                        {CONTROL_META[item.control].label}
-                      </span>
-                    )}
-                  </strong>
-                  <span className="data-meta">
-                    {item.subtitle && <span>{item.subtitle}</span>}
-                    {item.strength && <span>{item.strength}</span>}
-                    {item.form && <span>{item.form}</span>}
-                    {item.tussCode && <span>TUSS {item.tussCode}</span>}
-                    {item.usageCount > 0 && <span>{item.usageCount}× usado</span>}
-                  </span>
-                </span>
-              </div>
-              <span className="data-actions">
-                <button onClick={() => setEditing(item)} title="Editar" aria-label="Editar item">
-                  <Pencil size={14} />
-                </button>
-                <button onClick={() => setRemoving(item)} title="Excluir" aria-label="Excluir item">
-                  <Trash2 size={14} />
-                </button>
-              </span>
-            </article>
+            <DataRow
+              key={item.id}
+              icon={Icon}
+              title={item.name}
+              chips={
+                item.control &&
+                item.control !== 'COMMON' && (
+                  <Chip tone={CONTROL_META[item.control].tone}>{CONTROL_META[item.control].label}</Chip>
+                )
+              }
+              meta={
+                <>
+                  {item.subtitle && <span>{item.subtitle}</span>}
+                  {item.strength && <span>{item.strength}</span>}
+                  {item.form && <span>{item.form}</span>}
+                  {item.tussCode && <span>TUSS {item.tussCode}</span>}
+                  {item.usageCount > 0 && <span>{item.usageCount}× usado</span>}
+                </>
+              }
+              actions={
+                <>
+                  <RowAction icon={Pencil} title="Editar item" onClick={() => setEditing(item)} />
+                  <RowAction icon={Trash2} title="Excluir item" onClick={() => setRemoving(item)} />
+                </>
+              }
+            />
           ))}
-        </div>
+        </DataList>
       )}
 
       {editing && (
@@ -480,60 +476,58 @@ export function ClinicalDocuments() {
           description="Emita durante a consulta, em Atendimento: o documento já sai com a paciente certa e vinculado ao atendimento. Aqui você assina e envia o que ficou pendente."
         />
       ) : (
-        <div className="data-list">
+        <DataList>
           {docs.map((doc) => {
             const signed = !!doc.signedAt
             const expired = doc.validUntil ? new Date(doc.validUntil) < new Date() : false
             return (
-              <article key={doc.id} className="data-row">
-                <div className="data-main static">
-                  <span className="data-text">
-                    <strong>
-                      {doc.title}
-                      {signed ? (
-                        <span className={`chip ${expired ? 'neutral' : 'success'}`}>
-                          {expired ? 'Vencida' : 'Assinada'}
-                        </span>
-                      ) : (
-                        <span className="chip neutral">Rascunho</span>
-                      )}
-                      {doc.sentAt && <span className="chip info">Enviada</span>}
-                    </strong>
-                    <span className="data-meta">
-                      <span>{doc.patient.name}</span>
-                      <span>{formatDateBR(doc.createdAt)}</span>
-                      {doc.items.length > 0 && <span>{doc.items.length} item(ns)</span>}
-                      {doc.validUntil && <span>Válida até {formatDateBR(doc.validUntil)}</span>}
-                    </span>
-                  </span>
-                </div>
-                <span className="data-actions">
-                  {!signed && (
-                    <button onClick={() => setEditing(doc)} title="Editar" aria-label="Editar documento">
-                      <Pencil size={14} />
-                    </button>
-                  )}
-                  <button
-                    onClick={() => (cloudReady ? setSigning(doc) : sign.mutate({ id: doc.id }))}
-                    disabled={signed || sign.isPending}
-                    title={signed ? 'Já assinada' : 'Assinar'}
-                    aria-label="Assinar documento"
-                  >
-                    <FileSignature size={14} />
-                  </button>
-                  <button onClick={() => send.mutate(doc.id)} disabled={send.isPending} title="Enviar à paciente" aria-label="Enviar">
-                    <Send size={14} />
-                  </button>
-                  {!signed && (
-                    <button onClick={() => setRemoving(doc)} title="Excluir" aria-label="Excluir documento">
-                      <Trash2 size={14} />
-                    </button>
-                  )}
-                </span>
-              </article>
+              <DataRow
+                key={doc.id}
+                title={doc.title}
+                chips={
+                  <>
+                    {signed ? (
+                      <Chip tone={expired ? 'neutral' : 'success'}>{expired ? 'Vencida' : 'Assinada'}</Chip>
+                    ) : (
+                      <Chip>Rascunho</Chip>
+                    )}
+                    {doc.sentAt && <Chip tone="info">Enviada</Chip>}
+                  </>
+                }
+                meta={
+                  <>
+                    <span>{doc.patient.name}</span>
+                    <span>{formatDateBR(doc.createdAt)}</span>
+                    {doc.items.length > 0 && <span>{doc.items.length} item(ns)</span>}
+                    {doc.validUntil && <span>Válida até {formatDateBR(doc.validUntil)}</span>}
+                  </>
+                }
+                actions={
+                  <>
+                    {!signed && (
+                      <RowAction icon={Pencil} title="Editar documento" onClick={() => setEditing(doc)} />
+                    )}
+                    <RowAction
+                      icon={FileSignature}
+                      title={signed ? 'Já assinada' : 'Assinar documento'}
+                      onClick={() => (cloudReady ? setSigning(doc) : sign.mutate({ id: doc.id }))}
+                      disabled={signed || sign.isPending}
+                    />
+                    <RowAction
+                      icon={Send}
+                      title="Enviar à paciente"
+                      onClick={() => send.mutate(doc.id)}
+                      disabled={send.isPending}
+                    />
+                    {!signed && (
+                      <RowAction icon={Trash2} title="Excluir documento" onClick={() => setRemoving(doc)} />
+                    )}
+                  </>
+                }
+              />
             )
           })}
-        </div>
+        </DataList>
       )}
 
       {(sign.isError || send.isError) && <p className="error">{errorMessage(sign.error ?? send.error)}</p>}
@@ -826,10 +820,12 @@ export function DocumentForm({
           <span className="field-label">
             {catalogKind === 'MEDICATION' ? 'Adicionar medicamento' : catalogKind === 'EXAM' ? 'Adicionar exame' : 'Inserir orientação'}
           </span>
-          <div className="search-box" style={{ marginTop: 5, maxWidth: 'none' }}>
-            <Search size={15} />
-            <input placeholder="Buscar no catálogo" value={search} onChange={(e) => setSearch(e.target.value)} />
-          </div>
+          <SearchBox
+            value={search}
+            onChange={setSearch}
+            placeholder="Buscar no catálogo"
+            style={{ marginTop: 5, maxWidth: 'none' }}
+          />
           {search && (
             <div className="catalog-results">
               {catalog.data?.length ? (

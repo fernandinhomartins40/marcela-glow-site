@@ -3,13 +3,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FileText, Globe, Pencil, Plus, Sparkles, Trash2 } from 'lucide-react'
 import {
   api,
+  Chip,
   ConfirmDialog,
+  DataList,
+  DataRow,
   EmptyState,
   errorMessage,
   Field,
   formatDateBR,
   FormRow,
   Modal,
+  RowAction,
   SubmitButton,
   tenantSlug,
   Toolbar,
@@ -80,35 +84,28 @@ export function Procedures() {
           }
         />
       ) : (
-        <div className="data-list">
+        <DataList>
           {items.map((item) => (
-            <article key={item.id} className="data-row">
-              <div className="data-main static">
-                <span className="data-avatar">
-                  <Sparkles size={16} />
-                </span>
-                <span className="data-text">
-                  <strong>
-                    {item.title}
-                    {!item.isBookable && <span className="chip neutral">Fora do agendamento</span>}
-                  </strong>
-                  <span className="data-meta">
-                    <span>{item.subtitle}</span>
-                    <span>{item.durationMin + item.bufferMin} min</span>
-                  </span>
-                </span>
-              </div>
-              <span className="data-actions">
-                <button onClick={() => setEditing(item)} title="Editar" aria-label="Editar procedimento">
-                  <Pencil size={14} />
-                </button>
-                <button onClick={() => setRemoving(item)} title="Excluir" aria-label="Excluir procedimento">
-                  <Trash2 size={14} />
-                </button>
-              </span>
-            </article>
+            <DataRow
+              key={item.id}
+              icon={Sparkles}
+              title={item.title}
+              chips={!item.isBookable && <Chip>Fora do agendamento</Chip>}
+              meta={
+                <>
+                  <span>{item.subtitle}</span>
+                  <span>{item.durationMin + item.bufferMin} min</span>
+                </>
+              }
+              actions={
+                <>
+                  <RowAction icon={Pencil} title="Editar procedimento" onClick={() => setEditing(item)} />
+                  <RowAction icon={Trash2} title="Excluir procedimento" onClick={() => setRemoving(item)} />
+                </>
+              }
+            />
           ))}
-        </div>
+        </DataList>
       )}
 
       {editing && (
@@ -507,35 +504,32 @@ export function Cms({ cms }: { cms: { pages: Content[]; posts: Content[]; media:
           }
         />
       ) : (
-        <div className="data-list">
+        <DataList>
           {items.map((item) => (
-            <article key={item.id} className="data-row">
-              <div className="data-main static">
-                <span className="data-avatar">{kind === 'pages' ? <Globe size={16} /> : <FileText size={16} />}</span>
-                <span className="data-text">
-                  <strong>
-                    {item.title}
-                    <span className={`chip ${item.status === 'PUBLISHED' ? 'success' : 'neutral'}`}>
-                      {item.status === 'PUBLISHED' ? 'Publicado' : 'Rascunho'}
-                    </span>
-                  </strong>
-                  <span className="data-meta">
-                    <span>/{item.slug}</span>
-                    <span>{formatDateBR(item.createdAt)}</span>
-                  </span>
-                </span>
-              </div>
-              <span className="data-actions">
-                <button onClick={() => setEditing(item)} title="Editar" aria-label="Editar conteúdo">
-                  <Pencil size={14} />
-                </button>
-                <button onClick={() => setRemoving(item)} title="Excluir" aria-label="Excluir conteúdo">
-                  <Trash2 size={14} />
-                </button>
-              </span>
-            </article>
+            <DataRow
+              key={item.id}
+              icon={kind === 'pages' ? Globe : FileText}
+              title={item.title}
+              chips={
+                <Chip tone={item.status === 'PUBLISHED' ? 'success' : 'neutral'}>
+                  {item.status === 'PUBLISHED' ? 'Publicado' : 'Rascunho'}
+                </Chip>
+              }
+              meta={
+                <>
+                  <span>/{item.slug}</span>
+                  <span>{formatDateBR(item.createdAt)}</span>
+                </>
+              }
+              actions={
+                <>
+                  <RowAction icon={Pencil} title="Editar conteúdo" onClick={() => setEditing(item)} />
+                  <RowAction icon={Trash2} title="Excluir conteúdo" onClick={() => setRemoving(item)} />
+                </>
+              }
+            />
           ))}
-        </div>
+        </DataList>
       )}
 
       {editing && (

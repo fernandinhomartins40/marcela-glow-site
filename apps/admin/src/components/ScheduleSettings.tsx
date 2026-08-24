@@ -1,23 +1,8 @@
 import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import axios from 'axios'
 import { CalendarOff, Check, Clock, Loader2, Plus, Trash2 } from 'lucide-react'
 import { clinicDate, clinicTime, fromDateTimeLocalValue } from '../lib/schedule'
-
-const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' })
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('admin_token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
-
-const tenantSlug = import.meta.env.VITE_TENANT_SLUG || 'marcela-duch'
-
-function errorMessage(error: unknown, fallback = 'Não foi possível salvar.') {
-  if (axios.isAxiosError(error)) return error.response?.data?.message ?? error.message ?? fallback
-  if (error instanceof Error) return error.message
-  return fallback
-}
+import { api, errorMessage, tenantSlug } from '../lib/ui'
 
 const WEEKDAYS = [
   { id: 1, label: 'Segunda' },
@@ -162,7 +147,7 @@ function BusinessHours() {
         </div>
       )}
 
-      {save.isError && <p className="error">{errorMessage(save.error)}</p>}
+      {save.isError && <p className="error">{errorMessage(save.error, 'Não foi possível salvar.')}</p>}
 
       <div className="row-actions" style={{ marginTop: 14 }}>
         <button onClick={() => save.mutate()} disabled={save.isPending || invalid}>
@@ -293,7 +278,7 @@ function Durations() {
         </div>
       )}
 
-      {save.isError && <p className="error">{errorMessage(save.error)}</p>}
+      {save.isError && <p className="error">{errorMessage(save.error, 'Não foi possível salvar.')}</p>}
     </section>
   )
 }
@@ -369,7 +354,7 @@ function Blocks() {
       {startsAt && endsAt && startsAt >= endsAt && (
         <p className="error">O término deve ser depois do início.</p>
       )}
-      {create.isError && <p className="error">{errorMessage(create.error)}</p>}
+      {create.isError && <p className="error">{errorMessage(create.error, 'Não foi possível salvar.')}</p>}
 
       {query.isLoading ? (
         <p className="hint">Carregando...</p>

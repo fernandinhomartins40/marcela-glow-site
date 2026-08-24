@@ -44,3 +44,6 @@ postgres_data/
 
 # Prisma generated (committed via generate in Dockerfile)
 packages/database/node_modules/
+
+# Cache incremental do tsc --build (recriado a cada checagem de tipos)
+*.tsbuildinfo

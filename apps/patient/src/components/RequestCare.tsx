@@ -61,7 +61,14 @@ export function RequestCare({ procedures }: { procedures: Procedure[] }) {
     <Panel title="Solicitar atendimento" icon={CalendarPlus}>
       <form onSubmit={submit} className="panel-pad space-y-4">
         {/* Seletor de intenção */}
-        <div className="grid grid-cols-2 gap-1 p-1 rounded-md bg-secondary" role="tablist">
+        {/* `radiogroup`, não `tablist`: não há tabpanel — os botões escolhem o
+            que o formulário abaixo envia. Com role="tab" o leitor de tela
+            anuncia uma aba e procura um painel que não existe. */}
+        <div
+          className="grid grid-cols-2 gap-1 p-1 rounded-md bg-secondary"
+          role="radiogroup"
+          aria-label="O que você quer fazer"
+        >
           {(
             [
               { id: 'appointment' as Intent, label: 'Agendar horário' },
@@ -71,8 +78,8 @@ export function RequestCare({ procedures }: { procedures: Procedure[] }) {
             <button
               key={option.id}
               type="button"
-              role="tab"
-              aria-selected={intent === option.id}
+              role="radio"
+              aria-checked={intent === option.id}
               onClick={() => {
                 setIntent(option.id)
                 setFeedback('')

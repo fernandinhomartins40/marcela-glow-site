@@ -1,6 +1,5 @@
 import React from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import axios from 'axios'
 import {
   Ban,
   Check,
@@ -35,19 +34,7 @@ import {
   type Appointment,
   type WhatsAppLink,
 } from '../lib/schedule'
-
-const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' })
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('admin_token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
-
-function errorMessage(error: unknown, fallback = 'Não foi possível concluir.') {
-  if (axios.isAxiosError(error)) return error.response?.data?.message ?? error.message ?? fallback
-  if (error instanceof Error) return error.message
-  return fallback
-}
+import { api, Chip, errorMessage } from '../lib/ui'
 
 export function Schedule({ appointments }: { appointments: Appointment[] }) {
   const [anchor, setAnchor] = React.useState(new Date())
@@ -266,7 +253,7 @@ function DayList({
                     <strong>{appointment.name}</strong>
                     <span>{appointment.procedure?.title ?? 'Consulta de avaliação'}</span>
                   </span>
-                  <span className={`chip ${meta.tone}`}>{meta.label}</span>
+                  <Chip tone={meta.tone}>{meta.label}</Chip>
                 </button>
               </li>
             )
@@ -288,7 +275,7 @@ function DayList({
                     <strong>{appointment.name}</strong>
                     <span>{appointment.cancelReason ?? 'Sem motivo registrado'}</span>
                   </span>
-                  <span className="chip neutral">Cancelada</span>
+                  <Chip>Cancelada</Chip>
                 </button>
               </li>
             ))}
@@ -377,7 +364,7 @@ function AppointmentDrawer({
       <aside className="drawer" onClick={(e) => e.stopPropagation()}>
         <header>
           <div>
-            <span className={`chip ${meta.tone}`}>{meta.label}</span>
+            <Chip tone={meta.tone}>{meta.label}</Chip>
             <h2>{appointment.name}</h2>
             <p>{appointment.procedure?.title ?? 'Consulta de avaliação'}</p>
           </div>

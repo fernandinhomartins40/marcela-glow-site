@@ -6,8 +6,9 @@ import { cn } from './ui'
 
 export type SectionId = 'inicio' | 'consultas' | 'prescricoes' | 'mensagens'
 
-export const SECTIONS: { id: SectionId; label: string; icon: LucideIcon }[] = [
-  { id: 'inicio', label: 'Início', icon: Home },
+/** `badge: true` marca onde o contador de pendências aparece. */
+export const SECTIONS: { id: SectionId; label: string; icon: LucideIcon; badge?: boolean }[] = [
+  { id: 'inicio', label: 'Início', icon: Home, badge: true },
   { id: 'consultas', label: 'Consultas', icon: CalendarDays },
   { id: 'prescricoes', label: 'Prescrições', icon: FileText },
   { id: 'mensagens', label: 'Mensagens', icon: MessageCircle },
@@ -17,13 +18,14 @@ export function AppShell({
   active,
   onNavigate,
   patientName,
-  unreadMessages,
+  pending,
   children,
 }: {
   active: SectionId
   onNavigate: (id: SectionId) => void
   patientName: string | null
-  unreadMessages?: number
+  /** Avisos ainda não lidos — aparecem como contador sobre "Início". */
+  pending?: number
   children: React.ReactNode
 }) {
   return (
@@ -60,14 +62,15 @@ export function AppShell({
                   >
                     <Icon size={17} className="shrink-0" aria-hidden="true" />
                     {section.label}
-                    {section.id === 'mensagens' && unreadMessages ? (
+                    {section.badge && pending ? (
                       <span
                         className={cn(
                           'ml-auto min-w-5 h-5 px-1.5 rounded-full text-[0.65rem] font-medium inline-flex items-center justify-center',
                           isActive ? 'bg-primary-foreground/20' : 'bg-accent text-accent-foreground',
                         )}
+                        aria-label={`${pending} aviso${pending > 1 ? 's' : ''} não lido${pending > 1 ? 's' : ''}`}
                       >
-                        {unreadMessages}
+                        {pending}
                       </span>
                     ) : null}
                   </button>
@@ -139,8 +142,11 @@ export function AppShell({
                 >
                   <Icon size={19} aria-hidden="true" />
                   <span className="text-[0.65rem] tracking-wide">{section.label}</span>
-                  {section.id === 'mensagens' && unreadMessages ? (
-                    <span className="absolute top-1.5 right-[22%] w-2 h-2 rounded-full bg-accent" />
+                  {section.badge && pending ? (
+                    <span
+                      className="absolute top-1.5 right-[22%] w-2 h-2 rounded-full bg-accent"
+                      aria-label={`${pending} aviso${pending > 1 ? 's' : ''} não lido${pending > 1 ? 's' : ''}`}
+                    />
                   ) : null}
                   {isActive && <span className="absolute top-0 inset-x-4 h-px bg-primary" />}
                 </button>

@@ -23,7 +23,11 @@ import {
 } from 'lucide-react'
 import {
   api,
+  AttachmentsPanel,
+  Chip,
   ConfirmDialog,
+  DataList,
+  DataRow,
   EmptyState,
   errorMessage,
   Field,
@@ -34,6 +38,8 @@ import {
   maskPhone,
   Modal,
   parseMoney,
+  RowAction,
+  SearchBox,
   SubmitButton,
   tenantSlug,
   Toolbar,
@@ -167,14 +173,11 @@ function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
           </button>
         </div>
 
-        <div className="search-box">
-          <Search size={15} />
-          <input
-            placeholder="Buscar paciente sem agendamento"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        <SearchBox
+          value={search}
+          onChange={setSearch}
+          placeholder="Buscar paciente sem agendamento"
+        />
 
         <button className="primary" onClick={() => setCreating(true)}>
           <Plus size={15} />
@@ -191,27 +194,22 @@ function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
           ) : !patients.data?.length ? (
             <p className="hint">Nenhuma paciente com esse nome.</p>
           ) : (
-            <div className="data-list">
+            <DataList>
               {patients.data.slice(0, 6).map((p) => (
-                <article key={p.id} className="data-row">
-                  <div className="data-main static">
-                    <span className="data-avatar">
-                      <UserRound size={16} />
-                    </span>
-                    <span className="data-text">
-                      <strong>{p.name}</strong>
-                      <span className="data-meta">
-                        <span>{p.email}</span>
-                        {p.phone && <span>{p.phone}</span>}
-                      </span>
-                    </span>
-                  </div>
-                  <span className="data-actions">
-                    <StartEncounterButton patient={p} onStarted={onOpen} />
-                  </span>
-                </article>
+                <DataRow
+                  key={p.id}
+                  icon={UserRound}
+                  title={p.name}
+                  meta={
+                    <>
+                      <span>{p.email}</span>
+                      {p.phone && <span>{p.phone}</span>}
+                    </>
+                  }
+                  actions={<StartEncounterButton patient={p} onStarted={onOpen} />}
+                />
               ))}
-            </div>
+            </DataList>
           )}
         </section>
       )}
@@ -232,35 +230,35 @@ function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
           }
         />
       ) : (
-        <div className="data-list">
+        <DataList>
           {entries.map((entry) => {
             const meta = statusMeta(entry.status as never)
             const registered = entry._count.records + entry._count.prescriptions + entry._count.sessions
             const noPatient = !entry.patient
             return (
-              <article key={entry.id} className="data-row encounter-row">
-                <span className="encounter-time">{clinicTime(entry.scheduledAt)}</span>
-
-                <div className="data-main static">
-                  <span className="data-text">
-                    <strong>
-                      {entry.patient?.name ?? entry.name}
-                      <span className={`chip ${meta.tone}`}>{meta.label}</span>
-                      {registered > 0 && (
-                        <span className="chip info">
-                          {registered} registro{registered > 1 ? 's' : ''}
-                        </span>
-                      )}
-                    </strong>
-                    <span className="data-meta">
-                      <span>{entry.procedure?.title ?? 'Consulta de avaliação'}</span>
-                      {noPatient && <span className="warn-text">sem cadastro de paciente</span>}
-                    </span>
-                  </span>
-                </div>
-
-                <span className="data-actions">
-                  {noPatient ? (
+              <DataRow
+                key={entry.id}
+                className="encounter-row"
+                leading={<span className="encounter-time">{clinicTime(entry.scheduledAt)}</span>}
+                title={entry.patient?.name ?? entry.name}
+                chips={
+                  <>
+                    <Chip tone={meta.tone}>{meta.label}</Chip>
+                    {registered > 0 && (
+                      <Chip tone="info">
+                        {registered} registro{registered > 1 ? 's' : ''}
+                      </Chip>
+                    )}
+                  </>
+                }
+                meta={
+                  <>
+                    <span>{entry.procedure?.title ?? 'Consulta de avaliação'}</span>
+                    {noPatient && <span className="warn-text">sem cadastro de paciente</span>}
+                  </>
+                }
+                actions={
+                  noPatient ? (
                     <LinkPatientButton appointmentId={entry.id} />
                   ) : (
                     <button
@@ -268,16 +266,16 @@ function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
                       onClick={() => onOpen(entry.id)}
                       title="Abrir atendimento"
                     >
-                      <Stethoscope size={14} />
+                      <Stethoscope size={14} aria-hidden="true" />
                       Atender
-                      <ChevronRight size={14} />
+                      <ChevronRight size={14} aria-hidden="true" />
                     </button>
-                  )}
-                </span>
-              </article>
+                  )
+                }
+              />
             )
           })}
-        </div>
+        </DataList>
       )}
 
       {creating && (
@@ -746,7 +744,7 @@ function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onB
       )}
 
       {tab === 'files' && (
-        <EncounterFiles patientId={patient.id} attachments={data.attachments ?? []} onChanged={refresh} />
+        <AttachmentsPanel patientId={patient.id} attachments={data.attachments ?? []} onChanged={refresh} />
       )}
 
       {(creating || editing) && (
@@ -858,11 +856,11 @@ function RecordTimeline({
             <div className="timeline-head">
               <div>
                 <strong>{record.title}</strong>
-                <span className="chip neutral">{recordTypeLabel(record.type)}</span>
+                <Chip>{recordTypeLabel(record.type)}</Chip>
                 {record.lockedAt && (
-                  <span className="chip success">
-                    <Lock size={11} /> Fechado
-                  </span>
+                  <Chip tone="success" icon={Lock}>
+                    Fechado
+                  </Chip>
                 )}
               </div>
               <span className="timeline-date">
@@ -1106,50 +1104,45 @@ function EncounterDocuments({
           }
         />
       ) : (
-        <div className="data-list">
+        <DataList>
           {documents.map((doc) => {
             const signed = doc.status === 'SIGNED' || doc.status === 'SENT'
             return (
-              <article key={doc.id} className="data-row">
-                <div className="data-main static">
-                  <span className="data-avatar">
-                    <FileText size={16} />
-                  </span>
-                  <span className="data-text">
-                    <strong>
-                      {doc.title}
-                      <span className={`chip ${doc.status === 'SIGNED' ? 'success' : doc.status === 'SENT' ? 'info' : 'neutral'}`}>
-                        {doc.status === 'SIGNED' ? 'Assinado' : doc.status === 'SENT' ? 'Enviado' : 'Rascunho'}
-                      </span>
-                    </strong>
-                    <span className="data-meta">
-                      <span>{formatDateBR(doc.createdAt)}</span>
-                      {doc.items?.length > 0 && <span>{doc.items.length} item(ns)</span>}
-                    </span>
-                  </span>
-                </div>
-                <span className="data-actions">
-                  <button
-                    onClick={() => (cloudReady ? setSigning(doc) : sign.mutate({ id: doc.id }))}
-                    disabled={signed || sign.isPending}
-                    title={signed ? 'Já assinado' : 'Assinar'}
-                    aria-label="Assinar documento"
-                  >
-                    <FileSignature size={14} />
-                  </button>
-                  <button
-                    onClick={() => send.mutate(doc.id)}
-                    disabled={send.isPending}
-                    title="Enviar à paciente"
-                    aria-label="Enviar documento"
-                  >
-                    <Send size={14} />
-                  </button>
-                </span>
-              </article>
+              <DataRow
+                key={doc.id}
+                icon={FileText}
+                title={doc.title}
+                chips={
+                  <Chip tone={doc.status === 'SIGNED' ? 'success' : doc.status === 'SENT' ? 'info' : 'neutral'}>
+                    {doc.status === 'SIGNED' ? 'Assinado' : doc.status === 'SENT' ? 'Enviado' : 'Rascunho'}
+                  </Chip>
+                }
+                meta={
+                  <>
+                    <span>{formatDateBR(doc.createdAt)}</span>
+                    {doc.items?.length > 0 && <span>{doc.items.length} item(ns)</span>}
+                  </>
+                }
+                actions={
+                  <>
+                    <RowAction
+                      icon={FileSignature}
+                      title={signed ? 'Já assinado' : 'Assinar documento'}
+                      onClick={() => (cloudReady ? setSigning(doc) : sign.mutate({ id: doc.id }))}
+                      disabled={signed || sign.isPending}
+                    />
+                    <RowAction
+                      icon={Send}
+                      title="Enviar à paciente"
+                      onClick={() => send.mutate(doc.id)}
+                      disabled={send.isPending}
+                    />
+                  </>
+                }
+              />
             )
           })}
-        </div>
+        </DataList>
       )}
 
       {(sign.isError || send.isError) && <p className="error">{errorMessage(sign.error ?? send.error)}</p>}
@@ -1182,68 +1175,6 @@ function EncounterDocuments({
   )
 }
 
-/** Exames, fotos e laudos da paciente — anexar e abrir sem sair da consulta. */
-function EncounterFiles({
-  patientId,
-  attachments,
-  onChanged,
-}: {
-  patientId: string
-  attachments: Encounter['attachments']
-  onChanged: () => void
-}) {
-  const [opening, setOpening] = React.useState<string | null>(null)
-
-  async function open(id: string) {
-    setOpening(id)
-    try {
-      const { data } = await api.get(`/admin/files/${id}/download`)
-      window.open(data.downloadUrl, '_blank', 'noopener')
-    } finally {
-      setOpening(null)
-    }
-  }
-
-  return (
-    <>
-      <Toolbar>
-        <span className="toolbar-title">Exames, fotos e laudos</span>
-        <FileUploadButton patientId={patientId} onUploaded={onChanged} />
-      </Toolbar>
-
-      {!attachments.length ? (
-        <EmptyState
-          title="Nenhum arquivo"
-          description="Anexe exames trazidos pela paciente ou fotos do antes e depois."
-        />
-      ) : (
-        <div className="data-list">
-          {attachments.map((file) => (
-            <article key={file.id} className="data-row">
-              <div className="data-main static">
-                <span className="data-avatar">
-                  <Paperclip size={16} />
-                </span>
-                <span className="data-text">
-                  <strong>{file.fileName}</strong>
-                  <span className="data-meta">
-                    <span>{formatDateBR(file.createdAt)}</span>
-                    {file.sizeBytes != null && <span>{Math.max(1, Math.round(file.sizeBytes / 1024))} KB</span>}
-                  </span>
-                </span>
-              </div>
-              <span className="data-actions">
-                <button onClick={() => open(file.id)} disabled={opening === file.id} title="Abrir" aria-label="Abrir arquivo">
-                  <Download size={14} />
-                </button>
-              </span>
-            </article>
-          ))}
-        </div>
-      )}
-    </>
-  )
-}
 
 function EncounterSessions({
   patientId,
@@ -1280,24 +1211,21 @@ function EncounterSessions({
           }
         />
       ) : (
-        <div className="data-list">
+        <DataList>
           {sessions.map((session) => (
-            <article key={session.id} className="data-row">
-              <div className="data-main static">
-                <span className="data-avatar">
-                  <HeartPulse size={16} />
-                </span>
-                <span className="data-text">
-                  <strong>{session.procedure?.title ?? 'Procedimento'}</strong>
-                  <span className="data-meta">
-                    <span>{formatDateBR(session.performedAt)}</span>
-                    <span>{formatMoney(session.priceCents)}</span>
-                  </span>
-                </span>
-              </div>
-            </article>
+            <DataRow
+              key={session.id}
+              icon={HeartPulse}
+              title={session.procedure?.title ?? 'Procedimento'}
+              meta={
+                <>
+                  <span>{formatDateBR(session.performedAt)}</span>
+                  <span>{formatMoney(session.priceCents)}</span>
+                </>
+              }
+            />
           ))}
-        </div>
+        </DataList>
       )}
 
       {creating && (

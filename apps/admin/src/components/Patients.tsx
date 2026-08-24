@@ -18,7 +18,11 @@ import {
 } from 'lucide-react'
 import {
   api,
+  AttachmentsPanel,
+  Chip,
   ConfirmDialog,
+  DataList,
+  DataRow,
   EmptyState,
   errorMessage,
   Field,
@@ -31,9 +35,12 @@ import {
   maskCPF,
   maskPhone,
   Modal,
+  RowAction,
+  SearchBox,
   SubmitButton,
   toDateInput,
   Toolbar,
+  type Tone,
 } from '../lib/ui'
 
 export interface Patient {
@@ -198,14 +205,11 @@ export function Patients() {
   return (
     <>
       <Toolbar>
-        <div className="search-box">
-          <Search size={15} />
-          <input
-            placeholder="Buscar por nome, e-mail ou telefone"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
+        <SearchBox
+          value={search}
+          onChange={setSearch}
+          placeholder="Buscar por nome, e-mail ou telefone"
+        />
         <label className="toolbar-check">
           <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} />
           Mostrar arquivadas
@@ -236,61 +240,74 @@ export function Patients() {
           }
         />
       ) : (
-        <div className="data-list">
+        <DataList>
           {patients.map((patient) => (
-            <article key={patient.id} className={`data-row ${patient.isActive ? '' : 'archived'}`}>
-              <button className="data-main" onClick={() => setDetailId(patient.id)}>
-                <span className="data-avatar">
-                  <UserRound size={16} />
-                </span>
-                <span className="data-text">
-                  <strong>
-                    {patient.socialName || patient.name}
-                    {!patient.isActive && <span className="chip neutral">Arquivada</span>}
-                    {patient.allergies && (
-                      <span className="chip danger" title={`Alergias: ${patient.allergies}`}>
-                        <AlertTriangle size={11} /> Alergia
-                      </span>
-                    )}
-                  </strong>
-                  <span className="data-meta">
-                    <span><Mail size={12} /> {patient.email}</span>
-                    {patient.phone && <span><Phone size={12} /> {maskPhone(patient.phone)}</span>}
-                    {patient.cpf && <span>CPF {maskCPF(patient.cpf)}</span>}
+            <DataRow
+              key={patient.id}
+              icon={UserRound}
+              dimmed={!patient.isActive}
+              onOpen={() => setDetailId(patient.id)}
+              openLabel={`Abrir prontuário de ${patient.name}`}
+              title={patient.socialName || patient.name}
+              chips={
+                <>
+                  {!patient.isActive && <Chip>Arquivada</Chip>}
+                  {patient.allergies && (
+                    <Chip tone="danger" icon={AlertTriangle} title={`Alergias: ${patient.allergies}`}>
+                      Alergia
+                    </Chip>
+                  )}
+                </>
+              }
+              meta={
+                <>
+                  <span>
+                    <Mail size={12} aria-hidden="true" /> {patient.email}
                   </span>
-                </span>
-              </button>
-
-              <span className="data-counts">
-                <span title="Consultas"><CalendarDays size={13} /> {patient._count?.appointments ?? 0}</span>
-                <span title="Procedimentos"><HeartPulse size={13} /> {patient._count?.sessions ?? 0}</span>
-                <span title="Documentos emitidos"><FileText size={13} /> {patient._count?.prescriptions ?? 0}</span>
-              </span>
-
-              <span className="data-actions">
-                <button
-                  className="primary"
-                  onClick={() => setDetailId(patient.id)}
-                  aria-label={`Abrir prontuário de ${patient.name}`}
-                  title="Abrir prontuário"
-                >
-                  <HeartPulse size={14} />
-                  Prontuário
-                </button>
-                <button onClick={() => setEditing(patient)} aria-label={`Editar ${patient.name}`} title="Editar">
-                  <Pencil size={14} />
-                </button>
-                <button
-                  onClick={() => setArchiving(patient)}
-                  aria-label={patient.isActive ? `Arquivar ${patient.name}` : `Reativar ${patient.name}`}
-                  title={patient.isActive ? 'Arquivar' : 'Reativar'}
-                >
-                  {patient.isActive ? <Archive size={14} /> : <ArchiveRestore size={14} />}
-                </button>
-              </span>
-            </article>
+                  {patient.phone && (
+                    <span>
+                      <Phone size={12} aria-hidden="true" /> {maskPhone(patient.phone)}
+                    </span>
+                  )}
+                  {patient.cpf && <span>CPF {maskCPF(patient.cpf)}</span>}
+                </>
+              }
+              counts={
+                <>
+                  <span title="Consultas">
+                    <CalendarDays size={13} aria-hidden="true" /> {patient._count?.appointments ?? 0}
+                  </span>
+                  <span title="Procedimentos">
+                    <HeartPulse size={13} aria-hidden="true" /> {patient._count?.sessions ?? 0}
+                  </span>
+                  <span title="Documentos emitidos">
+                    <FileText size={13} aria-hidden="true" /> {patient._count?.prescriptions ?? 0}
+                  </span>
+                </>
+              }
+              actions={
+                <>
+                  {/* Único botão da linha com rótulo visível — RowAction é só ícone */}
+                  <button
+                    className="primary"
+                    onClick={() => setDetailId(patient.id)}
+                    aria-label={`Abrir prontuário de ${patient.name}`}
+                    title="Abrir prontuário"
+                  >
+                    <HeartPulse size={14} aria-hidden="true" />
+                    Prontuário
+                  </button>
+                  <RowAction icon={Pencil} title={`Editar ${patient.name}`} onClick={() => setEditing(patient)} />
+                  <RowAction
+                    icon={patient.isActive ? Archive : ArchiveRestore}
+                    title={patient.isActive ? `Arquivar ${patient.name}` : `Reativar ${patient.name}`}
+                    onClick={() => setArchiving(patient)}
+                  />
+                </>
+              }
+            />
           ))}
-        </div>
+        </DataList>
       )}
 
       {editing && (
@@ -718,7 +735,7 @@ function PatientForm({
   )
 }
 
-const DOC_STATUS: Record<string, { label: string; tone: string }> = {
+const DOC_STATUS: Record<string, { label: string; tone: Tone }> = {
   DRAFT: { label: 'Rascunho', tone: 'neutral' },
   SENT: { label: 'Enviado', tone: 'info' },
   SIGNED: { label: 'Assinado', tone: 'success' },
@@ -934,8 +951,8 @@ export function PatientDetail({ id, onClose }: { id: string; onClose: () => void
                   <div className="timeline-head">
                     <div>
                       <strong>{r.title}</strong>
-                      <span className="chip neutral">{RECORD_TYPE[r.type] ?? r.type}</span>
-                      {r.lockedAt && <span className="chip success">Fechado</span>}
+                      <Chip>{RECORD_TYPE[r.type] ?? r.type}</Chip>
+                      {r.lockedAt && <Chip tone="success">Fechado</Chip>}
                     </div>
                     <span className="timeline-date">{formatDateBR(r.occurredAt ?? r.createdAt)}</span>
                   </div>
@@ -961,111 +978,52 @@ export function PatientDetail({ id, onClose }: { id: string; onClose: () => void
           (!p.prescriptions?.length ? (
             <p className="hint">Nenhum documento emitido. Receitas e exames são emitidos no Atendimento.</p>
           ) : (
-            <div className="data-list">
+            <DataList>
               {p.prescriptions.map((doc: any) => {
-                const meta = DOC_STATUS[doc.status] ?? { label: doc.status, tone: 'neutral' }
+                const meta = DOC_STATUS[doc.status] ?? { label: doc.status, tone: 'neutral' as const }
                 return (
-                  <article key={doc.id} className="data-row">
-                    <div className="data-main static">
-                      <span className="data-avatar">
-                        <FileText size={16} />
-                      </span>
-                      <span className="data-text">
-                        <strong>
-                          {doc.title}
-                          <span className={`chip ${meta.tone}`}>{meta.label}</span>
-                        </strong>
-                        <span className="data-meta">
-                          <span>{DOC_KIND[doc.kind] ?? doc.kind}</span>
-                          <span>{formatDateBR(doc.createdAt)}</span>
-                          {doc.items?.length > 0 && <span>{doc.items.length} item(ns)</span>}
-                        </span>
-                      </span>
-                    </div>
-                  </article>
+                  <DataRow
+                    key={doc.id}
+                    icon={FileText}
+                    title={doc.title}
+                    chips={<Chip tone={meta.tone}>{meta.label}</Chip>}
+                    meta={
+                      <>
+                        <span>{DOC_KIND[doc.kind] ?? doc.kind}</span>
+                        <span>{formatDateBR(doc.createdAt)}</span>
+                        {doc.items?.length > 0 && <span>{doc.items.length} item(ns)</span>}
+                      </>
+                    }
+                  />
                 )
               })}
-            </div>
+            </DataList>
           ))}
 
         {tab === 'procedures' &&
           (!p.sessions?.length ? (
             <p className="hint">Nenhum procedimento registrado.</p>
           ) : (
-            <div className="data-list">
+            <DataList>
               {p.sessions.map((s: any) => (
-                <article key={s.id} className="data-row">
-                  <div className="data-main static">
-                    <span className="data-avatar">
-                      <HeartPulse size={16} />
-                    </span>
-                    <span className="data-text">
-                      <strong>{s.procedure?.title ?? 'Procedimento'}</strong>
-                      <span className="data-meta">
-                        <span>{formatDateBR(s.performedAt)}</span>
-                        <span>{formatMoney(s.priceCents)}</span>
-                      </span>
-                    </span>
-                  </div>
-                </article>
+                <DataRow
+                  key={s.id}
+                  icon={HeartPulse}
+                  title={s.procedure?.title ?? 'Procedimento'}
+                  meta={
+                    <>
+                      <span>{formatDateBR(s.performedAt)}</span>
+                      <span>{formatMoney(s.priceCents)}</span>
+                    </>
+                  }
+                />
               ))}
-            </div>
+            </DataList>
           ))}
 
-        {tab === 'files' && <PatientFiles patientId={id} attachments={p.attachments ?? []} onChanged={refresh} />}
+        {tab === 'files' && <AttachmentsPanel patientId={id} attachments={p.attachments ?? []} onChanged={refresh} />}
       </div>
     </Modal>
   )
 }
 
-function PatientFiles({
-  patientId,
-  attachments,
-  onChanged,
-}: {
-  patientId: string
-  attachments: any[]
-  onChanged: () => void
-}) {
-  async function open(fileId: string) {
-    const { data } = await api.get(`/admin/files/${fileId}/download`)
-    window.open(data.downloadUrl, '_blank', 'noopener')
-  }
-
-  return (
-    <>
-      <Toolbar>
-        <span className="toolbar-title">Exames, fotos e laudos</span>
-        <FileUploadButton patientId={patientId} onUploaded={onChanged} />
-      </Toolbar>
-
-      {!attachments.length ? (
-        <p className="hint">Nenhum arquivo anexado.</p>
-      ) : (
-        <div className="data-list">
-          {attachments.map((file) => (
-            <article key={file.id} className="data-row">
-              <div className="data-main static">
-                <span className="data-avatar">
-                  <Paperclip size={16} />
-                </span>
-                <span className="data-text">
-                  <strong>{file.fileName}</strong>
-                  <span className="data-meta">
-                    <span>{formatDateBR(file.createdAt)}</span>
-                    {file.sizeBytes != null && <span>{Math.max(1, Math.round(file.sizeBytes / 1024))} KB</span>}
-                  </span>
-                </span>
-              </div>
-              <span className="data-actions">
-                <button onClick={() => open(file.id)} title="Abrir" aria-label="Abrir arquivo">
-                  <Download size={14} />
-                </button>
-              </span>
-            </article>
-          ))}
-        </div>
-      )}
-    </>
-  )
-}

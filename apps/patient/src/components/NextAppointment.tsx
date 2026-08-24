@@ -1,7 +1,7 @@
 import { CalendarDays, CalendarPlus, Clock, type LucideIcon } from 'lucide-react'
 import type { Appointment } from '@/lib/api'
-import { appointmentStatus, formatFriendlyDateTime, formatRelative, toneClass } from '@/lib/format'
-import { cn, StatusChip } from './ui'
+import { appointmentStatus, formatFriendlyDateTime, formatRelative } from '@/lib/format'
+import { StatusChip } from './ui'
 
 /**
  * Cartão de destaque no topo do painel: responde "quando é minha próxima
@@ -45,7 +45,7 @@ export function NextAppointment({
     <section className="panel panel-pad bg-[hsl(var(--espresso))] border-transparent">
       <div className="flex flex-wrap items-center gap-3">
         <p className="label-eyebrow text-[hsl(var(--bronze-light))]">Próxima consulta</p>
-        <span className={cn('chip', toneClass[status.tone])}>{status.label}</span>
+        <StatusChip label={status.label} tone={status.tone} />
       </div>
 
       <h2 className="mt-3 font-display text-2xl sm:text-3xl text-[hsl(var(--cream))]">{title}</h2>

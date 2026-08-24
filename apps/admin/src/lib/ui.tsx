@@ -1,6 +1,7 @@
 import React from 'react'
 import axios from 'axios'
-import { AlertTriangle, Loader2, Upload, X } from 'lucide-react'
+import { AlertTriangle, Download, Loader2, Paperclip, Search, Upload, X } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' })
 api.interceptors.request.use((config) => {
@@ -304,4 +305,234 @@ export function toDateInput(value?: string | null) {
   if (!value) return ''
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Blocos de lista — a mesma linha aparecia copiada em oito lugares (catálogo,
+// pacientes, insumos, documentos, anexos, sessões). Copiada, ela também
+// divergia: a aba de arquivos da paciente tinha perdido o EmptyState e o
+// estado de "abrindo" que a mesma lista no atendimento já tinha.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type { Tone } from './tone'
+import type { Tone } from './tone'
+
+/** Pastilha de status. Antes era `<span className={`chip ${tone}`}>` solto. */
+export function Chip({
+  tone = 'neutral',
+  icon: Icon,
+  title,
+  children,
+}: {
+  tone?: Tone
+  icon?: LucideIcon
+  title?: string
+  children: React.ReactNode
+}) {
+  return (
+    <span className={`chip ${tone}`} title={title}>
+      {Icon && <Icon size={11} aria-hidden="true" />}
+      {children}
+    </span>
+  )
+}
+
+/**
+ * Linha de lista do painel: ícone, título (com pastilhas), metadados e ações.
+ *
+ * `onOpen` decide a semântica: com ele a área principal é um `<button>` de
+ * verdade — foco pelo teclado e leitor de tela anunciam que abre algo; sem ele
+ * é um `<div>` inerte, sem cursor de clique prometendo o que não acontece.
+ */
+export function DataRow({
+  icon: Icon,
+  title,
+  chips,
+  meta,
+  counts,
+  actions,
+  leading,
+  onOpen,
+  openLabel,
+  dimmed,
+  className,
+}: {
+  /** Sem ícone a linha fica só com o texto — usado nas listas de documentos. */
+  icon?: LucideIcon
+  title: React.ReactNode
+  chips?: React.ReactNode
+  meta?: React.ReactNode
+  counts?: React.ReactNode
+  actions?: React.ReactNode
+  /** Célula antes do corpo — a agenda põe a hora ali (`.encounter-row`). */
+  leading?: React.ReactNode
+  onOpen?: () => void
+  openLabel?: string
+  dimmed?: boolean
+  className?: string
+}) {
+  const body = (
+    <>
+      {Icon && (
+        <span className="data-avatar">
+          <Icon size={16} aria-hidden="true" />
+        </span>
+      )}
+      <span className="data-text">
+        <strong>
+          {title}
+          {chips}
+        </strong>
+        {meta && <span className="data-meta">{meta}</span>}
+      </span>
+    </>
+  )
+
+  return (
+    <article className={`data-row ${dimmed ? 'archived' : ''} ${className ?? ''}`.trim()}>
+      {leading}
+      {onOpen ? (
+        <button className="data-main" onClick={onOpen} aria-label={openLabel}>
+          {body}
+        </button>
+      ) : (
+        <div className="data-main static">{body}</div>
+      )}
+      {counts && <span className="data-counts">{counts}</span>}
+      {actions && <span className="data-actions">{actions}</span>}
+    </article>
+  )
+}
+
+/** Contêiner das linhas — existe para ninguém precisar lembrar da classe. */
+export function DataList({ children }: { children: React.ReactNode }) {
+  return <div className="data-list">{children}</div>
+}
+
+/** Botão-ícone das ações de linha. `title` vira também o rótulo acessível. */
+export function RowAction({
+  icon: Icon,
+  title,
+  onClick,
+  disabled,
+  primary,
+}: {
+  icon: LucideIcon
+  title: string
+  onClick: () => void
+  disabled?: boolean
+  primary?: boolean
+}) {
+  return (
+    <button
+      className={primary ? 'primary' : undefined}
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      aria-label={title}
+    >
+      <Icon size={14} aria-hidden="true" />
+    </button>
+  )
+}
+
+/**
+ * Campo de busca da barra de ferramentas. O `<input>` estava solto em quatro
+ * telas, sempre sem rótulo — o placeholder some ao digitar e o leitor de tela
+ * ficava sem nada. Aqui o placeholder vira `aria-label`, e `type="search"`
+ * dá o botão de limpar nativo, que ajuda no toque.
+ */
+export function SearchBox({
+  value,
+  onChange,
+  placeholder,
+  className,
+  style,
+}: {
+  value: string
+  onChange: (value: string) => void
+  placeholder: string
+  className?: string
+  style?: React.CSSProperties
+}) {
+  return (
+    <div className={`search-box ${className ?? ''}`.trim()} style={style}>
+      <Search size={15} aria-hidden="true" />
+      <input
+        type="search"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        aria-label={placeholder}
+      />
+    </div>
+  )
+}
+
+/**
+ * Lista de anexos da paciente — idêntica no prontuário e na ficha, incluindo o
+ * upload. Ficava duplicada em dois componentes que já haviam divergido.
+ */
+export function AttachmentsPanel({
+  patientId,
+  attachments,
+  onChanged,
+}: {
+  patientId: string
+  attachments: Array<{ id: string; fileName: string; createdAt: string; sizeBytes?: number | null }>
+  onChanged: () => void
+}) {
+  const [opening, setOpening] = React.useState<string | null>(null)
+
+  async function open(id: string) {
+    setOpening(id)
+    try {
+      const { data } = await api.get(`/admin/files/${id}/download`)
+      window.open(data.downloadUrl, '_blank', 'noopener')
+    } finally {
+      setOpening(null)
+    }
+  }
+
+  return (
+    <>
+      <Toolbar>
+        <span className="toolbar-title">Exames, fotos e laudos</span>
+        <FileUploadButton patientId={patientId} onUploaded={onChanged} />
+      </Toolbar>
+
+      {!attachments.length ? (
+        <EmptyState
+          title="Nenhum arquivo"
+          description="Anexe exames trazidos pela paciente ou fotos do antes e depois."
+        />
+      ) : (
+        <DataList>
+          {attachments.map((file) => (
+            <DataRow
+              key={file.id}
+              icon={Paperclip}
+              title={file.fileName}
+              meta={
+                <>
+                  <span>{formatDateBR(file.createdAt)}</span>
+                  {file.sizeBytes != null && (
+                    <span>{Math.max(1, Math.round(file.sizeBytes / 1024))} KB</span>
+                  )}
+                </>
+              }
+              actions={
+                <RowAction
+                  icon={Download}
+                  title="Abrir arquivo"
+                  onClick={() => open(file.id)}
+                  disabled={opening === file.id}
+                />
+              }
+            />
+          ))}
+        </DataList>
+      )}
+    </>
+  )
 }

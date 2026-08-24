@@ -1,19 +1,21 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import axios from 'axios'
+import { api, errorMessage, tenantSlug } from './lib/ui'
 import {
   CalendarDays,
   FileSignature,
   FileText,
   LayoutDashboard,
   LogOut,
+  Menu,
   MessageSquare,
   Settings,
   Sparkles,
   Stethoscope,
   UserRound,
   Users,
+  X,
 } from 'lucide-react'
 import draPortrait from './assets/dra-marcela-portrait.jpg'
 import marbleTexture from './assets/marble-texture.jpg'
@@ -27,14 +29,6 @@ import { Encounter } from './components/Encounter'
 import './styles.css'
 
 const queryClient = new QueryClient()
-const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' })
-const tenantSlug = import.meta.env.VITE_TENANT_SLUG || 'marcela-duch'
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('admin_token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
-  return config
-})
 
 type Tab =
   | 'dashboard'
@@ -87,7 +81,7 @@ function Login() {
       localStorage.setItem('admin_token', data.token)
       window.location.reload()
     } catch (err) {
-      setError(axios.isAxiosError(err) ? err.response?.data?.message ?? err.message : 'Falha ao autenticar')
+      setError(errorMessage(err, 'Falha ao autenticar'))
     }
   }
 
@@ -228,16 +222,52 @@ const groupOf = (tab: Tab) => NAV_ITEMS.find(({ item }) => item[0] === tab)?.gro
 
 function Shell() {
   const [tab, setTab] = React.useState<Tab>('dashboard')
+  /* No celular a lateral vira gaveta. Antes ela só desmontava numa faixa de
+     onze links no topo, e cada troca de tela exigia rolar aquele bloco todo
+     antes de chegar ao conteúdo. */
+  const [navOpen, setNavOpen] = React.useState(false)
   const data = useAdminData()
   const me = useQuery({
     queryKey: ['me'],
     queryFn: async () => (await api.get('/auth/me')).data,
     staleTime: 5 * 60 * 1000,
   })
+
+  // Escolher uma seção fecha a gaveta; Esc também.
+  React.useEffect(() => {
+    if (!navOpen) return
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setNavOpen(false)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [navOpen])
+
+  function go(next: Tab) {
+    setTab(next)
+    setNavOpen(false)
+  }
+
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${navOpen ? 'nav-open' : ''}`}>
+      {/* Só existe abaixo de 860px; o CSS esconde no desktop */}
+      <button
+        className="nav-scrim"
+        hidden={!navOpen}
+        onClick={() => setNavOpen(false)}
+        aria-label="Fechar navegação"
+        tabIndex={-1}
+      />
       <aside>
-        <div className="brand"><Sparkles size={22} /><strong>Marcela CRM</strong></div>
+        <div className="brand">
+          <Sparkles size={22} aria-hidden="true" />
+          <strong>Marcela CRM</strong>
+          <button
+            className="nav-close"
+            onClick={() => setNavOpen(false)}
+            aria-label="Fechar navegação"
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
 
         <nav className="side-nav">
           {NAV_GROUPS.map((group) => (
@@ -247,7 +277,7 @@ function Shell() {
                 <button
                   key={id}
                   className={tab === id ? 'active' : ''}
-                  onClick={() => setTab(id as Tab)}
+                  onClick={() => go(id as Tab)}
                   title={hint}
                   aria-current={tab === id ? 'page' : undefined}
                 >
@@ -269,6 +299,15 @@ function Shell() {
       <main>
         <header>
           <div>
+            {/* Abre a gaveta — o CSS só mostra abaixo de 860px */}
+            <button
+              className="nav-toggle"
+              onClick={() => setNavOpen(true)}
+              aria-label="Abrir navegação"
+              aria-expanded={navOpen}
+            >
+              <Menu size={20} aria-hidden="true" />
+            </button>
             <span className="eyebrow">{groupOf(tab)}</span>
             <h1>{labelOf(tab)}</h1>
             {hintOf(tab) && <p className="page-hint">{hintOf(tab)}</p>}
