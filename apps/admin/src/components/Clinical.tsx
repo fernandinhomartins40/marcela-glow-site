@@ -31,6 +31,7 @@ import {
   Toolbar,
   type Tone,
 } from '../lib/ui'
+import { useDebounced } from '../lib/useDebounced'
 import type { Patient } from './Patients'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -130,6 +131,8 @@ export function ClinicalCatalog({ only }: { only?: CatalogKind | CatalogKind[] }
   )
   const [kind, setKind] = React.useState<CatalogKind>(allowed[0])
   const [search, setSearch] = React.useState('')
+  // A busca vai ao servidor: sem atraso cada tecla vira uma requisição
+  const debouncedSearch = useDebounced(search)
 
   // Ao trocar de aba, volta para o primeiro tipo permitido
   React.useEffect(() => {
@@ -139,9 +142,13 @@ export function ClinicalCatalog({ only }: { only?: CatalogKind | CatalogKind[] }
   const [removing, setRemoving] = React.useState<CatalogItem | null>(null)
 
   const query = useQuery({
-    queryKey: ['catalog', kind, search],
+    queryKey: ['catalog', kind, debouncedSearch],
     queryFn: async () =>
-      (await api.get('/clinical/catalog', { params: { kind, ...(search ? { search } : {}) } })).data as CatalogItem[],
+      (
+        await api.get('/clinical/catalog', {
+          params: { kind, ...(debouncedSearch ? { search: debouncedSearch } : {}) },
+        })
+      ).data as CatalogItem[],
   })
 
   const refresh = () => client.invalidateQueries({ queryKey: ['catalog'] })
@@ -708,6 +715,8 @@ export function DocumentForm({
   const [instructions, setInstructions] = React.useState(document?.instructions ?? '')
   const [items, setItems] = React.useState<DocItem[]>(document?.items ?? [])
   const [search, setSearch] = React.useState('')
+  // A busca vai ao servidor: sem atraso cada tecla vira uma requisição
+  const debouncedSearch = useDebounced(search)
 
   const patients = useQuery({
     queryKey: ['patients', '', false],
@@ -720,9 +729,13 @@ export function DocumentForm({
   const catalogKind: CatalogKind = kind === 'PRESCRIPTION' ? 'MEDICATION' : kind === 'EXAM_REQUEST' ? 'EXAM' : 'GUIDANCE'
 
   const catalog = useQuery({
-    queryKey: ['catalog', catalogKind, search],
+    queryKey: ['catalog', catalogKind, debouncedSearch],
     queryFn: async () =>
-      (await api.get('/clinical/catalog', { params: { kind: catalogKind, ...(search ? { search } : {}) } }))
+      (
+        await api.get('/clinical/catalog', {
+          params: { kind: catalogKind, ...(debouncedSearch ? { search: debouncedSearch } : {}) },
+        })
+      )
         .data as CatalogItem[],
   })
 

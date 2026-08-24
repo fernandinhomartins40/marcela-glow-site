@@ -1,9 +1,18 @@
 import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { MessageCircle } from 'lucide-react'
-import { api, errorMessage, Field, FormRow, Modal, SubmitButton, tenantSlug } from '../lib/ui'
+import {
+  api,
+  errorMessage,
+  Field,
+  FormRow,
+  Modal,
+  PatientSearchSelect,
+  type PatientOption,
+  SubmitButton,
+  tenantSlug,
+} from '../lib/ui'
 import { fromDateTimeLocalValue, type WhatsAppLink } from '../lib/schedule'
-import type { Patient } from './Patients'
 
 interface Procedure {
   id: string
@@ -27,18 +36,13 @@ export function NewAppointment({
 }) {
   const client = useQueryClient()
   const [mode, setMode] = React.useState<'existing' | 'new'>('existing')
-  const [patientId, setPatientId] = React.useState('')
+  const [picked, setPicked] = React.useState<PatientOption | null>(null)
   const [guest, setGuest] = React.useState({ name: '', email: '', phone: '' })
   const [procedureId, setProcedureId] = React.useState('')
   const [scheduledAt, setScheduledAt] = React.useState(defaultDate ?? '')
   const [message, setMessage] = React.useState('')
   const [status, setStatus] = React.useState<'CONFIRMED' | 'PENDING'>('CONFIRMED')
   const [result, setResult] = React.useState<WhatsAppLink | null>(null)
-
-  const patients = useQuery({
-    queryKey: ['patients', '', false],
-    queryFn: async () => (await api.get('/admin/patients')).data as Patient[],
-  })
 
   const procedures = useQuery({
     queryKey: ['procedures-admin'],
@@ -48,7 +52,9 @@ export function NewAppointment({
   const create = useMutation({
     mutationFn: async () => {
       const { data } = await api.post('/appointments/staff', {
-        ...(mode === 'existing' ? { patientId } : { name: guest.name, email: guest.email, phone: guest.phone }),
+        ...(mode === 'existing'
+          ? { patientId: picked!.id }
+          : { name: guest.name, email: guest.email, phone: guest.phone }),
         procedureId: procedureId || undefined,
         scheduledAt: fromDateTimeLocalValue(scheduledAt),
         message: message || undefined,
@@ -67,7 +73,7 @@ export function NewAppointment({
   const chosen = procedures.data?.find((p) => p.id === procedureId)
   const patientOk =
     mode === 'existing'
-      ? !!patientId
+      ? !!picked
       : guest.name.trim().length >= 2 && /\S+@\S+\.\S+/.test(guest.email)
   const valid = patientOk && !!scheduledAt
 
@@ -132,14 +138,12 @@ export function NewAppointment({
 
         {mode === 'existing' ? (
           <Field label="Paciente" required>
-            <select value={patientId} onChange={(e) => setPatientId(e.target.value)}>
-              <option value="">Selecione…</option>
-              {patients.data?.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} — {p.email}
-                </option>
-              ))}
-            </select>
+            <PatientSearchSelect
+              value={picked}
+              onChange={setPicked}
+              autoFocus
+              emptyHint="Use “Sem cadastro” para marcar sem criar ficha."
+            />
           </Field>
         ) : (
           <>

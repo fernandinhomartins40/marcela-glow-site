@@ -38,12 +38,15 @@ import {
   maskPhone,
   Modal,
   parseMoney,
+  PatientSearchSelect,
+  type PatientOption,
   RowAction,
   SearchBox,
   SubmitButton,
   tenantSlug,
   Toolbar,
 } from '../lib/ui'
+import { useDebounced } from '../lib/useDebounced'
 import {
   clinicDate,
   clinicDateKey,
@@ -122,6 +125,8 @@ export function Encounter() {
 function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
   const [date, setDate] = React.useState(() => dateKey(new Date()))
   const [search, setSearch] = React.useState('')
+  // A busca vai ao servidor: sem atraso cada tecla vira uma requisição
+  const debouncedSearch = useDebounced(search)
   const [creating, setCreating] = React.useState(false)
 
   const agenda = useQuery({
@@ -131,9 +136,10 @@ function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
 
   // Busca de paciente para quem chegou sem agendamento
   const patients = useQuery({
-    queryKey: ['patients', search, false],
-    queryFn: async () => (await api.get('/admin/patients', { params: { search } })).data as Patient[],
-    enabled: search.trim().length >= 2,
+    queryKey: ['patients', debouncedSearch, false],
+    queryFn: async () =>
+      (await api.get('/admin/patients', { params: { search: debouncedSearch } })).data as Patient[],
+    enabled: debouncedSearch.trim().length >= 2,
   })
 
   // A API devolve janela ampla em UTC; recorta o dia local aqui
@@ -377,8 +383,9 @@ function NewEncounterModal({
 }) {
   const client = useQueryClient()
   const [mode, setMode] = React.useState<'existing' | 'new'>('existing')
-  const [search, setSearch] = React.useState('')
-  const [patientId, setPatientId] = React.useState('')
+  /* A paciente escolhida vem inteira, não só o id: o cartão de confirmação
+     mostra nome e contato sem uma segunda consulta à lista. */
+  const [picked, setPicked] = React.useState<PatientOption | null>(null)
   const [form, setForm] = React.useState({
     name: '',
     email: '',
@@ -395,11 +402,6 @@ function NewEncounterModal({
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
   })
 
-  const patients = useQuery({
-    queryKey: ['patients', search, false],
-    queryFn: async () => (await api.get('/admin/patients', { params: search ? { search } : {} })).data as Patient[],
-  })
-
   const procedures = useQuery({
     queryKey: ['procedures-admin'],
     queryFn: async () =>
@@ -408,7 +410,7 @@ function NewEncounterModal({
 
   const start = useMutation({
     mutationFn: async () => {
-      let id = patientId
+      let id = picked?.id ?? ''
 
       // Cadastra a paciente antes, para que o atendimento já nasça vinculado.
       // Cadastro mínimo: a ficha completa se preenche depois, em Pacientes.
@@ -442,7 +444,7 @@ function NewEncounterModal({
 
   const valid =
     mode === 'existing'
-      ? !!patientId && !!scheduledAt
+      ? !!picked && !!scheduledAt
       : form.name.trim().length >= 2 && /\S+@\S+\.\S+/.test(form.email) && !!scheduledAt
 
   return (
@@ -480,30 +482,14 @@ function NewEncounterModal({
         </div>
 
         {mode === 'existing' ? (
-          <>
-            <Field label="Buscar paciente">
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Nome, e-mail ou telefone"
-                autoFocus
-              />
-            </Field>
-            <Field label="Paciente" required>
-              <select value={patientId} onChange={(e) => setPatientId(e.target.value)} size={6}>
-                {patients.data?.slice(0, 40).map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} — {p.email}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            {!patients.data?.length && !patients.isLoading && (
-              <p className="hint">
-                Nenhuma paciente encontrada. Use “Cadastrar agora” para criar o cadastro.
-              </p>
-            )}
-          </>
+          <Field label="Paciente" required>
+            <PatientSearchSelect
+              value={picked}
+              onChange={setPicked}
+              autoFocus
+              emptyHint="Use “Cadastrar agora” para criar a ficha."
+            />
+          </Field>
         ) : (
           <>
             <Field label="Nome completo" required>

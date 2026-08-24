@@ -42,6 +42,7 @@ import {
   Toolbar,
   type Tone,
 } from '../lib/ui'
+import { useDebounced } from '../lib/useDebounced'
 
 export interface Patient {
   id: string
@@ -175,17 +176,22 @@ type PatientFormState = typeof EMPTY_FORM
 export function Patients() {
   const client = useQueryClient()
   const [search, setSearch] = React.useState('')
+  // A busca vai ao servidor: sem atraso cada tecla vira uma requisição
+  const debouncedSearch = useDebounced(search)
   const [showArchived, setShowArchived] = React.useState(false)
   const [editing, setEditing] = React.useState<Patient | 'new' | null>(null)
   const [detailId, setDetailId] = React.useState<string | null>(null)
   const [archiving, setArchiving] = React.useState<Patient | null>(null)
 
   const query = useQuery({
-    queryKey: ['patients', search, showArchived],
+    queryKey: ['patients', debouncedSearch, showArchived],
     queryFn: async () =>
       (
         await api.get('/admin/patients', {
-          params: { ...(search ? { search } : {}), ...(showArchived ? { includeArchived: 'true' } : {}) },
+          params: {
+            ...(debouncedSearch ? { search: debouncedSearch } : {}),
+            ...(showArchived ? { includeArchived: 'true' } : {}),
+          },
         })
       ).data as Patient[],
   })

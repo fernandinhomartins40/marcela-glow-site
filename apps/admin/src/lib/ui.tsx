@@ -1,6 +1,8 @@
 import React from 'react'
 import axios from 'axios'
-import { AlertTriangle, Download, Loader2, Paperclip, Search, Upload, X } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { useDebounced } from './useDebounced'
+import { AlertTriangle, Download, Loader2, Paperclip, Search, Upload, UserRound, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' })
@@ -448,12 +450,14 @@ export function SearchBox({
   placeholder,
   className,
   style,
+  autoFocus,
 }: {
   value: string
   onChange: (value: string) => void
   placeholder: string
   className?: string
   style?: React.CSSProperties
+  autoFocus?: boolean
 }) {
   return (
     <div className={`search-box ${className ?? ''}`.trim()} style={style}>
@@ -464,6 +468,7 @@ export function SearchBox({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={placeholder}
+        autoFocus={autoFocus}
       />
     </div>
   )
@@ -532,6 +537,110 @@ export function AttachmentsPanel({
             />
           ))}
         </DataList>
+      )}
+    </>
+  )
+}
+
+/**
+ * Busca e escolha de paciente, com a lista aparecendo conforme se digita.
+ *
+ * Substitui o `<select size={6}>` que havia nos formulários de atendimento:
+ * ali a lista chegava inteira do servidor, nada indicava que a escolha tinha
+ * sido registrada, e num celular o select nativo com seis linhas é um alvo de
+ * toque ruim. Aqui cada resultado é um botão, e a paciente escolhida vira um
+ * cartão com opção de trocar — o estado fica visível.
+ */
+/** Só o que a busca devolve e a escolha precisa mostrar — não a ficha inteira. */
+export interface PatientOption {
+  id: string
+  name: string
+  email: string
+  phone?: string | null
+}
+
+export function PatientSearchSelect({
+  value,
+  onChange,
+  autoFocus,
+  emptyHint,
+}: {
+  value: PatientOption | null
+  onChange: (patient: PatientOption | null) => void
+  autoFocus?: boolean
+  emptyHint?: React.ReactNode
+}) {
+  const [search, setSearch] = React.useState('')
+  const debounced = useDebounced(search)
+
+  const query = useQuery({
+    queryKey: ['patient-search', debounced],
+    queryFn: async () =>
+      (await api.get('/admin/patients', { params: debounced ? { search: debounced } : {} }))
+        .data as PatientOption[],
+    // Sem termo a lista inteira não ajuda: mostra as primeiras como sugestão
+    staleTime: 30_000,
+  })
+
+  if (value) {
+    return (
+      <div className="picked-row">
+        <span className="data-avatar">
+          <UserRound size={16} aria-hidden="true" />
+        </span>
+        <span className="data-text">
+          <strong>{value.name}</strong>
+          <span className="data-meta">
+            <span>{value.email}</span>
+            {value.phone && <span>{maskPhone(value.phone)}</span>}
+          </span>
+        </span>
+        <button type="button" onClick={() => onChange(null)}>
+          Trocar
+        </button>
+      </div>
+    )
+  }
+
+  const results = query.data ?? []
+
+  return (
+    <>
+      <SearchBox
+        value={search}
+        onChange={setSearch}
+        placeholder="Buscar por nome, e-mail, telefone ou CPF"
+        autoFocus={autoFocus}
+      />
+
+      {query.isLoading ? (
+        <p className="hint">Buscando...</p>
+      ) : results.length ? (
+        <div className="catalog-results" role="listbox" aria-label="Pacientes encontradas">
+          {results.slice(0, 20).map((patient) => (
+            <button
+              key={patient.id}
+              type="button"
+              role="option"
+              aria-selected={false}
+              onClick={() => onChange(patient)}
+            >
+              <strong>{patient.name}</strong>
+              <span>
+                {[patient.email, patient.phone ? maskPhone(patient.phone) : null]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="hint">
+          {search
+            ? `Nenhuma paciente encontrada para "${search}".`
+            : 'Digite para buscar uma paciente.'}
+          {emptyHint ? <> {emptyHint}</> : null}
+        </p>
       )}
     </>
   )
