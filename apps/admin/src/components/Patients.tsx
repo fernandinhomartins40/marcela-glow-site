@@ -295,7 +295,7 @@ export function Patients() {
                 <>
                   {/* Único botão da linha com rótulo visível — RowAction é só ícone */}
                   <button
-                    className="primary"
+                    className="primary data-action-label"
                     onClick={() => setDetailId(patient.id)}
                     aria-label={`Abrir prontuário de ${patient.name}`}
                     title="Abrir prontuário"
@@ -1032,4 +1032,3 @@ export function PatientDetail({ id, onClose }: { id: string; onClose: () => void
     </Modal>
   )
 }
-

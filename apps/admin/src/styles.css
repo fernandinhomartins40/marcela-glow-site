@@ -129,7 +129,11 @@ main header .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .14em;
 .toolbar-check input { width: 15px; height: 15px; margin: 0; accent-color: var(--espresso); }
 .search-box { position: relative; display: inline-flex; align-items: center; min-width: 260px; flex: 1 1 260px; max-width: 420px; }
 .search-box svg { position: absolute; left: 11px; color: var(--text-muted); pointer-events: none; }
-.search-box input { width: 100%; padding-left: 33px; }
+.search-box input { width: 100%; }
+/* A regra compacta de inputs dentro de `main` usa um seletor mais específico.
+   Sem repetir esse contexto ela zerava o recuo do ícone e o texto da busca
+   começava exatamente embaixo da lupa. */
+main .search-box input[type="search"] { padding: 9px 32px 9px 36px; }
 
 button.primary { background: var(--espresso); color: var(--cream-soft); border: 1px solid var(--espresso); }
 button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #fff; }
@@ -145,7 +149,7 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .data-main:hover:not(.static) strong { text-decoration: underline; text-underline-offset: 3px; }
 .data-avatar { width: 34px; height: 34px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--cream-deep); color: var(--bronze); }
 .data-text { display: grid; gap: 3px; min-width: 0; }
-.data-text strong { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; }
+.data-text strong { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13.5px; font-weight: 600; }
 .data-meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-muted); }
 .data-meta span { display: inline-flex; align-items: center; gap: 4px; }
 .data-counts { display: inline-flex; gap: 12px; font-size: 12px; color: var(--text-muted); }
@@ -529,8 +533,9 @@ main .data-actions button.encounter-open {
 .encounter-header { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 16px; margin-bottom: 14px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; }
 .back-button { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 7px 13px; font-size: 13px; background: transparent; border: 1px solid var(--border); border-radius: 7px; color: var(--espresso); }
 .encounter-patient { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.encounter-patient > div { min-width: 0; }
 .encounter-patient strong { display: block; font-size: 15px; font-weight: 600; }
-.encounter-patient span { display: block; font-size: 12.5px; color: var(--text-muted); }
+.encounter-patient span { display: block; font-size: 12.5px; color: var(--text-muted); overflow-wrap: anywhere; }
 .encounter-when { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 12.5px; color: var(--text-muted); }
 
 .patient-alert { display: flex; align-items: flex-start; gap: 8px; padding: 11px 14px; margin-bottom: 14px; background: #fbf0e2; border: 1px solid #e6c99b; border-radius: 8px; font-size: 13px; line-height: 1.55; color: #7d5220; }
@@ -559,6 +564,7 @@ main .data-actions button.encounter-open {
   .encounter-row .data-actions { grid-column: 1 / -1; }
   .encounter-when { margin-left: 0; width: 100%; }
   .encounter-header { gap: 12px; }
+  .encounter-patient { flex: 1 1 260px; }
 }
 
 /* ── Certificado digital ─────────────────────────────────────────────────── */
@@ -834,6 +840,17 @@ main .data-actions button.encounter-open {
   .week-nav strong { min-width: 0; flex: 1; }
   .toolbar { flex-wrap: wrap; }
   .search-box { min-width: 0; max-width: none; flex-basis: 100%; }
+  .toolbar-check { flex: 1 1 auto; }
+  .data-row { grid-template-columns: minmax(0, 1fr); gap: 9px; padding: 12px; }
+  .data-main, .data-counts, .data-actions { grid-column: 1; }
+  .data-counts { flex-wrap: wrap; row-gap: 6px; }
+  .data-actions { width: 100%; flex-wrap: wrap; }
+  .data-actions button.data-action-label,
+  main .data-actions button.data-action-label { flex: 1 1 auto; }
+  .encounter-header { align-items: stretch; }
+  .encounter-header .back-button { align-self: flex-start; }
+  .encounter-patient { flex-basis: 100%; }
+  .encounter-header > .primary { width: 100%; }
 }
 /* Abaixo de 860px não há largura para uma coluna lateral: a navegação vira
    uma faixa horizontal no topo e o conteúdo ocupa a tela inteira. */
