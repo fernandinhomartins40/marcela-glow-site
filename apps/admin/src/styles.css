@@ -175,40 +175,155 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .landing-nav button, main .landing-nav button { display: flex; align-items: flex-start; gap: 9px; width: 100%; min-height: 0; padding: 9px 11px; text-align: left; background: transparent; border: 1px solid transparent; border-radius: 8px; color: var(--text-muted); }
 .landing-nav button:hover:not(.active) { background: var(--cream-soft); color: var(--espresso); transform: none; }
 .landing-nav button.active { background: var(--cream-soft); border-color: var(--border); color: var(--espresso); }
-.landing-nav svg { flex: none; margin-top: 2px; }
+.landing-nav svg { flex: none; width: 15px; margin-top: 2px; }
 .landing-nav-text { display: grid; gap: 1px; min-width: 0; }
 .landing-nav-text strong { font-size: 13px; font-weight: 600; }
 .landing-nav-text em { font-size: 11px; font-style: normal; line-height: 1.35; color: var(--text-muted); }
 .landing-panel { min-width: 0; }
 
-.landing-split { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 18px; align-items: start; }
-.landing-form { display: grid; gap: 14px; min-width: 0; }
-.landing-preview { position: sticky; top: 0; min-width: 0; padding: 14px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; }
-.landing-preview-title { margin: 0 0 10px; font-size: 10.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+.landing-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 440px); gap: 18px; align-items: start; }
+.landing-form { display: grid; gap: 10px; min-width: 0; }
+.landing-preview { position: sticky; top: 0; min-width: 0; }
+.landing-preview-title { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin: 0 0 8px; font-size: 10.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+.landing-preview-note { font-weight: 400; letter-spacing: 0; text-transform: none; color: var(--text-muted); }
 
-.preview-stack { display: grid; gap: 12px; }
-.preview-card { display: grid; gap: 6px; padding: 12px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 8px; }
-.preview-image { width: 100%; max-height: 150px; object-fit: cover; border-radius: 6px; }
-.preview-logo { width: 48px; height: 48px; object-fit: contain; }
-.preview-eyebrow { margin: 0; font-size: 9.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--bronze); }
-.preview-title { margin: 0; font-family: var(--font-display, inherit); font-size: 19px; line-height: 1.15; color: var(--espresso); }
-.preview-title em { display: block; font-weight: 300; }
-.preview-subtitle { margin: 0; font-size: 13px; font-weight: 600; }
-.preview-text { margin: 0; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
-.preview-meta { margin: 0; font-size: 11px; color: var(--text-muted); }
-.preview-bullet { position: relative; margin: 0; padding-left: 16px; font-size: 11.5px; line-height: 1.5; color: var(--text-muted); }
-.preview-bullet::before { content: ''; position: absolute; left: 0; top: 9px; width: 10px; height: 1px; background: var(--bronze); }
-.preview-sub { display: grid; gap: 4px; padding-top: 9px; border-top: 1px solid var(--border); }
-.preview-buttons { display: flex; flex-wrap: wrap; gap: 7px; margin: 0; }
-.preview-btn-solid, .preview-btn-ghost { padding: 6px 12px; font-size: 11px; border-radius: 6px; }
-.preview-btn-solid { background: var(--espresso); color: var(--cream-soft); }
-.preview-btn-ghost { border: 1px solid var(--border); color: var(--espresso); }
+/* == Previa fiel da landing ==================================================
+   Nao e uma aproximacao: sao os mesmos tokens HSL, as mesmas fontes e a mesma
+   estrutura das secoes do site, num container menor. Por isso a escala
+   tipografica aqui usa `cqw` no lugar do `vw` do site — o
+   `clamp(3.5rem, 11vw, 8.5rem)` do hero renderizaria letras de 140px dentro de
+   um quadro de 400px. Ancorar na largura do proprio container reproduz a
+   proporcao real: o titulo ocupa a mesma fracao da largura que ocupa na tela. */
+.lp { container-type: inline-size; overflow: hidden; border: 1px solid var(--border); border-radius: 10px;
+      font-family: "Inter", system-ui, sans-serif;
+      /* Copiados de apps/web/src/index.css — mesma paleta, mesmos valores. */
+      --background: 36 30% 94%; --foreground: 24 25% 18%; --primary: 24 25% 20%;
+      --primary-foreground: 36 30% 96%; --accent: 28 22% 55%;
+      --cream: 36 35% 96%; --cream-deep: 34 28% 88%; --espresso: 22 30% 14%;
+      --bronze: 28 22% 55%; --bronze-light: 32 25% 75%;
+      background: hsl(var(--background)); color: hsl(var(--foreground)); }
+
+/* Fundos por secao, iguais aos do site */
+.lp-marble { background-image: linear-gradient(135deg, hsl(36 35% 96%) 0%, hsl(33 28% 90%) 50%, hsl(32 25% 86%) 100%); }
+.lp-cream-deep { background: hsl(var(--cream-deep)); }
+.lp-espresso { background: hsl(var(--espresso)); color: hsl(var(--cream)); }
+
+.lp-inner { position: relative; padding: 7cqw 6cqw; }
+/* O hero e uma tela inteira deitada; sem fixar a proporcao o quadro fica
+   quase quadrado, a coluna de texto estreita e os dois botoes empilham —
+   exatamente o que nao acontece no site. */
+.lp-hero { aspect-ratio: 16 / 10; display: grid; align-content: center; }
+.lp-hero .lp-inner { padding: 5cqw; }
+.lp-hero .lp-title-hero { font-size: 9cqw; }
+.lp-hero .lp-lead { font-size: max(9px, 2.4cqw); }
+.lp-hero .lp-stack { gap: 2.2cqw; }
+.lp-hero .lp-btn { padding: 1.8cqw 3cqw; font-size: max(7px, 1.6cqw); }
+.lp-hero .lp-dots { margin-top: 3cqw; }
+.lp-hero .lp-actions { flex-wrap: nowrap; min-width: 0; }
+.lp-hero .lp-btn { min-width: 0; text-align: center; }
+
+/* Escala tipografica — mesmos niveis do site, reancorados no container */
+.lp-eyebrow { margin: 0; font-family: "Inter", sans-serif; font-size: max(8px, 1.9cqw); font-weight: 500; letter-spacing: .3em; text-transform: uppercase; color: hsl(var(--accent)); }
+.lp-espresso .lp-eyebrow { color: hsl(var(--bronze-light)); }
+.lp-display { margin: 0; font-family: "Cormorant Garamond", "Playfair Display", Georgia, serif; font-weight: 400; color: hsl(var(--primary)); font-feature-settings: "lnum", "kern"; text-wrap: balance; }
+.lp-espresso .lp-display { color: hsl(var(--cream)); }
+.lp-title-hero { font-size: 15cqw; line-height: .88; letter-spacing: -.015em; }
+.lp-title-section { font-size: 9cqw; line-height: .98; letter-spacing: -.01em; }
+.lp-title-block { font-size: 5cqw; line-height: 1.08; }
+/* A segunda linha e sempre italica e mais leve — a assinatura visual do site. */
+.lp-title-italic { display: block; font-style: italic; font-weight: 300; }
+.lp-title-section .lp-title-italic, .lp-title-block .lp-title-italic { color: hsl(var(--accent)); }
+.lp-espresso .lp-title-italic { color: hsl(var(--bronze-light)); }
+
+.lp-lead { margin: 0; font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; font-size: max(10px, 3.2cqw); line-height: 1.45; color: hsl(var(--foreground) / .7); }
+.lp-lead-roman { font-style: normal; letter-spacing: -.02em; color: hsl(var(--foreground) / .8); }
+.lp-espresso .lp-lead { color: hsl(var(--cream) / .7); }
+.lp-body { margin: 0; font-size: max(9px, 2.5cqw); font-weight: 300; letter-spacing: .01em; line-height: 1.6; color: hsl(var(--foreground) / .75); }
+.lp-espresso .lp-body { color: hsl(var(--cream) / .7); }
+
+.lp-divider { display: block; width: 5cqw; height: 1px; background: hsl(var(--accent)); }
+.lp-espresso .lp-divider { background: hsl(var(--bronze-light) / .6); }
+
+/* Ponto de lista: traco a esquerda, alinhado a primeira linha */
+.lp-point { display: grid; grid-template-columns: 4cqw minmax(0, 1fr); gap: 2.5cqw; align-items: start; }
+.lp-point::before { content: ''; height: 1px; margin-top: 1.9cqw; background: hsl(var(--accent)); }
+
+/* Botoes — cantos retos, caixa alta e rastreio largo, como no site */
+.lp-actions { display: flex; flex-wrap: wrap; gap: 2.5cqw; }
+.lp-btn { display: inline-flex; align-items: center; justify-content: center; padding: 2.2cqw 4cqw; font-family: "Inter", sans-serif; font-size: max(8px, 2cqw); font-weight: 500; letter-spacing: .18em; text-transform: uppercase; border-radius: 0; }
+.lp-btn-cta { background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+.lp-btn-outline { border: 1px solid hsl(var(--primary) / .5); color: hsl(var(--primary)); }
+.lp-espresso .lp-btn-cta { background: hsl(var(--cream)); color: hsl(var(--espresso)); }
+
+/* Imagem com a borda dupla editorial (inset-3 border border-cream/40) */
+.lp-figure { position: relative; overflow: hidden; }
+.lp-figure img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.lp-figure::after { content: ''; position: absolute; inset: 2.5cqw; border: 1px solid hsl(var(--cream) / .4); pointer-events: none; }
+.lp-figure-empty { position: absolute; inset: 0; display: grid; place-items: center; background-image: linear-gradient(135deg, hsl(36 35% 96%), hsl(32 25% 86%)); color: hsl(var(--accent)); font-size: max(7px, 1.7cqw); letter-spacing: .2em; text-transform: uppercase; text-align: center; padding: 0 2cqw; }
+
+/* Marca de fundo gigante atras do conteudo */
+.lp-watermark { position: absolute; bottom: 0; left: 0; font-family: "Cormorant Garamond", serif; font-weight: 300; font-size: 15cqw; line-height: .7; letter-spacing: -.04em; color: hsl(var(--cream-deep)); opacity: .45; white-space: nowrap; pointer-events: none; user-select: none; }
+.lp-watermark-top { top: 0; bottom: auto; left: 50%; transform: translateX(-50%); }
+
+/* Grades das secoes: as mesmas proporcoes de coluna do site */
+.lp-split { position: relative; display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 5cqw; align-items: center; }
+.lp-split > * { min-width: 0; }
+/* A tag do CRM tangencia o canto por fora, entao a coluna nao pode recortar. */
+.lp-split > .lp-crm-host { position: relative; overflow: visible; }
+.lp-split-reverse { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+.lp-stack { display: grid; gap: 3cqw; min-width: 0; }
+.lp-stack > * { min-width: 0; }
+.lp-stack-tight { display: grid; gap: 2cqw; min-width: 0; }
+.lp-head { position: relative; display: grid; gap: 2.5cqw; max-width: 80%; margin-bottom: 6cqw; }
+
+/* Indicador de slides do hero */
+.lp-dots { display: flex; align-items: center; justify-content: center; gap: 2cqw; margin-top: 5cqw; }
+.lp-dot { height: 1px; width: 4cqw; background: hsl(var(--primary) / .3); }
+.lp-dot.is-on { width: 8cqw; background: hsl(var(--primary)); }
+
+/* Tag do CRM flutuando no canto da foto */
+.lp-crm { position: absolute; right: -3cqw; bottom: -3cqw; z-index: 1; padding: 2cqw 3cqw; background: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+.lp-crm-label { margin: 0; font-size: max(7px, 1.6cqw); letter-spacing: .3em; text-transform: uppercase; opacity: .7; }
+.lp-crm-value { margin: 0; font-family: "Cormorant Garamond", serif; font-size: max(11px, 4cqw); line-height: 1.1; }
+
+/* Rodape sobre o espresso */
+.lp-footer-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5cqw; }
+.lp-footer-logo { width: 9cqw; height: auto; filter: brightness(0) invert(1); opacity: .9; }
+.lp-brand { margin: 0; font-family: "Cormorant Garamond", serif; font-size: max(10px, 3.4cqw); letter-spacing: .25em; text-transform: uppercase; color: hsl(var(--cream)); }
+.lp-brand-sub { margin: 0; font-size: max(7px, 1.7cqw); letter-spacing: .3em; text-transform: uppercase; color: hsl(var(--bronze-light)); }
+.lp-field-label { margin: 0; font-size: max(7px, 1.7cqw); letter-spacing: .3em; text-transform: uppercase; color: hsl(var(--bronze-light)); }
+.lp-input { padding: 2.2cqw 3cqw; font-size: max(8px, 2.1cqw); color: hsl(var(--cream) / .5); border: 1px solid hsl(var(--cream) / .25); }
+.lp-social { display: flex; gap: 2cqw; }
+.lp-social span { width: 6cqw; height: 6cqw; border: 1px solid hsl(var(--cream) / .25); }
+
+/* O carrossel do hero: um slide abaixo do outro, cada um como aparece na tela */
+.lp-slides { display: grid; gap: 12px; }
+.lp-slide-tag { margin: 0 0 5px; font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+
+/* Cartao de tratamento / depoimento, como no site */
+.lp-card { padding: 4cqw; background: hsl(var(--cream)); border: 1px solid hsl(var(--accent) / .25); }
+.lp-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3cqw; }
+.lp-placeholder { display: grid; gap: 1.5cqw; padding: 4cqw; border: 1px dashed hsl(var(--accent) / .4); text-align: center; }
 
 /* Resultado de busca — o formato que todo mundo reconhece. */
 .serp-preview { display: grid; gap: 3px; padding: 12px 13px; background: #fff; border: 1px solid var(--border); border-radius: 8px; }
 .serp-url { margin: 0; font-size: 11.5px; color: #4d5156; }
 .serp-title { margin: 0; font-size: 16px; line-height: 1.3; color: #1a0dab; }
 .serp-desc { margin: 0; font-size: 12px; line-height: 1.5; color: #4d5156; }
+.serp-og { width: 100%; aspect-ratio: 1200 / 630; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+
+/* == Grupos colapsaveis do formulario ========================================
+   Oito secoes com dez campos cada viram uma coluna longa demais para achar o
+   que se quer editar. Cada grupo abre e fecha; o primeiro ja vem aberto. */
+.fold { min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; }
+.fold-head, main .fold-head { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 0; padding: 11px 13px; text-align: left; background: transparent; border: 0; border-radius: 9px; color: var(--espresso); }
+.fold-head:hover, main .fold-head:hover { background: var(--cream-soft); transform: none; }
+.fold-head > svg { flex: none; color: var(--bronze); }
+.fold-title { flex: 1; min-width: 0; display: grid; gap: 1px; }
+.fold-title strong { font-size: 13px; font-weight: 600; }
+.fold-title em { font-size: 11px; font-style: normal; line-height: 1.35; color: var(--text-muted); }
+.fold-count { flex: none; font-size: 11px; color: var(--text-muted); }
+.fold-body { display: grid; gap: 12px; padding: 2px 13px 14px; border-top: 1px solid var(--border); }
 
 /* Listas editáveis */
 .string-list, .repeat-list { display: grid; gap: 8px; }
@@ -652,6 +767,12 @@ main .data-actions button.encounter-open {
   .schedule { grid-template-columns: minmax(0, 1fr); }
   .schedule-queue { position: static; max-height: none; }
   .schedule-queue ul { max-height: 260px; }
+  /* A previa precisa de 340px para a secao caber; lado a lado com o
+     formulario nesta largura, os dois ficam estreitos demais — entao ela
+     desce para baixo do formulario ja aqui, e nao so no celular. */
+  .landing-split { grid-template-columns: minmax(0, 1fr); }
+  .landing-preview { position: static; }
+  .lp { max-width: 620px; }
 }
 
 /* Blocos de 3 e 4 colunas passam a 2: abaixo disso o número do indicador
@@ -693,8 +814,6 @@ main .data-actions button.encounter-open {
      desce para o fim: lado a lado, nenhum dos dois teria largura útil. */
   .landing-layout { grid-template-columns: minmax(0, 1fr); }
   .landing-nav { position: static; grid-auto-flow: column; grid-auto-columns: minmax(150px, auto); overflow-x: auto; padding-bottom: 4px; }
-  .landing-split { grid-template-columns: minmax(0, 1fr); }
-  .landing-preview { position: static; }
   .image-field { grid-template-columns: 72px minmax(0, 1fr); }
   .segmented { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
   .segmented button { width: 100%; }
