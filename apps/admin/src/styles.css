@@ -535,7 +535,7 @@ main .data-actions button.encounter-open {
 .encounter-patient { display: flex; align-items: center; gap: 11px; min-width: 0; }
 .encounter-patient > div { min-width: 0; }
 .encounter-patient strong { display: block; font-size: 15px; font-weight: 600; }
-.encounter-patient span { display: block; font-size: 12.5px; color: var(--text-muted); overflow-wrap: anywhere; }
+.encounter-patient > div > span { display: block; font-size: 12.5px; color: var(--text-muted); overflow-wrap: anywhere; }
 .encounter-when { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 12.5px; color: var(--text-muted); }
 
 .patient-alert { display: flex; align-items: flex-start; gap: 8px; padding: 11px 14px; margin-bottom: 14px; background: #fbf0e2; border: 1px solid #e6c99b; border-radius: 8px; font-size: 13px; line-height: 1.55; color: #7d5220; }
@@ -547,14 +547,14 @@ main .data-actions button.encounter-open {
 .clinical-alerts .patient-alert { margin-bottom: 0; }
 
 .timeline { display: grid; gap: 10px; }
-.timeline-item { padding: 15px 17px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 9px; }
+.timeline-item { min-width: 0; height: auto; padding: 15px 17px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 9px; }
 .timeline-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
 .timeline-head > div { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .timeline-head strong { font-size: 14px; font-weight: 600; }
 .timeline-date { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
 .timeline-field { display: grid; gap: 2px; margin: 0 0 9px; font-size: 13px; line-height: 1.55; }
 .timeline-field > span { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
-.timeline-body { margin: 0 0 9px; font-size: 13px; line-height: 1.6; white-space: pre-line; }
+.timeline-body { margin: 0 0 9px; font-size: 13px; line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere; }
 .timeline-actions { display: flex; gap: 7px; margin-top: 12px; padding-top: 11px; border-top: 1px solid var(--border); }
 .timeline-actions button { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 6px 11px; font-size: 12px; background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--espresso); }
 .timeline-actions button:hover { border-color: var(--bronze); transform: none; }
@@ -651,7 +651,7 @@ main .data-actions button.encounter-open {
 /* A fila de espera cede largura para a grade conforme a tela aperta: em
    notebook os 240px fixos custavam ~40px de cada coluna de dia, que é
    justamente onde o nome da paciente deixava de caber. */
-.schedule { display: grid; grid-template-columns: clamp(196px, 19vw, 300px) minmax(0, 1fr); gap: clamp(10px, 1.2vw, 18px); align-items: start; }
+.schedule { display: grid; grid-template-columns: clamp(196px, 19vw, 300px) minmax(0, 1fr); grid-template-areas: "toolbar toolbar" "queue grid" "queue day"; gap: 14px clamp(10px, 1.2vw, 18px); align-items: start; }
 .chip { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; height: 22px; padding: 0 10px; border-radius: 999px; font-size: 11px; font-weight: 600; letter-spacing: .04em; }
 .chip.success { background: #e4efe6; color: #33613f; }
 .chip.warning { background: #f7ecdc; color: #8a5a22; }
@@ -659,7 +659,7 @@ main .data-actions button.encounter-open {
 .chip.neutral { background: var(--cream-deep); color: var(--text-muted); }
 .chip.danger  { background: #fbe9e7; color: #8d3a2e; }
 
-.schedule-queue { background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px; position: sticky; top: 16px; }
+.schedule-queue { grid-area: queue; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px; position: sticky; top: 16px; }
 /* header sem borda aqui: a regra global de header pertence ao topo da página */
 .schedule-queue header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 0; border-bottom: 0; }
 .schedule-queue h2 { margin: 0; font-family: inherit; font-size: 15px; font-weight: 600; letter-spacing: 0; color: var(--espresso); }
@@ -672,8 +672,10 @@ main .data-actions button.encounter-open {
 .queue-when { display: inline-flex; align-items: center; gap: 5px; }
 .queue-empty { font-size: 13px; color: var(--text-muted); margin: 8px 0; }
 
-.schedule-main { display: grid; gap: 14px; }
-.schedule-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.schedule-main { display: contents; }
+/* A barra ocupa a largura da agenda inteira. As regras de margem, padding e
+   borda neutralizam o estilo do cabeçalho geral que a deslocava para baixo. */
+.schedule-toolbar { grid-area: toolbar; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; padding: 0; border: 0; }
 .week-nav { display: inline-flex; align-items: center; gap: 10px; }
 .week-nav strong { font-size: 14px; min-width: 170px; text-align: center; }
 .week-nav button, .today-button { width: 32px; height: 32px; min-height: 32px; padding: 0; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 7px; cursor: pointer; color: var(--espresso); }
@@ -686,7 +688,7 @@ main .data-actions button.encounter-open {
    caibam com legibilidade — antes o `overflow-x` só existia abaixo de 760px,
    então entre 761px e 1180px (a faixa dos notebooks) as colunas eram
    espremidas até ~111px e o nome da paciente sumia sob o horário. */
-.week-grid { background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.week-grid { grid-area: grid; min-width: 0; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
 .week-scroll { overflow-x: auto; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
 /* 104px é o piso em que "17:05" + o primeiro nome ainda convivem na coluna. */
 .week-head, .week-body { display: grid; grid-template-columns: 52px repeat(6, minmax(104px, 1fr)); min-width: 676px; }
@@ -704,7 +706,7 @@ main .data-actions button.encounter-open {
 .hour-slot { height: calc(100% / 13); border-bottom: 1px solid rgba(216,202,184,.45); }
 /* `min-width: 0` no grid do evento: sem ele o nome longo define a largura
    mínima da coluna e o ellipsis nunca chega a agir. */
-.event { position: absolute; left: 2px; right: 2px; min-width: 0; display: grid; align-content: start; gap: 1px; padding: 3px 4px; border: 0; border-left: 3px solid; border-radius: 5px; cursor: pointer; overflow: hidden; text-align: left; font-size: 10px; line-height: 1.25; }
+.event { position: absolute; left: 2px; right: 2px; min-width: 0; min-height: 0; display: grid; align-content: start; gap: 1px; padding: 3px 4px; border: 0; border-left: 3px solid; border-radius: 5px; cursor: pointer; overflow: hidden; text-align: left; font-size: 10px; line-height: 1.25; }
 .event strong { font-size: 10px; font-weight: 600; }
 .event span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .event.success { background: #e4efe6; border-color: #4a7d58; color: #2c5236; }
@@ -712,7 +714,7 @@ main .data-actions button.encounter-open {
 .event.info    { background: #e6ecf2; border-color: #5a7794; color: #36506b; }
 .event.neutral { background: var(--cream-deep); border-color: var(--bronze); color: var(--text-muted); }
 
-.day-list { background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+.day-list { grid-area: day; min-width: 0; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
 .day-list h3 { margin: 0 0 12px; font-size: 14px; text-transform: capitalize; }
 .day-list ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .day-list li button { width: 100%; display: grid; grid-template-columns: 64px minmax(0,1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; text-align: left; }
@@ -770,7 +772,7 @@ main .data-actions button.encounter-open {
 
 /* Notebook estreito: a fila lateral sai de cima da agenda e vira faixa */
 @media (max-width: 1180px) {
-  .schedule { grid-template-columns: minmax(0, 1fr); }
+  .schedule { grid-template-columns: minmax(0, 1fr); grid-template-areas: "toolbar" "queue" "grid" "day"; }
   .schedule-queue { position: static; max-height: none; }
   .schedule-queue ul { max-height: 260px; }
   /* A previa precisa de 340px para a secao caber; lado a lado com o
