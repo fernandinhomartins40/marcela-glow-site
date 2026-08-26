@@ -77,7 +77,9 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 /* `min-width: 0` impede que uma tabela larga empurre a coluna do grid e
    crie scroll na página toda em vez de rolar dentro do próprio bloco. */
 main { padding: clamp(16px, 2.2vw, 26px) clamp(14px, 2.4vw, 30px); overflow: auto; position: relative; min-width: 0; }
-header { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid rgba(216,202,184,.7); position: relative; z-index: 1; }
+/* `flex-wrap` evita a sobreposição clássica de notebook: título longo + subtítulo
+   de um lado e o bloco "quem está usando" do outro competiam pela mesma linha. */
+header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 18px; row-gap: 10px; align-items: flex-start; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid rgba(216,202,184,.7); position: relative; z-index: 1; }
 /* Título da página em sans-serif e escala de painel, não de landing page */
 header h1 { margin: 2px 0 0; font-family: inherit; font-size: 24px; line-height: 1.2; font-weight: 600; letter-spacing: -0.01em; color: var(--espresso); }
 /* Quem está usando o painel — substitui o antigo badge com jargão técnico */
@@ -781,6 +783,33 @@ main .data-actions button.encounter-open {
   .landing-split { grid-template-columns: minmax(0, 1fr); }
   .landing-preview { position: static; }
   .lp { max-width: 620px; }
+}
+
+/* Faixa dos notebooks médios (≈1000–1150px), hoje sem tratamento: o gerenciador
+   do site insistia na lista lateral fixa de 232px e formulário + prévia ficavam
+   estreitos demais; a tabela de registros espremia a coluna do meio. */
+@media (max-width: 1150px) {
+  .landing-layout { grid-template-columns: minmax(0, 1fr); }
+  /* A lista de seções vira grade compacta em vez de coluna, devolvendo largura ao formulário */
+  .landing-nav { position: static; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .table article { grid-template-columns: minmax(0, 1fr) auto; row-gap: 6px; }
+}
+
+/* Notebooks de tela baixa (1366×768 / 720p ainda são o parque mais comum).
+   Acima de 860px o layout de duas colunas existe — mas com 730px de altura o
+   cabeçalho, os cartões e a agenda consumiam a primeira dobra inteira. Ajusta
+   densidade vertical sem mudar nada no celular, onde a rolagem é natural. */
+@media (min-width: 861px) and (max-height: 800px) {
+  main { padding-top: 14px; }
+  header { margin-bottom: 14px; padding-bottom: 10px; }
+  .stat { min-height: 72px; }
+  .stat strong { font-size: 26px; }
+  .schedule { gap: 10px; }
+  .schedule-queue { top: 8px; padding: 12px; }
+  .schedule-queue ul { max-height: 48vh; }
+  .week-body { height: 340px; }
+  .day-list { padding: 12px; }
+  .drawer { padding: 16px; gap: 14px; }
 }
 
 /* Blocos de 3 e 4 colunas passam a 2: abaixo disso o número do indicador
