@@ -1,6 +1,7 @@
 import React from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
+  ArrowLeft,
   Ban,
   Check,
   ChevronLeft,
@@ -9,7 +10,6 @@ import {
   MessageCircle,
   Phone,
   Plus,
-  X,
 } from 'lucide-react'
 import { NewAppointment } from './NewAppointment'
 import { addDays } from 'date-fns'
@@ -359,20 +359,36 @@ function AppointmentDrawer({
 
   const busy = confirm.isPending || cancel.isPending
 
-  return (
-    <div className="drawer-backdrop" onClick={onClose}>
-      <aside className="drawer" onClick={(e) => e.stopPropagation()}>
-        <header>
-          <div>
-            <Chip tone={meta.tone}>{meta.label}</Chip>
-            <h2>{appointment.name}</h2>
-            <p>{appointment.procedure?.title ?? 'Consulta de avaliação'}</p>
-          </div>
-          <button className="icon-button" onClick={onClose} aria-label="Fechar">
-            <X size={18} />
-          </button>
-        </header>
+  // Esc volta para a agenda, como em qualquer página aberta por cima
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
 
+  // A página de fundo não rola enquanto esta está aberta
+  React.useEffect(() => {
+    document.body.classList.add('page-lock')
+    return () => document.body.classList.remove('page-lock')
+  }, [])
+
+  return (
+    <div className="drawer page-view" role="dialog" aria-modal="true" aria-label={`Consulta de ${appointment.name}`}>
+      <header className="page-view-bar">
+        <button className="page-back" onClick={onClose} aria-label="Voltar">
+          <ArrowLeft size={16} />
+          Voltar
+        </button>
+        <div className="page-view-heading">
+          <Chip tone={meta.tone}>{meta.label}</Chip>
+          <h2>{appointment.name}</h2>
+          <p>{appointment.procedure?.title ?? 'Consulta de avaliação'}</p>
+        </div>
+      </header>
+
+      <div className="drawer-body page-view-body">
         <dl className="drawer-facts">
           <div>
             <dt>Contato</dt>
@@ -495,7 +511,7 @@ function AppointmentDrawer({
             )}
           </section>
         )}
-      </aside>
+      </div>
     </div>
   )
 }

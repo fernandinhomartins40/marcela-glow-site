@@ -727,17 +727,47 @@ main .data-actions button.encounter-open {
 .slot-body strong { font-size: 13px; }
 .slot-body span { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* ── Painel lateral do agendamento ───────────────────────────────────────── */
-.drawer-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(31,23,19,.42); display: flex; justify-content: flex-end; }
-.drawer { width: min(440px, 100%); height: 100%; overflow-y: auto; background: var(--marble-soft); border-left: 1px solid var(--border); padding: 22px; display: grid; gap: 18px; align-content: start; color: var(--espresso); }
-/* Depois de `.drawer`: mesma especificidade, então a ordem decide. Antes
-   dela o `wide` nunca teve efeito e o formulário largo transbordava. */
-.drawer.drawer-wide { width: min(680px, 100%); }
+/* ── Páginas de formulário e detalhe ─────────────────────────────────────── */
+/* Substituíram as gavetas laterais: cadastros, prontuários e detalhes abrem
+   como uma página de tela inteira — barra superior fixa com Voltar, conteúdo
+   centralizado em largura de leitura e ações fixas no rodapé. O container
+   mantém a classe `drawer` para herdar os blocos internos (drawer-body,
+   drawer-facts, drawer-actions) sem repetir CSS. */
+.drawer.page-view {
+  position: fixed; inset: 0; z-index: 60; width: 100%; height: 100%;
+  display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain;
+  background: var(--marble); border-left: 0; padding: 0; gap: 0; align-content: stretch;
+}
+/* Trava a rolagem do fundo enquanto uma página está aberta */
+body.page-lock { overflow: hidden; }
+.page-view-bar {
+  position: sticky; top: 0; z-index: 5; margin: 0;
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px clamp(16px, 3vw, 32px);
+  background: var(--cream-soft); border-bottom: 1px solid var(--border);
+}
+.page-view-heading { min-width: 0; }
+/* A barra sobrepõe o estilo genérico de header/h2 que o painel aplica */
+.drawer .page-view-bar { align-items: center; justify-content: flex-start; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.page-view-bar h2 { margin: 4px 0 0; font-family: inherit; font-size: 19px; line-height: 1.25; font-weight: 600; color: var(--espresso); overflow-wrap: anywhere; }
+.page-view-bar p { margin: 2px 0 0; font-size: 13px; color: var(--text-muted); }
+.page-back {
+  min-height: 36px; padding: 8px 14px; font-size: 13px; flex: none;
+  background: transparent; border: 1px solid var(--border); border-radius: 7px; color: var(--espresso);
+}
+.page-back:hover:not(:disabled) { border-color: var(--bronze); background: var(--marble-soft); transform: none; }
+.page-view-body { width: min(760px, 100%); margin: 0 auto; padding: 22px clamp(16px, 3vw, 32px) 48px; }
+/* Formulários largos (prontuário completo) ganham mais respiro horizontal */
+.page-view.is-wide .page-view-body { width: min(1080px, 100%); }
+.page-view-footer {
+  position: sticky; bottom: 0; z-index: 5; margin-top: auto;
+  background: var(--marble); border-top: 1px solid var(--border);
+  padding: 12px clamp(16px, 3vw, 32px);
+}
 .drawer p { color: var(--espresso); }
-.drawer header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding-bottom: 0; border-bottom: 0; }
-.drawer header h2 { margin: 8px 0 3px; font-family: inherit; font-size: 19px; font-weight: 600; color: var(--espresso); }
 .drawer h3 { font-family: inherit; }
-.drawer header p { margin: 0; font-size: 13px; color: var(--text-muted); }
+/* Resta apenas para o diálogo de confirmação, que continua sendo um diálogo */
+.drawer-backdrop { position: fixed; inset: 0; z-index: 70; background: rgba(31,23,19,.42); display: flex; }
 .icon-button { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--border); border-radius: 7px; cursor: pointer; color: var(--espresso); }
 .drawer-facts { display: grid; gap: 12px; margin: 0; padding: 14px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 9px; }
 .drawer-facts dt { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--bronze); margin-bottom: 3px; }
@@ -844,8 +874,6 @@ main .data-actions button.encounter-open {
      coluna de uma palavra. Cada opção ocupa a linha inteira. */
   /* Título e subtítulo já ocupam a largura toda; o X abaixo deles fica solto
      no meio do vazio. No celular ele volta para o canto, sobre o cabeçalho. */
-  .drawer header { position: relative; padding-right: 40px; }
-  .drawer header .icon-button { position: absolute; top: 0; right: 0; }
   .perm-groups { grid-template-columns: minmax(0, 1fr); }
   /* A lista de seções vira uma fila rolável acima do formulário, e a prévia
      desce para o fim: lado a lado, nenhum dos dois teria largura útil. */

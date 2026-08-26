@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom'
 import axios from 'axios'
 import { useQuery } from '@tanstack/react-query'
 import { useDebounced } from './useDebounced'
-import { AlertTriangle, Download, Loader2, Paperclip, Search, Upload, UserRound, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Download, Loader2, Paperclip, Search, Upload, UserRound } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' })
@@ -21,7 +21,11 @@ export function errorMessage(error: unknown, fallback = 'Não foi possível conc
   return fallback
 }
 
-/** Painel lateral usado por todos os formulários de cadastro e edição. */
+/**
+ * Página de formulário/detalhe usada por todos os cadastros e edições.
+ * Substituiu a gaveta lateral: formulário ocupa a tela inteira como uma página
+ * de verdade, com botão Voltar no topo e ações fixas no rodapé.
+ */
 export function Modal({
   title,
   subtitle,
@@ -37,7 +41,7 @@ export function Modal({
   footer?: React.ReactNode
   wide?: boolean
 }) {
-  // Esc fecha — atalho esperado em formulário sobreposto
+  // Esc volta — atalho esperado ao sair de uma página aberta por cima
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
@@ -46,31 +50,37 @@ export function Modal({
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
-  /* Renderiza no <body>, não onde foi chamado. Um modal aberto de dentro de
+  // A página de fundo não rola enquanto esta está aberta
+  React.useEffect(() => {
+    document.body.classList.add('page-lock')
+    return () => document.body.classList.remove('page-lock')
+  }, [])
+
+  /* Renderiza no <body>, não onde foi chamado. Um formulário aberto de dentro de
      `.data-actions` (cujos botões são quadrados de 30px) herdava aquele CSS e
-     saía com os próprios botões espremidos — o formulário dependia do lugar
-     em que a chamada estava escrita. */
+     saía com os próprios botões espremidos — o resultado dependia do lugar
+     em que a chamada estava escrita. A classe `drawer` permanece no container
+     de propósito: os blocos internos (drawer-body, drawer-facts, drawer-actions)
+     continuam herdados das regras existentes. */
   return ReactDOM.createPortal(
-    <div className="drawer-backdrop" onClick={onClose}>
-      <aside
-        className={`drawer ${wide ? 'drawer-wide' : ''}`}
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-      >
-        <header>
-          <div>
-            <h2>{title}</h2>
-            {subtitle && <p>{subtitle}</p>}
-          </div>
-          <button className="icon-button" onClick={onClose} aria-label="Fechar">
-            <X size={18} />
-          </button>
-        </header>
-        <div className="drawer-body">{children}</div>
-        {footer && <div className="drawer-footer">{footer}</div>}
-      </aside>
+    <div
+      className={`drawer page-view ${wide ? 'is-wide' : ''}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label={title}
+    >
+      <header className="page-view-bar">
+        <button className="page-back" onClick={onClose} aria-label="Voltar">
+          <ArrowLeft size={16} />
+          Voltar
+        </button>
+        <div className="page-view-heading">
+          <h2>{title}</h2>
+          {subtitle && <p>{subtitle}</p>}
+        </div>
+      </header>
+      <div className="drawer-body page-view-body">{children}</div>
+      {footer && <div className="drawer-footer page-view-footer">{footer}</div>}
     </div>,
     document.body,
   )
