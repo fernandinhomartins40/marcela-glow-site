@@ -1,38 +1,37 @@
 import React from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { AlertCircle, CalendarDays, FileText, Heart, Paperclip, RefreshCw } from 'lucide-react'
-import { fetchDashboard, getErrorMessage, type DashboardData } from '@/lib/api'
-import { firstName, pickNextAppointment } from '@/lib/format'
+import { AlertCircle, RefreshCw } from 'lucide-react'
+import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { fetchDashboard, getErrorMessage } from '@/lib/api'
+import { firstName } from '@/lib/format'
 import { AppShell, type SectionId } from '@/components/AppShell'
-import { NextAppointment, SummaryStat } from '@/components/NextAppointment'
-import { RequestCare } from '@/components/RequestCare'
-import {
-  AppointmentsList,
-  AttachmentsList,
-  DashboardSkeleton,
-  MessagesList,
-  NotificationsPanel,
-  PrescriptionsList,
-  SessionsList,
-} from '@/components/sections'
+import { DashboardSkeleton } from '@/components/sections'
+import { HomePage } from '@/pages/sections/Home'
+import { AppointmentsPage } from '@/pages/sections/Appointments'
+import { PrescriptionsPage } from '@/pages/sections/Prescriptions'
+import { MessagesPage } from '@/pages/sections/Messages'
+
+const SECTION_IDS: SectionId[] = ['inicio', 'consultas', 'prescricoes', 'mensagens']
 
 export function Dashboard() {
-  const [section, setSection] = React.useState<SectionId>('inicio')
+  const navigateTo = useNavigate()
+  const { section: requestedSection } = useParams()
+  const section = SECTION_IDS.includes(requestedSection as SectionId)
+    ? requestedSection as SectionId
+    : null
   const query = useQuery({ queryKey: ['patient-dashboard'], queryFn: fetchDashboard })
 
   const data = query.data
   const patientName = data?.patient?.name ?? null
   const greeting = firstName(patientName)
-  /* O AppShell já desenhava o marcador de pendências, mas ninguém alimentava o
-     número — ele nunca aparecia. `Message` não tem estado de leitura na API;
-     as notificações têm, e são justamente os avisos de consulta que a paciente
-     precisa ver ao abrir o portal. */
-  const unread = data?.notifications.filter((n) => !n.readAt).length ?? 0
+  const unread = data?.notifications.filter((notification) => !notification.readAt).length ?? 0
 
   function navigate(id: SectionId) {
-    setSection(id)
+    navigateTo(`/${id}`)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
+  if (!section) return <Navigate to="/inicio" replace />
 
   return (
     <AppShell active={section} onNavigate={navigate} patientName={patientName} pending={unread}>
@@ -65,61 +64,12 @@ export function Dashboard() {
             </p>
           </div>
 
-          {section === 'inicio' && <HomeSection data={data} onRequest={() => navigate('consultas')} />}
-          {section === 'consultas' && <AppointmentsSection data={data} />}
-          {section === 'prescricoes' && <PrescriptionsSection data={data} />}
-          {section === 'mensagens' && <MessagesSection data={data} />}
+          {section === 'inicio' && <HomePage data={data} onRequest={() => navigate('consultas')} />}
+          {section === 'consultas' && <AppointmentsPage data={data} />}
+          {section === 'prescricoes' && <PrescriptionsPage data={data} />}
+          {section === 'mensagens' && <MessagesPage data={data} />}
         </>
       )}
     </AppShell>
-  )
-}
-
-function HomeSection({ data, onRequest }: { data: DashboardData; onRequest: () => void }) {
-  const next = pickNextAppointment(data.appointments)
-
-  return (
-    <div className="space-y-6">
-      <NextAppointment appointment={next} onRequest={onRequest} />
-
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <SummaryStat icon={CalendarDays} label="Consultas" value={data.appointments.length} />
-        <SummaryStat icon={Heart} label="Procedimentos" value={data.sessions.length} />
-        <SummaryStat icon={FileText} label="Prescrições" value={data.prescriptions.length} />
-        <SummaryStat icon={Paperclip} label="Arquivos" value={data.attachments.length} />
-      </div>
-
-      <RequestCare procedures={data.procedures} />
-
-      <NotificationsPanel notifications={data.notifications} />
-    </div>
-  )
-}
-
-function AppointmentsSection({ data }: { data: DashboardData }) {
-  return (
-    <div className="space-y-6">
-      <RequestCare procedures={data.procedures} />
-      <AppointmentsList appointments={data.appointments} />
-      <SessionsList sessions={data.sessions} />
-    </div>
-  )
-}
-
-function PrescriptionsSection({ data }: { data: DashboardData }) {
-  return (
-    <div className="space-y-6">
-      <PrescriptionsList prescriptions={data.prescriptions} />
-      <AttachmentsList attachments={data.attachments} />
-    </div>
-  )
-}
-
-function MessagesSection({ data }: { data: DashboardData }) {
-  return (
-    <div className="space-y-6">
-      <RequestCare procedures={data.procedures} />
-      <MessagesList messages={data.messages} />
-    </div>
   )
 }
