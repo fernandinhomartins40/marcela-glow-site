@@ -45,8 +45,10 @@ const Index = () => {
     setMeta('meta[property="og:title"]', "property", "og:title", content.title);
     setMeta('meta[property="og:description"]', "property", "og:description", content.description);
     if (ogImage.src) {
-      setMeta('meta[property="og:image"]', "property", "og:image", ogImage.src);
-      setMeta('meta[name="twitter:image"]', "name", "twitter:image", ogImage.src);
+      /* Absoluta: o og:image relativo não resolve em quem lê a meta fora do site. */
+      const absolute = new URL(ogImage.src, window.location.origin).href;
+      setMeta('meta[property="og:image"]', "property", "og:image", absolute);
+      setMeta('meta[name="twitter:image"]', "name", "twitter:image", absolute);
     }
   }, [content.title, content.description, ogImage.src]);
 
