@@ -117,7 +117,7 @@ const Hero = () => {
               <p className="font-editorial-italic type-lead text-foreground/70 mt-6 md:mt-7 lg:text-[clamp(1.05rem,min(1.7vw,2.4svh),1.4rem)] lg:mt-[min(1.75rem,3svh)] max-w-lg">
                 {slide.subtitle}
               </p>
-              <div className="grid sm:flex sm:flex-row gap-3 sm:gap-4 mt-8 md:mt-10 lg:mt-[min(2.5rem,4.5svh)]">
+              <div className="grid sm:flex sm:flex-row gap-3 sm:gap-4 mt-8 md:mt-10 lg:mt-[min(2.5rem,4.5svh)] [&>button]:lg:whitespace-nowrap [&>button]:lg:px-6 [&>button]:lg:tracking-[0.14em] [&>button]:min-[1200px]:px-10 [&>button]:min-[1200px]:tracking-[0.2em]">
                 <Button
                   variant="cta"
                   size="lg"
