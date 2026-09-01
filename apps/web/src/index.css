@@ -220,9 +220,12 @@
      seção escolhia o seu (96px, 72px, 60px para o mesmo nível), o que fazia a
      página parecer desorganizada. */
 
-  /* Título do hero — único nesta escala, acima de todos os demais */
+  /* Título do hero — único nesta escala, acima de todos os demais.
+     Escala pela largura E pela altura: numa tela larga porém baixa, medir só
+     em vw dava um título de 136px que empurrava o resto do hero para fora da
+     viewport. O min() faz a dimensão mais escassa mandar. */
   .type-hero {
-    font-size: clamp(3.5rem, 11vw, 8.5rem);
+    font-size: clamp(3.5rem, min(11vw, 17svh), 8.5rem);
     line-height: 0.88;
     letter-spacing: -0.015em;
   }

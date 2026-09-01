@@ -109,15 +109,15 @@ const Hero = () => {
           {/* Texto à esquerda */}
           <div className="lg:col-span-7 z-10 order-2 lg:order-1">
             <div key={`txt-${index}`} className="animate-slide-up">
-              <p className="label-eyebrow mb-4 md:mb-6">{slide.eyebrow}</p>
+              <p className="label-eyebrow mb-4 md:mb-6 lg:mb-[min(1.5rem,2.6svh)]">{slide.eyebrow}</p>
               <h1 className="font-display type-hero text-primary text-balance">
                 <span className="block">{slide.titleTop}</span>
                 <span className="block italic font-light">{slide.titleBottom}</span>
               </h1>
-              <p className="font-editorial-italic type-lead text-foreground/70 mt-6 md:mt-7 max-w-lg">
+              <p className="font-editorial-italic type-lead text-foreground/70 mt-6 md:mt-7 lg:text-[clamp(1.05rem,min(1.7vw,2.4svh),1.4rem)] lg:mt-[min(1.75rem,3svh)] max-w-lg">
                 {slide.subtitle}
               </p>
-              <div className="grid sm:flex sm:flex-row gap-3 sm:gap-4 mt-8 md:mt-10">
+              <div className="grid sm:flex sm:flex-row gap-3 sm:gap-4 mt-8 md:mt-10 lg:mt-[min(2.5rem,4.5svh)]">
                 <Button
                   variant="cta"
                   size="lg"
@@ -159,14 +159,14 @@ const Hero = () => {
       {/* Setas */}
       <button
         onClick={prevSlide}
-        className="absolute left-4 lg:left-8 top-1/2 -translate-y-1/2 z-20 hidden w-11 h-11 border border-foreground/30 md:flex items-center justify-center hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+        className="absolute left-6 top-1/2 -translate-y-1/2 z-20 hidden w-11 h-11 border border-foreground/30 min-[1520px]:flex items-center justify-center hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
         aria-label="Anterior"
       >
         <ChevronLeft className="w-4 h-4" />
       </button>
       <button
         onClick={nextSlide}
-        className="absolute right-4 lg:right-8 top-1/2 -translate-y-1/2 z-20 hidden w-11 h-11 border border-foreground/30 md:flex items-center justify-center hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
+        className="absolute right-6 top-1/2 -translate-y-1/2 z-20 hidden w-11 h-11 border border-foreground/30 min-[1520px]:flex items-center justify-center hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all"
         aria-label="Próximo"
       >
         <ChevronRight className="w-4 h-4" />
