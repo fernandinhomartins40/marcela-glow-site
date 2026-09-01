@@ -104,7 +104,7 @@ const Hero = () => {
       </div>
 
       {/* Conteúdo principal */}
-      <div className="relative container mx-auto px-5 sm:px-6 lg:px-10 min-h-[100svh] flex items-center pt-24 pb-24 md:pt-28 md:pb-20">
+      <div className="relative container mx-auto px-5 sm:px-6 lg:px-10 min-h-[100svh] flex items-center pt-24 pb-20 lg:pt-[max(6rem,12svh)] lg:pb-[max(5rem,10svh)]">
         <div className="grid lg:grid-cols-12 gap-6 md:gap-8 w-full items-center">
           {/* Texto à esquerda */}
           <div className="lg:col-span-7 z-10 order-2 lg:order-1">
@@ -140,7 +140,7 @@ const Hero = () => {
           <div className="lg:col-span-5 z-10 order-1 lg:order-2">
             <div
               key={`img-${index}`}
-              className="relative aspect-[4/5] max-w-[72vw] min-[420px]:max-w-xs sm:max-w-sm md:max-w-md mx-auto lg:max-w-none animate-reveal"
+              className="relative aspect-[4/5] w-[min(72vw,26svh)] min-[420px]:w-[min(20rem,28svh)] sm:w-[min(24rem,32svh)] md:w-[min(28rem,34svh)] lg:w-auto lg:h-full lg:max-h-[68svh] mx-auto animate-reveal"
             >
               <img
                 src={image?.url ?? FALLBACK_IMAGES[index % FALLBACK_IMAGES.length]}
@@ -184,7 +184,7 @@ const Hero = () => {
             aria-label={`Slide ${i + 1}`}
           />
         ))}
-        <span className="ml-3 text-[0.65rem] tracking-[0.3em] uppercase text-muted-foreground">
+        <span className="ml-3 text-[0.65rem] tracking-[0.3em] uppercase text-muted-foreground whitespace-nowrap">
           {String(index + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
         </span>
       </div>
