@@ -154,13 +154,26 @@ login. **Falta validar com SMTP real** (ver Passo 2).
 
 ### Passo 2 - Provar a persistencia de imagem ponta a ponta
 
-1. Subir `docker compose up` e fazer upload real de foto pelo painel.
+1. Fazer upload real de foto pelo painel (em producao ou com `docker compose up`).
 2. Conferir os tres pontos: objeto no bucket MinIO, `storageKey` gravado no
    Postgres e imagem abrindo por `/files/`.
 3. Ajustar CORS do bucket e `S3_PUBLIC_BASE_URL` conforme o resultado.
 
 Criterio de aceite: imagem enviada pelo painel aparece na landing apos atualizar
 a pagina, e anexo clinico abre por link que expira.
+
+### Passo 6 - Cadastrar os procedimentos da clinica (NOVO)
+
+Diagnostico na VPS em 2026-09-02: a infraestrutura esta saudavel (API healthy,
+banco conectado, 8 migracoes aplicadas, sem erro nos logs), com 1 clinica, 2
+usuarios, 2 pacientes e 5 agendamentos - mas **`Procedure = 0`**.
+
+Sem procedimento cadastrado, `/api/procedures` devolve `[]` e toda tela que
+depende dele aparece vazia: agendar pelo site, catalogo, selecao no atendimento.
+Nao e bug - o seed de producao nunca cadastrou o catalogo real da clinica.
+
+Criterio de aceite: a landing lista os procedimentos e da para agendar um deles.
+Depende da lista real (nome, duracao, preco) vinda da clinica.
 
 ### Passo 3 - Simplificar as 3 telas que a cliente usa todo dia (CONCLUIDO)
 

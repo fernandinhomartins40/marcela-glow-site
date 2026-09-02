@@ -1,16 +1,16 @@
 # Graph Report - marcela-glow-site  (2026-09-02)
 
 ## Corpus Check
-- 203 files · ~348,714 words
+- 203 files · ~348,960 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1784 nodes · 3157 edges · 169 communities (81 shown, 68 thin omitted)
+- 1784 nodes · 3156 edges · 169 communities (81 shown, 68 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 20 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c0c48cd2`
+- Built from commit: `712f10cc`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -169,24 +169,24 @@
 1. `cn()` - 228 edges
 2. `errorMessage()` - 46 edges
 3. `"Tenant"` - 24 edges
-4. `api` - 19 edges
-5. `formatDateBR()` - 19 edges
-6. `compilerOptions` - 18 edges
-7. `AppError` - 18 edges
+4. `formatDateBR()` - 19 edges
+5. `api` - 19 edges
+6. `AppError` - 18 edges
+7. `useSection()` - 18 edges
 8. `compilerOptions` - 18 edges
-9. `useSection()` - 18 edges
+9. `compilerOptions` - 18 edges
 10. `compilerOptions` - 18 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `CatalogForm()` --calls--> `errorMessage()`  [EXTRACTED]
-  apps/admin/src/components/Clinical.tsx → apps/admin/src/lib/ui.tsx
-- `SectionEditor()` --calls--> `errorMessage()`  [EXTRACTED]
-  apps/admin/src/components/Landing.tsx → apps/admin/src/lib/ui.tsx
-- `submit()` --calls--> `errorMessage()`  [EXTRACTED]
-  apps/admin/src/pages/Login.tsx → apps/admin/src/lib/ui.tsx
-- `buildLanding()` --calls--> `publicFileUrl()`  [EXTRACTED]
-  apps/api/src/routes/landing.ts → apps/api/src/lib/storage.ts
-- `AlertDialogOverlay` --calls--> `cn()`  [EXTRACTED]
+- `AlertDescription` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert.tsx → apps/web/src/lib/utils.ts
+- `AlertTitle` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert.tsx → apps/web/src/lib/utils.ts
+- `AlertDialogContent` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
+- `AlertDialogDescription` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
+- `AlertDialogFooter()` --calls--> `cn()`  [EXTRACTED]
   apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
 
 ## Import Cycles
@@ -519,7 +519,7 @@ Cohesion: 0.50
 Nodes (4): Alert, AlertDescription, AlertTitle, alertVariants
 
 ## Knowledge Gaps
-- **702 isolated node(s):** `$schema`, `style`, `rsc`, `tsx`, `config` (+697 more)
+- **702 isolated node(s):** `staffOnly`, `catalogSchema`, `itemSchema`, `documentSchema`, `DOCUMENT_INCLUDE` (+697 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 779 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **68 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -527,12 +527,12 @@ Nodes (4): Alert, AlertDescription, AlertTitle, alertVariants
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `cn()` connect `cn` to `breadcrumb.tsx`, `command.tsx`, `navigation-menu.tsx`, `sidebar.tsx`, `tabs.tsx`, `utils.ts`, `hooks/use-toast.ts`, `alert.tsx`, `drawer.tsx`, `context-menu.tsx`, `form.tsx`, `carousel.tsx`, `chart.tsx`, `pagination.tsx`, `web/src/lib/api.ts`, `input-otp.tsx`, `button.tsx`, `sheet.tsx`?**
-  _High betweenness centrality (0.041) - this node is a cross-community bridge._
+  _High betweenness centrality (0.042) - this node is a cross-community bridge._
+- **Why does `dependencies` connect `dependencies` to `@radix-ui/react-toast`, `@radix-ui/react-toggle`, `devDependencies`, `@radix-ui/react-toggle-group`, `@radix-ui/react-tooltip`, `react`, `react-dom`, `react-hook-form`, `react-resizable-panels`, `react-router-dom`, `recharts`, `sonner`, `tailwind-merge`, `tailwindcss-animate`, `@tanstack/react-query`, `vaul`, `zod`, `axios`, `class-variance-authority`, `clsx`, `cmdk`, `date-fns`, `embla-carousel-react`, `@hookform/resolvers`, `input-otp`, `lucide-react`, `next-themes`, `@radix-ui/react-accordion`, `@radix-ui/react-alert-dialog`, `@radix-ui/react-aspect-ratio`, `@radix-ui/react-checkbox`, `@radix-ui/react-collapsible`, `@radix-ui/react-dialog`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-hover-card`, `@radix-ui/react-label`, `@radix-ui/react-menubar`, `@radix-ui/react-popover`, `@radix-ui/react-progress`, `@radix-ui/react-radio-group`, `@radix-ui/react-scroll-area`, `@radix-ui/react-separator`, `@radix-ui/react-slider`, `@radix-ui/react-switch`, `@radix-ui/react-tabs`?**
+  _High betweenness centrality (0.006) - this node is a cross-community bridge._
 - **Why does `errorMessage()` connect `errorMessage` to `Landing.tsx`, `lib/ui.tsx`, `Schedule.tsx`, `agenda.tsx`, `Encounter.tsx`, `ficha.tsx`, `AdminApp.tsx`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
-- **Why does `Button` connect `button.tsx` to `cn`, `Appointment.tsx`, `sidebar.tsx`, `Footer.tsx`, `carousel.tsx`, `Index.tsx`, `useSection`, `pagination.tsx`?**
-  _High betweenness centrality (0.002) - this node is a cross-community bridge._
-- **What connects `$schema`, `style`, `rsc` to the rest of the system?**
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **What connects `staffOnly`, `catalogSchema`, `itemSchema` to the rest of the system?**
   _702 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `sections.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.05133599831685252 - nodes in this community are weakly interconnected._
