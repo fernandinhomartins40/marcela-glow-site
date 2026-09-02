@@ -14,7 +14,8 @@
     "clean": "turbo run clean",
     "db:migrate": "turbo run db:migrate --filter=@marcela/database",
     "db:seed": "turbo run db:seed --filter=@marcela/database",
-    "db:studio": "turbo run db:studio --filter=@marcela/database"
+    "db:studio": "turbo run db:studio --filter=@marcela/database",
+    "test": "turbo run test"
   },
   "devDependencies": {
     "turbo": "^2.3.3",
