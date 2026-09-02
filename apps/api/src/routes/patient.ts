@@ -11,6 +11,7 @@ import { audit } from '../lib/audit'
 import { getVapidPublicKey } from '../lib/push'
 import { presignDownload, storageConfigured } from '../lib/storage'
 import { checkSlotAvailable, resolveEndsAt } from '../lib/scheduling'
+import { publicBaseUrl, sendMail } from '../lib/mailer'
 
 const router = Router()
 const TENANT_SLUG_DEFAULT = 'marcela-duch'
@@ -182,6 +183,14 @@ router.post('/auth/password/request', async (req, res, next) => {
     await prisma.passwordResetToken.create({
       data: { subjectType: 'PATIENT', patientId: patient.id, tenantId: tenant.id, tokenHash: sha256(token), expiresAt: addHours(2) },
     })
+
+    await sendMail({
+      to: patient.email!,
+      subject: 'Recuperação de senha — portal da paciente',
+      body: `Olá, ${patient.name}.\n\nRecebemos um pedido para redefinir a sua senha de acesso ao portal. O link abaixo vale por 2 horas.\n\nSe não foi você, ignore este e-mail: a senha atual continua valendo.`,
+      action: { label: 'Definir nova senha', url: `${publicBaseUrl()}/paciente/#/recuperar-senha?token=${token}` },
+    })
+
     res.json({ message: 'Token de recuperacao gerado.', resetToken: process.env.NODE_ENV === 'production' ? undefined : token })
   } catch (err) {
     next(err)

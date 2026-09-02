@@ -13,6 +13,7 @@ import {
   utcToClinicDate,
 } from '../lib/scheduling'
 import { buildWhatsAppLink, stripWhatsAppMarkup, type MessageKind } from '../lib/whatsapp'
+import { sendMail } from '../lib/mailer'
 
 const router = Router()
 
@@ -81,6 +82,7 @@ async function notifyPatient(
     id: string
     tenantId: string
     name: string
+    email: string | null
     phone: string
     patientId: string | null
     scheduledAt: Date | null
@@ -106,6 +108,18 @@ async function notifyPatient(
     clinicAddress: tenant.address,
     reason,
   })
+
+  // E-mail é o único canal que alcança quem agendou pela landing sem cadastro:
+  // notificação e push exigem `patientId`, e o WhatsApp depende de alguém da
+  // equipe clicar no link. Sem isto a paciente só descobre a confirmação se a
+  // clínica lembrar de avisar.
+  if (appointment.email) {
+    await sendMail({
+      to: appointment.email,
+      subject: titles[kind],
+      body: stripWhatsAppMarkup(whatsapp.message),
+    })
+  }
 
   // Sem cadastro de paciente (lead da landing) não há painel para notificar
   if (appointment.patientId) {
@@ -216,6 +230,20 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       },
       include: APPOINTMENT_INCLUDE,
     })
+
+    // Quem pede horário pela landing fica sem resposta até a equipe confirmar.
+    // Este aviso fecha o ciclo na hora: diz que chegou e o que acontece agora.
+    if (appointment.email) {
+      const quando = appointment.scheduledAt
+        ? 'Você receberá a confirmação da data e do horário assim que a equipe validar a agenda.'
+        : 'A equipe entrará em contato para combinar a data e o horário.'
+
+      await sendMail({
+        to: appointment.email,
+        subject: 'Recebemos o seu pedido de agendamento',
+        body: `Olá, ${appointment.name}.\n\nRecebemos o seu pedido${appointment.procedure?.title ? ` de ${appointment.procedure.title}` : ''}. ${quando}\n\nSe precisar mudar alguma coisa, é só responder ao contato da clínica.`,
+      })
+    }
 
     res.status(201).json(appointment)
   } catch (err) {

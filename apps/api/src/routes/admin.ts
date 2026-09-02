@@ -9,6 +9,7 @@ import { addDays, randomToken, sha256 } from '../lib/security'
 import { buildStorageKey, presignDownload, presignUpload, publicFileUrl, s3Bucket, storageConfigured } from '../lib/storage'
 import { sendPatientPush } from '../lib/push'
 import { rolePermissions } from '../lib/permissions'
+import { publicBaseUrl, sendMail } from '../lib/mailer'
 
 const router = Router()
 const staffOnly = [authenticate, requireStaff]
@@ -1177,6 +1178,19 @@ router.post('/invites', requirePermission('USER_MANAGE'), async (req, res, next)
       },
     })
     await audit(req, 'CREATE', 'staffInvite', invite.id, { email: body.email, role: body.role })
+
+    const clinic = await prisma.tenant.findUnique({
+      where: { id: req.user!.tenantId },
+      select: { name: true },
+    })
+
+    await sendMail({
+      to: body.email,
+      subject: `Convite para a equipe — ${clinic?.name ?? 'clínica'}`,
+      body: `Olá, ${body.name}.\n\nVocê foi convidada para acessar o painel da clínica. Use o link abaixo para criar a sua senha; ele vale por 7 dias.`,
+      action: { label: 'Criar minha senha', url: `${publicBaseUrl()}/admin/#/convite?token=${token}` },
+    })
+
     res.status(201).json({ invite, inviteToken: process.env.NODE_ENV === 'production' ? undefined : token })
   } catch (err) {
     next(err)

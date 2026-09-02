@@ -8,6 +8,7 @@ import { AppError, NotFoundError, UnauthorizedError } from '../lib/errors'
 import { addDays, addHours, randomToken, sha256 } from '../lib/security'
 import { effectivePermissions } from '../lib/permissions'
 import { audit } from '../lib/audit'
+import { publicBaseUrl, sendMail } from '../lib/mailer'
 
 const router = Router()
 
@@ -178,6 +179,14 @@ router.post('/password/request', async (req, res, next) => {
     await prisma.passwordResetToken.create({
       data: { subjectType: 'STAFF', userId: user.id, tenantId: tenant.id, tokenHash: sha256(token), expiresAt: addHours(2) },
     })
+
+    await sendMail({
+      to: user.email,
+      subject: 'Recuperação de senha — painel da clínica',
+      body: `Olá, ${user.name}.\n\nRecebemos um pedido para redefinir a sua senha do painel. O link abaixo vale por 2 horas.\n\nSe não foi você, ignore este e-mail: a senha atual continua valendo.`,
+      action: { label: 'Definir nova senha', url: `${publicBaseUrl()}/admin/#/recuperar-senha?token=${token}` },
+    })
+
     res.json({ message: 'Token de recuperacao gerado.', resetToken: process.env.NODE_ENV === 'production' ? undefined : token })
   } catch (err) {
     next(err)
