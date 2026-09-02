@@ -37,13 +37,13 @@ imprime os ids; repita com o id completo (ex.: `apps_web_src_lib_utils_cn`).
 <!-- graph-map:begin -->
 <!-- Gerado por scripts/graph-map.js. Nao editar a mao: rode `node scripts/graph-map.js --write`. -->
 
-Grafo: 1769 nos, 2955 arestas (commit `0cb914c8`).
+Grafo: 1801 nos, 3152 arestas (commit `27d261c9`).
 
 | Area | Nos | Hub (maior propagacao de mudanca) |
 |---|---|---|
 | `apps/web` | 616 | `cn()` (228 arestas) - `apps/web/src/lib/utils.ts:4` |
-| `apps/admin` | 365 | `Encounter.tsx` (58 arestas) - `apps/admin/src/components/Encounter.tsx:1` |
-| `apps/api` | 307 | `admin.ts` (52 arestas) - `apps/api/src/routes/admin.ts:1` |
+| `apps/admin` | 376 | `lib/ui.tsx` (56 arestas) - `apps/admin/src/lib/ui.tsx:1` |
+| `apps/api` | 324 | `admin.ts` (55 arestas) - `apps/api/src/routes/admin.ts:1` |
 | `apps/patient` | 229 | `sections.tsx` (37 arestas) - `apps/patient/src/components/sections.tsx:1` |
 | `packages/database` | 85 | `"Tenant"` (24 arestas) - `packages/database/prisma/migrations/20240429000000_init/migration.sql:8` |
 | `scripts` | 48 | `graph-map.js` (20 arestas) - `scripts/graph-map.js:1` |
@@ -58,21 +58,24 @@ Grafo: 1769 nos, 2955 arestas (commit `0cb914c8`).
 ```
  282  apps/web/src/components/ui
  219  apps/web
+ 137  apps/api/src/lib
  132  apps/admin
  130  apps/patient
- 127  apps/api/src/lib
- 126  apps/admin/src/components
   90  apps/api/src/routes
+  84  apps/admin/src/components
+  79  apps/api
   74  apps/admin/src/lib
-  72  apps/api
   48  scripts
   46  apps/web/src/components
   42  packages/database
   41  apps/patient/src/lib
   34  apps/patient/src/components
   22  apps/web/src/hooks
+  19  apps/admin/src/components/patients
+  19  apps/admin/src/components/encounter
   16  apps/web/src/lib
   16  apps/admin/src/pages
+  15  apps/admin/src/components/landing
   15  apps/admin/src
   13  packages/shared/src
   12  packages/database/prisma/migrations/20260430000000_crm_patient_pwas

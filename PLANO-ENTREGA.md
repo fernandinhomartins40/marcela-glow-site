@@ -19,7 +19,7 @@ arquitetural, e um excesso de superficie em poucas telas.
 | API (118 rotas, RBAC, auditoria) | Completo |
 | Storage S3/MinIO + Nginx `/files/` | Completo, falta validar end-to-end |
 | Landing (CMS editavel + fallback) | Completo |
-| Painel do medico | Completo, complexo demais em 3 telas |
+| Painel do medico | Completo; 3 telas grandes ja quebradas |
 | Painel do paciente | Completo, mais raso que a API permite |
 | Envio de e-mail | Implementado, falta validar com SMTP real |
 | Testes automatizados | 17 testes de regra; falta teste de rota |
@@ -86,16 +86,20 @@ navegador -> presigned URL -> MinIO -> leitura via `/files/`. Erro de CORS ou de
 
 Voce sentiu certo, mas a complexidade esta concentrada, nao espalhada:
 
-| Arquivo | Linhas |
-|---|---|
-| `apps/admin/src/components/Encounter.tsx` | 1396 |
-| `apps/api/src/routes/admin.ts` | 1389 |
-| `apps/admin/src/components/Landing.tsx` | 1178 |
-| `apps/admin/src/components/Patients.tsx` | 1034 |
-| `apps/api/src/routes/clinical.ts` | 842 |
+| Arquivo | Na auditoria | Agora |
+|---|---|---|
+| `apps/api/src/routes/admin.ts` | 1389 | 1389 |
+| `apps/admin/src/components/Landing.tsx` | 1178 | 595 |
+| `apps/api/src/routes/clinical.ts` | 842 | 842 |
+| `apps/admin/src/components/Encounter.tsx` | 1396 | 318 |
+| `apps/admin/src/components/Patients.tsx` | 1034 | 206 |
 
-Quatro arquivos de frontend concentram 4600 linhas. **O resto do projeto e
-saudavel** - ja existe um design system proprio em `apps/admin/src/lib/ui.tsx`
+As tres telas do painel foram quebradas (Passo 3). O maior arquivo agora e
+`admin.ts`, no backend: 50 rotas num arquivo so. Nao entrou nos passos porque
+rota grande incomoda quem edita, mas nao afeta quem usa - fica como divida.
+
+**O resto do projeto e saudavel** - ja existe um design system proprio em
+`apps/admin/src/lib/ui.tsx`
 (759 linhas: `Modal`, `Field`, `DataRow`, `ConfirmDialog`, `EmptyState`,
 `FileUploadButton`, `PatientSearchSelect`, mascaras de CPF/telefone/dinheiro).
 
@@ -157,16 +161,20 @@ login. **Falta validar com SMTP real** (ver Passo 2).
 Criterio de aceite: imagem enviada pelo painel aparece na landing apos atualizar
 a pagina, e anexo clinico abre por link que expira.
 
-### Passo 3 - Simplificar as 3 telas que a cliente usa todo dia
+### Passo 3 - Simplificar as 3 telas que a cliente usa todo dia (QUASE)
 
-Nao reescrever: **extrair**. O alvo e reduzir cada arquivo grande compondo com
-`ui.tsx`, sem mudar contrato de API.
+Nao reescrever: **extrair**. Movimento mecanico, sem tocar em comportamento,
+texto, validacao ou chamada de API; contrato publico intacto nos tres casos.
 
-- `Encounter.tsx` (1396): separar por etapa do atendimento (anamnese,
-  procedimento, prescricao, anexos), cada uma um componente que ja usa
-  `Field`/`FormRow`/`SubmitButton`.
-- `Patients.tsx` (1034): separar lista, filtro e ficha em tres componentes.
-- `Landing.tsx` (1178): uma secao editavel por componente, todas iguais.
+| Arquivo | Antes | Depois | Corte |
+|---|---|---|---|
+| `Encounter.tsx` | 1396 | 318 | por etapa do consultorio |
+| `Patients.tsx` | 1034 | 206 | lista / formulario / ficha |
+| `Landing.tsx` | 1178 | 595 | editor / campos / preview |
+
+Falta: `Landing.tsx` ainda tem 595 linhas contra a meta de ~400. O que sobra e
+`SectionFields`, um switch com um ramo por secao - so encolhe separando uma
+secao por arquivo.
 
 Regra da experiencia: **toda tarefa da medica em ate 3 cliques a partir do
 painel**. Agendar, atender, prescrever, editar o site.
