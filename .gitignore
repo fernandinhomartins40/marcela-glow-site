@@ -47,3 +47,7 @@ packages/database/node_modules/
 
 # Cache incremental do tsc --build (recriado a cada checagem de tipos)
 *.tsbuildinfo
+
+# Graphify: grafo de conhecimento do codebase (regenerado com `graphify update .`)
+graphify-out/*
+!graphify-out/GRAPH_REPORT.md

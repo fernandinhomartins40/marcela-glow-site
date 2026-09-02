@@ -76,6 +76,37 @@ Routes published by Nginx:
 - Patient PWA: `http://localhost:3095/paciente/`
 - API health: `http://localhost:3095/api/health`
 
+## Mapa do codigo (Graphify)
+
+O repositorio e indexado pelo [Graphify](https://github.com/safishamsi/graphify), que
+monta um grafo de conhecimento do codebase via AST (tree-sitter), sem custo de LLM.
+Serve para navegar a arquitetura e medir o impacto de uma mudanca antes de fazer.
+
+Instalacao (uma vez por maquina, requer Python 3.10+ e `uv`):
+
+```sh
+uv tool install "graphifyy[sql]"
+graphify install
+```
+
+Uso:
+
+```sh
+graphify update .                        # reconstroi o grafo apos mudar codigo
+graphify god-nodes --top 15              # hubs da arquitetura
+graphify explain "authenticate()"        # vizinhos e chamadas de um simbolo
+graphify affected "authenticate()"       # o que quebra se esse simbolo mudar
+graphify path "authenticate()" "AppError"  # menor caminho entre dois simbolos
+graphify query "how does auth reach prisma?"
+```
+
+As buscas casam nomes de simbolos do codigo, entao use os identificadores reais
+(`authenticate()`, `AppError`) e termos em ingles - perguntas em portugues nao casam.
+
+Saidas em `graphify-out/`: `graph.html` (visualizacao interativa), `GRAPH_REPORT.md`
+(versionado) e `graph.json` (consultas). Os arquivos pesados sao ignorados pelo git e
+um hook de `post-commit` mantem o grafo atualizado a cada commit.
+
 ## Deploy
 
 O deploy é feito por Docker na VPS, com Nginx servindo o site, os PWAs e a API
