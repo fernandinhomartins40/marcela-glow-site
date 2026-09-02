@@ -165,6 +165,8 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .empty-icon { display: block; margin: 0 auto 10px; color: var(--bronze); opacity: .75; }
 .empty-title { margin: 0; font-size: 14px; font-weight: 600; }
 .empty-desc { margin: 6px auto 16px; max-width: 380px; font-size: 13px; color: var(--text-muted); line-height: 1.55; }
+/* Estado vazio com mais de uma saída (ex.: "ir para o próximo" + "novo"). */
+.empty-state > button + button, .empty-state > * + button { margin-left: 8px; }
 
 .drawer-body { display: grid; gap: 14px; }
 .drawer-footer { display: flex; justify-content: flex-end; gap: 8px; padding-top: 14px; border-top: 1px solid var(--border); }
