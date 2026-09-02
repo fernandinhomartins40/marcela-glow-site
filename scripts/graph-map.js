@@ -28,11 +28,16 @@ const nodes = g.nodes || []
 const links = g.links || []
 
 const norm = (s) => (s || '').split(String.fromCharCode(92)).join('/')
+// Uma "area" e a maior unidade util do projeto. Em monorepos e o app/pacote
+// (apps/web, packages/database); em repo de app unico e o diretorio de topo
+// (src, tests). GRAPH_MAP_GROUPS ajusta os prefixos que agrupam por subpasta.
+const GROUPS = (process.env.GRAPH_MAP_GROUPS || 'apps,packages,services,libs,modules')
+  .split(',').map((x) => x.trim()).filter(Boolean)
 const areaOf = (f) => {
   const p = norm(f)
   if (!p.includes('/')) return null
   const parts = p.split('/')
-  return parts[0] === 'apps' || parts[0] === 'packages' ? `${parts[0]}/${parts[1]}` : parts[0]
+  return GROUPS.includes(parts[0]) && parts.length > 1 ? parts[0] + '/' + parts[1] : parts[0]
 }
 
 const fileById = new Map(nodes.map((n) => [n.id, norm(n.source_file)]))
@@ -91,7 +96,13 @@ const result = {
   areas: [...byArea.entries()].sort((a, b) => b[1] - a[1]),
   crossBoundary: [...cross.entries()].sort((a, b) => b[1] - a[1]),
   hubs: [...hubsByArea.entries()].sort((a, b) => b[1].d - a[1].d),
-  dirs: [...byDir.entries()].filter(([, n]) => n >= 5).sort((a, b) => b[1] - a[1]),
+  // Limiar adaptativo: 5+ nos poda o ruido em projetos grandes, mas zeraria
+  // a lista num projeto pequeno. Abaixo de 40 diretorios, mostra todos.
+  dirs: (() => {
+    const all = [...byDir.entries()].sort((a, b) => b[1] - a[1])
+    const big = all.filter(([, n]) => n >= 5)
+    return all.length > 40 ? big : all
+  })(),
 }
 
 if (process.argv.includes('--json')) {
@@ -130,7 +141,8 @@ function render() {
     for (const [k, n] of result.crossBoundary) L.push(`- ${code(k)}: ${n} arestas`)
   }
   L.push('')
-  L.push('**Onde as coisas moram** (diretorios com 5+ nos):')
+  const podou = result.dirs.length > 0 && result.dirs[result.dirs.length - 1][1] >= 5
+  L.push(`**Onde as coisas moram**${podou ? ' (diretorios com 5+ nos)' : ''}:`)
   L.push('')
   L.push(TICK.repeat(3))
   for (const [d, n] of result.dirs) L.push(`${String(n).padStart(4)}  ${d}`)
