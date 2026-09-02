@@ -37,17 +37,16 @@ imprime os ids; repita com o id completo (ex.: `apps_web_src_lib_utils_cn`).
 <!-- graph-map:begin -->
 <!-- Gerado por scripts/graph-map.js. Nao editar a mao: rode `node scripts/graph-map.js --write`. -->
 
-Grafo: 1801 nos, 3152 arestas (commit `27d261c9`).
+Grafo: 1784 nos, 3157 arestas (commit `c0c48cd2`).
 
 | Area | Nos | Hub (maior propagacao de mudanca) |
 |---|---|---|
 | `apps/web` | 616 | `cn()` (228 arestas) - `apps/web/src/lib/utils.ts:4` |
-| `apps/admin` | 376 | `lib/ui.tsx` (56 arestas) - `apps/admin/src/lib/ui.tsx:1` |
-| `apps/api` | 324 | `admin.ts` (55 arestas) - `apps/api/src/routes/admin.ts:1` |
-| `apps/patient` | 229 | `sections.tsx` (37 arestas) - `apps/patient/src/components/sections.tsx:1` |
+| `apps/admin` | 377 | `lib/ui.tsx` (57 arestas) - `apps/admin/src/lib/ui.tsx:1` |
+| `apps/api` | 326 | `admin.ts` (55 arestas) - `apps/api/src/routes/admin.ts:1` |
+| `apps/patient` | 231 | `sections.tsx` (38 arestas) - `apps/patient/src/components/sections.tsx:1` |
 | `packages/database` | 85 | `"Tenant"` (24 arestas) - `packages/database/prisma/migrations/20240429000000_init/migration.sql:8` |
 | `scripts` | 48 | `graph-map.js` (20 arestas) - `scripts/graph-map.js:1` |
-| `packages/shared` | 22 | `shared/src/index.ts` (12 arestas) - `packages/shared/src/index.ts:1` |
 | `.github` | 8 | `rollback()` (3 arestas) - `.github/scripts/remote-deploy.sh:72` |
 
 **Acoplamento entre areas:**
@@ -58,32 +57,30 @@ Grafo: 1801 nos, 3152 arestas (commit `27d261c9`).
 ```
  282  apps/web/src/components/ui
  219  apps/web
- 137  apps/api/src/lib
+ 138  apps/api/src/lib
  132  apps/admin
  130  apps/patient
   90  apps/api/src/routes
-  84  apps/admin/src/components
-  79  apps/api
+  81  apps/admin/src/components
+  80  apps/api
   74  apps/admin/src/lib
   48  scripts
   46  apps/web/src/components
+  42  apps/patient/src/lib
   42  packages/database
-  41  apps/patient/src/lib
-  34  apps/patient/src/components
+  35  apps/patient/src/components
   22  apps/web/src/hooks
   19  apps/admin/src/components/patients
+  19  apps/admin/src/components/landing
   19  apps/admin/src/components/encounter
   16  apps/web/src/lib
   16  apps/admin/src/pages
-  15  apps/admin/src/components/landing
   15  apps/admin/src
-  13  packages/shared/src
   12  packages/database/prisma/migrations/20260430000000_crm_patient_pwas
   10  apps/web/src/types
   10  apps/patient/src/pages
    9  apps/api/src/middleware
    9  apps/web/src/assets/instagram
-   9  packages/shared
    8  apps/patient/src/pages/sections
    8  .github/scripts
    7  apps/web/src/pages
@@ -98,11 +95,11 @@ Grafo: 1801 nos, 3152 arestas (commit `27d261c9`).
 
 ## Divida conhecida
 
-- `packages/shared` e codigo morto: ninguem importa `@marcela/shared`. O
-  `TENANT_SLUG` que ele exporta nao e usado e `'marcela-duch'` esta hardcoded
-  em 5 arquivos: `apps/web/src/lib/api.ts`, `apps/admin/src/lib/ui.tsx`,
+- O slug da clinica (`'marcela-duch'`) esta hardcoded em 5 arquivos:
+  `apps/web/src/lib/api.ts`, `apps/admin/src/lib/ui.tsx`,
   `apps/patient/src/lib/api.ts`, `apps/api/src/routes/patient.ts` e
-  `packages/database/src/seed.ts`.
+  `packages/database/src/seed.ts`. Os apps sao silos independentes (nao
+  compartilham codigo), entao so vale unificar quando houver um segundo tenant.
 
 ## Convencoes
 

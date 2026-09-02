@@ -20,9 +20,9 @@ arquitetural, e um excesso de superficie em poucas telas.
 | Storage S3/MinIO + Nginx `/files/` | Completo, falta validar end-to-end |
 | Landing (CMS editavel + fallback) | Completo |
 | Painel do medico | Completo; 3 telas grandes ja quebradas |
-| Painel do paciente | Completo, mais raso que a API permite |
+| Painel do paciente | Completo; download de arquivo corrigido |
 | Envio de e-mail | Implementado, falta validar com SMTP real |
-| Testes automatizados | 17 testes de regra; falta teste de rota |
+| Testes automatizados | 23 testes de regra; falta teste de rota |
 
 ## Como tudo se conecta
 
@@ -73,8 +73,9 @@ validar com um SMTP real** - ate la, o envio esta escrito mas nao exercitado.
 
 ### 2. Testes automatizados (parcialmente resolvido)
 
-O projeto nao tinha nenhum. Agora ha 17 cobrindo permissao e fuso - as regras
-onde o erro nao aparece. Falta cobertura de rota com banco.
+O projeto nao tinha nenhum. Agora ha 23 cobrindo permissao, fuso e a chave de
+armazenamento - as regras onde o erro nao aparece. Falta cobertura de rota com
+banco.
 
 ### 3. Fluxo de storage nunca validado ponta a ponta
 
@@ -89,7 +90,7 @@ Voce sentiu certo, mas a complexidade esta concentrada, nao espalhada:
 | Arquivo | Na auditoria | Agora |
 |---|---|---|
 | `apps/api/src/routes/admin.ts` | 1389 | 1389 |
-| `apps/admin/src/components/Landing.tsx` | 1178 | 595 |
+| `apps/admin/src/components/Landing.tsx` | 1178 | 233 |
 | `apps/api/src/routes/clinical.ts` | 842 | 842 |
 | `apps/admin/src/components/Encounter.tsx` | 1396 | 318 |
 | `apps/admin/src/components/Patients.tsx` | 1034 | 206 |
@@ -161,7 +162,7 @@ login. **Falta validar com SMTP real** (ver Passo 2).
 Criterio de aceite: imagem enviada pelo painel aparece na landing apos atualizar
 a pagina, e anexo clinico abre por link que expira.
 
-### Passo 3 - Simplificar as 3 telas que a cliente usa todo dia (QUASE)
+### Passo 3 - Simplificar as 3 telas que a cliente usa todo dia (CONCLUIDO)
 
 Nao reescrever: **extrair**. Movimento mecanico, sem tocar em comportamento,
 texto, validacao ou chamada de API; contrato publico intacto nos tres casos.
@@ -170,11 +171,9 @@ texto, validacao ou chamada de API; contrato publico intacto nos tres casos.
 |---|---|---|---|
 | `Encounter.tsx` | 1396 | 318 | por etapa do consultorio |
 | `Patients.tsx` | 1034 | 206 | lista / formulario / ficha |
-| `Landing.tsx` | 1178 | 595 | editor / campos / preview |
+| `Landing.tsx` | 1178 | 233 | editor / campos / secoes / preview |
 
-Falta: `Landing.tsx` ainda tem 595 linhas contra a meta de ~400. O que sobra e
-`SectionFields`, um switch com um ramo por secao - so encolhe separando uma
-secao por arquivo.
+Nenhum arquivo de tela passa de 400 linhas.
 
 Regra da experiencia: **toda tarefa da medica em ate 3 cliques a partir do
 painel**. Agendar, atender, prescrever, editar o site.
@@ -182,21 +181,30 @@ painel**. Agendar, atender, prescrever, editar o site.
 Criterio de aceite: nenhum arquivo de tela acima de ~400 linhas, e nenhum
 formulario novo escrito sem usar `ui.tsx`.
 
-### Passo 4 - Fechar o painel do paciente
+### Passo 4 - Fechar o painel do paciente (CONCLUIDO)
 
-A API ja oferece mais do que a tela mostra (14 rotas, incluindo mensagens,
-prescricoes e download de arquivo). Completar as secoes existentes (`Home`,
-`Appointments`, `Prescriptions`, `Messages`) para consumir o que ja existe, sem
-criar rota nova.
+**A auditoria errou aqui.** Registrei "mais raso que a API permite" ao ver que
+as secoes tinham 11 a 24 linhas cada. Elas sao curtas porque **compoem**
+componentes de 1136 linhas em `components/` - proxima consulta, listas de
+consultas, sessoes, prescricoes, mensagens e notificacoes ja estavam todas
+ligadas. Contar linha de arquivo nao mede o que a tela entrega.
+
+O que de fato faltava era um bug: a lista de arquivos apontava para
+`attachment.url`, o endereco do bucket privado, entao **clicar nao abria nada**.
+A rota que assina o link (`/patient/files/:id/download`) existia e nunca era
+chamada. Corrigido - a linha agora busca o link assinado ao ser tocada, com
+estado de carregando e erro.
 
 Criterio de aceite: paciente entra, ve a proxima consulta, abre a prescricao e
-baixa o anexo, sem passar pela clinica.
+baixa o anexo, sem passar pela clinica. **O download so pode ser confirmado com
+storage real** (Passo 2).
 
 ### Passo 5 - Rede de seguranca minima (PARCIAL)
 
-Feito: vitest instalado, `npm test` na raiz, e 17 testes cobrindo os dois pontos
-onde erro nao aparece - permissao (papel ganhar acesso a mais expoe prontuario
-sem quebrar nada visivel) e fuso (consulta so aparece na hora errada).
+Feito: vitest instalado, `npm test` na raiz, e 23 testes cobrindo os pontos onde
+erro nao aparece - permissao (papel ganhar acesso a mais expoe prontuario sem
+quebrar nada visivel), fuso (consulta so aparece na hora errada) e a chave de
+armazenamento (arquivo vai para o lugar errado ou sobrescreve outro).
 Verificado que pegam regressao: conceder `RECORD_READ` a `RECEPTION` falha.
 
 Falta: teste de rota com banco (login, agendamento, upload presigned), que exige
@@ -214,8 +222,8 @@ subir Postgres de teste. Criterio de aceite: `npm test` no CI.
 
 ## Divida menor, registrada
 
-- `packages/shared` e codigo morto: ninguem importa `@marcela/shared`, e o slug
-  da clinica esta hardcoded em 5 arquivos. Unificar ou remover o pacote.
+- `packages/shared` foi removido: ninguem o importava. O slug da clinica segue
+  hardcoded em 5 arquivos - so vale unificar quando houver um segundo tenant.
 - WhatsApp e por link `wa.me` (nao envia sozinho). E uma decisao consciente e
   documentada no codigo; vale confirmar com a cliente que atende a expectativa.
 - **Lembrete de consulta** (vespera do atendimento) precisa de agendador em
