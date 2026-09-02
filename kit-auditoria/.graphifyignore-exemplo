@@ -1,0 +1,3 @@
+# O proprio kit nao faz parte do codigo do projeto: indexa-lo poluiria o mapa
+# (num projeto pequeno chega a dominar o grafo).
+kit-auditoria/

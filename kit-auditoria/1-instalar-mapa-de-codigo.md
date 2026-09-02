@@ -1,7 +1,9 @@
 # Estrategia: mapa de codigo barato para agentes
 
-Copie este arquivo para a raiz de qualquer projeto e peca ao Claude:
-**"leia o SETUP-GRAPH-CONTEXT.md e aplique neste projeto"**.
+Passo 1 do `kit-auditoria`. Copie a pasta do kit para a raiz do projeto e peca:
+**"leia kit-auditoria/1-instalar-mapa-de-codigo.md e aplique neste projeto"**.
+
+O script pronto esta em `kit-auditoria/graph-map.js` - copie para `scripts/`.
 
 ## O problema que isto resolve
 
@@ -79,9 +81,22 @@ Se `graphify hook install` adicionar `graphify-out/graph.json merge=graphify`
 ao `.gitattributes`, remova a linha — ela referencia um arquivo agora ignorado
 e exigiria o merge driver nas outras maquinas sem nunca ser usada.
 
+### 3b. Excluir o proprio kit do indice
+
+O kit e documentacao, nao codigo do projeto. Sem excluir, ele entra no grafo e
+distorce o mapa - num projeto pequeno chega a domina-lo. Crie um
+`.graphifyignore` na raiz (ou some ao existente):
+
+```
+kit-auditoria/
+```
+
+Ha um modelo pronto em `kit-auditoria/.graphifyignore-exemplo`. Rode
+`graphify update .` de novo depois de criar.
+
 ### 4. Copiar o script destilador
 
-Copie `scripts/graph-map.js` deste projeto. Ele nao tem dependencia alem do
+Copie `kit-auditoria/graph-map.js` para `scripts/`. Ele nao tem dependencia alem do
 Node (`fs`, `path`) e nao assume nada do layout — agrupa por `apps/`,
 `packages/`, `services/`, `libs/`, `modules/` e cai para o diretorio de topo
 em repos de app unico. Para outros prefixos:
@@ -101,7 +116,7 @@ node scripts/graph-map.js --check   # exit 1 se desatualizado (para CI)
 
 ### 5. Montar o CLAUDE.md
 
-Estrutura em tres camadas (veja o `CLAUDE.md` deste projeto como modelo):
+Estrutura em tres camadas:
 
 1. **Como investigar** — a ordem de consulta e os limites do grafo.
 2. **Mapa gerado** — entre `<!-- graph-map:begin -->` e `<!-- graph-map:end -->`.

@@ -37,7 +37,7 @@ imprime os ids; repita com o id completo (ex.: `apps_web_src_lib_utils_cn`).
 <!-- graph-map:begin -->
 <!-- Gerado por scripts/graph-map.js. Nao editar a mao: rode `node scripts/graph-map.js --write`. -->
 
-Grafo: 1749 nos, 2936 arestas (commit `6f29dc46`).
+Grafo: 1769 nos, 2955 arestas (commit `0cb914c8`).
 
 | Area | Nos | Hub (maior propagacao de mudanca) |
 |---|---|---|
@@ -46,7 +46,7 @@ Grafo: 1749 nos, 2936 arestas (commit `6f29dc46`).
 | `apps/api` | 307 | `admin.ts` (52 arestas) - `apps/api/src/routes/admin.ts:1` |
 | `apps/patient` | 229 | `sections.tsx` (37 arestas) - `apps/patient/src/components/sections.tsx:1` |
 | `packages/database` | 85 | `"Tenant"` (24 arestas) - `packages/database/prisma/migrations/20240429000000_init/migration.sql:8` |
-| `scripts` | 47 | `graph-map.js` (19 arestas) - `scripts/graph-map.js:1` |
+| `scripts` | 48 | `graph-map.js` (20 arestas) - `scripts/graph-map.js:1` |
 | `packages/shared` | 22 | `shared/src/index.ts` (12 arestas) - `packages/shared/src/index.ts:1` |
 | `.github` | 8 | `rollback()` (3 arestas) - `.github/scripts/remote-deploy.sh:72` |
 
@@ -65,7 +65,7 @@ Grafo: 1749 nos, 2936 arestas (commit `6f29dc46`).
   90  apps/api/src/routes
   74  apps/admin/src/lib
   72  apps/api
-  47  scripts
+  48  scripts
   46  apps/web/src/components
   42  packages/database
   41  apps/patient/src/lib
