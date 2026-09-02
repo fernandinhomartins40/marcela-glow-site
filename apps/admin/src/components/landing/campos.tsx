@@ -1,5 +1,5 @@
 import React from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { ChevronRight, Plus, Trash2 } from 'lucide-react'
 import { Field } from '../../lib/ui'
 import { ImageCropper } from '../ImageCropper'
 import type { CropTarget } from '../../lib/imageCrop'
@@ -214,3 +214,70 @@ export function ImageField({
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** Como o resultado aparece numa busca — o formato mais reconhecível. */
+
+export function Fold({
+  title,
+  hint,
+  count,
+  defaultOpen = false,
+  children,
+}: {
+  title: string
+  hint?: string
+  count?: number
+  defaultOpen?: boolean
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = React.useState(defaultOpen)
+  const bodyId = React.useId()
+
+  return (
+    <section className="fold">
+      <button
+        type="button"
+        className="fold-head"
+        aria-expanded={open}
+        aria-controls={bodyId}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <ChevronRight
+          size={15}
+          aria-hidden="true"
+          style={{ transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .18s ease' }}
+        />
+        <span className="fold-title">
+          <strong>{title}</strong>
+          {hint && <em>{hint}</em>}
+        </span>
+        {count !== undefined && <span className="fold-count">{count}</span>}
+      </button>
+      {open && (
+        <div className="fold-body" id={bodyId}>
+          {children}
+        </div>
+      )}
+    </section>
+  )
+}
+
+/** Cabeçalho comum: quase toda seção tem sobrelinha e título em duas partes. */
+export function HeadingFields({ draft, set, lead }: { draft: any; set: (p: string, v: unknown) => void; lead?: boolean }) {
+  return (
+    <>
+      <Field label="Sobrelinha" hint="A linha pequena em maiúsculas acima do título.">
+        <input value={draft.eyebrow ?? ''} onChange={(e) => set('eyebrow', e.target.value)} />
+      </Field>
+      <Field label="Título — primeira linha">
+        <input value={draft.titleTop ?? ''} onChange={(e) => set('titleTop', e.target.value)} />
+      </Field>
+      <Field label="Título — segunda linha" hint="Sai em itálico, mais leve.">
+        <input value={draft.titleBottom ?? ''} onChange={(e) => set('titleBottom', e.target.value)} />
+      </Field>
+      {lead && (
+        <Field label="Texto de apoio">
+          <textarea rows={3} value={draft.lead ?? ''} onChange={(e) => set('lead', e.target.value)} />
+        </Field>
+      )}
+    </>
+  )
+}
