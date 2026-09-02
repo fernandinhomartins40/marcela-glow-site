@@ -508,7 +508,23 @@ router.get('/encounters/agenda', ...staffOnly, requirePermission('APPOINTMENT_RE
       orderBy: { scheduledAt: 'asc' },
     })
 
-    res.json(appointments)
+    // Dia sem atendimento e a situacao normal numa agenda de consultorio, mas
+    // a tela vazia parece sistema quebrado. Devolve tambem o proximo compromisso
+    // depois desta data, para o painel dizer onde a agenda continua.
+    const next =
+      appointments.length > 0
+        ? null
+        : await prisma.appointment.findFirst({
+            where: {
+              tenantId: req.user!.tenantId,
+              scheduledAt: { gte: end },
+              status: { in: ['PENDING', 'CONFIRMED'] },
+            },
+            select: { id: true, scheduledAt: true, name: true },
+            orderBy: { scheduledAt: 'asc' },
+          })
+
+    res.json({ appointments, next })
   } catch (err) {
     next(err)
   }

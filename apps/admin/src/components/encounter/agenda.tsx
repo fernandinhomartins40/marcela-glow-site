@@ -1,6 +1,6 @@
 import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ChevronRight, Plus, Stethoscope, UserRound } from 'lucide-react'
+import { CalendarDays, ChevronRight, Plus, Stethoscope, UserRound } from 'lucide-react'
 import {
   api,
   Chip,
@@ -45,7 +45,12 @@ export function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
 
   const agenda = useQuery({
     queryKey: ['encounter-agenda', date],
-    queryFn: async () => (await api.get('/clinical/encounters/agenda', { params: { date } })).data as AgendaEntry[],
+    queryFn: async () =>
+      (await api.get('/clinical/encounters/agenda', { params: { date } })).data as {
+        appointments: AgendaEntry[]
+        /** Preenchido só quando o dia está vazio: o próximo compromisso na agenda. */
+        next: { id: string; scheduledAt: string; name: string } | null
+      },
   })
 
   // Busca de paciente para quem chegou sem agendamento
@@ -57,9 +62,10 @@ export function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
   })
 
   // A API devolve janela ampla em UTC; recorta o dia local aqui
-  const entries = (agenda.data ?? []).filter(
+  const entries = (agenda.data?.appointments ?? []).filter(
     (entry) => entry.scheduledAt && clinicDateKey(entry.scheduledAt) === date,
   )
+  const next = agenda.data?.next ?? null
 
   const selected = new Date(`${date}T12:00:00`)
 
@@ -141,12 +147,26 @@ export function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
       ) : !entries.length ? (
         <EmptyState
           title="Nenhum atendimento neste dia"
-          description="Escolha outra data, busque a paciente pelo nome ou abra um novo atendimento."
+          description={
+            next
+              ? `O próximo é ${next.name}, em ${fullDayLabel(new Date(next.scheduledAt))}.`
+              : 'Escolha outra data, busque a paciente pelo nome ou abra um novo atendimento.'
+          }
           action={
-            <button className="primary" onClick={() => setCreating(true)}>
-              <Plus size={15} />
-              Novo atendimento
-            </button>
+            <>
+              {/* Sem isto, a agenda vazia parece sistema quebrado: a medica nao
+                  tem como saber se nao ha nada hoje ou se nada carregou. */}
+              {next && (
+                <button onClick={() => setDate(clinicDateKey(next.scheduledAt))}>
+                  <CalendarDays size={15} />
+                  Ir para o próximo
+                </button>
+              )}
+              <button className="primary" onClick={() => setCreating(true)}>
+                <Plus size={15} />
+                Novo atendimento
+              </button>
+            </>
           }
         />
       ) : (
