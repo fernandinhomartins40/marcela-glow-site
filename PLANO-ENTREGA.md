@@ -21,8 +21,8 @@ arquitetural, e um excesso de superficie em poucas telas.
 | Landing (CMS editavel + fallback) | Completo |
 | Painel do medico | Completo, complexo demais em 3 telas |
 | Painel do paciente | Completo, mais raso que a API permite |
-| **Envio de e-mail** | **Ausente - bloqueador** |
-| Testes automatizados | Zero |
+| Envio de e-mail | Implementado, falta validar com SMTP real |
+| Testes automatizados | 17 testes de regra; falta teste de rota |
 
 ## Como tudo se conecta
 
@@ -62,21 +62,19 @@ medica saber que pode editar (ver Passo 3).
 
 ## Os tres bloqueadores
 
-### 1. Nao existe envio de e-mail (critico)
+### 1. Envio de e-mail (resolvido no codigo)
 
-Busca por nodemailer/smtp/sendMail na API: zero resultados. Em
-`apps/api/src/routes/auth.ts:181` e `patient.ts:185`, "esqueci minha senha" gera
-o token, grava o hash e **em producao devolve `undefined`** - ninguem recebe
-nada. Mesmo caso no convite de equipe (`admin.ts:1180`).
+Era o unico item que sozinho travava a entrega: os tres fluxos que geram token
+(reset de equipe, reset de paciente, convite) gravavam o hash e descartavam o
+valor, entao quem esquecia a senha dependia de alguem mexer no banco.
 
-Efeito na venda: paciente que esquece a senha fica travado, e a clinica precisa
-mexer no banco. Nao da para entregar assim.
+Resolvido com `lib/mailer.ts` e ligado tambem ao ciclo do agendamento. **Falta
+validar com um SMTP real** - ate la, o envio esta escrito mas nao exercitado.
 
-### 2. Zero testes automatizados
+### 2. Testes automatizados (parcialmente resolvido)
 
-Nenhum arquivo `.test.ts` no repositorio. Com 118 rotas e RBAC granular,
-qualquer ajuste antes da entrega e feito no escuro. Nao precisa de cobertura
-ampla - precisa cobrir os fluxos que, se quebrarem, o cliente ve.
+O projeto nao tinha nenhum. Agora ha 17 cobrindo permissao e fuso - as regras
+onde o erro nao aparece. Falta cobertura de rota com banco.
 
 ### 3. Fluxo de storage nunca validado ponta a ponta
 
@@ -105,23 +103,49 @@ A conclusao importante: **nao falta componente reutilizavel, falta usar o que ja
 existe**. As telas grandes cresceram porque montam formulario inline em vez de
 compor com `ui.tsx`.
 
+## Revisao da regra de negocio
+
+A regra esta bem escrita onde existe: horario opcional no agendamento (a pessoa
+pode so pedir contato), vinculo automatico com paciente ja cadastrada pelo
+e-mail, conflito de agenda checado com `checkSlotAvailable`, equipe podendo
+confirmar fora do expediente mas nunca sobrepor atendimento.
+
+O que faltava nao era regra a mais - era **fechar o ciclo com quem esta do outro
+lado**. O sistema sabia tudo e nao contava nada:
+
+- Quem agendava pela landing sem cadastro **nao recebia nada**. `notifyPatient`
+  so alcanca quem tem `patientId` (notificacao no portal e push), e o WhatsApp
+  depende de alguem da equipe clicar num link. A pessoa mandava o pedido e
+  ficava no escuro.
+- Quem esquecia a senha ficava preso na porta: o token era gerado e descartado.
+
+O principio adotado: **todo evento que muda o estado de um compromisso avisa a
+pessoa pelo canal que ela tem** - e-mail sempre, portal e push quando ha
+cadastro, WhatsApp como acao da equipe. Isso e o que faz o sistema parecer vivo
+sem acrescentar tela nenhuma.
+
+O que **nao** virou regra nova, de proposito: cobranca, confirmacao automatica
+sem revisao humana e lembrete agendado. Os dois primeiros tiram da clinica o
+controle sobre a agenda; o terceiro precisa de um agendador em producao, que e
+infraestrutura, nao regra. Ficam registrados como divida.
+
 ## Plano de entrega
 
 Ordenado por bloqueio de venda. Cada passo entrega algo demonstravel.
 
-### Passo 1 - Destravar o acesso (bloqueador)
+### Passo 1 - Fechar o ciclo de comunicacao (CONCLUIDO)
 
-Sem isto nao se entrega a cliente.
+1. `lib/mailer.ts` com `sendMail`, layout unico e degradacao: sem SMTP o link
+   vai para o log em vez de sumir, e falha de envio nunca derruba a requisicao
+   que ja concluiu.
+2. Ligado nos tres pontos que geravam token orfao: reset de equipe, reset de
+   paciente e convite de integrante.
+3. Ligado tambem no ciclo do agendamento: aviso de recebimento na hora do pedido
+   e, via `notifyPatient`, confirmacao, remarcacao e cancelamento - alcancando
+   inclusive quem agendou sem cadastro.
 
-1. Adicionar `nodemailer` e um `lib/mailer.ts` com uma funcao
-   `sendMail({ to, subject, html })`, lendo `SMTP_*` do ambiente.
-2. Ligar nos tres pontos que ja geram token: reset de staff (`auth.ts:181`),
-   reset de paciente (`patient.ts:185`) e convite de equipe (`admin.ts:1180`).
-3. Manter o retorno do token em dev (ja e o comportamento) e, quando SMTP nao
-   estiver configurado, logar o link no servidor em vez de falhar em silencio.
-
-Criterio de aceite: pedir "esqueci a senha" em producao chega e-mail com link
-que abre a tela de nova senha e conclui o login.
+Criterio de aceite: pedir "esqueci a senha" chega e-mail com link que conclui o
+login. **Falta validar com SMTP real** (ver Passo 2).
 
 ### Passo 2 - Provar a persistencia de imagem ponta a ponta
 
@@ -160,13 +184,15 @@ criar rota nova.
 Criterio de aceite: paciente entra, ve a proxima consulta, abre a prescricao e
 baixa o anexo, sem passar pela clinica.
 
-### Passo 5 - Rede de seguranca minima
+### Passo 5 - Rede de seguranca minima (PARCIAL)
 
-Cinco testes de API cobrindo o que quebra a venda: login de staff, login de
-paciente, criar agendamento publico, upload presigned e permissao negada para
-papel sem acesso.
+Feito: vitest instalado, `npm test` na raiz, e 17 testes cobrindo os dois pontos
+onde erro nao aparece - permissao (papel ganhar acesso a mais expoe prontuario
+sem quebrar nada visivel) e fuso (consulta so aparece na hora errada).
+Verificado que pegam regressao: conceder `RECORD_READ` a `RECEPTION` falha.
 
-Criterio de aceite: `npm test` roda no CI e falha se algum desses quebrar.
+Falta: teste de rota com banco (login, agendamento, upload presigned), que exige
+subir Postgres de teste. Criterio de aceite: `npm test` no CI.
 
 ## O que NAO fazer
 
@@ -184,3 +210,9 @@ Criterio de aceite: `npm test` roda no CI e falha se algum desses quebrar.
   da clinica esta hardcoded em 5 arquivos. Unificar ou remover o pacote.
 - WhatsApp e por link `wa.me` (nao envia sozinho). E uma decisao consciente e
   documentada no codigo; vale confirmar com a cliente que atende a expectativa.
+- **Lembrete de consulta** (vespera do atendimento) precisa de agendador em
+  producao - cron ou fila. A mensagem ja existe (`MessageKind` tem `reminder`);
+  falta so quem dispare.
+- **Confirmacao automatica sem revisao** e **cobranca** ficaram de fora de
+  proposito: tiram da clinica o controle da agenda. Decisao da dona do negocio,
+  nao tecnica.

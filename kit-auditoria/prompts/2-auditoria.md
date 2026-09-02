@@ -49,7 +49,22 @@ concentrada em poucos arquivos, nao espalhada. Verifique tambem se ja existe
 uma camada de componentes reutilizaveis subutilizada - e comum a tela ter
 crescido por nao usar o que ja estava pronto.
 
-### 6. O que impede entregar
+### 6. O ciclo se fecha com o usuario?
+
+Sistema inacabado costuma **saber tudo e nao contar nada**. Para cada evento que
+muda o estado de algo que o usuario espera (pedido criado, confirmado, cancelado,
+pagamento aprovado, senha redefinida), pergunte:
+
+- **A pessoa fica sabendo?** Por qual canal?
+- **O canal alcanca quem nao tem cadastro?** Notificacao no portal e push
+  costumam exigir um id interno que o visitante nao tem - entao quem chegou pela
+  porta da frente fica no escuro.
+- **O aviso depende de alguem lembrar de clicar?** Se sim, nao e automacao.
+
+Esta e a lacuna de regra de negocio mais comum e a mais barata de fechar: nao
+exige tela nova, so entregar o que o sistema ja sabe.
+
+### 7. O que impede entregar
 Procure ativamente pelo que costuma faltar em projeto inacabado:
 
 - **Envio de e-mail** (reset de senha que gera token e nao entrega a ninguem)
@@ -61,7 +76,7 @@ Procure ativamente pelo que costuma faltar em projeto inacabado:
 Para cada um: e bloqueador de entrega ou incomodo? Justifique pelo efeito no
 usuario final.
 
-### 7. Estado verificavel
+### 8. Estado verificavel
 Rode o build (e os testes, se houver) e relate o resultado real. Se falhar,
 mostre o erro.
 

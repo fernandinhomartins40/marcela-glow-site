@@ -37,6 +37,33 @@ perde comportamento que ninguem lembra de reimplementar.
 **Nao invente escopo.** O plano cobre o que a auditoria encontrou. Se algo seria
 bom mas nao bloqueia, registre no fim como divida, fora dos passos.
 
+## Regra de negocio: robusta sem ficar complexa
+
+Se o dono pediu para melhorar a regra de negocio, resista ao impulso de
+acrescentar funcionalidade. Em projeto inacabado, o que costuma faltar nao e
+regra a mais - e **fechar o ciclo com quem esta do outro lado**. O sistema ja
+sabe tudo e nao conta nada.
+
+Priorize, nesta ordem:
+
+1. **Avisar quem espera resposta.** Todo evento que muda o estado de um
+   compromisso deve alcancar a pessoa pelo canal que ela tem. Canal que exige
+   cadastro nao alcanca quem chegou pela porta da frente; canal que depende de
+   alguem clicar nao e automatico.
+2. **Nao deixar ninguem preso.** Token que nao chega, fluxo que so termina com
+   intervencao manual no banco, estado sem saida.
+3. **Tornar visivel o que ja e editavel.** E comum haver painel de conteudo que
+   o dono nao sabe que existe.
+
+Deixe **fora** do plano, registrado como divida com a justificativa:
+
+- Automacao que tira do dono o controle de decisao (confirmar sozinho, cobrar
+  sozinho). E decisao de negocio, nao tecnica - pergunte, nao presuma.
+- O que exige infraestrutura nova (agendador, fila, worker) para um ganho que
+  nao bloqueia a entrega.
+
+Robusto aqui significa **o ciclo nao ter buraco**, nao ter mais recurso.
+
 ## Experiencia do usuario
 
 Todo passo que toca interface deve respeitar:
