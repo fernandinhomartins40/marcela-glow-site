@@ -210,20 +210,47 @@ export function AttachmentsList({ attachments }: { attachments: Attachment[] }) 
   return (
     <Panel title="Arquivos e fotos" icon={Paperclip}>
       <div>
-        {attachments.map((attachment) => {
-          const size = formatFileSize(attachment.sizeBytes)
-          return (
-            <ItemRow
-              key={attachment.id}
-              href={attachment.url}
-              title={attachment.fileName}
-              meta={[formatDate(attachment.createdAt), size].filter(Boolean).join(' · ')}
-              trailing={<Download size={15} className="text-accent shrink-0" aria-hidden="true" />}
-            />
-          )
-        })}
+        {attachments.map((attachment) => (
+          <AttachmentRow key={attachment.id} attachment={attachment} />
+        ))}
       </div>
     </Panel>
+  )
+}
+
+/**
+ * Uma linha de arquivo.
+ *
+ * O download não é um link direto: arquivo clínico fica em bucket privado, e o
+ * endereço que abre precisa ser assinado na hora pela API. Por isso a linha
+ * busca o link ao ser tocada e só então abre.
+ */
+function AttachmentRow({ attachment }: { attachment: Attachment }) {
+  const [error, setError] = React.useState<string | null>(null)
+
+  const open = useMutation({
+    mutationFn: () => fetchAttachmentUrl(attachment.id),
+    onMutate: () => setError(null),
+    onSuccess: (url) => window.open(url, '_blank', 'noopener,noreferrer'),
+    onError: (err) => setError(getErrorMessage(err, 'Não foi possível abrir o arquivo.')),
+  })
+
+  const size = formatFileSize(attachment.sizeBytes)
+
+  return (
+    <ItemRow
+      onClick={() => open.mutate()}
+      disabled={open.isPending}
+      title={attachment.fileName}
+      meta={error ?? [formatDate(attachment.createdAt), size].filter(Boolean).join(' · ')}
+      trailing={
+        open.isPending ? (
+          <Loader2 size={15} className="text-accent shrink-0 animate-spin" aria-hidden="true" />
+        ) : (
+          <Download size={15} className="text-accent shrink-0" aria-hidden="true" />
+        )
+      }
+    />
   )
 }
 

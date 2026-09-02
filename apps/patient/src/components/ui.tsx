@@ -70,12 +70,17 @@ export function ItemRow({
   description,
   trailing,
   href,
+  onClick,
+  disabled,
 }: {
   title: React.ReactNode
   meta?: React.ReactNode
   description?: React.ReactNode
   trailing?: React.ReactNode
   href?: string
+  /** Para linha que precisa buscar o destino antes de abrir (link assinado). */
+  onClick?: () => void
+  disabled?: boolean
 }) {
   const content = (
     <>
@@ -104,6 +109,19 @@ export function ItemRow({
       >
         {content}
       </a>
+    )
+  }
+
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        className={cn(base, 'w-full text-left transition-colors hover:bg-secondary/50 disabled:opacity-60')}
+      >
+        {content}
+      </button>
     )
   }
 

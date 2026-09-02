@@ -157,6 +157,19 @@ export async function fetchDashboard(): Promise<DashboardData> {
   return { ...dashboard.data, procedures: procedures.data ?? [] }
 }
 
+/**
+ * Pede o link de download de um arquivo clínico.
+ *
+ * O `url` que vem no painel aponta para o bucket privado e não abre sozinho:
+ * arquivo de paciente não pode ficar acessível a quem descobrir o endereço.
+ * A API confere se o arquivo é mesmo desta paciente, registra o acesso e
+ * devolve um link assinado que vale por 15 minutos.
+ */
+export async function fetchAttachmentUrl(id: string): Promise<string> {
+  const { data } = await api.get(`/patient/files/${id}/download`)
+  return data.downloadUrl
+}
+
 function urlBase64ToUint8Array(value: string) {
   const padding = '='.repeat((4 - (value.length % 4)) % 4)
   const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/')
