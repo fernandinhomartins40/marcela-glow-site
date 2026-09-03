@@ -786,6 +786,12 @@ body.page-lock { overflow: hidden; }
    Os filhos do corpo foram desenhados para uma coluna de 440px: lista de fatos
    empilhada, campos herdados do estilo global e rodapé espremido. Na página
    eles se distribuem como em qualquer tela do painel. */
+/* Dentro de um formulário a busca é um campo como os outros e acompanha a
+   largura da coluna. O `max-width: 420px` da regra base existe para a barra de
+   ferramentas, onde ela divide espaço com botões; num formulário ele deixava o
+   campo terminando antes dos demais, sem alinhar com nada. */
+.page-view .field > .search-box { max-width: none; min-width: 0; width: 100%; }
+
 /* `[type=search]` fica de fora: a caixa de busca tem lupa posicionada por cima
    e precisa do recuo maior à esquerda, senão o texto começa embaixo do ícone. */
 .page-view input:not([type=checkbox]):not([type=radio]):not([type=search]),
