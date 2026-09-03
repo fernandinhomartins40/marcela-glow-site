@@ -1,8 +1,10 @@
 import React from 'react'
-import { ChevronRight, Plus, Trash2 } from 'lucide-react'
-import { Field } from '../../lib/ui'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { ChevronRight, Image as ImageIcon, Plus, Trash2 } from 'lucide-react'
+import { api, ConfirmDialog, Field } from '../../lib/ui'
 import { ImageCropper } from '../ImageCropper'
 import type { CropTarget } from '../../lib/imageCrop'
+import type { LandingData } from './types'
 
 /**
  * Campos que varias secoes reaproveitam: lista de textos, lista de blocos

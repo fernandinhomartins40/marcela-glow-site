@@ -1,6 +1,6 @@
 import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Archive, ArchiveRestore, Mail, Pencil, Phone, Plus, Search, UserRound } from 'lucide-react'
+import { AlertTriangle, Archive, ArchiveRestore, CalendarDays, FileText, HeartPulse, Mail, Pencil, Phone, Plus, Search, UserRound } from 'lucide-react'
 import {
   api,
   Chip,
@@ -10,6 +10,7 @@ import {
   EmptyState,
   errorMessage,
   formatDateBR,
+  maskCPF,
   maskPhone,
   Modal,
   RowAction,

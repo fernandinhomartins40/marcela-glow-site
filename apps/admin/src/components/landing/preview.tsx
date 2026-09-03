@@ -1,6 +1,6 @@
 import React from 'react'
 import { CalendarCheck, Search, Sparkles } from 'lucide-react'
-import type { SectionId } from './types'
+import type { LandingData, SectionId } from './types'
 
 /**
  * Espelho do site dentro do painel: mostra como a secao vai aparecer com o

@@ -65,7 +65,7 @@ function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onB
 
   const query = useQuery({
     queryKey: ['encounter', appointmentId],
-    queryFn: async () => (await api.get(`/clinical/encounters/${appointmentId}`)).data as Encounter,
+    queryFn: async () => (await api.get(`/clinical/encounters/${appointmentId}`)).data as EncounterData,
   })
 
   const refresh = () => {

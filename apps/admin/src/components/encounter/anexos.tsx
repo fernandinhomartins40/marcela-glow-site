@@ -1,6 +1,6 @@
 import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BookOpen, FlaskConical, Pill, Plus } from 'lucide-react'
+import { BookOpen, FileSignature, FileText, FlaskConical, HeartPulse, Pill, Plus, Send } from 'lucide-react'
 import {
   api,
   Chip,
@@ -20,6 +20,7 @@ import {
   Toolbar,
 } from '../../lib/ui'
 import { DocumentForm, SignDocumentPrompt, type DocumentKind } from '../Clinical'
+import type { EncounterData } from './types'
 
 /**
  * Etapa 3: o que sai do atendimento - receita, atestado e sessao realizada.
@@ -32,11 +33,11 @@ export function EncounterDocuments({
 }: {
   patient: { id: string; name: string }
   appointmentId: string
-  documents: Encounter['documents']
+  documents: EncounterData['documents']
   onChanged: () => void
 }) {
   const [creating, setCreating] = React.useState<DocumentKind | null>(null)
-  const [signing, setSigning] = React.useState<Encounter['documents'][number] | null>(null)
+  const [signing, setSigning] = React.useState<EncounterData['documents'][number] | null>(null)
 
   const sign = useMutation({
     mutationFn: async ({ id, otp }: { id: string; otp?: string }) =>
@@ -168,7 +169,7 @@ export function EncounterSessions({
 }: {
   patientId: string
   appointmentId: string
-  sessions: Encounter['sessions']
+  sessions: EncounterData['sessions']
   onChanged: () => void
 }) {
   const [creating, setCreating] = React.useState(false)

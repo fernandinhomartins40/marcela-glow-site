@@ -135,4 +135,4 @@ export const EMPTY_FORM = {
   imageConsent: false,
 }
 
-type PatientFormState = typeof EMPTY_FORM
+export type PatientFormState = typeof EMPTY_FORM

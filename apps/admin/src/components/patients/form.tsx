@@ -43,7 +43,7 @@ import {
   type Tone,
 } from '../../lib/ui'
 import { useDebounced } from '../../lib/useDebounced'
-import { EMPTY_FORM, GENDERS, MARITAL_STATUSES, BLOOD_TYPES, REFERRAL_SOURCES, labelOf, type Patient } from './shared'
+import { type PatientFormState, EMPTY_FORM, GENDERS, MARITAL_STATUSES, BLOOD_TYPES, REFERRAL_SOURCES, labelOf, type Patient } from './shared'
 
 /**
  * Formulario da ficha da paciente, dividido em abas.

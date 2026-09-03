@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import {
   enablePushNotifications,
+  fetchAttachmentUrl,
   getErrorMessage,
   type Appointment,
   type Attachment,

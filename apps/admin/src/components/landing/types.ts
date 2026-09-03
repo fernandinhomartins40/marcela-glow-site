@@ -7,7 +7,7 @@ import type { CropTarget } from '../../lib/imageCrop'
  * acabou de mudar, entao os dois precisam concordar sobre o formato.
  */
 
-type SectionId =
+export type SectionId =
   | 'HERO'
   | 'ABOUT'
   | 'PROCEDURES'
@@ -17,7 +17,7 @@ type SectionId =
   | 'FOOTER'
   | 'SEO'
 
-interface SectionState {
+export interface SectionState {
   content: Record<string, any>
   isVisible: boolean
   /** false enquanto a seção ainda usa o texto de fábrica. */
@@ -25,7 +25,7 @@ interface SectionState {
   updatedAt: string | null
 }
 
-interface LandingData {
+export interface LandingData {
   sections: Record<SectionId, SectionState>
   images: Record<string, { url: string; width: number; height: number; alt: string }>
   imageTargets: Record<string, CropTarget>
