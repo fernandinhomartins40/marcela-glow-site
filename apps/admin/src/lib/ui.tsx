@@ -79,6 +79,23 @@ export function Modal({
     return () => document.body.classList.remove('page-lock')
   }, [])
 
+  const ref = React.useRef<HTMLDivElement>(null)
+
+  /* Foco no primeiro campo ao abrir. Como página, ela substitui a tela e não
+     flutua sobre ela: quem abriu um cadastro veio para digitar, e sem isto o
+     foco fica no botão da lista que ficou atrás. Campo desabilitado ou somente
+     leitura é pulado; não havendo nenhum, o foco vai para o container, para o
+     leitor de tela anunciar o título em vez de continuar na lista anterior. */
+  React.useEffect(() => {
+    const root = ref.current
+    if (!root) return
+    const alvo = root.querySelector<HTMLElement>(
+      '.page-view-body input:not([type=checkbox]):not([type=radio]):not([disabled]):not([readonly]), .page-view-body textarea:not([disabled]):not([readonly]), .page-view-body select:not([disabled])',
+    )
+    if (alvo) alvo.focus()
+    else root.focus()
+  }, [])
+
   /* Renderiza no <body>, não onde foi chamado. Um formulário aberto de dentro de
      `.data-actions` (cujos botões são quadrados de 30px) herdava aquele CSS e
      saía com os próprios botões espremidos — o resultado dependia do lugar
@@ -87,6 +104,8 @@ export function Modal({
      continuam herdados das regras existentes. */
   return ReactDOM.createPortal(
     <div
+      ref={ref}
+      tabIndex={-1}
       className={`drawer page-view ${wide ? 'is-wide' : ''}`}
       role="dialog"
       aria-modal="true"
@@ -103,7 +122,14 @@ export function Modal({
         </div>
       </header>
       <div className="drawer-body page-view-body">{children}</div>
-      {footer && <div className="drawer-footer page-view-footer">{footer}</div>}
+      {/* O invólucro interno alinha as ações à mesma coluna do formulário: a
+          barra atravessa a tela, mas os botões terminam onde o último campo
+          termina. */}
+      {footer && (
+        <div className="drawer-footer page-view-footer">
+          <div className="page-view-actions">{footer}</div>
+        </div>
+      )}
     </div>,
     document.body,
   )

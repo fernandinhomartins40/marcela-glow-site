@@ -448,7 +448,9 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 @media (max-width: 900px) {
   .data-row { grid-template-columns: minmax(0,1fr) auto; row-gap: 10px; }
   .data-counts { grid-column: 1 / -1; }
-  .form-row { grid-template-columns: 1fr !important; }
+  /* Numa página o formulário tem largura de sobra mesmo em tablet: só empilha
+     quando a coluna fica estreita de verdade (ver a regra de 640px). */
+  .form-row:not(.page-view .form-row) { grid-template-columns: 1fr !important; }
   .search-box { max-width: none; }
   .toolbar > .primary:last-child { margin-left: 0; width: 100%; }
   .mini-row { grid-template-columns: 1fr; row-gap: 3px; }
@@ -493,6 +495,9 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 @media (max-width: 760px) {
   .area-tabs { overflow-x: auto; }
   .qr-box { flex-direction: column; align-items: flex-start; }
+  /* Aqui a coluna da página fica estreita de verdade e duas colunas de campo
+     apertariam o rótulo: empilha. */
+  .page-view .form-row { grid-template-columns: 1fr !important; }
 }
 
 /* ── Atendimento ─────────────────────────────────────────────────────────── */
@@ -523,6 +528,12 @@ main .data-actions button.encounter-open {
 
 /* Subtítulo que separa blocos dentro de um formulário longo */
 .form-section-title { margin: 6px 0 0; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+/* Na página o formulário é longo e o espaçamento uniforme da gaveta faz tudo
+   parecer uma lista só. Um respiro e um filete antes de cada seção devolvem a
+   hierarquia — a médica passa a ver blocos, não uma coluna contínua. */
+.page-view .form-section-title { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--border); }
+.page-view .form-grid > *:first-child .form-section-title,
+.page-view .form-section-title:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
 
 /* Aviso acionável dentro do painel lateral (ex.: pedido sem cadastro) */
 .drawer-section.warn-box { background: #fbf0e2; border: 1px solid #e6c99b; border-radius: 8px; padding: 13px 15px; }
@@ -788,6 +799,14 @@ body.page-lock { overflow: hidden; }
   background: var(--marble); border-top: 1px solid var(--border);
   padding: 12px clamp(16px, 3vw, 32px);
 }
+/* O rodapé atravessa a tela toda, mas os botões precisam terminar onde o
+   formulário termina. Sem isto eles flutuam na borda direita, longe do último
+   campo — herança da gaveta, onde a coluna ocupava a largura inteira. */
+.page-view-actions { width: min(880px, 100%); margin: 0 auto; display: flex; justify-content: flex-end; gap: 8px; }
+.page-view.is-wide .page-view-actions { width: min(1080px, 100%); }
+/* O cabeçalho segue a mesma coluna, para o título nascer alinhado ao conteúdo. */
+.page-view-bar { padding-inline: clamp(16px, 3vw, 32px); }
+.page-view-bar > * { max-width: none; }
 .drawer p { color: var(--espresso); }
 .drawer h3 { font-family: inherit; }
 /* Resta apenas para o diálogo de confirmação, que continua sendo um diálogo */
