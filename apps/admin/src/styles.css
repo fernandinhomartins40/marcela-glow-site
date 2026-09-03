@@ -410,7 +410,13 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .field-label { font-size: 12px; font-weight: 600; }
 .field-label em { color: #a33131; font-style: normal; }
 .field-hint { font-size: 11.5px; color: var(--text-muted); line-height: 1.45; }
-.field input:not([type=checkbox]):not([type=radio]), .field select, .field textarea { width: 100%; padding: 9px 11px; font-size: 13px; border: 1px solid var(--border); border-radius: 7px; background: var(--cream-soft); color: var(--espresso); outline: 0; }
+/* `[type=search]` fora daqui: a busca tem a lupa desenhada por cima do campo e
+   precisa do recuo maior à esquerda. Esta regra tem duas classes e vem depois
+   da regra da lupa, então sem a exclusão ela vence e o texto volta a começar
+   embaixo do ícone. */
+.field input:not([type=checkbox]):not([type=radio]):not([type=search]), .field select, .field textarea { width: 100%; padding: 9px 11px; font-size: 13px; border: 1px solid var(--border); border-radius: 7px; background: var(--cream-soft); color: var(--espresso); outline: 0; }
+/* A busca dentro de um campo herda a moldura dos demais controles. */
+.field .search-box input[type=search] { width: 100%; font-size: 13px; border: 1px solid var(--border); border-radius: 7px; background: var(--cream-soft); color: var(--espresso); outline: 0; }
 .field textarea { resize: vertical; font-family: inherit; line-height: 1.55; }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--bronze); box-shadow: 0 0 0 3px rgba(156,130,104,.15); }
 .field input:disabled { opacity: .6; }
