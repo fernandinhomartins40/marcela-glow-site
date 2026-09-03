@@ -735,10 +735,10 @@ main .data-actions button.encounter-open {
    centralizado em largura de leitura e ações fixas no rodapé. O container
    mantém a classe `drawer` para herdar os blocos internos (drawer-body,
    drawer-facts, drawer-actions) sem repetir CSS. */
-/* Comeca depois da sidebar em vez de cobri-la: a pagina substituiu o modal, e
-   pagina de painel mantem a navegacao a vista - some com ela e a medica perde a
-   referencia de onde esta. O portal renderiza no <body>, fora do grid do shell,
-   entao a coluna e reproduzida aqui com o mesmo clamp de .app-shell. */
+/* Começa depois da sidebar em vez de cobri-la: a página substituiu o modal, e
+   página de painel mantém a navegação à vista — some com ela e a médica perde a
+   referência de onde está. O portal renderiza no <body>, fora do grid do shell,
+   então a coluna é reproduzida aqui com o mesmo `clamp` de `.app-shell`. */
 .drawer.page-view {
   position: fixed; inset: 0 0 0 clamp(196px, 17vw, 244px); z-index: 40;
   width: auto; height: 100%;
@@ -763,9 +763,26 @@ body.page-lock { overflow: hidden; }
   background: transparent; border: 1px solid var(--border); border-radius: 7px; color: var(--espresso);
 }
 .page-back:hover:not(:disabled) { border-color: var(--bronze); background: var(--marble-soft); transform: none; }
-.page-view-body { width: min(760px, 100%); margin: 0 auto; padding: 22px clamp(16px, 3vw, 32px) 48px; }
+.page-view-body { width: min(880px, 100%); margin: 0 auto; padding: 24px clamp(16px, 3vw, 32px) 48px; }
 /* Formulários largos (prontuário completo) ganham mais respiro horizontal */
 .page-view.is-wide .page-view-body { width: min(1080px, 100%); }
+/* ── Blocos internos com comportamento de página, não de gaveta ──────────────
+   Os filhos do corpo foram desenhados para uma coluna de 440px: lista de fatos
+   empilhada, campos herdados do estilo global e rodapé espremido. Na página
+   eles se distribuem como em qualquer tela do painel. */
+.page-view input:not([type=checkbox]):not([type=radio]),
+.page-view select { padding: 10px 12px; font-size: 14px; border-radius: 7px; }
+.page-view label { font-size: 13px; }
+.page-view .field-hint { font-size: 12px; }
+.page-view .drawer-facts { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); align-items: start; }
+.page-view .drawer-facts .wide { grid-column: 1 / -1; }
+/* Seções soltas viram cartões, como os blocos do painel — antes eram apenas
+   conteúdo solto sobre o fundo, herança da gaveta de 440px. */
+.page-view .drawer-section { background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px; gap: 10px; }
+.page-view-bar h2 { font-size: 22px; }
+.page-view-bar p { font-size: 13.5px; }
+.page-back { min-height: 38px; }
+.page-view-footer button { min-height: 40px; padding: 9px 18px; font-size: 13.5px; }
 .page-view-footer {
   position: sticky; bottom: 0; z-index: 5; margin-top: auto;
   background: var(--marble); border-top: 1px solid var(--border);
@@ -953,8 +970,8 @@ body.page-lock { overflow: hidden; }
   }
   .nav-open .app-nav { transform: translateX(0); }
 
-  /* Aqui a lateral virou gaveta e nao ocupa mais coluna: a pagina volta a usar
-     a tela inteira, senao sobraria uma faixa vazia a esquerda. */
+  /* Aqui a lateral virou gaveta e não ocupa mais coluna: a página volta a usar
+     a tela inteira, senão sobraria uma faixa vazia à esquerda. */
   .drawer.page-view { inset: 0; }
 
   .nav-scrim {
