@@ -735,8 +735,13 @@ main .data-actions button.encounter-open {
    centralizado em largura de leitura e ações fixas no rodapé. O container
    mantém a classe `drawer` para herdar os blocos internos (drawer-body,
    drawer-facts, drawer-actions) sem repetir CSS. */
+/* Comeca depois da sidebar em vez de cobri-la: a pagina substituiu o modal, e
+   pagina de painel mantem a navegacao a vista - some com ela e a medica perde a
+   referencia de onde esta. O portal renderiza no <body>, fora do grid do shell,
+   entao a coluna e reproduzida aqui com o mesmo clamp de .app-shell. */
 .drawer.page-view {
-  position: fixed; inset: 0; z-index: 60; width: 100%; height: 100%;
+  position: fixed; inset: 0 0 0 clamp(196px, 17vw, 244px); z-index: 40;
+  width: auto; height: 100%;
   display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain;
   background: var(--marble); border-left: 0; padding: 0; gap: 0; align-content: stretch;
 }
@@ -947,6 +952,10 @@ body.page-lock { overflow: hidden; }
     box-shadow: 0 0 40px rgba(47,34,27,.3);
   }
   .nav-open .app-nav { transform: translateX(0); }
+
+  /* Aqui a lateral virou gaveta e nao ocupa mais coluna: a pagina volta a usar
+     a tela inteira, senao sobraria uma faixa vazia a esquerda. */
+  .drawer.page-view { inset: 0; }
 
   .nav-scrim {
     display: block;
