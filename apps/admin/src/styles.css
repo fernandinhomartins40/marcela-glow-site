@@ -406,7 +406,12 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .perm-item.by-role { color: var(--text-muted); cursor: default; }
 .perm-source { margin-left: auto; padding-left: 8px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--bronze); white-space: nowrap; }
 .form-row { display: grid; gap: 12px; }
-.field { display: grid; gap: 5px; }
+.field { display: grid; gap: 5px; align-content: start; }
+/* Campos lado a lado alinham pelo topo do controle. Sem isto, o campo que tem
+   dica embaixo ("Ocupa 60 min") fica mais alto e o vizinho sobe junto com ele,
+   deixando os dois controles em alturas diferentes. `start` mantém cada
+   controle na sua altura natural; a dica cresce para baixo, sem empurrar nada. */
+.form-row { align-items: start; }
 .field-label { font-size: 12px; font-weight: 600; }
 .field-label em { color: #a33131; font-style: normal; }
 .field-hint { font-size: 11.5px; color: var(--text-muted); line-height: 1.45; }
