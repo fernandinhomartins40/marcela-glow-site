@@ -1,16 +1,16 @@
 # Graph Report - marcela-glow-site  (2026-09-02)
 
 ## Corpus Check
-- 203 files · ~349,208 words
+- 203 files · ~349,281 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1786 nodes · 3162 edges · 166 communities (78 shown, 68 thin omitted)
+- 1789 nodes · 3171 edges · 168 communities (80 shown, 68 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 20 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `760801ba`
+- Built from commit: `e462a5d4`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -18,8 +18,8 @@
 - sections.tsx
 - cn
 - devDependencies
-- Landing.tsx
-- lib/ui.tsx
+- ImageCropper.tsx
+- Encounter.tsx
 - hooks/use-toast.ts
 - sidebar.tsx
 - Schedule.tsx
@@ -32,7 +32,7 @@
 - tasks
 - database/package.json
 - routes/landing.ts
-- ficha.tsx
+- lib/ui.tsx
 - compilerOptions
 - dropdown-menu.tsx
 - compilerOptions
@@ -43,6 +43,7 @@
 - web/src/lib/api.ts
 - patient.ts
 - toggle-group.tsx
+- api
 - fetch_instagram_professional_assets.py
 - dependencies
 - AdminApp.tsx
@@ -65,14 +66,15 @@
 - carousel.tsx
 - compilerOptions
 - dependencies
+- admin/package.json
 - Index.tsx
 - compilerOptions
 - compilerOptions
 - chart.tsx
 - compilerOptions
-- admin/package.json
+- scripts
 - input-otp.tsx
-- patient/package.json
+- scripts
 - button.tsx
 - api/package.json
 - source
@@ -81,22 +83,23 @@
 - check-encoding.js
 - Appointment.tsx
 - breadcrumb.tsx
+- patient/package.json
 - navigation-menu.tsx
 - agenda.tsx
 - Footer.tsx
 - Dra. Marcela Duch — Site e Plataforma
 - seed-demo-users.js
-- Encounter.tsx
+- eslint
 - cors
 - remote-deploy.sh
 - remote-health-check.sh
 - seed.ts
-- eslint-plugin-react-hooks
-- postcss
-- tailwindcss-animate
+- eslint-plugin-react-refresh
+- tailwindcss
+- @types/react
 - @types/node
-- @types/react-dom
-- vite
+- typescript-eslint
+- @types/react
 - admin/public/sw.js
 - docker-entrypoint.sh
 - dotenv
@@ -106,10 +109,10 @@
 - qrcode
 - eslint-plugin-react-hooks
 - eslint-plugin-react-refresh
-- tailwindcss
+- vite
 - @types/react-dom
 - typescript
-- typescript-eslint
+- @radix-ui/react-avatar
 - patient/public/sw.js
 - axios
 - class-variance-authority
@@ -123,19 +126,19 @@
 - next-themes
 - @radix-ui/react-accordion
 - @radix-ui/react-alert-dialog
-- @radix-ui/react-aspect-ratio
+- @radix-ui/react-context-menu
 - @radix-ui/react-checkbox
 - @radix-ui/react-collapsible
-- @radix-ui/react-dialog
+- @radix-ui/react-navigation-menu
 - @radix-ui/react-dropdown-menu
 - @radix-ui/react-hover-card
 - @radix-ui/react-label
 - @radix-ui/react-menubar
-- @radix-ui/react-popover
+- @radix-ui/react-select
 - @radix-ui/react-progress
 - @radix-ui/react-radio-group
 - @radix-ui/react-scroll-area
-- @radix-ui/react-separator
+- react-day-picker
 - @radix-ui/react-slider
 - @radix-ui/react-switch
 - @radix-ui/react-tabs
@@ -147,7 +150,6 @@
 - react-dom
 - react-hook-form
 - react-resizable-panels
-- react-router-dom
 - recharts
 - sonner
 - tailwind-merge
@@ -166,7 +168,7 @@
 1. `cn()` - 228 edges
 2. `errorMessage()` - 48 edges
 3. `"Tenant"` - 24 edges
-4. `api` - 19 edges
+4. `api` - 20 edges
 5. `formatDateBR()` - 19 edges
 6. `AppError` - 18 edges
 7. `useSection()` - 18 edges
@@ -175,21 +177,21 @@
 10. `compilerOptions` - 18 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `SectionEditor()` --calls--> `errorMessage()`  [EXTRACTED]
-  apps/admin/src/components/Landing.tsx → apps/admin/src/lib/ui.tsx
-- `submit()` --calls--> `errorMessage()`  [EXTRACTED]
-  apps/admin/src/pages/Login.tsx → apps/admin/src/lib/ui.tsx
-- `DropdownMenuShortcut()` --calls--> `cn()`  [EXTRACTED]
-  apps/web/src/components/ui/dropdown-menu.tsx → apps/web/src/lib/utils.ts
-- `ResizableHandle()` --calls--> `cn()`  [EXTRACTED]
-  apps/web/src/components/ui/resizable.tsx → apps/web/src/lib/utils.ts
-- `ResizablePanelGroup()` --calls--> `cn()`  [EXTRACTED]
-  apps/web/src/components/ui/resizable.tsx → apps/web/src/lib/utils.ts
+- `AlertDescription` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert.tsx → apps/web/src/lib/utils.ts
+- `AlertTitle` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert.tsx → apps/web/src/lib/utils.ts
+- `AlertDialogContent` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
+- `AlertDialogDescription` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
+- `AlertDialogFooter()` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (166 total, 68 thin omitted)
+## Communities (168 total, 68 thin omitted)
 
 ### Community 0 - "sections.tsx"
 Cohesion: 0.05
@@ -200,16 +202,16 @@ Cohesion: 0.06
 Nodes (50): AccordionContent, AccordionItem, AccordionTrigger, Avatar, AvatarFallback, AvatarImage, Card, CardContent (+42 more)
 
 ### Community 2 - "devDependencies"
-Cohesion: 0.05
-Nodes (43): devDependencies, autoprefixer, eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, postcss (+35 more)
+Cohesion: 0.04
+Nodes (44): devDependencies, autoprefixer, eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, postcss (+36 more)
 
-### Community 3 - "Landing.tsx"
+### Community 3 - "ImageCropper.tsx"
 Cohesion: 0.10
-Nodes (29): ImageCropper(), onPointerMove(), pick(), scaleFactor(), submit(), zoom(), Fold(), HeadingFields() (+21 more)
+Nodes (27): ImageCropper(), onPointerMove(), pick(), scaleFactor(), submit(), zoom(), Fold(), HeadingFields() (+19 more)
 
-### Community 4 - "lib/ui.tsx"
-Cohesion: 0.11
-Nodes (27): CATALOG_META, CatalogItem, CatalogKind, ClinicalDocument, Compliance, Control, CONTROL_META, DOC_META (+19 more)
+### Community 4 - "Encounter.tsx"
+Cohesion: 0.12
+Nodes (25): CATALOG_META, CatalogForm(), CatalogItem, CatalogKind, ClinicalDocument, Compliance, Control, CONTROL_META (+17 more)
 
 ### Community 5 - "hooks/use-toast.ts"
 Cohesion: 0.09
@@ -259,9 +261,9 @@ Nodes (27): dependencies, bcryptjs, @prisma/client, devDependencies, prisma, tsx
 Cohesion: 0.09
 Nodes (23): aboutSchema, appointmentSchema, footerSchema, heroSchema, heroSlideSchema, IMAGE_TARGETS, imageSlot, isLandingSection() (+15 more)
 
-### Community 17 - "ficha.tsx"
-Cohesion: 0.17
-Nodes (26): ClinicalAlerts(), DOC_KIND, DOC_STATUS, PatientDetail(), RECORD_TYPE, FORM_TABS, FormTab, PatientForm() (+18 more)
+### Community 17 - "lib/ui.tsx"
+Cohesion: 0.15
+Nodes (33): ClinicalAlerts(), DOC_KIND, DOC_STATUS, PatientDetail(), RECORD_TYPE, FORM_TABS, FormTab, PatientForm() (+25 more)
 
 ### Community 18 - "compilerOptions"
 Cohesion: 0.08
@@ -302,6 +304,10 @@ Nodes (21): audit(), signToken(), getVapidPublicKey(), pushConfigured, addDays()
 ### Community 27 - "toggle-group.tsx"
 Cohesion: 0.43
 Nodes (5): ToggleGroup, ToggleGroupContext, ToggleGroupItem, Toggle, toggleVariants
+
+### Community 28 - "api"
+Cohesion: 0.20
+Nodes (9): BusinessHour, BusinessHours(), Durations(), update(), Procedure, ScheduleBlock, ScheduleSettings(), WEEKDAYS (+1 more)
 
 ### Community 29 - "fetch_instagram_professional_assets.py"
 Cohesion: 0.24
@@ -345,11 +351,11 @@ Nodes (16): aliases, components, hooks, lib, ui, utils, rsc, $schema (+8 more)
 
 ### Community 39 - "devDependencies"
 Cohesion: 0.12
-Nodes (17): devDependencies, autoprefixer, eslint, eslint-plugin-react-refresh, globals, tailwindcss, @types/react, typescript (+9 more)
+Nodes (17): devDependencies, autoprefixer, eslint-plugin-react-hooks, globals, postcss, tailwindcss-animate, @types/react-dom, typescript (+9 more)
 
 ### Community 40 - "errorMessage"
 Cohesion: 0.07
-Nodes (30): Content, ContentForm(), Lead, LEAD_COLUMNS, LeadForm(), Leads(), Procedure, ProcedureForm() (+22 more)
+Nodes (35): Cms(), Content, ContentForm(), Lead, LEAD_COLUMNS, LeadForm(), Leads(), Procedure (+27 more)
 
 ### Community 41 - "dependencies"
 Cohesion: 0.11
@@ -365,7 +371,7 @@ Nodes (17): dependencies, axios, date-fns, lucide-react, react, react-dom, react
 
 ### Community 44 - "devDependencies"
 Cohesion: 0.12
-Nodes (17): devDependencies, autoprefixer, eslint, globals, postcss, tailwindcss-animate, @types/node, @types/react (+9 more)
+Nodes (17): devDependencies, autoprefixer, eslint, globals, postcss, tailwindcss, tailwindcss-animate, @types/node (+9 more)
 
 ### Community 45 - "web/components.json"
 Cohesion: 0.12
@@ -389,7 +395,11 @@ Nodes (13): compilerOptions, esModuleInterop, module, moduleResolution, outDir, 
 
 ### Community 50 - "dependencies"
 Cohesion: 0.15
-Nodes (13): dependencies, @radix-ui/react-avatar, @radix-ui/react-context-menu, @radix-ui/react-navigation-menu, @radix-ui/react-select, @radix-ui/react-slot, react-day-picker, @radix-ui/react-avatar (+5 more)
+Nodes (13): dependencies, @radix-ui/react-aspect-ratio, @radix-ui/react-dialog, @radix-ui/react-popover, @radix-ui/react-separator, @radix-ui/react-slot, react-router-dom, react-router-dom (+5 more)
+
+### Community 51 - "admin/package.json"
+Cohesion: 0.40
+Nodes (4): name, private, type, version
 
 ### Community 52 - "Index.tsx"
 Cohesion: 0.26
@@ -411,17 +421,17 @@ Nodes (9): ChartConfig, ChartContainer, ChartContext, ChartContextProps, ChartLe
 Cohesion: 0.18
 Nodes (10): compilerOptions, allowJs, noImplicitAny, noUnusedLocals, noUnusedParameters, paths, skipLibCheck, strictNullChecks (+2 more)
 
-### Community 57 - "admin/package.json"
-Cohesion: 0.20
-Nodes (9): name, private, scripts, build, dev, lint, preview, type (+1 more)
+### Community 57 - "scripts"
+Cohesion: 0.33
+Nodes (6): scripts, build, dev, lint, preview, typecheck
 
 ### Community 58 - "input-otp.tsx"
 Cohesion: 0.40
 Nodes (4): InputOTP, InputOTPGroup, InputOTPSeparator, InputOTPSlot
 
-### Community 59 - "patient/package.json"
-Cohesion: 0.20
-Nodes (9): name, private, scripts, build, dev, lint, preview, type (+1 more)
+### Community 59 - "scripts"
+Cohesion: 0.33
+Nodes (6): scripts, build, dev, lint, preview, typecheck
 
 ### Community 60 - "button.tsx"
 Cohesion: 0.24
@@ -455,13 +465,17 @@ Nodes (14): Appointment(), AppointmentContent, contactBlocks, FALLBACK, formatCh
 Cohesion: 0.25
 Nodes (7): Breadcrumb, BreadcrumbEllipsis(), BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator()
 
+### Community 68 - "patient/package.json"
+Cohesion: 0.40
+Nodes (4): name, private, type, version
+
 ### Community 69 - "navigation-menu.tsx"
 Cohesion: 0.29
 Nodes (7): NavigationMenu, NavigationMenuContent, NavigationMenuIndicator, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle, NavigationMenuViewport
 
 ### Community 71 - "agenda.tsx"
-Cohesion: 0.13
-Nodes (13): ClinicalCatalog(), DocumentForm(), LinkPatientModal(), NewEncounterModal(), AgendaEntry, NewAppointment(), Procedure, Team() (+5 more)
+Cohesion: 0.20
+Nodes (10): LinkPatientModal(), NewEncounterModal(), AgendaEntry, NewAppointment(), Procedure, fromDateTimeLocalValue(), WhatsAppLink, Field() (+2 more)
 
 ### Community 72 - "Footer.tsx"
 Cohesion: 0.33
@@ -474,10 +488,6 @@ Nodes (6): Ambiente local, Deploy, Dra. Marcela Duch — Site e Plataforma, Mapa
 ### Community 74 - "seed-demo-users.js"
 Cohesion: 0.40
 Nodes (3): bcrypt, prisma, { PrismaClient, Permission, UserRole }
-
-### Community 75 - "Encounter.tsx"
-Cohesion: 0.23
-Nodes (14): Cms(), ClinicalDocuments(), EncounterDocuments(), EncounterSessions(), RecordForm(), RecordTimeline(), EncounterData, MedicalRecord (+6 more)
 
 ### Community 77 - "remote-deploy.sh"
 Cohesion: 1.00
@@ -504,24 +514,24 @@ Cohesion: 0.50
 Nodes (4): Alert, AlertDescription, AlertTitle, alertVariants
 
 ## Knowledge Gaps
-- **703 isolated node(s):** `queryClient`, `NAV_GROUPS`, `NAV_ITEMS`, `demoAdmin`, `demoStaff` (+698 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 780 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **705 isolated node(s):** `name`, `private`, `version`, `type`, `dev` (+700 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 782 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **68 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `cn()` connect `cn` to `Appointment.tsx`, `breadcrumb.tsx`, `command.tsx`, `navigation-menu.tsx`, `sidebar.tsx`, `hooks/use-toast.ts`, `utils.ts`, `alert.tsx`, `form.tsx`, `carousel.tsx`, `dropdown-menu.tsx`, `chart.tsx`, `pagination.tsx`, `web/src/lib/api.ts`, `input-otp.tsx`, `toggle-group.tsx`, `button.tsx`, `sheet.tsx`?**
-  _High betweenness centrality (0.041) - this node is a cross-community bridge._
-- **Why does `errorMessage()` connect `errorMessage` to `Landing.tsx`, `lib/ui.tsx`, `Schedule.tsx`, `agenda.tsx`, `Encounter.tsx`, `ficha.tsx`, `AdminApp.tsx`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
-- **Why does `dependencies` connect `dependencies` to `@radix-ui/react-toast`, `@radix-ui/react-toggle`, `devDependencies`, `@radix-ui/react-toggle-group`, `@radix-ui/react-tooltip`, `react`, `react-dom`, `react-hook-form`, `react-resizable-panels`, `react-router-dom`, `recharts`, `sonner`, `tailwind-merge`, `tailwindcss-animate`, `@tanstack/react-query`, `vaul`, `zod`, `axios`, `class-variance-authority`, `clsx`, `cmdk`, `date-fns`, `embla-carousel-react`, `@hookform/resolvers`, `input-otp`, `lucide-react`, `next-themes`, `@radix-ui/react-accordion`, `@radix-ui/react-alert-dialog`, `@radix-ui/react-aspect-ratio`, `@radix-ui/react-checkbox`, `@radix-ui/react-collapsible`, `@radix-ui/react-dialog`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-hover-card`, `@radix-ui/react-label`, `@radix-ui/react-menubar`, `@radix-ui/react-popover`, `@radix-ui/react-progress`, `@radix-ui/react-radio-group`, `@radix-ui/react-scroll-area`, `@radix-ui/react-separator`, `@radix-ui/react-slider`, `@radix-ui/react-switch`, `@radix-ui/react-tabs`?**
-  _High betweenness centrality (0.002) - this node is a cross-community bridge._
-- **What connects `queryClient`, `NAV_GROUPS`, `NAV_ITEMS` to the rest of the system?**
-  _703 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _High betweenness centrality (0.027) - this node is a cross-community bridge._
+- **Why does `dependencies` connect `dependencies` to `@radix-ui/react-toast`, `@radix-ui/react-toggle`, `devDependencies`, `@radix-ui/react-toggle-group`, `@radix-ui/react-tooltip`, `react`, `react-dom`, `react-hook-form`, `react-resizable-panels`, `recharts`, `sonner`, `tailwind-merge`, `tailwindcss-animate`, `@tanstack/react-query`, `vaul`, `zod`, `@radix-ui/react-avatar`, `axios`, `class-variance-authority`, `clsx`, `cmdk`, `date-fns`, `embla-carousel-react`, `@hookform/resolvers`, `input-otp`, `lucide-react`, `next-themes`, `@radix-ui/react-accordion`, `@radix-ui/react-alert-dialog`, `@radix-ui/react-context-menu`, `@radix-ui/react-checkbox`, `@radix-ui/react-collapsible`, `@radix-ui/react-navigation-menu`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-hover-card`, `@radix-ui/react-label`, `@radix-ui/react-menubar`, `@radix-ui/react-select`, `@radix-ui/react-progress`, `@radix-ui/react-radio-group`, `@radix-ui/react-scroll-area`, `react-day-picker`, `@radix-ui/react-slider`, `@radix-ui/react-switch`, `@radix-ui/react-tabs`?**
+  _High betweenness centrality (0.006) - this node is a cross-community bridge._
+- **Why does `errorMessage()` connect `errorMessage` to `ImageCropper.tsx`, `Encounter.tsx`, `Schedule.tsx`, `agenda.tsx`, `lib/ui.tsx`, `api`, `AdminApp.tsx`?**
+  _High betweenness centrality (0.006) - this node is a cross-community bridge._
+- **What connects `name`, `private`, `version` to the rest of the system?**
+  _705 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `sections.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.05133599831685252 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05154639175257732 - nodes in this community are weakly interconnected._
 - **Should `cn` be split into smaller, more focused modules?**
   _Cohesion score 0.06253652834599649 - nodes in this community are weakly interconnected._
 - **Should `devDependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.045454545454545456 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.044444444444444446 - nodes in this community are weakly interconnected._
