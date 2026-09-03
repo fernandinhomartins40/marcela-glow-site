@@ -16,7 +16,7 @@ import {
   Users,
   X,
 } from 'lucide-react'
-import { api, ROLE_LABELS } from './lib/ui'
+import { api, errorMessage, ROLE_LABELS, TOKEN_KEY } from './lib/ui'
 import { Login } from './pages/Login'
 import { AdminPanel, type AdminTab } from './pages/AdminPanel'
 import './styles.css'
@@ -153,7 +153,7 @@ function Shell() {
           ))}
         </nav>
 
-        <button className="nav-signout" onClick={() => { localStorage.removeItem('admin_token'); window.location.reload() }}>
+        <button className="nav-signout" onClick={() => { localStorage.removeItem(TOKEN_KEY); window.location.reload() }}>
           <LogOut size={17} />Sair
         </button>
       </aside>
@@ -179,7 +179,11 @@ function Shell() {
           )}
         </header>
         {data.isLoading && <p>Carregando dados reais do backend...</p>}
-        {data.isError && <p className="error">Não foi possível carregar a API.</p>}
+        {data.isError && (
+          <p className="error">
+            {errorMessage(data.error, 'Não foi possível carregar os dados. Verifique a conexão e tente novamente.')}
+          </p>
+        )}
         {data.data && <AdminPanel tab={tab} data={data.data} currentUserId={me.data?.id} />}
       </main>
     </div>
@@ -191,7 +195,7 @@ function App() {
     if ('serviceWorker' in navigator) navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
   }, [])
 
-  if (!localStorage.getItem('admin_token')) return <Login />
+  if (!localStorage.getItem(TOKEN_KEY)) return <Login />
 
   return (
     <Routes>

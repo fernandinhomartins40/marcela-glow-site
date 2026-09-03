@@ -6,12 +6,35 @@ import { useDebounced } from './useDebounced'
 import { AlertTriangle, ArrowLeft, Download, Loader2, Paperclip, Search, Upload, UserRound } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
+export const TOKEN_KEY = 'admin_token'
+
 export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' })
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('admin_token')
+  const token = localStorage.getItem(TOKEN_KEY)
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
+
+/**
+ * Sessão expirada ou revogada volta para o login em vez de virar erro de tela.
+ *
+ * A sessão dura 7 dias e o painel só checava se *existe* token guardado, nunca
+ * se ele ainda vale: com token velho, as seis chamadas do painel voltavam 401 e
+ * a tela dizia "Não foi possível carregar a API" — que parece backend fora do
+ * ar. Sem sair e entrar de novo, não havia como se recuperar.
+ */
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = axios.isAxiosError(error) ? error.response?.status : undefined
+    // 403 é permissão faltando para esta conta: continua sendo erro de tela.
+    if (status === 401 && localStorage.getItem(TOKEN_KEY)) {
+      localStorage.removeItem(TOKEN_KEY)
+      window.location.reload()
+    }
+    return Promise.reject(error)
+  },
+)
 
 export const tenantSlug = import.meta.env.VITE_TENANT_SLUG || 'marcela-duch'
 

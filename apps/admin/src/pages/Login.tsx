@@ -1,5 +1,5 @@
 import React from 'react'
-import { api, errorMessage, tenantSlug } from '../lib/ui'
+import { api, errorMessage, tenantSlug, TOKEN_KEY } from '../lib/ui'
 import draPortrait from '../assets/dra-marcela-portrait.jpg'
 import marbleTexture from '../assets/marble-texture.jpg'
 
@@ -39,7 +39,7 @@ export function Login() {
         password,
         tenantSlug,
       })
-      localStorage.setItem('admin_token', data.token)
+      localStorage.setItem(TOKEN_KEY, data.token)
       window.location.reload()
     } catch (err) {
       setError(errorMessage(err, 'Falha ao autenticar'))
