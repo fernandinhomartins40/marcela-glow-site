@@ -56,3 +56,24 @@ describe('publicFileUrl', () => {
     expect(publicFileUrl(chave).endsWith(chave)).toBe(true)
   })
 })
+
+/**
+ * O prefixo decide o que abre sem assinatura. Errar aqui não aparece em tela:
+ * um anexo clínico gravado como público fica legível a quem tiver o link.
+ */
+describe('prefixo público', () => {
+  it('mantém arquivo comum fora do prefixo público', () => {
+    expect(buildStorageKey('t1', 'exame.pdf').startsWith('public/')).toBe(false)
+  })
+
+  it('põe no prefixo público só quando pedido', () => {
+    expect(buildStorageKey('t1', 'logo.png', { publico: true }).startsWith('public/t1/')).toBe(true)
+  })
+
+  it('não deixa o nome do arquivo escapar do prefixo', () => {
+    // Nome vindo do navegador não pode reposicionar a chave para fora de public/.
+    const chave = buildStorageKey('t1', '../../privado/roubo.pdf', { publico: true })
+    expect(chave.startsWith('public/t1/')).toBe(true)
+    expect(chave).not.toContain('../')
+  })
+})

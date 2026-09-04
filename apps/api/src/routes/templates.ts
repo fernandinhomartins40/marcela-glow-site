@@ -291,7 +291,7 @@ router.post('/logo/presign', ...staffOnly, requirePermission('PRESCRIPTION_WRITE
   try {
     const body = logoPresignSchema.parse(req.body)
     if (!storageConfigured) throw new AppError('Storage nao configurado', 503, 'STORAGE_NOT_CONFIGURED')
-    const storageKey = buildStorageKey(req.user!.tenantId, body.fileName)
+    const storageKey = buildStorageKey(req.user!.tenantId, body.fileName, { publico: true })
     const uploadUrl = await presignUpload(storageKey, body.mimeType)
     res.json({ uploadUrl, storageKey, expiresIn: 900 })
   } catch (err) {

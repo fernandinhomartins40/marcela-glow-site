@@ -42,9 +42,20 @@ const s3Public = storageConfigured
   ? new S3Client({ ...opcoesComuns, endpoint: publicEndpoint })
   : null
 
-export function buildStorageKey(tenantId: string, fileName: string): string {
+/**
+ * Prefixo do que pode ser lido sem assinatura.
+ *
+ * O bucket guarda prontuário e foto de paciente, então é privado por padrão e
+ * a leitura passa por link assinado. Logo e imagem de site precisam abrir
+ * direto — num documento impresso ou numa landing não há como assinar cada
+ * requisição —, e ficam sob este prefixo, o único liberado no MinIO.
+ */
+export const PUBLIC_PREFIX = 'public'
+
+export function buildStorageKey(tenantId: string, fileName: string, options?: { publico?: boolean }): string {
   const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '-').slice(-120)
-  return `${tenantId}/${new Date().toISOString().slice(0, 10)}/${randomToken(16)}-${safeName}`
+  const chave = `${tenantId}/${new Date().toISOString().slice(0, 10)}/${randomToken(16)}-${safeName}`
+  return options?.publico ? `${PUBLIC_PREFIX}/${chave}` : chave
 }
 
 export async function presignUpload(key: string, contentType: string): Promise<string> {

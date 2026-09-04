@@ -175,7 +175,10 @@ router.post('/admin/images/presign', ...staffOnly, requirePermission('CMS_WRITE'
       )
     }
 
-    const storageKey = buildStorageKey(req.user!.tenantId, `landing-${body.slot.replace(/\./g, '-')}`)
+    // Imagem de site carrega direto no navegador: vai para o prefixo público.
+    const storageKey = buildStorageKey(req.user!.tenantId, `landing-${body.slot.replace(/\./g, '-')}`, {
+      publico: true,
+    })
     const uploadUrl = await presignUpload(storageKey, body.mimeType)
     res.json({ uploadUrl, storageKey, bucket: s3Bucket, target, expiresIn: 900 })
   } catch (err) {
