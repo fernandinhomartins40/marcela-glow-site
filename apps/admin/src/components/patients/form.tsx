@@ -38,6 +38,7 @@ import {
   RowAction,
   SearchBox,
   SubmitButton,
+  TagInput,
   toDateInput,
   Toolbar,
   type Tone,
@@ -337,19 +338,35 @@ export function PatientForm({
         {tab === 'clinical' && (
           <>
             <Field label="Alergias" hint="Aparece como alerta no atendimento e antes de prescrever">
-              <textarea rows={2} value={form.allergies} onChange={(e) => set('allergies', e.target.value)} />
+              <TagInput
+                value={form.allergies}
+                onChange={(v) => set('allergies', v)}
+                placeholder="Uma por vez: dipirona, látex…"
+              />
             </Field>
 
             <Field label="Medicações em uso" hint="Aparece como alerta no atendimento">
-              <textarea rows={2} value={form.medications} onChange={(e) => set('medications', e.target.value)} />
+              <TagInput
+                value={form.medications}
+                onChange={(v) => set('medications', v)}
+                placeholder="Uma por vez: losartana 50mg…"
+              />
             </Field>
 
             <Field label="Comorbidades" hint="Diabetes, hipertensão, doenças autoimunes…">
-              <textarea rows={2} value={form.conditions} onChange={(e) => set('conditions', e.target.value)} />
+              <TagInput
+                value={form.conditions}
+                onChange={(v) => set('conditions', v)}
+                placeholder="Uma por vez: diabetes, hipertensão…"
+              />
             </Field>
 
             <Field label="Cirurgias e procedimentos anteriores">
-              <textarea rows={2} value={form.surgeries} onChange={(e) => set('surgeries', e.target.value)} />
+              <TagInput
+                value={form.surgeries}
+                onChange={(v) => set('surgeries', v)}
+                placeholder="Uma por vez: cesárea 2019…"
+              />
             </Field>
 
             <FormRow>

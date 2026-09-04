@@ -424,6 +424,21 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .field .search-box input[type=search] { width: 100%; font-size: 13px; border: 1px solid var(--border); border-radius: 7px; background: var(--cream-soft); color: var(--espresso); outline: 0; }
 .field textarea { resize: vertical; font-family: inherit; line-height: 1.55; }
 .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--bronze); box-shadow: 0 0 0 3px rgba(156,130,104,.15); }
+
+/* ── Campo de lista por tags ──────────────────────────────────────────────
+   A moldura fica no container e o input por dentro sem borda propria, para o
+   conjunto parecer um campo so - as tags moram dentro dele, nao acima. */
+.tag-input { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; padding: 6px 8px; border: 1px solid var(--border); border-radius: 7px; background: var(--cream-soft); cursor: text; }
+.tag-input:focus-within { border-color: var(--bronze); box-shadow: 0 0 0 3px rgba(156,130,104,.15); }
+.tag-list { display: contents; margin: 0; padding: 0; list-style: none; }
+.tag-list li { display: inline-flex; align-items: center; gap: 5px; max-width: 100%; padding: 3px 4px 3px 10px; border-radius: 999px; background: var(--marble-soft); border: 1px solid var(--border); font-size: 12.5px; color: var(--espresso); }
+.tag-list li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Alvo de 20px: o X precisa ser clicavel sem inchar a tag. */
+.tag-list li button { width: 20px; height: 20px; min-height: 0; flex: none; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; border-radius: 999px; background: transparent; color: var(--text-muted); }
+.tag-list li button:hover:not(:disabled) { background: rgba(156,130,104,.18); color: var(--espresso); transform: none; }
+/* Cresce com o que foi digitado, mas nunca empurra as tags para fora. */
+.tag-input > input { flex: 1 1 140px; min-width: 120px; border: 0; outline: 0; background: transparent; padding: 4px 2px; font-size: 13px; color: var(--espresso); }
+.page-view .tag-input > input { font-size: 14px; padding: 5px 2px; }
 .field input:disabled { opacity: .6; }
 .check-row { display: flex; align-items: center; gap: 9px; font-size: 13px; cursor: pointer; }
 .check-row input { width: 16px; height: 16px; margin: 0; accent-color: var(--espresso); }

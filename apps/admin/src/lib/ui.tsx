@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom'
 import axios from 'axios'
 import { useQuery } from '@tanstack/react-query'
 import { useDebounced } from './useDebounced'
-import { AlertTriangle, ArrowLeft, Download, Loader2, Paperclip, Search, Upload, UserRound } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Download, Loader2, Paperclip, Search, Upload, UserRound, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export const TOKEN_KEY = 'admin_token'
@@ -414,6 +414,116 @@ export function Chip({
       {Icon && <Icon size={11} aria-hidden="true" />}
       {children}
     </span>
+  )
+}
+
+/** Separa o texto guardado no banco na lista de itens que a tela edita. */
+export function splitTags(value?: string | null): string[] {
+  return (value ?? '')
+    .split(/[,;\n]/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+}
+
+/** Junta de volta no formato que o banco (e o resto do sistema) já lê. */
+export function joinTags(tags: string[]): string {
+  return tags.join(', ')
+}
+
+/**
+ * Campo de lista por tags.
+ *
+ * Alergia, medicação e comorbidade viram alerta no atendimento e antes de
+ * prescrever, mas eram digitadas em texto corrido: a separação ficava por conta
+ * de quem preenchia, e "dipirona e latex" virava um alerta só. Em tags cada item
+ * é uma unidade — dá para conferir e remover um sem reescrever a frase.
+ *
+ * O valor continua sendo texto separado por vírgula, então nada muda no banco
+ * nem em quem já lê esses campos. O que estava escrito com ponto e vírgula ou em
+ * linhas separadas também é reconhecido na leitura.
+ */
+export function TagInput({
+  value,
+  onChange,
+  placeholder,
+  ariaLabel,
+}: {
+  value: string
+  onChange: (value: string) => void
+  placeholder?: string
+  ariaLabel?: string
+}) {
+  const [rascunho, setRascunho] = React.useState('')
+  const tags = splitTags(value)
+
+  const adicionar = (texto: string) => {
+    const limpo = texto.trim().replace(/[,;]+$/, '').trim()
+    if (!limpo) return
+    // Repetido não entra: duas vezes "dipirona" não é mais informação.
+    if (tags.some((t) => t.toLowerCase() === limpo.toLowerCase())) {
+      setRascunho('')
+      return
+    }
+    onChange(joinTags([...tags, limpo]))
+    setRascunho('')
+  }
+
+  const remover = (alvo: string) => onChange(joinTags(tags.filter((t) => t !== alvo)))
+
+  return (
+    <div className="tag-input">
+      {tags.length > 0 && (
+        <ul className="tag-list">
+          {tags.map((tag) => (
+            <li key={tag}>
+              <span>{tag}</span>
+              <button
+                type="button"
+                onClick={() => remover(tag)}
+                aria-label={`Remover ${tag}`}
+                title={`Remover ${tag}`}
+              >
+                <X size={12} aria-hidden="true" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <input
+        type="text"
+        value={rascunho}
+        aria-label={ariaLabel}
+        placeholder={tags.length ? 'Adicionar outro…' : placeholder}
+        onChange={(e) => {
+          // Colar uma lista pronta ("dipirona, látex") vira várias tags de uma vez.
+          const texto = e.target.value
+          if (/[,;]/.test(texto)) {
+            const partes = splitTags(texto)
+            const ultimo = /[,;]\s*$/.test(texto) ? '' : partes.pop() ?? ''
+            for (const p of partes) adicionar(p)
+            setRascunho(ultimo)
+            return
+          }
+          setRascunho(texto)
+        }}
+        onKeyDown={(e) => {
+          // Espaço não fecha a tag: "ácido hialurônico" é um item só.
+          if (e.key === 'Enter' || e.key === 'Tab') {
+            if (!rascunho.trim()) return
+            e.preventDefault()
+            adicionar(rascunho)
+            return
+          }
+          // Apagar com o campo vazio tira a última tag, como em campo de e-mail.
+          if (e.key === 'Backspace' && !rascunho && tags.length) {
+            e.preventDefault()
+            remover(tags[tags.length - 1])
+          }
+        }}
+        // Sair do campo não pode perder o que foi digitado e não confirmado.
+        onBlur={() => adicionar(rascunho)}
+      />
+    </div>
   )
 }
 
