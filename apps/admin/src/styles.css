@@ -1145,22 +1145,72 @@ img, video, canvas { max-width: 100%; height: auto; }
 .template-preview { position: sticky; top: 8px; }
 .preview-caption { margin: 0 0 6px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
 /* Proporcao de folha, para a margem em mm fazer sentido visual. */
-.preview-sheet { aspect-ratio: 210 / 297; overflow: hidden; background: #fff; border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 2px 12px rgba(47,34,27,.10); color: #2c2c2c; display: flex; flex-direction: column; }
-.preview-sheet.is-a5 { aspect-ratio: 148 / 210; }
-.preview-clinic { display: grid; gap: 2px; padding-bottom: 6px; margin-bottom: 8px; border-bottom: 1px solid #e6ded2; font-size: .85em; }
-.preview-clinic span { color: #777; font-size: .9em; }
-.preview-rich { font-size: .85em; line-height: 1.5; }
-.preview-title { margin: 8px 0 4px; font-family: inherit; font-size: 1.05em; font-weight: 700; }
-.preview-patient { margin: 0 0 8px; font-size: .85em; color: #555; }
-.preview-body { flex: 1; font-size: .85em; line-height: 1.55; color: #444; overflow: hidden; }
-.preview-signature { display: flex; flex-direction: column; margin-top: auto; }
-.preview-signature .preview-line { width: 60%; height: 1px; background: #333; margin: 0 auto 3px; }
-.preview-signature[style*="left"] .preview-line { margin-left: 0; }
-.preview-signature[style*="right"] .preview-line { margin-right: 0; }
-.preview-signer { font-size: .8em; color: #444; }
-/* O QR acompanha o alinhamento escolhido para a assinatura. */
-.preview-signature { align-items: center; }
-.preview-signature[style*="left"] { align-items: flex-start; }
-.preview-signature[style*="right"] { align-items: flex-end; }
-.preview-qr { width: 30px; height: 30px; margin-top: 6px; border: 1px solid #ccc; border-radius: 3px; background: repeating-conic-gradient(#333 0% 25%, #fff 0% 50%) 50% / 8px 8px; }
-.preview-footer { padding-top: 6px; margin-top: 8px; border-top: 1px solid #e6ded2; color: #777; }
+
+/* ── Editor de texto: menus de cor e de campos ────────────────────────────── */
+.rich-select { width: auto; min-width: 96px; height: 26px; padding: 0 6px; font-size: 12px; border: 1px solid var(--border); border-radius: 5px; background: var(--cream-soft); color: var(--espresso); }
+.rich-menu-wrap { position: relative; display: inline-flex; }
+.rich-color-dot { width: 13px; height: 13px; border-radius: 3px; background: linear-gradient(135deg, #2c2c2c 50%, #b08d57 50%); }
+.rich-field-button { width: auto !important; gap: 5px; padding: 0 9px !important; font-size: 12px; font-weight: 600; }
+.rich-menu { position: absolute; top: calc(100% + 5px); right: 0; z-index: 20; min-width: 220px; max-height: 300px; overflow-y: auto; padding: 6px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 6px 24px rgba(47,34,27,.16); }
+.rich-menu-cores { display: flex; gap: 5px; min-width: 0; }
+.rich-menu-cores button { width: 22px; height: 22px; min-height: 0; padding: 0; border: 1px solid rgba(0,0,0,.15); border-radius: 5px; }
+.rich-menu-hint { margin: 2px 6px 8px; font-size: 11.5px; color: var(--text-muted); line-height: 1.4; }
+.rich-menu-group { margin: 8px 6px 3px; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+.rich-menu-campos button { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; min-height: 0; padding: 5px 7px; border: 0; border-radius: 5px; background: transparent; text-align: left; font-size: 12.5px; color: var(--espresso); }
+.rich-menu-campos button:hover { background: var(--marble-soft); transform: none; }
+.rich-menu-campos button span { font-size: 11px; color: var(--text-muted); }
+
+/* ── Blocos da folha ──────────────────────────────────────────────────────── */
+.block-list { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.block-list li { border: 1px solid var(--border); border-radius: 8px; background: var(--cream-soft); overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.block-list li.is-selected { border-color: var(--bronze); box-shadow: 0 0 0 2px rgba(156,130,104,.16); }
+.block-head { display: grid; gap: 1px; padding: 9px 11px; min-height: 0; border: 0; background: transparent; text-align: left; justify-items: start; }
+.block-head:hover { background: var(--marble-soft); transform: none; }
+.block-name { font-size: 13px; font-weight: 600; color: var(--espresso); }
+.block-hint { font-size: 11.5px; color: var(--text-muted); }
+.block-actions { display: inline-flex; gap: 2px; padding-right: 8px; }
+.block-actions button { width: 26px; height: 26px; min-height: 0; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--text-muted); }
+.block-actions button:hover:not(:disabled) { border-color: var(--border); color: var(--espresso); background: var(--marble-soft); transform: none; }
+.block-options { grid-column: 1 / -1; display: grid; gap: 10px; padding: 10px 11px 12px; border-top: 1px solid var(--border); background: var(--marble-soft); }
+.block-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
+.block-add button { gap: 4px; min-height: 30px; padding: 0 10px; font-size: 12px; background: transparent; border: 1px dashed var(--border); border-radius: 999px; color: var(--espresso); }
+.block-add button:hover { border-style: solid; border-color: var(--bronze); transform: none; }
+
+/* ── A folha impressa ─────────────────────────────────────────────────────── */
+.sheet { aspect-ratio: 210 / 297; overflow: hidden; background: #fff; border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 2px 12px rgba(47,34,27,.10); display: flex; flex-direction: column; }
+.sheet.is-a5 { aspect-ratio: 148 / 210; }
+.sheet-block { position: relative; }
+.sheet-block.is-clickable { cursor: pointer; border-radius: 3px; }
+.sheet-block.is-clickable:hover { outline: 1px dashed var(--bronze); outline-offset: 2px; }
+.sheet-block.is-selected { outline: 2px solid var(--bronze); outline-offset: 2px; }
+.sheet-clinic { display: flex; align-items: center; gap: 10px; }
+.sheet-clinic.align-center { justify-content: center; text-align: center; }
+.sheet-clinic.align-right { justify-content: flex-end; text-align: right; }
+.sheet-clinic img { max-width: 40%; object-fit: contain; }
+.sheet-clinic-text { display: grid; gap: 1px; font-size: .85em; }
+.sheet-clinic-text span { color: #777; font-size: .9em; }
+.sheet-title { margin: 8px 0 4px; font-family: inherit; font-size: 1.1em; font-weight: 700; }
+.sheet-patient { margin: 0 0 6px; font-size: .85em; }
+.sheet-content { flex: 1; font-size: .85em; line-height: 1.55; min-height: 0; overflow: hidden; }
+.sheet-content-label { margin: 0 0 3px; font-size: .95em; font-weight: 600; }
+.sheet-content ol { margin: 0 0 6px; padding-left: 18px; }
+.sheet-instructions { margin: 0; white-space: pre-line; }
+.sheet-instructions.is-empty { color: #999; }
+.sheet-rich { font-size: .85em; line-height: 1.5; }
+.sheet-rich h2 { font-size: 1.15em; margin: .3em 0; }
+.sheet-rich h3 { font-size: 1.05em; margin: .3em 0; }
+.sheet-rich hr { border: 0; border-top: 1px solid #ddd; margin: .4em 0; }
+.sheet-rich ul { margin: .3em 0; padding-left: 18px; }
+.sheet-signature { display: flex; flex-direction: column; align-items: center; }
+.sheet-block[style*="left"] .sheet-signature { align-items: flex-start; }
+.sheet-block[style*="right"] .sheet-signature { align-items: flex-end; }
+.sheet-line { width: 150px; border-top: 1px solid; margin-bottom: 3px; }
+.sheet-signer { font-size: .8em; }
+.sheet-crm { font-size: .72em; color: #777; }
+.sheet-qr { width: 30px; height: 30px; margin-top: 5px; border: 1px solid #ccc; border-radius: 3px; background: repeating-conic-gradient(#333 0% 25%, #fff 0% 50%) 50% / 8px 8px; }
+.sheet-divider { border: 0; border-top: 1px solid; margin: 6px 0; }
+
+/* Seletor de cor: a regra generica de input o deixava com altura de texto e a
+   amostra sumia. */
+.field input[type=color] { width: 100%; height: 38px; padding: 3px; cursor: pointer; }
+.page-view .field input[type=color] { height: 42px; }

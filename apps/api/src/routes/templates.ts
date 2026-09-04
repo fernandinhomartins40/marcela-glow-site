@@ -31,23 +31,59 @@ const itemSchema = z.object({
 })
 
 /**
- * Layout de impressão.
+ * Um bloco da folha. A ordem do array e a ordem em que sao impressos.
  *
- * Campos livres o suficiente para o editor visual crescer sem exigir migração:
- * o que a tela não conhecer, ela ignora. `headerHtml` e `footerHtml` guardam o
- * conteúdo formatado do editor.
+ * `content` so vale para o bloco de texto; os demais sao gerados pelo sistema
+ * (dados da clinica, da paciente, itens, assinatura) e o bloco so diz onde
+ * entram e com que aparencia.
  */
+const blockSchema = z.object({
+  id: z.string().min(1),
+  type: z.enum([
+    'clinic',      // logo + nome/endereco/telefone
+    'title',       // titulo do documento
+    'patient',     // nome e dados da paciente
+    'content',     // itens (receita/exame) ou orientacoes
+    'text',        // texto livre formatado
+    'signature',   // linha de assinatura + QR
+    'divider',     // linha horizontal
+    'spacer',      // espaco em branco
+  ]),
+  html: z.string().optional(),
+  align: z.enum(['left', 'center', 'right']).optional(),
+  /** Altura em milimetros — usado por spacer e pelo espaco da assinatura */
+  heightMm: z.number().min(0).max(120).optional(),
+  /** Opcoes por tipo de bloco, sem exigir migracao a cada ajuste */
+  options: z.record(z.unknown()).optional(),
+})
+
+const brandSchema = z.object({
+  logoUrl: z.string().optional().nullable(),
+  logoHeightMm: z.number().min(5).max(40).optional(),
+  logoAlign: z.enum(['left', 'center', 'right']).optional(),
+  /** Cor de titulos e linhas; o corpo do texto segue em preto para impressao */
+  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  textColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  /** Nome e contato impressos; vazio usa o cadastro da clinica */
+  clinicName: z.string().optional().nullable(),
+  clinicLine1: z.string().optional().nullable(),
+  clinicLine2: z.string().optional().nullable(),
+})
+
 const layoutSchema = z.object({
+  /** Blocos da folha, na ordem de impressao. Vazio usa o arranjo padrao. */
+  blocks: z.array(blockSchema).optional(),
+  brand: brandSchema.optional(),
+
+  /* Campos do primeiro formato, antes dos blocos. Continuam aceitos para os
+     modelos ja gravados: a tela converte para blocos ao abrir. */
   headerHtml: z.string().optional(),
   footerHtml: z.string().optional(),
-  /** Mostra logo e dados da clínica no topo, antes do cabeçalho livre */
   showClinicHeader: z.boolean().optional(),
-  /** Onde entra o bloco de assinatura */
   signaturePosition: z.enum(['left', 'center', 'right']).optional(),
-  /** Espaço reservado acima da linha de assinatura, em milímetros */
   signatureSpaceMm: z.number().min(0).max(80).optional(),
-  /** Imprime o QR de verificação junto da assinatura */
   showVerificationQr: z.boolean().optional(),
+
   marginMm: z.number().min(5).max(50).optional(),
   fontFamily: z.enum(['sans', 'serif']).optional(),
   fontSizePt: z.number().min(8).max(16).optional(),
