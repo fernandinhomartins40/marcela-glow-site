@@ -116,18 +116,24 @@ export function Patients() {
               chips={
                 <>
                   {!patient.isActive && <Chip>Arquivada</Chip>}
-                  {/* Uma tag por alergia: "Alergia" sozinho obrigava a abrir a ficha
-                     para saber de qual se trata. Acima de tres vira contagem, senao
-                     uma paciente com lista longa empurra o resto da linha. */}
-                  {splitTags(patient.allergies).slice(0, 3).map((alergia) => (
-                    <Chip key={alergia} tone="danger" icon={AlertTriangle} title={`Alergia: ${alergia}`}>
-                      {alergia}
-                    </Chip>
-                  ))}
-                  {splitTags(patient.allergies).length > 3 && (
-                    <Chip tone="danger" title={`Alergias: ${patient.allergies}`}>
-                      +{splitTags(patient.allergies).length - 3}
-                    </Chip>
+                  {/* "Alergia:" uma vez, seguido de uma tag por item. Sem o rotulo
+                     as tags viram palavras soltas ("latex", "sulfa") sem dizer do que
+                     se trata; repeti-lo em cada tag gastaria a linha inteira.
+                     Acima de tres vira contagem, senao uma paciente com lista longa
+                     empurra o contato e o CPF para fora da linha. */}
+                  {splitTags(patient.allergies).length > 0 && (
+                    <span className="chip-group" title={`Alergias: ${patient.allergies}`}>
+                      <AlertTriangle size={12} aria-hidden="true" />
+                      <span className="chip-group-label">Alergia:</span>
+                      {splitTags(patient.allergies).slice(0, 3).map((alergia) => (
+                        <Chip key={alergia} tone="danger">
+                          {alergia}
+                        </Chip>
+                      ))}
+                      {splitTags(patient.allergies).length > 3 && (
+                        <Chip tone="danger">+{splitTags(patient.allergies).length - 3}</Chip>
+                      )}
+                    </span>
                   )}
                 </>
               }
