@@ -644,6 +644,77 @@ Este é um texto de demonstração para exercitar a listagem e a página de publ
   }
   console.log(`📰 Publicações: ${posts.length}`)
 
+  // ── Modelos de documento ──────────────────────────────────────────────────
+  // Guardam o que se repete a cada emissão: o texto pronto e o layout de
+  // impressão. O primeiro de cada tipo entra como padrão, que é o que a tela
+  // sugere primeiro ao emitir.
+  const LAYOUT_BASE = {
+    showClinicHeader: true,
+    signaturePosition: 'center',
+    signatureSpaceMm: 24,
+    showVerificationQr: true,
+    marginMm: 20,
+    fontFamily: 'sans',
+    fontSizePt: 11,
+    paper: 'A4',
+  }
+
+  const MODELOS = [
+    {
+      name: 'Receita pós-procedimento',
+      kind: 'PRESCRIPTION',
+      title: 'Receita',
+      instructions:
+        'Seguir as orientações abaixo por 7 dias.\n\nEm caso de dor intensa, vermelhidão progressiva ou febre, entre em contato com a clínica.',
+      isDefault: true,
+      layout: { ...LAYOUT_BASE, footerHtml: '<p>Documento assinado digitalmente. Confira a autenticidade pelo QR ao lado.</p>' },
+    },
+    {
+      name: 'Pedido de exames pré-procedimento',
+      kind: 'EXAM_REQUEST',
+      title: 'Solicitação de exames',
+      instructions: 'Realizar os exames abaixo e trazer os resultados na próxima consulta.',
+      isDefault: true,
+      layout: { ...LAYOUT_BASE },
+    },
+    {
+      name: 'Orientações pós-toxina botulínica',
+      kind: 'GUIDANCE',
+      title: 'Cuidados após o procedimento',
+      instructions: ORIENTACOES[0].body,
+      isDefault: true,
+      layout: { ...LAYOUT_BASE, signatureSpaceMm: 12, showVerificationQr: false },
+    },
+    {
+      name: 'Orientações pós-preenchimento',
+      kind: 'GUIDANCE',
+      title: 'Cuidados após o procedimento',
+      instructions: ORIENTACOES[1].body,
+      layout: { ...LAYOUT_BASE, signatureSpaceMm: 12, showVerificationQr: false },
+    },
+    {
+      name: 'Atestado de comparecimento',
+      kind: 'CERTIFICATE',
+      title: 'Atestado de comparecimento',
+      instructions:
+        'Atesto para os devidos fins que a paciente compareceu a esta clínica nesta data, para atendimento médico.',
+      isDefault: true,
+      layout: { ...LAYOUT_BASE, paper: 'A5', signatureSpaceMm: 20, showVerificationQr: false },
+    },
+  ]
+
+  let modelos = 0
+  for (const m of MODELOS) {
+    const existente = await prisma.documentTemplate.findFirst({
+      where: { tenantId: tenant.id, name: m.name },
+    })
+    const dados = { ...m, kind: m.kind as DocumentKind, tenantId: tenant.id, createdById: doctor.id, isActive: true }
+    if (existente) await prisma.documentTemplate.update({ where: { id: existente.id }, data: dados })
+    else await prisma.documentTemplate.create({ data: dados })
+    modelos += 1
+  }
+  console.log(`📄 Modelos de documento: ${modelos}`)
+
   console.log('\n✅ Seed de demonstração concluído.')
   console.log('   Portal da paciente: ' + email(PACIENTES[0].name) + ' / Paciente@2026')
   console.log('   Equipe (recepção):  recepcao@exemplo.com.br / Equipe@2026!')
