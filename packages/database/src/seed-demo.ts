@@ -243,8 +243,25 @@ function telefone(i: number): string {
   return `679${String(80000000 + i * 1234).slice(0, 8)}`
 }
 
+/**
+ * CPF ficticio, mas com digito verificador correto.
+ *
+ * O painel valida o CPF antes de deixar salvar a ficha; numero invalido trava
+ * o botao e a paciente do seed nao pode ser editada. Os nove primeiros digitos
+ * saem de uma sequencia previsivel, entao o mesmo indice gera sempre o mesmo
+ * CPF e o seed continua idempotente.
+ */
 function cpf(i: number): string {
-  return String(10000000000 + i * 12345678).slice(0, 11)
+  const base = String(100000000 + i * 12345671).slice(0, 9)
+  const digito = (parcial: string) => {
+    let soma = 0
+    for (let k = 0; k < parcial.length; k++) soma += Number(parcial[k]) * (parcial.length + 1 - k)
+    const resto = (soma * 10) % 11
+    return resto === 10 ? 0 : resto
+  }
+  const d1 = digito(base)
+  const d2 = digito(base + d1)
+  return base + d1 + d2
 }
 
 async function main() {

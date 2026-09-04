@@ -146,6 +146,18 @@ export function PatientForm({
   const cpfInvalid = cpfDigits.length > 0 && !isValidCPF(cpfDigits)
   const valid = form.name.trim().length >= 2 && /\S+@\S+\.\S+/.test(form.email) && !cpfInvalid
 
+  /* O que falta para salvar, dito no rodapé.
+     O botão desabilitado sozinho não explica nada, e o motivo costuma estar
+     numa aba que não é a aberta — um CPF errado em "Identificação" trava o
+     salvamento de quem está mexendo em "Administrativo". */
+  const impedimento = !valid
+    ? form.name.trim().length < 2
+      ? 'Informe o nome em “Identificação”.'
+      : !/\S+@\S+\.\S+/.test(form.email)
+        ? 'Informe um e-mail válido em “Identificação”.'
+        : 'Corrija o CPF em “Identificação” ou deixe o campo vazio.'
+    : null
+
   return (
     <Modal
       title={patient ? 'Editar paciente' : 'Nova paciente'}
@@ -154,6 +166,7 @@ export function PatientForm({
       wide
       footer={
         <>
+          {impedimento && <span className="footer-hint">{impedimento}</span>}
           <button onClick={onClose}>Cancelar</button>
           <SubmitButton pending={save.isPending} disabled={!valid} onClick={() => save.mutate()}>
             {patient ? 'Salvar alterações' : 'Cadastrar'}
