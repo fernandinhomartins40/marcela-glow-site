@@ -1,37 +1,30 @@
-import {
-  AppointmentStatus,
+const bcrypt = require('bcryptjs')
+// Os enums vem do client gerado, entao acompanham o schema sem lista propria.
+const {
+  AppointmentStatus, CatalogKind, ContentStatus, DocumentKind, Gender,
+  LeadStatus, MaritalStatus, MedicationControl, MessageSender,
+  NotificationChannel, PrescriptionStatus, PrismaClient, RecordType, UserRole,
   BloodType,
-  CatalogKind,
-  ContentStatus,
-  DocumentKind,
-  Gender,
-  LeadStatus,
-  MaritalStatus,
-  MedicationControl,
-  MessageSender,
-  NotificationChannel,
-  PrescriptionStatus,
-  PrismaClient,
-  RecordType,
-  UserRole,
-} from '@prisma/client'
-import bcrypt from 'bcryptjs'
+} = require('@prisma/client')
 
 /**
- * Seed de demonstração: enche o banco com volume suficiente para exercitar as
- * telas de verdade.
+ * Seed de demonstracao: enche a clinica com volume suficiente para exercitar
+ * as telas.
  *
- * Diferente de `seed.ts`, que cria o mínimo para a aplicação subir (um tenant,
- * um admin, um exemplo de cada coisa), este popula a clínica como ela seria
- * depois de alguns meses de uso: catálogo completo, agenda espalhada no tempo,
- * prontuários com histórico e conversas em andamento. É o que permite ver
- * paginação, filtro, estado cheio e ordenação funcionando.
+ * Roda no deploy, logo apos seed-demo-users.js. Aquele garante o que a
+ * aplicacao precisa para subir (tenant, usuarios, expediente); este popula o
+ * catalogo e o movimento - sem procedimento cadastrado, agendamento, catalogo
+ * e selecao no atendimento aparecem vazios.
  *
- * Idempotente: reconhece o que já criou pelo e-mail/nome e atualiza em vez de
- * duplicar, então pode rodar a cada deploy sem sujar o banco.
+ * Idempotente: reconhece o que ja criou por e-mail ou nome e atualiza em vez de
+ * duplicar, entao pode rodar a cada deploy. As datas sao relativas a hoje, para
+ * a agenda nao envelhecer no banco.
  *
- * Os dados são fictícios e marcados como tal (e-mails @exemplo.com.br). Nunca
- * use este seed num banco com paciente real: ele grava prontuário e receita.
+ * Os dados sao ficticios (e-mails @exemplo.com.br). Quando a clinica tiver o
+ * proprio catalogo e as proprias pacientes, tire a chamada do deploy: este
+ * script grava prontuario e receita, e nao deve conviver com dado real.
+ *
+ * Desligar sem mexer no codigo: SEED_DEMO_DATA=0.
  */
 
 const prisma = new PrismaClient()
@@ -39,14 +32,14 @@ const prisma = new PrismaClient()
 const TENANT_SLUG = process.env.SEED_TENANT_SLUG || 'marcela-duch'
 
 /** Data relativa a hoje, para a agenda nunca "envelhecer" no banco. */
-function dia(offset: number, hora = 9, minuto = 0): Date {
+function dia(offset, hora = 9, minuto = 0) {
   const d = new Date()
   d.setHours(hora, minuto, 0, 0)
   d.setDate(d.getDate() + offset)
   return d
 }
 
-function anos(idade: number): Date {
+function anos(idade) {
   const d = new Date()
   d.setFullYear(d.getFullYear() - idade)
   return d
@@ -227,7 +220,7 @@ const DEPOIMENTOS = [
   { authorName: 'Helena C.', text: 'Atendimento pontual, ambiente agradável e um cuidado com detalhes que eu não vi em outro lugar da região.', rating: 4 },
 ]
 
-function email(nome: string): string {
+function email(nome) {
   const base = nome
     .toLowerCase()
     .normalize('NFD')
@@ -239,15 +232,19 @@ function email(nome: string): string {
   return `${base}@exemplo.com.br`
 }
 
-function telefone(i: number): string {
+function telefone(i) {
   return `679${String(80000000 + i * 1234).slice(0, 8)}`
 }
 
-function cpf(i: number): string {
+function cpf(i) {
   return String(10000000000 + i * 12345678).slice(0, 11)
 }
 
 async function main() {
+  if (process.env.SEED_DEMO_DATA === '0') {
+    console.log('Seed de demonstracao desligado (SEED_DEMO_DATA=0).')
+    return
+  }
   console.log('🌱 Seed de demonstração — dados fictícios para testar a aplicação\n')
 
   const tenant = await prisma.tenant.findUnique({ where: { slug: TENANT_SLUG } })
@@ -287,7 +284,7 @@ async function main() {
   for (const [weekday, startTime, endTime] of [
     [1, '08:00', '18:00'], [2, '08:00', '18:00'], [3, '08:00', '18:00'],
     [4, '08:00', '18:00'], [5, '08:00', '18:00'], [6, '08:00', '12:00'],
-  ] as const) {
+  ]) {
     const existente = await prisma.businessHour.findFirst({ where: { tenantId: tenant.id, weekday } })
     if (existente) {
       await prisma.businessHour.update({ where: { id: existente.id }, data: { startTime, endTime, isActive: true } })
@@ -311,21 +308,21 @@ async function main() {
   console.log(`💉 Procedimentos: ${procedimentos.length}`)
 
   // ── Catálogo clínico ──────────────────────────────────────────────────────
-  const catalogo: { kind: CatalogKind; itens: Record<string, unknown>[] }[] = [
+  const catalogo = [
     { kind: CatalogKind.MEDICATION, itens: MEDICAMENTOS },
     { kind: CatalogKind.EXAM, itens: EXAMES },
     { kind: CatalogKind.GUIDANCE, itens: ORIENTACOES },
     { kind: CatalogKind.RECORD_TEMPLATE, itens: MODELOS_PRONTUARIO },
   ]
   let totalCatalogo = 0
-  const medicamentos: { id: string; name: string }[] = []
+  const medicamentos = []
   for (const grupo of catalogo) {
     for (const item of grupo.itens) {
-      const nome = item.name as string
+      const nome = item.name
       const existente = await prisma.catalogItem.findFirst({
         where: { tenantId: tenant.id, kind: grupo.kind, name: nome },
       })
-      const dados = { ...item, kind: grupo.kind, tenantId: tenant.id, isActive: true } as never
+      const dados = { ...item, kind: grupo.kind, tenantId: tenant.id, isActive: true }
       const salvo = existente
         ? await prisma.catalogItem.update({ where: { id: existente.id }, data: dados })
         : await prisma.catalogItem.create({ data: dados })
@@ -354,7 +351,7 @@ async function main() {
       skinType: p.skinType,
       allergies: p.allergies ?? null,
       conditions: p.conditions ?? null,
-      medications: (p as { medications?: string }).medications ?? null,
+      medications: p.medications ?? null,
       bloodType: p.bloodType,
       referralSource: p.referralSource,
       lgpdConsentAt: dia(-90 + i),
@@ -378,7 +375,7 @@ async function main() {
   // Espalhada de 60 dias atrás a 30 à frente, com status coerente ao tempo:
   // passado concluído ou cancelado, hoje confirmado, futuro entre confirmado e
   // aguardando. É o que faz a agenda e o dashboard mostrarem algo real.
-  const agendaPlano: { offset: number; hora: number; pacienteIdx: number; procIdx: number; status: AppointmentStatus }[] = []
+  const agendaPlano = []
   let n = 0
   for (const offset of [-58, -51, -44, -37, -30, -23, -16, -9, -2]) {
     agendaPlano.push({ offset, hora: 8 + (n % 8), pacienteIdx: n % PACIENTES.length, procIdx: n % PROCEDIMENTOS.length, status: n % 7 === 0 ? AppointmentStatus.CANCELLED : AppointmentStatus.COMPLETED })
@@ -428,7 +425,7 @@ async function main() {
   let registros = 0
   let sessoes = 0
   for (const [i, ag] of concluidos.entries()) {
-    const proc = procedimentos.find((p) => p.id === ag.procedureId)!
+    const proc = procedimentos.find((p) => p.id === ag.procedureId)
     const jaTem = await prisma.medicalRecord.findFirst({ where: { appointmentId: ag.id } })
     if (!jaTem) {
       await prisma.medicalRecord.create({
@@ -443,7 +440,7 @@ async function main() {
           plan: `Manter cuidados domiciliares. Retorno em 30 dias para reavaliação.`,
           occurredAt: ag.scheduledAt,
           lockedAt: i % 2 === 0 ? ag.endsAt : null,
-          patientId: ag.patientId!,
+          patientId: ag.patientId,
           appointmentId: ag.id,
           createdById: doctor.id,
           tenantId: tenant.id,
@@ -456,10 +453,10 @@ async function main() {
     if (!temSessao) {
       await prisma.procedureSession.create({
         data: {
-          performedAt: ag.scheduledAt!,
+          performedAt: ag.scheduledAt,
           priceCents: [35000, 90000, 120000, 150000, 65000, 45000, 55000, 25000, 0][i % 9],
           notes: `${proc.title} realizado conforme plano.`,
-          patientId: ag.patientId!,
+          patientId: ag.patientId,
           procedureId: proc.id,
           appointmentId: ag.id,
           tenantId: tenant.id,
@@ -495,14 +492,14 @@ async function main() {
         signedById: status === PrescriptionStatus.SIGNED ? doctor.id : null,
         verificationCode: codigo,
         validUntil: dia(30 + i),
-        patientId: ag.patientId!,
+        patientId: ag.patientId,
         appointmentId: ag.id,
         tenantId: tenant.id,
       },
     })
 
     for (const [ordem, med] of medicamentos.slice(i % 3, (i % 3) + 2).entries()) {
-      const fonte = MEDICAMENTOS.find((m) => m.name === med.name)!
+      const fonte = MEDICAMENTOS.find((m) => m.name === med.name)
       await prisma.prescriptionItem.create({
         data: {
           prescriptionId: receita.id,

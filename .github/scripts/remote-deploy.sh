@@ -106,6 +106,24 @@ if ! compose exec -T api node scripts/seed-demo-users.js; then
   exit 1
 fi
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Dados de demonstracao
+#
+# Diferente do seed acima, falha aqui NAO derruba o deploy: sao dados de
+# vitrine, e a aplicacao funciona sem eles. O que ele resolve e a tabela de
+# procedimentos vazia, que deixa agendamento, catalogo e atendimento sem opcao
+# nenhuma para escolher.
+#
+# Quando a clinica tiver o proprio catalogo e as proprias pacientes, ponha
+# SEED_DEMO_DATA=0 no .env do servidor: dado ficticio nao deve conviver com
+# prontuario real.
+# ─────────────────────────────────────────────────────────────────────────────
+
+echo "Populando dados de demonstracao..."
+if ! compose exec -T api node scripts/seed-demo-data.js; then
+  echo "Aviso: o seed de demonstracao falhou; o deploy segue sem ele." >&2
+fi
+
 ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
 
 echo "Limpando imagens orfas..."
