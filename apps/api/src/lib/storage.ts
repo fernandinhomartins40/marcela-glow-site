@@ -11,13 +11,35 @@ const publicBaseUrl = process.env.S3_PUBLIC_BASE_URL
 
 export const storageConfigured = Boolean(s3Bucket && accessKeyId && secretAccessKey)
 
-const s3 = storageConfigured
-  ? new S3Client({
-      region,
-      endpoint,
-      forcePathStyle: process.env.S3_FORCE_PATH_STYLE !== 'false',
-      credentials: { accessKeyId: accessKeyId!, secretAccessKey: secretAccessKey! },
-    })
+const opcoesComuns = {
+  region,
+  forcePathStyle: process.env.S3_FORCE_PATH_STYLE !== 'false',
+  credentials: { accessKeyId: accessKeyId!, secretAccessKey: secretAccessKey! },
+}
+
+/** Fala com o MinIO pela rede interna: e o caminho curto, sem sair do host. */
+const s3 = storageConfigured ? new S3Client({ ...opcoesComuns, endpoint }) : null
+
+/**
+ * Assina URLs que o navegador vai abrir.
+ *
+ * A assinatura da AWS cobre o host, entao nao adianta trocar o endereco depois
+ * de assinar - a URL passa a nao conferir. Por isso este cliente assina ja com
+ * o endereco publico: `S3_ENDPOINT` aponta para `minio:9000`, que so existe
+ * dentro do Docker e em HTTP, e o navegador numa pagina HTTPS recusa por
+ * conteudo misto antes mesmo de tentar.
+ *
+ * Sem `S3_PUBLIC_BASE_URL` configurado, cai no cliente interno: em
+ * desenvolvimento os dois endereços são o mesmo.
+ */
+const publicEndpoint = publicBaseUrl
+  // De "https://host/files" sobra "https://host": o caminho do bucket entra
+  // depois, montado pelo proprio SDK.
+  ? publicBaseUrl.replace(/\/files\/?$/, '').replace(/\/$/, '')
+  : endpoint
+
+const s3Public = storageConfigured
+  ? new S3Client({ ...opcoesComuns, endpoint: publicEndpoint })
   : null
 
 export function buildStorageKey(tenantId: string, fileName: string): string {
@@ -26,13 +48,13 @@ export function buildStorageKey(tenantId: string, fileName: string): string {
 }
 
 export async function presignUpload(key: string, contentType: string): Promise<string> {
-  if (!s3) throw new Error('S3 storage is not configured')
-  return getSignedUrl(s3, new PutObjectCommand({ Bucket: s3Bucket, Key: key, ContentType: contentType }), { expiresIn: 900 })
+  if (!s3Public) throw new Error('S3 storage is not configured')
+  return getSignedUrl(s3Public, new PutObjectCommand({ Bucket: s3Bucket, Key: key, ContentType: contentType }), { expiresIn: 900 })
 }
 
 export async function presignDownload(key: string): Promise<string> {
-  if (!s3) throw new Error('S3 storage is not configured')
-  return getSignedUrl(s3, new GetObjectCommand({ Bucket: s3Bucket, Key: key }), { expiresIn: 900 })
+  if (!s3Public) throw new Error('S3 storage is not configured')
+  return getSignedUrl(s3Public, new GetObjectCommand({ Bucket: s3Bucket, Key: key }), { expiresIn: 900 })
 }
 
 export function publicFileUrl(key: string): string {
