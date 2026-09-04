@@ -126,28 +126,32 @@ function BlockView({
         </p>
       )
 
-    case 'content':
+    case 'items':
+      // Lista montada ao emitir. Fora de receita e pedido de exame não há
+      // itens, então o bloco não ocupa espaço na folha.
+      if (kind !== 'PRESCRIPTION' && kind !== 'EXAM_REQUEST') return null
       return (
         <div className="sheet-content">
-          {kind === 'PRESCRIPTION' || kind === 'EXAM_REQUEST' ? (
-            <>
-              <p className="sheet-content-label" style={{ color: accent }}>
-                {contentLabel(kind)}
-              </p>
-              <ol>
-                <li>Item do documento — 1 caixa</li>
-                <li>Item do documento — uso contínuo</li>
-              </ol>
-            </>
-          ) : null}
-          {instructions ? (
-            <p className="sheet-instructions">{applyFields(instructions, values)}</p>
-          ) : (
-            <p className="sheet-instructions is-empty">Conteúdo do documento…</p>
-          )}
+          <p className="sheet-content-label" style={{ color: accent }}>
+            {contentLabel(kind)}
+          </p>
+          <ol>
+            <li>Item do documento — 1 caixa</li>
+            <li>Item do documento — uso contínuo</li>
+          </ol>
         </div>
       )
 
+    case 'content':
+      return (
+        <div className="sheet-content">
+          {instructions ? (
+            <p className="sheet-instructions">{applyFields(instructions, values)}</p>
+          ) : (
+            <p className="sheet-instructions is-empty">As orientações digitadas em “Conteúdo”…</p>
+          )}
+        </div>
+      )
     case 'text':
       return (
         <div

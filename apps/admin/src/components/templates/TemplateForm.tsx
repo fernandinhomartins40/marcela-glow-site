@@ -1,7 +1,7 @@
 import React from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { AlertTriangle, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
-import { api, ConfirmDialog, errorMessage, Field, FormRow, Modal, SubmitButton } from '../../lib/ui'
+import { api, errorMessage, Field, FormRow, Modal, SubmitButton } from '../../lib/ui'
 import { RichText } from '../../lib/RichText'
 import { sampleValues } from '../../lib/docFields'
 import { LogoField } from './LogoField'
@@ -9,7 +9,6 @@ import { Sheet } from './Sheet'
 import {
   BLOCK_META,
   CORES_PADRAO,
-  ESSENCIAIS,
   inserirNaOrdem,
   blocosPadrao,
   ensureBlocks,
@@ -64,9 +63,6 @@ export function TemplateForm({
     template ? ensureBlocks(layoutInicial) : blocosPadrao(),
   )
   const [selecionado, setSelecionado] = React.useState<string | null>(null)
-  /* Remover um bloco essencial pede confirmação: sem ele o documento sai sem
-     informação que precisa constar, e o engano só aparece na impressão. */
-  const [removendo, setRemovendo] = React.useState<Block | null>(null)
 
   const kindAtual = template?.kind ?? kind
   const valores = sampleValues()
@@ -159,12 +155,7 @@ export function TemplateForm({
               onSelect={setSelecionado}
               onChange={setBloco}
               onMove={mover}
-              onRemove={(id) => {
-                const bloco = blocks.find((b) => b.id === id)
-                if (!bloco) return
-                if (BLOCK_META[bloco.type].essencial) setRemovendo(bloco)
-                else setBlocks((prev) => prev.filter((b) => b.id !== id))
-              }}
+              onRemove={(id) => setBlocks((prev) => prev.filter((b) => b.id !== id))}
               onAdd={(t) => {
                 const b = novoBloco(t)
                 // Volta para a posição natural dele, não para o fim da folha.
@@ -195,19 +186,6 @@ export function TemplateForm({
 
       {save.isError && <p className="error">{errorMessage(save.error)}</p>}
 
-      {removendo && (
-        <ConfirmDialog
-          title={`Remover "${BLOCK_META[removendo.type].label}"?`}
-          message={`${BLOCK_META[removendo.type].hint}. Sem este bloco o documento sai sem essa informação — dá para adicionar de volta depois.`}
-          confirmLabel="Remover"
-          danger
-          onCancel={() => setRemovendo(null)}
-          onConfirm={() => {
-            setBlocks((prev) => prev.filter((b) => b.id !== removendo.id))
-            setRemovendo(null)
-          }}
-        />
-      )}
     </Modal>
   )
 }
@@ -231,20 +209,24 @@ function BlocksEditor({
 }) {
   const disponiveis = tiposDisponiveis(blocks)
   const presentes = new Set(blocks.map((b) => b.type))
-  const faltando = ESSENCIAIS.filter((t) => !presentes.has(t))
+  // Blocos que trazem dado do banco. Não são obrigatórios — só vale avisar
+  // que estão fora, porque o dado deles não aparece sozinho.
+  const faltando = (['title', 'patient', 'items', 'content', 'signature'] as BlockType[])
+    .filter((t) => !presentes.has(t))
 
   return (
     <>
       <p className="form-section-title">Blocos da folha</p>
 
-      {/* O que falta aparece antes de salvar, não na hora de imprimir. */}
+      {/* Bloco de dados removido não some do documento: o mesmo valor sai por
+          campo automático dentro de um texto livre. */}
       {faltando.length > 0 && (
         <div className="blocks-warning">
           <AlertTriangle size={15} aria-hidden="true" />
           <span>
-            Sem {faltando.map((t) => BLOCK_META[t].label.toLowerCase()).join(
-)} o documento sai
-            incompleto. Use “Adicionar bloco” abaixo para devolver.
+            A folha está sem {faltando.map((t) => BLOCK_META[t].label.toLowerCase()).join(', ')}.
+            Adicione abaixo, ou escreva num “Texto livre” usando o botão <strong>Campo</strong>
+            — {'{{paciente}}'}, {'{{data}}'} e os demais imprimem o mesmo dado.
           </span>
         </div>
       )}
