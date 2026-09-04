@@ -651,12 +651,18 @@ export function PatientSearchSelect({
   const [search, setSearch] = React.useState('')
   const debounced = useDebounced(search)
 
+  /* Duas letras antes de consultar: uma só devolve quase o cadastro inteiro, o
+     que não ajuda a achar ninguém e ainda gasta uma requisição por tecla. */
+  const termo = debounced.trim()
+  const buscando = termo.length >= 2
+
   const query = useQuery({
-    queryKey: ['patient-search', debounced],
+    queryKey: ['patient-search', termo],
     queryFn: async () =>
-      (await api.get('/admin/patients', { params: debounced ? { search: debounced } : {} }))
-        .data as PatientOption[],
-    // Sem termo a lista inteira não ajuda: mostra as primeiras como sugestão
+      (await api.get('/admin/patients', { params: { search: termo } })).data as PatientOption[],
+    // Sem termo não há o que consultar: a lista inteira só atrapalha quem
+    // procura uma paciente específica.
+    enabled: buscando,
     staleTime: 30_000,
   })
 
@@ -691,7 +697,12 @@ export function PatientSearchSelect({
         autoFocus={autoFocus}
       />
 
-      {query.isLoading ? (
+      {!buscando ? (
+        <p className="hint">
+          {search.trim() ? 'Digite ao menos duas letras.' : 'Digite para buscar uma paciente.'}
+          {emptyHint ? <> {emptyHint}</> : null}
+        </p>
+      ) : query.isLoading ? (
         <p className="hint">Buscando...</p>
       ) : results.length ? (
         <div className="catalog-results" role="listbox" aria-label="Pacientes encontradas">
@@ -714,9 +725,7 @@ export function PatientSearchSelect({
         </div>
       ) : (
         <p className="hint">
-          {search
-            ? `Nenhuma paciente encontrada para "${search}".`
-            : 'Digite para buscar uma paciente.'}
+          Nenhuma paciente encontrada para “{termo}”.
           {emptyHint ? <> {emptyHint}</> : null}
         </p>
       )}
