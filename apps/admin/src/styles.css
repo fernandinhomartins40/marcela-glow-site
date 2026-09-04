@@ -1224,3 +1224,8 @@ img, video, canvas { max-width: 100%; height: auto; }
 .logo-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .logo-actions button { gap: 5px; min-height: 32px; padding: 0 11px; font-size: 12.5px; background: transparent; border: 1px solid var(--border); border-radius: 7px; color: var(--espresso); }
 .logo-actions button:hover:not(:disabled) { border-color: var(--bronze); background: var(--marble-soft); transform: none; }
+
+/* Aviso de bloco essencial faltando na folha do modelo. */
+.blocks-warning { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border: 1px solid #e6c99b; border-radius: 8px; background: #fbf0e2; font-size: 12.5px; line-height: 1.5; color: #7d5220; }
+.blocks-warning svg { flex: none; margin-top: 1px; }
+.block-add button.is-missing { border-style: solid; border-color: #d9a441; background: #fbf0e2; color: #7d5220; font-weight: 600; }

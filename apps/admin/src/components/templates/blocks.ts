@@ -57,15 +57,40 @@ export interface TemplateLayout {
   paper?: 'A4' | 'A5'
 }
 
-export const BLOCK_META: Record<BlockType, { label: string; hint: string; unico?: boolean }> = {
-  clinic: { label: 'Logo e dados da clínica', hint: 'Cabeçalho com a marca', unico: true },
-  title: { label: 'Título do documento', hint: 'Ex.: Receita, Atestado', unico: true },
-  patient: { label: 'Dados da paciente', hint: 'Nome e identificação', unico: true },
-  content: { label: 'Conteúdo', hint: 'Itens ou orientações do documento', unico: true },
-  text: { label: 'Texto livre', hint: 'Parágrafo formatado, com campos automáticos' },
-  signature: { label: 'Assinatura', hint: 'Linha, nome e QR de verificação', unico: true },
-  divider: { label: 'Linha divisória', hint: 'Separa duas partes' },
-  spacer: { label: 'Espaço', hint: 'Empurra o que vem depois' },
+/**
+ * `unico`: só cabe uma vez na folha (não faz sentido dois blocos de assinatura).
+ * `essencial`: sem ele o documento sai sem informação que precisa constar, então
+ * a remoção avisa antes — e a posição sugerida é lembrada para devolver o bloco
+ * onde ele estava, não no fim da folha.
+ */
+export const BLOCK_META: Record<
+  BlockType,
+  { label: string; hint: string; unico?: boolean; essencial?: boolean; ordem: number }
+> = {
+  clinic: { label: 'Logo e dados da clínica', hint: 'Cabeçalho com a marca', unico: true, ordem: 0 },
+  divider: { label: 'Linha divisória', hint: 'Separa duas partes', ordem: 1 },
+  title: { label: 'Título do documento', hint: 'Ex.: Receita, Atestado', unico: true, essencial: true, ordem: 2 },
+  patient: { label: 'Dados da paciente', hint: 'Nome e identificação da paciente', unico: true, essencial: true, ordem: 3 },
+  content: { label: 'Conteúdo', hint: 'Itens ou orientações do documento', unico: true, essencial: true, ordem: 4 },
+  text: { label: 'Texto livre', hint: 'Parágrafo formatado, com campos automáticos', ordem: 5 },
+  signature: { label: 'Assinatura', hint: 'Linha, nome e QR de verificação', unico: true, essencial: true, ordem: 6 },
+  spacer: { label: 'Espaço', hint: 'Empurra o que vem depois', ordem: 7 },
+}
+
+/** Blocos sem os quais o documento sai incompleto. */
+export const ESSENCIAIS = (Object.keys(BLOCK_META) as BlockType[]).filter((t) => BLOCK_META[t].essencial)
+
+/**
+ * Onde o bloco entra ao ser devolvido.
+ *
+ * Sem isto ele cai no fim da folha, e um "Conteúdo" removido por engano volta
+ * depois da assinatura — o modelo continua quebrado mesmo com o bloco de volta.
+ */
+export function inserirNaOrdem(blocos: Block[], novo: Block): Block[] {
+  const alvo = BLOCK_META[novo.type].ordem
+  const i = blocos.findIndex((b) => BLOCK_META[b.type].ordem > alvo)
+  if (i === -1) return [...blocos, novo]
+  return [...blocos.slice(0, i), novo, ...blocos.slice(i)]
 }
 
 let contador = 0
