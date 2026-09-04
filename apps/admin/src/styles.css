@@ -1127,3 +1127,40 @@ img, video, canvas { max-width: 100%; height: auto; }
 .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 /* Itens de grid precisam poder encolher abaixo do conteúdo */
 .stats > *, .two > *, .three > *, .grid > * { min-width: 0; }
+
+/* ── Editor de texto formatado ────────────────────────────────────────────── */
+.rich-text { border: 1px solid var(--border); border-radius: 7px; background: var(--cream-soft); overflow: hidden; }
+.rich-text:focus-within { border-color: var(--bronze); box-shadow: 0 0 0 3px rgba(156,130,104,.15); }
+.rich-toolbar { display: flex; align-items: center; gap: 2px; padding: 4px 6px; border-bottom: 1px solid var(--border); background: var(--marble-soft); }
+.rich-toolbar button { width: 26px; height: 26px; min-height: 0; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 5px; background: transparent; color: var(--espresso); font-size: 13px; }
+.rich-toolbar button:hover:not(:disabled) { background: rgba(156,130,104,.18); transform: none; }
+.rich-sep { width: 1px; height: 16px; margin: 0 4px; background: var(--border); }
+.rich-area { padding: 10px 12px; font-size: 13px; line-height: 1.6; color: var(--espresso); outline: 0; overflow-y: auto; }
+.rich-area:empty::before { content: attr(data-placeholder); color: var(--text-muted); }
+.rich-area ul { margin: 4px 0; padding-left: 20px; }
+
+/* ── Modelos de documento: editor ao lado da previa ───────────────────────── */
+.template-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); gap: 20px; align-items: start; }
+@media (max-width: 900px) { .template-layout { grid-template-columns: minmax(0, 1fr); } }
+.template-preview { position: sticky; top: 8px; }
+.preview-caption { margin: 0 0 6px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+/* Proporcao de folha, para a margem em mm fazer sentido visual. */
+.preview-sheet { aspect-ratio: 210 / 297; overflow: hidden; background: #fff; border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 2px 12px rgba(47,34,27,.10); color: #2c2c2c; display: flex; flex-direction: column; }
+.preview-sheet.is-a5 { aspect-ratio: 148 / 210; }
+.preview-clinic { display: grid; gap: 2px; padding-bottom: 6px; margin-bottom: 8px; border-bottom: 1px solid #e6ded2; font-size: .85em; }
+.preview-clinic span { color: #777; font-size: .9em; }
+.preview-rich { font-size: .85em; line-height: 1.5; }
+.preview-title { margin: 8px 0 4px; font-family: inherit; font-size: 1.05em; font-weight: 700; }
+.preview-patient { margin: 0 0 8px; font-size: .85em; color: #555; }
+.preview-body { flex: 1; font-size: .85em; line-height: 1.55; color: #444; overflow: hidden; }
+.preview-signature { display: flex; flex-direction: column; margin-top: auto; }
+.preview-signature .preview-line { width: 60%; height: 1px; background: #333; margin: 0 auto 3px; }
+.preview-signature[style*="left"] .preview-line { margin-left: 0; }
+.preview-signature[style*="right"] .preview-line { margin-right: 0; }
+.preview-signer { font-size: .8em; color: #444; }
+/* O QR acompanha o alinhamento escolhido para a assinatura. */
+.preview-signature { align-items: center; }
+.preview-signature[style*="left"] { align-items: flex-start; }
+.preview-signature[style*="right"] { align-items: flex-end; }
+.preview-qr { width: 30px; height: 30px; margin-top: 6px; border: 1px solid #ccc; border-radius: 3px; background: repeating-conic-gradient(#333 0% 25%, #fff 0% 50%) 50% / 8px 8px; }
+.preview-footer { padding-top: 6px; margin-top: 8px; border-top: 1px solid #e6ded2; color: #777; }

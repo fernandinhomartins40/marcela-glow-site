@@ -6,6 +6,7 @@ import { Cms, Leads, Procedures } from '../components/Catalog'
 import { Team } from '../components/Team'
 import { Landing } from '../components/Landing'
 import { ClinicalCatalog, ClinicalDocuments } from '../components/Clinical'
+import { DocumentTemplates } from '../components/DocumentTemplates'
 import { Certificate } from '../components/Certificate'
 import { Encounter } from '../components/Encounter'
 
@@ -57,12 +58,13 @@ function Stat({ label, value }: { label: string; value: string | number }) {
 }
 
 function RegistryPage() {
-  const [area, setArea] = React.useState<'procedures' | 'medications' | 'exams' | 'guidance'>('procedures')
+  const [area, setArea] = React.useState<'procedures' | 'medications' | 'exams' | 'guidance' | 'doctemplates'>('procedures')
   const areas = [
     ['procedures', 'Procedimentos da clínica'],
     ['medications', 'Medicamentos'],
     ['exams', 'Exames'],
     ['guidance', 'Orientações e modelos'],
+    ['doctemplates', 'Modelos de documento'],
   ] as const
 
   return (
@@ -78,6 +80,7 @@ function RegistryPage() {
       {area === 'medications' && <ClinicalCatalog only="MEDICATION" />}
       {area === 'exams' && <ClinicalCatalog only="EXAM" />}
       {area === 'guidance' && <ClinicalCatalog only={['GUIDANCE', 'RECORD_TEMPLATE']} />}
+      {area === 'doctemplates' && <DocumentTemplates />}
     </>
   )
 }

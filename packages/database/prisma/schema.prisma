@@ -197,33 +197,34 @@ model Tenant {
   updatedAt DateTime @updatedAt
 
   // relations
-  users         User[]
-  procedures    Procedure[]
-  appointments  Appointment[]
-  testimonials  Testimonial[]
-  subscribers   NewsletterSubscriber[]
-  patients      Patient[]
-  leads         Lead[]
-  medicalRecords MedicalRecord[]
-  procedureSessions ProcedureSession[]
-  prescriptions Prescription[]
-  attachments   Attachment[]
-  cmsPages      CmsPage[]
-  landingContent LandingContent[]
-  landingImages  LandingImage[]
-  blogPosts     BlogPost[]
-  notifications Notification[]
-  messages      Message[]
-  clinicSettings ClinicSetting[]
-  authSessions  AuthSession[]
-  auditLogs     AuditLog[]
+  users               User[]
+  procedures          Procedure[]
+  appointments        Appointment[]
+  testimonials        Testimonial[]
+  subscribers         NewsletterSubscriber[]
+  patients            Patient[]
+  leads               Lead[]
+  medicalRecords      MedicalRecord[]
+  procedureSessions   ProcedureSession[]
+  prescriptions       Prescription[]
+  documentTemplates   DocumentTemplate[]
+  attachments         Attachment[]
+  cmsPages            CmsPage[]
+  landingContent      LandingContent[]
+  landingImages       LandingImage[]
+  blogPosts           BlogPost[]
+  notifications       Notification[]
+  messages            Message[]
+  clinicSettings      ClinicSetting[]
+  authSessions        AuthSession[]
+  auditLogs           AuditLog[]
   passwordResetTokens PasswordResetToken[]
-  staffInvites  StaffInvite[]
-  pushSubscriptions PushSubscription[]
-  userPermissions UserPermission[]
-  businessHours BusinessHour[]
-  scheduleBlocks ScheduleBlock[]
-  catalogItems  CatalogItem[]
+  staffInvites        StaffInvite[]
+  pushSubscriptions   PushSubscription[]
+  userPermissions     UserPermission[]
+  businessHours       BusinessHour[]
+  scheduleBlocks      ScheduleBlock[]
+  catalogItems        CatalogItem[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -231,27 +232,28 @@ model Tenant {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model User {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   email        String
   passwordHash String
   name         String
-  role         UserRole @default(STAFF)
-  isActive     Boolean  @default(true)
+  role         UserRole  @default(STAFF)
+  isActive     Boolean   @default(true)
   lastLoginAt  DateTime?
   tenantId     String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  medicalRecords MedicalRecord[]
-  sessions AuthSession[]
-  auditLogs AuditLog[]
-  resetTokens PasswordResetToken[]
-  invitesSent StaffInvite[] @relation("InviteSender")
-  permissions UserPermission[]
-  uploadedAttachments Attachment[]
-  signedPrescriptions Prescription[] @relation("PrescriptionSigner")
-  confirmedAppointments Appointment[] @relation("AppointmentConfirmer")
+  tenant                Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  medicalRecords        MedicalRecord[]
+  sessions              AuthSession[]
+  auditLogs             AuditLog[]
+  resetTokens           PasswordResetToken[]
+  invitesSent           StaffInvite[]        @relation("InviteSender")
+  permissions           UserPermission[]
+  uploadedAttachments   Attachment[]
+  signedPrescriptions   Prescription[]       @relation("PrescriptionSigner")
+  documentTemplates     DocumentTemplate[]   @relation("TemplateAuthor")
+  confirmedAppointments Appointment[]        @relation("AppointmentConfirmer")
 
   @@unique([email, tenantId])
 }
@@ -292,7 +294,7 @@ model Procedure {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   appointments Appointment[]
   sessions     ProcedureSession[]
 }
@@ -326,8 +328,8 @@ model Appointment {
   /// Marca quando a equipe disparou o aviso por WhatsApp
   notifiedAt    DateTime?
 
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   tenant      Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   procedure   Procedure? @relation(fields: [procedureId], references: [id], onDelete: SetNull)
@@ -473,26 +475,26 @@ model NewsletterSubscriber {
 }
 
 model Patient {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   name         String
   email        String
   phone        String?
   passwordHash String?
-  isActive     Boolean  @default(true)
+  isActive     Boolean   @default(true)
   lastLoginAt  DateTime?
   birthDate    DateTime?
   notes        String?
 
   // ── Identificação ──
   /// Só dígitos. Identifica a paciente em receita e atestado e separa homônimas.
-  cpf          String?
-  rg           String?
+  cpf           String?
+  rg            String?
   /// Como a paciente quer ser chamada, quando difere do nome civil (Lei 14.320/2022)
-  socialName   String?
-  gender       Gender?
+  socialName    String?
+  gender        Gender?
   maritalStatus MaritalStatus?
-  occupation   String?
-  nationality  String?
+  occupation    String?
+  nationality   String?
 
   // ── Endereço ──
   /// Só dígitos
@@ -517,8 +519,8 @@ model Patient {
   conditions      String?
   surgeries       String?
   bloodType       BloodType?
-  isPregnant      Boolean  @default(false)
-  isBreastfeeding Boolean  @default(false)
+  isPregnant      Boolean    @default(false)
+  isBreastfeeding Boolean    @default(false)
   skinType        String?
 
   // ── Administrativo ──
@@ -531,23 +533,23 @@ model Patient {
   lgpdConsentAt   DateTime?
   imageConsentAt  DateTime?
 
-  tenantId     String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  tenant        Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  appointments  Appointment[]
-  records       MedicalRecord[]
-  sessions      ProcedureSession[]
-  prescriptions Prescription[]
-  notifications Notification[]
-  messages      Message[]
-  authSessions  AuthSession[]
-  auditLogs     AuditLog[]
-  resetTokens   PasswordResetToken[]
+  tenant            Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointments      Appointment[]
+  records           MedicalRecord[]
+  sessions          ProcedureSession[]
+  prescriptions     Prescription[]
+  notifications     Notification[]
+  messages          Message[]
+  authSessions      AuthSession[]
+  auditLogs         AuditLog[]
+  resetTokens       PasswordResetToken[]
   pushSubscriptions PushSubscription[]
-  attachments   Attachment[]
-  leads         Lead[]
+  attachments       Attachment[]
+  leads             Lead[]
 
   @@unique([email, tenantId])
   @@unique([cpf, tenantId])
@@ -555,14 +557,14 @@ model Patient {
 }
 
 model Lead {
-  id          String     @id @default(cuid())
-  name        String
-  email       String?
-  phone       String?
-  origin      String?
-  status      LeadStatus @default(NEW)
+  id           String     @id @default(cuid())
+  name         String
+  email        String?
+  phone        String?
+  origin       String?
+  status       LeadStatus @default(NEW)
   nextFollowUp DateTime?
-  notes       String?
+  notes        String?
 
   /// Ficha criada a partir deste contato. Sem isto a origem se perdia na
   /// conversão: a mesma pessoa virava dois registros sem ligação, e não havia
@@ -570,9 +572,9 @@ model Lead {
   patientId   String?
   convertedAt DateTime?
 
-  tenantId    String
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   patient Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
@@ -590,21 +592,21 @@ model MedicalRecord {
   tenantId    String
 
   /// Data do atendimento — pode diferir de createdAt quando registrado depois
-  occurredAt  DateTime?
+  occurredAt    DateTime?
   /// Queixa principal, em uma linha
-  complaint   String?
+  complaint     String?
   /// Conduta e plano terapêutico
-  plan        String?
+  plan          String?
   /// Alergias, medicações em uso, comorbidades — texto livre por atendimento
-  history     String?
+  history       String?
   /// Prontuário assinado não pode mais ser alterado
-  lockedAt    DateTime?
+  lockedAt      DateTime?
   /// Consulta que originou o registro. Opcional: retorno por telefone e
   /// encaixe também geram prontuário, sem passar pela agenda.
   appointmentId String?
 
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   patient     Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
   tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -617,23 +619,23 @@ model MedicalRecord {
 }
 
 model ProcedureSession {
-  id          String   @id @default(cuid())
-  patientId   String
-  procedureId String?
-  tenantId    String
-  performedAt DateTime @default(now())
-  notes       String?
+  id             String   @id @default(cuid())
+  patientId      String
+  procedureId    String?
+  tenantId       String
+  performedAt    DateTime @default(now())
+  notes          String?
   beforePhotoUrl String?
   afterPhotoUrl  String?
-  priceCents  Int?
+  priceCents     Int?
   /// Consulta em que o procedimento foi realizado
-  appointmentId String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  appointmentId  String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  patient   Patient    @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  procedure Procedure? @relation(fields: [procedureId], references: [id], onDelete: SetNull)
-  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient     Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  procedure   Procedure?   @relation(fields: [procedureId], references: [id], onDelete: SetNull)
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
 
   @@index([appointmentId])
@@ -642,20 +644,20 @@ model ProcedureSession {
 /// Documento clínico entregue à paciente: receita, pedido de exame ou
 /// orientação. O nome permanece Prescription por compatibilidade.
 model Prescription {
-  id          String             @id @default(cuid())
-  patientId   String
-  tenantId    String
-  kind        DocumentKind       @default(PRESCRIPTION)
-  title       String
+  id               String             @id @default(cuid())
+  patientId        String
+  tenantId         String
+  kind             DocumentKind       @default(PRESCRIPTION)
+  title            String
   /// Texto livre: orientações gerais ou corpo do documento sem itens
-  instructions String
-  status      PrescriptionStatus @default(DRAFT)
-  sentAt      DateTime?
-  signedAt    DateTime?
-  signedById  String?
-  signatureHash String?
+  instructions     String
+  status           PrescriptionStatus @default(DRAFT)
+  sentAt           DateTime?
+  signedAt         DateTime?
+  signedById       String?
+  signatureHash    String?
   signaturePayload Json?
-  verificationCode String? @unique
+  verificationCode String?            @unique
 
   /// Nível efetivo da assinatura aplicada — ver enum SignatureLevel
   signatureLevel SignatureLevel @default(INTERNAL)
@@ -666,14 +668,14 @@ model Prescription {
   /// Consulta em que o documento foi emitido
   appointmentId  String?
 
-  createdAt   DateTime           @default(now())
-  updatedAt   DateTime           @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  signedBy User?  @relation("PrescriptionSigner", fields: [signedById], references: [id], onDelete: SetNull)
-  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
-  items   PrescriptionItem[]
+  patient     Patient            @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  tenant      Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  signedBy    User?              @relation("PrescriptionSigner", fields: [signedById], references: [id], onDelete: SetNull)
+  appointment Appointment?       @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  items       PrescriptionItem[]
 
   @@index([tenantId, kind, status])
   @@index([patientId, createdAt])
@@ -683,28 +685,28 @@ model Prescription {
 /// de texto. Um modelo só, com `kind` discriminando, porque os quatro
 /// compartilham busca, favoritos e ciclo de vida.
 model CatalogItem {
-  id          String      @id @default(cuid())
-  kind        CatalogKind
-  name        String
+  id         String      @id @default(cuid())
+  kind       CatalogKind
+  name       String
   /// Princípio ativo (medicamento) ou sinônimo de busca (exame)
-  subtitle    String?
+  subtitle   String?
   /// Corpo do texto para GUIDANCE e RECORD_TEMPLATE
-  body        String?
-  isActive    Boolean     @default(true)
+  body       String?
+  isActive   Boolean     @default(true)
   /// Sobe os mais usados no topo da busca
-  usageCount  Int         @default(0)
+  usageCount Int         @default(0)
 
   // ── Medicamento ──
-  strength    String?     /// "50mg/mL"
-  form        String?     /// "comprimido", "creme"
-  route       String?     /// "oral", "tópica"
-  defaultDose String?     /// "1 comprimido a cada 8 horas"
-  defaultQty  String?     /// "1 caixa"
+  strength    String? /// "50mg/mL"
+  form        String? /// "comprimido", "creme"
+  route       String? /// "oral", "tópica"
+  defaultDose String? /// "1 comprimido a cada 8 horas"
+  defaultQty  String? /// "1 caixa"
   control     MedicationControl? @default(COMMON)
 
   // ── Exame ──
   tussCode    String?
-  preparation String?     /// "jejum de 8 horas"
+  preparation String? /// "jejum de 8 horas"
 
   tenantId  String
   createdAt DateTime @default(now())
@@ -725,15 +727,15 @@ model PrescriptionItem {
   catalogItemId  String?
 
   /// Congelados na emissão: o catálogo pode mudar, o documento não.
-  name        String
-  strength    String?
-  form        String?
-  route       String?
-  dose        String?
-  quantity    String?
-  notes       String?
-  control     MedicationControl @default(COMMON)
-  displayOrder Int              @default(0)
+  name         String
+  strength     String?
+  form         String?
+  route        String?
+  dose         String?
+  quantity     String?
+  notes        String?
+  control      MedicationControl @default(COMMON)
+  displayOrder Int               @default(0)
 
   createdAt DateTime @default(now())
 
@@ -744,7 +746,7 @@ model PrescriptionItem {
 }
 
 model Attachment {
-  id              String   @id @default(cuid())
+  id              String         @id @default(cuid())
   fileName        String
   url             String
   bucket          String?
@@ -757,7 +759,7 @@ model Attachment {
   patientId       String?
   uploadedById    String?
   tenantId        String
-  createdAt       DateTime @default(now())
+  createdAt       DateTime       @default(now())
 
   medicalRecord MedicalRecord? @relation(fields: [medicalRecordId], references: [id], onDelete: Cascade)
   patient       Patient?       @relation(fields: [patientId], references: [id], onDelete: Cascade)
@@ -823,6 +825,37 @@ model Message {
   tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
+/// Modelo reutilizavel de documento: o conteudo que ja vem preenchido e o
+/// layout com que ele e impresso. Um modelo pode trazer so o conteudo, so o
+/// layout, ou os dois.
+model DocumentTemplate {
+  id           String       @id @default(cuid())
+  name         String
+  kind         DocumentKind @default(PRESCRIPTION)
+  /// Titulo sugerido ao emitir a partir deste modelo
+  title        String?
+  /// Texto de orientacoes ja preenchido
+  instructions String?
+  /// Itens (medicamentos/exames) do modelo, no mesmo formato do documento
+  items        Json?
+  /// Layout de impressao: cabecalho, rodape, posicao da assinatura, margens.
+  /// Nulo usa o layout padrao da clinica.
+  layout       Json?
+  /// Modelo padrao para este tipo: e o que a tela sugere primeiro
+  isDefault    Boolean      @default(false)
+  isActive     Boolean      @default(true)
+  usageCount   Int          @default(0)
+  tenantId     String
+  createdById  String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy User?  @relation("TemplateAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, kind, isActive])
+}
+
 model ClinicSetting {
   id        String   @id @default(cuid())
   key       String
@@ -859,7 +892,7 @@ model AuthSession {
 }
 
 model AuditLog {
-  id          String          @id @default(cuid())
+  id          String           @id @default(cuid())
   tenantId    String
   action      AuditAction
   resource    String
@@ -870,7 +903,7 @@ model AuditLog {
   ipAddress   String?
   userAgent   String?
   metadata    Json?
-  createdAt   DateTime        @default(now())
+  createdAt   DateTime         @default(now())
 
   tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -897,17 +930,17 @@ model PasswordResetToken {
 }
 
 model StaffInvite {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   email       String
   name        String?
-  role        UserRole @default(STAFF)
+  role        UserRole     @default(STAFF)
   permissions Permission[]
-  tokenHash   String   @unique
+  tokenHash   String       @unique
   tenantId    String
   invitedById String?
   acceptedAt  DateTime?
   expiresAt   DateTime
-  createdAt   DateTime @default(now())
+  createdAt   DateTime     @default(now())
 
   tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   invitedBy User?  @relation("InviteSender", fields: [invitedById], references: [id], onDelete: SetNull)
