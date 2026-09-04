@@ -233,6 +233,24 @@ subir Postgres de teste. Criterio de aceite: `npm test` no CI.
   e mais barato e mais escalavel.
 - **Nao adiar o e-mail.** E o unico item que sozinho impede a entrega.
 
+## Campos do banco sem lugar no painel
+
+Auditoria de 2026-09-04 comparando os campos escalares de cada tabela com o que
+os formularios editam. A maioria do que "falta" e preenchida pelo sistema e nao
+deveria estar em formulario mesmo (`confirmedAt`, `signatureHash`, `storageKey`,
+`lastLoginAt`, `usageCount`). O que sobra e lacuna de verdade:
+
+| O que | Situacao |
+|---|---|
+| **Depoimentos** | A API tem CRUD completo (`/api/testimonials`) e o editor da landing diz "os depoimentos ficam em Cadastros -> Depoimentos" - **essa aba nao existe**. Hoje so da para cadastrar direto no banco. |
+| **Dados da clinica** (nome, telefone, endereco) | `Ajustes` grava em `ClinicSetting` (chave-valor), nunca na tabela `Tenant`. Mas e o `Tenant` que alimenta a assinatura e o endereco nas mensagens de WhatsApp (`appointments.ts:107`). Mudar o telefone da clinica exige banco. |
+| **Foto do procedimento** (`Procedure.imageUrl`) | O campo existe e a landing pode exibir; o formulario de procedimento nao oferece upload. |
+| **Antes e depois** (`ProcedureSession.beforePhotoUrl/afterPhotoUrl`) | Campos previstos para o registro fotografico da sessao, sem nenhuma tela que os preencha. |
+| **Capa da publicacao** (`BlogPost.coverUrl`) | Mesmo caso: campo existe, formulario nao tem o upload. |
+
+Nao e lacuna: `Patient.allergies` **existe** no formulario (ficha da paciente,
+aba "Dados clinicos") - e de la que sai a tag de alergia na listagem.
+
 ## Divida menor, registrada
 
 - `packages/shared` foi removido: ninguem o importava. O slug da clinica segue
