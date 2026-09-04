@@ -337,7 +337,7 @@ export function PatientForm({
 
         {tab === 'clinical' && (
           <>
-            <Field label="Alergias" hint="Aparece como alerta no atendimento e antes de prescrever">
+            <Field label="Alergias" hint="Espaço cria a tag; aperte espaço de novo para continuar o mesmo item. Aparece como alerta antes de prescrever">
               <TagInput
                 value={form.allergies}
                 onChange={(v) => set('allergies', v)}

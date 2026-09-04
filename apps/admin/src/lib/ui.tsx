@@ -454,6 +454,10 @@ export function TagInput({
   ariaLabel?: string
 }) {
   const [rascunho, setRascunho] = React.useState('')
+  /* Ultima tag fechada por espaco. Guardada para o espaco seguinte poder
+     desfazer: "losartana" vira tag, o segundo espaco a traz de volta como
+     texto e continua "losartana 50mg". */
+  const [fechadaPorEspaco, setFechadaPorEspaco] = React.useState<string | null>(null)
   const tags = splitTags(value)
 
   const adicionar = (texto: string) => {
@@ -507,7 +511,32 @@ export function TagInput({
           setRascunho(texto)
         }}
         onKeyDown={(e) => {
-          // Espaço não fecha a tag: "ácido hialurônico" é um item só.
+          /* Espaço fecha a tag; um segundo espaço desfaz e continua o texto.
+
+             A maioria do que se digita aqui é uma palavra só ("dipirona",
+             "látex"), e exigir Enter para cada uma trava a digitação. Mas dose
+             vem em duas partes ("losartana 50mg"), e não dá para adivinhar:
+             no instante do espaço, "losartana" ainda não tem nada que a
+             distinga de "dipirona".
+
+             Por isso o desfazer é explícito. O espaço fecha; se o item ainda
+             continuava, o próximo espaço traz a tag de volta como texto e a
+             digitação segue. Enter e Tab fecham sem esse desfazer. */
+          if (e.key === ' ') {
+            e.preventDefault()
+            const texto = rascunho.trim()
+            if (!texto) {
+              if (fechadaPorEspaco) {
+                remover(fechadaPorEspaco)
+                setRascunho(fechadaPorEspaco + ' ')
+                setFechadaPorEspaco(null)
+              }
+              return
+            }
+            adicionar(texto)
+            setFechadaPorEspaco(texto)
+            return
+          }
           if (e.key === 'Enter' || e.key === 'Tab') {
             if (!rascunho.trim()) return
             e.preventDefault()
