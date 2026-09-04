@@ -15,6 +15,7 @@ import {
   Modal,
   RowAction,
   SearchBox,
+  splitTags,
   Toolbar,
 } from '../lib/ui'
 import { useDebounced } from '../lib/useDebounced'
@@ -115,9 +116,17 @@ export function Patients() {
               chips={
                 <>
                   {!patient.isActive && <Chip>Arquivada</Chip>}
-                  {patient.allergies && (
-                    <Chip tone="danger" icon={AlertTriangle} title={`Alergias: ${patient.allergies}`}>
-                      Alergia
+                  {/* Uma tag por alergia: "Alergia" sozinho obrigava a abrir a ficha
+                     para saber de qual se trata. Acima de tres vira contagem, senao
+                     uma paciente com lista longa empurra o resto da linha. */}
+                  {splitTags(patient.allergies).slice(0, 3).map((alergia) => (
+                    <Chip key={alergia} tone="danger" icon={AlertTriangle} title={`Alergia: ${alergia}`}>
+                      {alergia}
+                    </Chip>
+                  ))}
+                  {splitTags(patient.allergies).length > 3 && (
+                    <Chip tone="danger" title={`Alergias: ${patient.allergies}`}>
+                      +{splitTags(patient.allergies).length - 3}
                     </Chip>
                   )}
                 </>
