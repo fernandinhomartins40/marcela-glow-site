@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
 import { api, errorMessage, Field, FormRow, Modal, SubmitButton } from '../../lib/ui'
 import { RichText } from '../../lib/RichText'
 import { sampleValues } from '../../lib/docFields'
+import { LogoField } from './LogoField'
 import { Sheet } from './Sheet'
 import {
   BLOCK_META,
@@ -320,13 +321,7 @@ function BrandEditor({
   return (
     <>
       <p className="form-section-title">Logo</p>
-      <Field label="Endereço da imagem" hint="Cole o link do logo. Aparece no bloco de dados da clínica.">
-        <input
-          value={brand.logoUrl ?? ''}
-          onChange={(e) => set('logoUrl', e.target.value || null)}
-          placeholder="https://…/logo.png"
-        />
-      </Field>
+      <LogoField url={brand.logoUrl} onChange={(u) => set('logoUrl', u)} />
       <FormRow>
         <Field label="Altura (mm)">
           <input

@@ -4,6 +4,7 @@ import { prisma } from '@marcela/database'
 import { authenticate, requirePermission, requireStaff } from '../middleware/auth'
 import { AppError, NotFoundError } from '../lib/errors'
 import { audit } from '../lib/audit'
+import { buildStorageKey, presignUpload, publicFileUrl, s3Bucket, storageConfigured } from '../lib/storage'
 
 /**
  * Modelos de documento.
@@ -267,6 +268,62 @@ router.post('/:id/used', ...staffOnly, requirePermission('PRESCRIPTION_WRITE'), 
       data: { usageCount: { increment: 1 } },
     })
     res.status(204).end()
+  } catch (err) {
+    next(err)
+  }
+})
+
+/**
+ * Upload do logo usado nos modelos.
+ *
+ * Mesmo fluxo de presigned URL dos anexos: a API assina, o navegador envia
+ * direto ao storage e só a chave volta. Imagem por link externo não entra —
+ * um servidor de terceiros fora do ar deixaria o papel timbrado quebrado no
+ * meio de uma impressão.
+ */
+const logoPresignSchema = z.object({
+  fileName: z.string().min(1),
+  mimeType: z.string().regex(/^image\/(png|jpeg|webp|svg\+xml)$/, 'Envie PNG, JPG, WEBP ou SVG.'),
+  sizeBytes: z.number().int().min(1).max(5 * 1024 * 1024, 'O logo deve ter até 5 MB.'),
+})
+
+router.post('/logo/presign', ...staffOnly, requirePermission('PRESCRIPTION_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = logoPresignSchema.parse(req.body)
+    if (!storageConfigured) throw new AppError('Storage nao configurado', 503, 'STORAGE_NOT_CONFIGURED')
+    const storageKey = buildStorageKey(req.user!.tenantId, body.fileName)
+    const uploadUrl = await presignUpload(storageKey, body.mimeType)
+    res.json({ uploadUrl, storageKey, expiresIn: 900 })
+  } catch (err) {
+    next(err)
+  }
+})
+
+/**
+ * Registra o envio e devolve a URL publica.
+ *
+ * O logo fica visivel a quem recebe o documento, entao vai como PATIENT_VISIBLE
+ * e sem paciente: nao e anexo de prontuario, e um elemento do papel timbrado.
+ */
+router.post('/logo/complete', ...staffOnly, requirePermission('PRESCRIPTION_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = logoPresignSchema.extend({ storageKey: z.string().min(1) }).parse(req.body)
+    const attachment = await prisma.attachment.create({
+      data: {
+        fileName: body.fileName,
+        mimeType: body.mimeType,
+        sizeBytes: body.sizeBytes,
+        storageKey: body.storageKey,
+        bucket: s3Bucket,
+        url: publicFileUrl(body.storageKey),
+        // O logo aparece no documento que a paciente recebe.
+        visibility: 'PATIENT_VISIBLE',
+        uploadedById: req.user!.userId,
+        tenantId: req.user!.tenantId,
+      },
+    })
+    await audit(req, 'CREATE', 'attachment', attachment.id, { uso: 'logo-modelo' })
+    res.status(201).json({ url: attachment.url, storageKey: attachment.storageKey })
   } catch (err) {
     next(err)
   }
