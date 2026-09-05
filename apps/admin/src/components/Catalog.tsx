@@ -336,6 +336,7 @@ export function Leads() {
               <div
                 key={column.status}
                 className={alvo === column.status ? 'is-drop-target' : undefined}
+                style={{ borderTopColor: cor }}
                 /* Sem preventDefault no dragOver o navegador recusa o drop. */
                 onDragOver={(e) => {
                   e.preventDefault()
@@ -356,7 +357,7 @@ export function Leads() {
                   }
                 }}
               >
-                <h3 style={{ borderTopColor: cor }}>
+                <h3>
                   <span className="kanban-icon" style={{ background: cor }}>
                     <Icone size={12} aria-hidden="true" />
                   </span>

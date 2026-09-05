@@ -122,10 +122,22 @@ main header .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .14em;
    rolagem é horizontal — um funil quebrado em duas linhas perde a ordem das
    etapas, que é justamente o que o quadro comunica. */
 .kanban { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(200px, 1fr); gap: 12px; overflow-x: auto; align-items: start; padding-bottom: 4px; }
-.kanban > div { display: grid; align-content: start; gap: 8px; padding: 10px; border: 1px solid transparent; border-radius: 10px; transition: background .15s, border-color .15s; }
-/* Alvo do arraste: sem um destaque, soltar o card vira aposta. */
-.kanban > div.is-drop-target { border-color: var(--bronze); background: var(--marble-soft); }
-.kanban h3 { display: flex; align-items: center; gap: 7px; font-size: 11px; margin: 0; padding-top: 8px; border-top: 2px solid var(--border); letter-spacing: .12em; text-transform: uppercase; color: var(--espresso); }
+/* A faixa colorida é a borda da própria coluna, não do título: com o padding
+   de 10px ela ficava recuada das laterais e descolava do card abaixo. */
+.kanban > div {
+  display: grid; align-content: start; gap: 8px;
+  padding: 0 10px 10px; border: 1px solid transparent; border-top: 3px solid var(--border);
+  border-radius: 4px 4px 10px 10px;
+  transition: background .15s, border-color .15s, box-shadow .15s;
+}
+/* Alvo do arraste: a coluna inteira muda de borda, não só o topo, para não
+   depender de reparar num traço de 3px enquanto se arrasta. */
+.kanban > div.is-drop-target {
+  border-color: var(--bronze) !important;
+  background: var(--marble-soft);
+  box-shadow: 0 0 0 3px rgba(156,130,104,.18);
+}
+.kanban h3 { display: flex; align-items: center; gap: 7px; margin: 0; padding: 10px 0 2px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--espresso); }
 .kanban-icon { width: 20px; height: 20px; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; color: #fff; }
 .kanban p { font-size: 13px; }
 .kanban span { display: block; font-size: 12px; margin-top: 3px; }
