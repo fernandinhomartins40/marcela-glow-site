@@ -1251,6 +1251,61 @@ router.patch('/sessions/:id/revoke', requirePermission('USER_MANAGE'), async (re
   }
 })
 
+/**
+ * Colunas do quadro de leads.
+ *
+ * O status e um enum do banco, entao as colunas nao podem ser criadas a
+ * vontade sem migracao. O que a clinica personaliza e a apresentacao: nome,
+ * cor, icone e ordem de cada status, e quais aparecem no quadro. Fica em
+ * ClinicSetting por ser configuracao de tela, nao dado clinico.
+ */
+const LEAD_BOARD_KEY = 'leadBoard'
+
+const leadColumnSchema = z.object({
+  status: z.nativeEnum(LeadStatus),
+  label: z.string().min(1).max(40),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  icon: z.string().max(40).optional(),
+  /** Fora do quadro, mas o status continua valendo para os leads existentes */
+  hidden: z.boolean().optional(),
+})
+
+router.get('/lead-board', requirePermission('LEAD_READ'), async (req, res, next) => {
+  try {
+    const registro = await prisma.clinicSetting.findUnique({
+      where: { key_tenantId: { key: LEAD_BOARD_KEY, tenantId: req.user!.tenantId } },
+    })
+    res.json({ columns: registro?.value ?? null })
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.put('/lead-board', requirePermission('LEAD_WRITE'), async (req, res, next) => {
+  try {
+    const body = z.object({ columns: z.array(leadColumnSchema).min(1) }).parse(req.body)
+
+    // Status repetido deixaria leads invisiveis numa das colunas.
+    const vistos = new Set<string>()
+    for (const c of body.columns) {
+      if (vistos.has(c.status)) {
+        throw new AppError(`O status ${c.status} aparece em duas colunas.`, 400, 'DUPLICATE_STATUS')
+      }
+      vistos.add(c.status)
+    }
+
+    const salvo = await prisma.clinicSetting.upsert({
+      where: { key_tenantId: { key: LEAD_BOARD_KEY, tenantId: req.user!.tenantId } },
+      update: { value: body.columns },
+      create: { key: LEAD_BOARD_KEY, value: body.columns, tenantId: req.user!.tenantId },
+    })
+    await audit(req, 'UPDATE', 'clinicSetting', salvo.id, { key: LEAD_BOARD_KEY })
+    res.json({ columns: salvo.value })
+  } catch (err) {
+    next(err)
+  }
+})
+
 router.get('/settings', requirePermission('SETTINGS_READ'), async (req, res, next) => {
   try {
     const settings = await prisma.clinicSetting.findMany({ where: { tenantId: req.user!.tenantId } })

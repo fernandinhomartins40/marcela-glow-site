@@ -1,6 +1,6 @@
 import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FileText, Globe, Pencil, Plus, Sparkles, Trash2, UserPlus, UserRound } from 'lucide-react'
+import { FileText, Globe, Pencil, Plus, Sparkles, Trash2, UserPlus, UserRound, SlidersHorizontal } from 'lucide-react'
 import {
   api,
   Chip,
@@ -18,6 +18,8 @@ import {
   tenantSlug,
   Toolbar,
 } from '../lib/ui'
+import { BoardSettings } from './leads/BoardSettings'
+import { COLUNAS_PADRAO, iconOf, normalizeColumns, type LeadColumn } from './leads/board'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Procedimentos oferecidos pela clínica
@@ -255,20 +257,22 @@ interface Lead {
   patient: { id: string; name: string } | null
 }
 
-const LEAD_COLUMNS = [
-  { id: 'NEW', label: 'Novo' },
-  { id: 'CONTACTED', label: 'Contatado' },
-  { id: 'QUALIFIED', label: 'Qualificado' },
-  { id: 'PROPOSAL', label: 'Proposta' },
-  { id: 'WON', label: 'Ganho' },
-  { id: 'LOST', label: 'Perdido' },
-]
 
 export function Leads() {
   const client = useQueryClient()
   const [editing, setEditing] = React.useState<Lead | 'new' | null>(null)
   const [removing, setRemoving] = React.useState<Lead | null>(null)
   const [converting, setConverting] = React.useState<Lead | null>(null)
+  const [editandoColunas, setEditandoColunas] = React.useState(false)
+  /* Coluna sob o cursor durante o arraste: sem isso não há como mostrar onde
+     o card vai cair, e soltar vira aposta. */
+  const [alvo, setAlvo] = React.useState<string | null>(null)
+
+  const board = useQuery({
+    queryKey: ['lead-board'],
+    queryFn: async () =>
+      (await api.get('/admin/lead-board')).data as { columns: LeadColumn[] | null },
+  })
 
   const query = useQuery({
     queryKey: ['leads'],
@@ -279,6 +283,9 @@ export function Leads() {
     client.invalidateQueries({ queryKey: ['leads'] })
     client.invalidateQueries({ queryKey: ['admin'] })
   }
+
+  const colunas = normalizeColumns(board.data?.columns)
+  const visiveis = colunas.filter((c) => !c.hidden)
 
   const move = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) => api.patch(`/admin/leads/${id}`, { status }),
@@ -307,6 +314,10 @@ export function Leads() {
     <>
       <Toolbar>
         <span className="toolbar-title">{leads.length} leads</span>
+        <button onClick={() => setEditandoColunas(true)}>
+          <SlidersHorizontal size={14} />
+          Colunas
+        </button>
         <button className="primary" onClick={() => setEditing('new')}>
           <Plus size={15} />
           Novo lead
@@ -317,16 +328,54 @@ export function Leads() {
         <p className="hint">Carregando...</p>
       ) : (
         <div className="kanban">
-          {LEAD_COLUMNS.map((column) => {
-            const items = leads.filter((l) => l.status === column.id)
+          {visiveis.map((column) => {
+            const items = leads.filter((l) => l.status === column.status)
+            const Icone = iconOf(column)
+            const cor = column.color ?? '#8c7a68'
             return (
-              <div key={column.id}>
-                <h3>
+              <div
+                key={column.status}
+                className={alvo === column.status ? 'is-drop-target' : undefined}
+                /* Sem preventDefault no dragOver o navegador recusa o drop. */
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  if (alvo !== column.status) setAlvo(column.status)
+                }}
+                onDragLeave={(e) => {
+                  // Só limpa ao sair da coluna inteira, não ao passar por um card.
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) setAlvo(null)
+                }}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  setAlvo(null)
+                  const id = e.dataTransfer.getData('text/plain')
+                  const lead = leads.find((l) => l.id === id)
+                  // Soltar na mesma coluna não é mudança: evita uma escrita à toa.
+                  if (lead && lead.status !== column.status) {
+                    move.mutate({ id, status: column.status })
+                  }
+                }}
+              >
+                <h3 style={{ borderTopColor: cor }}>
+                  <span className="kanban-icon" style={{ background: cor }}>
+                    <Icone size={12} aria-hidden="true" />
+                  </span>
                   {column.label} <span className="kanban-count">{items.length}</span>
                 </h3>
-                {items.length === 0 && <p className="kanban-empty">—</p>}
+                {items.length === 0 && (
+                  <p className="kanban-empty">{alvo === column.status ? 'Solte aqui' : '—'}</p>
+                )}
                 {items.map((lead) => (
-                  <div key={lead.id} className="lead-card">
+                  <div
+                    key={lead.id}
+                    className="lead-card"
+                    draggable
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData('text/plain', lead.id)
+                      e.dataTransfer.effectAllowed = 'move'
+                    }}
+                    onDragEnd={() => setAlvo(null)}
+                  >
                     <strong>{lead.name}</strong>
                     <span>{lead.origin ?? 'origem direta'}</span>
                     {lead.phone && <span>{lead.phone}</span>}
@@ -357,13 +406,15 @@ export function Leads() {
                           <UserPlus size={13} />
                         </button>
                       )}
+                      {/* O select fica: arrastar não funciona no teclado nem em
+                          leitor de tela, e mover o lead não pode depender do mouse. */}
                       <select
                         value={lead.status}
                         onChange={(e) => move.mutate({ id: lead.id, status: e.target.value })}
                         aria-label={`Mover ${lead.name}`}
                       >
-                        {LEAD_COLUMNS.map((c) => (
-                          <option key={c.id} value={c.id}>
+                        {colunas.map((c) => (
+                          <option key={c.status} value={c.status}>
                             {c.label}
                           </option>
                         ))}
@@ -381,6 +432,17 @@ export function Leads() {
             )
           })}
         </div>
+      )}
+
+      {editandoColunas && (
+        <BoardSettings
+          columns={colunas}
+          onClose={() => setEditandoColunas(false)}
+          onSaved={() => {
+            setEditandoColunas(false)
+            client.invalidateQueries({ queryKey: ['lead-board'] })
+          }}
+        />
       )}
 
       {editing && (
@@ -481,8 +543,8 @@ function LeadForm({ lead, onClose, onSaved }: { lead: Lead | null; onClose: () =
           </Field>
           <Field label="Situação">
             <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-              {LEAD_COLUMNS.map((c) => (
-                <option key={c.id} value={c.id}>
+              {COLUNAS_PADRAO.map((c) => (
+                <option key={c.status} value={c.status}>
                   {c.label}
                 </option>
               ))}
