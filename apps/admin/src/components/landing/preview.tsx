@@ -1,6 +1,7 @@
 import React from 'react'
 import { CalendarCheck, Search, Sparkles } from 'lucide-react'
 import type { LandingData, SectionId } from './types'
+import { FOTOS_DO_BUILD } from './fotosDoBuild'
 
 /**
  * Espelho do site dentro do painel: mostra como a secao vai aparecer com o
@@ -30,20 +31,33 @@ export function SearchPreview({
   )
 }
 
-/** Fotografia de um slot, com a borda dupla e a proporção que o site usa. */
+/**
+ * Fotografia de um espaço do site.
+ *
+ * A ordem é a mesma do site: a foto enviada pelo painel, e na falta dela a
+ * que veio no build. Só quando não existe nenhuma das duas é que aparece o
+ * retângulo vazio — e aí ele diz a verdade, porque o site também estaria sem
+ * foto ali.
+ */
 export function Figure({
   image,
+  slot,
   ratio,
   label,
 }: {
   image?: { url: string; alt: string }
+  /** Para achar a foto que o site usa quando nenhuma foi enviada. */
+  slot?: string
   ratio: string
   label: string
 }) {
+  const doBuild = slot ? FOTOS_DO_BUILD[slot] : undefined
+  const src = image?.url ?? doBuild
+
   return (
     <div className="lp-figure" style={{ aspectRatio: ratio }}>
-      {image ? (
-        <img src={image.url} alt={image.alt} />
+      {src ? (
+        <img src={src} alt={image?.alt ?? ''} />
       ) : (
         <span className="lp-figure-empty">{label}</span>
       )}
@@ -107,7 +121,7 @@ function HeroPreview({ draft, images }: { draft: any; images: LandingData['image
                 <span className="lp-btn lp-btn-outline">{draft.secondaryCta}</span>
               </div>
             </div>
-            <Figure image={images[`hero.${index}`]} ratio="4 / 5" label="foto do site" />
+            <Figure image={images[`hero.${index}`]} slot={`hero.${index}`} ratio="4 / 5" label="foto do site" />
           </div>
         </div>
       </section>
@@ -171,7 +185,7 @@ export function SectionPreview({
           <span className="lp-watermark lp-watermark-top">{draft.watermark}</span>
           <div className="lp-split lp-split-reverse">
             <div className="lp-crm-host">
-              <Figure image={images['about.portrait']} ratio="4 / 5" label="retrato" />
+              <Figure image={images['about.portrait']} slot="about.portrait" ratio="4 / 5" label="retrato" />
               <div className="lp-crm">
                 <p className="lp-crm-label">{draft.crmLabel}</p>
                 <p className="lp-crm-value">{draft.crmNumber}</p>
@@ -337,11 +351,11 @@ export function SectionPreview({
       <div className="lp-inner">
         <div className="lp-footer-grid">
           <div className="lp-stack-tight">
-            {images['footer.logo'] ? (
-              <img className="lp-footer-logo" src={images['footer.logo'].url} alt="" />
-            ) : (
-              <p className="lp-field-label">logo</p>
-            )}
+            <img
+              className="lp-footer-logo"
+              src={images['footer.logo']?.url ?? FOTOS_DO_BUILD['footer.logo']}
+              alt=""
+            />
             <p className="lp-brand">Dra. Marcela Duch</p>
             <p className="lp-brand-sub">Médica · CRM/MS 5691</p>
             <p className="lp-lead">{draft.tagline}</p>

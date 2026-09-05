@@ -7,6 +7,7 @@ import {
   Eye,
   EyeOff,
   Layers,
+  Lock,
   MessageSquareQuote,
   PanelBottom,
   RotateCcw,
@@ -61,6 +62,26 @@ const SECTIONS: {
   { id: 'SEO', label: 'Google e redes', icon: Search, about: 'O título e o resumo que aparecem no Google e ao compartilhar o link.' },
 ]
 
+/**
+ * A página do site de cima a baixo, na ordem em que a visitante rola.
+ *
+ * Duas partes não têm aba porque não são editáveis: o menu do topo e a faixa
+ * rolante de palavras vivem no código do site. Omiti-las daria a entender que
+ * a página começa no carrossel, e quem procurasse onde mudar o menu ficaria
+ * girando pelas oito abas. Listá-las como travadas responde a pergunta.
+ */
+const PAGINA: ({ id: SectionId } | { fixo: string; nota: string })[] = [
+  { fixo: 'Menu do topo', nota: 'Os links do menu vêm do código do site' },
+  { id: 'HERO' },
+  { fixo: 'Faixa rolante', nota: 'A tira escura com as palavras que passam' },
+  { id: 'ABOUT' },
+  { id: 'PROCEDURES' },
+  { id: 'TECHNOLOGY' },
+  { id: 'TESTIMONIALS' },
+  { id: 'APPOINTMENT' },
+  { id: 'FOOTER' },
+]
+
 export function Landing() {
   const [active, setActive] = React.useState<SectionId>('HERO')
   const client = useQueryClient()
@@ -78,6 +99,47 @@ export function Landing() {
 
   return (
     <div className="cms">
+      <div className="cms-mapa">
+        <p className="cms-mapa-titulo">A página, de cima a baixo</p>
+        <ol>
+          {PAGINA.map((parte, i) => {
+            if ('fixo' in parte) {
+              return (
+                <li key={`fixo-${i}`} className="is-fixo" title={parte.nota}>
+                  <Lock size={11} aria-hidden="true" />
+                  {parte.fixo}
+                </li>
+              )
+            }
+            const meta = SECTIONS.find((sec) => sec.id === parte.id)!
+            const data = query.data!.sections[parte.id]
+            return (
+              <li key={parte.id}>
+                <button
+                  type="button"
+                  className={`${active === parte.id ? 'is-active' : ''}${
+                    data.isVisible ? '' : ' is-off'
+                  }`}
+                  onClick={() => setActive(parte.id)}
+                  title={
+                    data.isVisible
+                      ? `Editar: ${meta.about}`
+                      : 'Esta seção está escondida do site'
+                  }
+                >
+                  {meta.label}
+                  {!data.isVisible && <EyeOff size={11} aria-hidden="true" />}
+                </button>
+              </li>
+            )
+          })}
+        </ol>
+        <p className="cms-mapa-nota">
+          <Lock size={11} aria-hidden="true" />
+          As partes com cadeado não se editam por aqui — elas vêm prontas no site.
+        </p>
+      </div>
+
       <nav className="cms-tabs" role="tablist" aria-label="Seções do site">
         {SECTIONS.map((section) => {
           const data = query.data.sections[section.id]

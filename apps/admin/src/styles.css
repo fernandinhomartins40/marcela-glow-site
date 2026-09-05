@@ -217,6 +217,24 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .cms svg { flex: none; }
 
 /* Abas das seções */
+/* Mapa da pagina: a ordem real das secoes no site, incluindo as duas que nao
+   se editam aqui. Sem ele o editor da a entender que a pagina comeca no
+   carrossel, e quem procura onde mudar o menu do topo gira pelas oito abas. */
+.cms-mapa { display: grid; gap: 8px; padding: 12px 14px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; }
+.cms-mapa-titulo { margin: 0; font-size: 10.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--bronze); }
+.cms-mapa ol { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin: 0; padding: 0; list-style: none; counter-reset: none; }
+/* A seta entre os itens desenha a sequencia sem precisar de numero. */
+.cms-mapa li + li::before { content: "\203A"; margin-right: 5px; color: var(--bronze); opacity: .5; }
+.cms-mapa li { display: inline-flex; align-items: center; }
+.cms-mapa li.is-fixo { gap: 5px; padding: 4px 9px; font-size: 11.5px; background: var(--cream-deep); border-radius: 6px; color: var(--text-muted); }
+.cms-mapa li.is-fixo svg { opacity: .6; }
+.cms-mapa button, main .cms-mapa button { display: inline-flex; align-items: center; gap: 5px; min-height: 26px !important; padding: 4px 10px !important; font-size: 11.5px; background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--espresso); }
+.cms-mapa button:hover, main .cms-mapa button:hover { border-color: var(--bronze); background: var(--marble-soft); transform: none; }
+.cms-mapa button.is-active, main .cms-mapa button.is-active { background: var(--espresso); border-color: var(--espresso); color: var(--marble-soft); font-weight: 600; }
+/* Escondida do site: riscada, porque o lugar dela na sequencia continua. */
+.cms-mapa button.is-off, main .cms-mapa button.is-off { text-decoration: line-through; opacity: .55; }
+.cms-mapa-nota { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 11px; color: var(--text-muted); }
+
 .cms-tabs { display: flex; flex-wrap: wrap; gap: 3px; padding: 4px; background: var(--cream-deep); border: 1px solid var(--border); border-radius: 10px; }
 .cms-tab, main .cms-tab { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 7px 13px; font-size: 12.5px; font-weight: 500; background: transparent; border: 1px solid transparent; border-radius: 7px; color: var(--text-muted); }
 .cms-tab:hover:not(.is-active), main .cms-tab:hover:not(.is-active) { background: var(--marble-soft); color: var(--espresso); transform: none; }

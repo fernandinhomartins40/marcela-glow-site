@@ -1,16 +1,16 @@
 # Graph Report - marcela-glow-site  (2026-09-05)
 
 ## Corpus Check
-- 216 files · ~370,731 words
+- 216 files · ~371,320 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1909 nodes · 3415 edges · 174 communities (86 shown, 68 thin omitted)
+- 1911 nodes · 3418 edges · 177 communities (89 shown, 68 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 22 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `952d7e6c`
+- Built from commit: `7c26339e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -27,7 +27,7 @@
 - middleware/auth.ts
 - scheduling.ts
 - admin.ts
-- patient.ts
+- appointments.ts
 - routes/clinical.ts
 - tasks
 - database/package.json
@@ -39,11 +39,11 @@
 - compilerOptions
 - scripts
 - useSection
-- button.tsx
+- pagination.tsx
 - web/src/lib/api.ts
 - templates.ts
 - context-menu.tsx
-- ScheduleSettings.tsx
+- AdminPanel.tsx
 - fetch_instagram_professional_assets.py
 - dependencies
 - AdminApp.tsx
@@ -75,11 +75,11 @@
 - scripts
 - Encounter.tsx
 - scripts
-- Procedures.tsx
+- button.tsx
 - api/package.json
 - source
 - sheet.tsx
-- routes/auth.ts
+- patient.ts
 - check-encoding.js
 - Appointment.tsx
 - breadcrumb.tsx
@@ -169,6 +169,9 @@
 - alert.tsx
 - "DocumentTemplate"
 - Testimonials.tsx
+- cloudSignature.ts
+- alert-dialog.tsx
+- card.tsx
 
 ## God Nodes (most connected - your core abstractions)
 1. `cn()` - 228 edges
@@ -197,15 +200,15 @@
 ## Import Cycles
 - None detected.
 
-## Communities (174 total, 68 thin omitted)
+## Communities (177 total, 68 thin omitted)
 
 ### Community 0 - "sections.tsx"
 Cohesion: 0.05
 Nodes (77): AppShell(), SectionId, SECTIONS, NextAppointment(), SummaryStat(), Intent, RequestCare(), AppointmentsList() (+69 more)
 
 ### Community 1 - "cn"
-Cohesion: 0.06
-Nodes (49): AccordionContent, AccordionItem, AccordionTrigger, Avatar, AvatarFallback, AvatarImage, Card, CardContent (+41 more)
+Cohesion: 0.07
+Nodes (45): AccordionContent, AccordionItem, AccordionTrigger, Avatar, AvatarFallback, AvatarImage, DrawerContent, DrawerDescription (+37 more)
 
 ### Community 2 - "devDependencies"
 Cohesion: 0.04
@@ -213,11 +216,11 @@ Nodes (44): devDependencies, autoprefixer, eslint, @eslint/js, eslint-plugin-rea
 
 ### Community 3 - "ImageCropper.tsx"
 Cohesion: 0.09
-Nodes (31): ImageCropper(), onPointerMove(), pick(), scaleFactor(), submit(), zoom(), Bloco(), cap() (+23 more)
+Nodes (32): ImageCropper(), onPointerMove(), pick(), scaleFactor(), submit(), zoom(), Bloco(), cap() (+24 more)
 
 ### Community 4 - "Clinical.tsx"
-Cohesion: 0.13
-Nodes (12): CATALOG_META, CatalogForm(), CatalogItem, CatalogKind, ClinicalCatalog(), ClinicalDocument, Compliance, Control (+4 more)
+Cohesion: 0.10
+Nodes (16): CATALOG_META, CatalogForm(), CatalogItem, CatalogKind, ClinicalCatalog(), ClinicalDocument, Compliance, Control (+8 more)
 
 ### Community 5 - "hooks/use-toast.ts"
 Cohesion: 0.09
@@ -228,12 +231,12 @@ Cohesion: 0.07
 Nodes (31): Input, Separator, Sidebar, SidebarContent, SidebarContext, SidebarFooter, SidebarGroup, SidebarGroupAction (+23 more)
 
 ### Community 7 - "agenda.tsx"
-Cohesion: 0.12
-Nodes (36): LinkPatientModal(), NewEncounterModal(), TodayAgenda(), EncounterDetail(), NewAppointment(), Procedure, AppointmentDrawer(), DayList() (+28 more)
+Cohesion: 0.11
+Nodes (35): LinkPatientModal(), NewEncounterModal(), TodayAgenda(), AgendaEntry, NewAppointment(), Procedure, AppointmentDrawer(), DayList() (+27 more)
 
 ### Community 8 - "utils.ts"
-Cohesion: 0.07
-Nodes (17): Badge(), BadgeProps, badgeVariants, Checkbox, HoverCardContent, PopoverContent, Progress, RadioGroup (+9 more)
+Cohesion: 0.08
+Nodes (15): Badge(), BadgeProps, badgeVariants, Checkbox, HoverCardContent, PopoverContent, Progress, ResizableHandle() (+7 more)
 
 ### Community 9 - "middleware/auth.ts"
 Cohesion: 0.10
@@ -241,19 +244,19 @@ Nodes (28): AppError, ForbiddenError, NotFoundError, UnauthorizedError, JwtPaylo
 
 ### Community 10 - "scheduling.ts"
 Cohesion: 0.11
-Nodes (29): addDaysISO(), BLOCKING_STATUSES, BusyInterval, checkSlotAvailable(), CLINIC_TIMEZONE, clinicTimeToUtc(), clinicWeekday(), ConflictCheck (+21 more)
+Nodes (30): addDaysISO(), BLOCKING_STATUSES, BusyInterval, checkSlotAvailable(), CLINIC_TIMEZONE, clinicTimeToUtc(), clinicWeekday(), ConflictCheck (+22 more)
 
 ### Community 11 - "admin.ts"
-Cohesion: 0.07
-Nodes (32): randomToken(), buildStorageKey(), opcoesComuns, presignDownload(), presignUpload(), PUBLIC_PREFIX, publicFileUrl(), s3Bucket (+24 more)
+Cohesion: 0.08
+Nodes (24): effectivePermissions(), rolePermissions, acceptInviteSchema, blockSchema, blogPostSchema, businessHoursSchema, cmsPageSchema, fileCompleteSchema (+16 more)
 
-### Community 12 - "patient.ts"
-Cohesion: 0.07
-Nodes (32): escapeHtml(), mailerConfigured, MailInput, port, publicBaseUrl(), renderHtml(), sendMail(), getVapidPublicKey() (+24 more)
+### Community 12 - "appointments.ts"
+Cohesion: 0.13
+Nodes (16): getVapidPublicKey(), pushConfigured, sendPatientPush(), stripWhatsAppMarkup(), APPOINTMENT_INCLUDE, availabilityQuerySchema, cancelSchema, confirmSchema (+8 more)
 
 ### Community 13 - "routes/clinical.ts"
-Cohesion: 0.07
-Nodes (48): availableSignatureLevel(), checkCompliance(), ComplianceCheck, CONTROL_LABELS, DOCUMENT_LABELS, DocumentKind, formatItemLine(), highestControl() (+40 more)
+Cohesion: 0.10
+Nodes (28): availableSignatureLevel(), checkCompliance(), ComplianceCheck, CONTROL_LABELS, DOCUMENT_LABELS, DocumentKind, formatItemLine(), highestControl() (+20 more)
 
 ### Community 14 - "tasks"
 Cohesion: 0.07
@@ -264,12 +267,12 @@ Cohesion: 0.07
 Nodes (28): bcryptjs, dependencies, bcryptjs, @prisma/client, devDependencies, prisma, tsx, @types/bcryptjs (+20 more)
 
 ### Community 16 - "routes/landing.ts"
-Cohesion: 0.10
-Nodes (22): aboutSchema, appointmentSchema, footerSchema, heroSchema, heroSlideSchema, IMAGE_TARGETS, imageSlot, isLandingSection() (+14 more)
+Cohesion: 0.08
+Nodes (31): aboutSchema, appointmentSchema, footerSchema, heroSchema, heroSlideSchema, IMAGE_TARGETS, imageSlot, isLandingSection() (+23 more)
 
 ### Community 17 - "lib/ui.tsx"
-Cohesion: 0.12
-Nodes (44): KIND_LABEL, ClinicalAlerts(), DOC_KIND, DOC_STATUS, PatientDetail(), RECORD_TYPE, FORM_TABS, FormTab (+36 more)
+Cohesion: 0.11
+Nodes (45): KIND_LABEL, ClinicalAlerts(), DOC_KIND, DOC_STATUS, PatientDetail(), RECORD_TYPE, FORM_TABS, FormTab (+37 more)
 
 ### Community 18 - "compilerOptions"
 Cohesion: 0.08
@@ -292,12 +295,12 @@ Cohesion: 0.08
 Nodes (25): devDependencies, turbo, typescript, engines, node, typescript, name, packageManager (+17 more)
 
 ### Community 23 - "useSection"
-Cohesion: 0.19
-Nodes (14): About(), AboutContent, FALLBACK, FALLBACK, FALLBACK_IMAGES, Hero(), HeroContent, HeroSlide (+6 more)
+Cohesion: 0.17
+Nodes (14): FALLBACK, FALLBACK_IMAGES, Hero(), HeroContent, HeroSlide, FALLBACK, TechContent, TechItem (+6 more)
 
-### Community 24 - "button.tsx"
-Cohesion: 0.11
-Nodes (21): AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter(), AlertDialogHeader(), AlertDialogOverlay, AlertDialogTitle (+13 more)
+### Community 24 - "pagination.tsx"
+Cohesion: 0.20
+Nodes (9): ButtonProps, Pagination(), PaginationContent, PaginationEllipsis(), PaginationItem, PaginationLink(), PaginationLinkProps, PaginationNext() (+1 more)
 
 ### Community 25 - "web/src/lib/api.ts"
 Cohesion: 0.13
@@ -311,9 +314,9 @@ Nodes (14): allowedOrigins, app, limiter, audit(), blockSchema, brandSchema, ite
 Cohesion: 0.20
 Nodes (9): ContextMenuCheckboxItem, ContextMenuContent, ContextMenuItem, ContextMenuLabel, ContextMenuRadioItem, ContextMenuSeparator, ContextMenuShortcut(), ContextMenuSubContent (+1 more)
 
-### Community 28 - "ScheduleSettings.tsx"
-Cohesion: 0.22
-Nodes (8): BusinessHour, BusinessHours(), Durations(), update(), Procedure, ScheduleBlock, ScheduleSettings(), WEEKDAYS
+### Community 28 - "AdminPanel.tsx"
+Cohesion: 0.10
+Nodes (12): Procedures(), DocumentTemplates(), Encounter(), Landing(), BusinessHour, BusinessHours(), Durations(), update() (+4 more)
 
 ### Community 29 - "fetch_instagram_professional_assets.py"
 Cohesion: 0.24
@@ -324,8 +327,8 @@ Cohesion: 0.11
 Nodes (19): dependencies, axios, date-fns, lucide-react, react, react-dom, react-router-dom, recharts (+11 more)
 
 ### Community 31 - "AdminApp.tsx"
-Cohesion: 0.12
-Nodes (17): AdminApp(), groupOf(), hintOf(), initials(), labelOf(), NAV_GROUPS, NAV_ITEMS, queryClient (+9 more)
+Cohesion: 0.11
+Nodes (18): AdminApp(), groupOf(), hintOf(), initials(), labelOf(), NAV_GROUPS, NAV_ITEMS, queryClient (+10 more)
 
 ### Community 32 - "devDependencies"
 Cohesion: 0.10
@@ -360,8 +363,8 @@ Cohesion: 0.12
 Nodes (17): devDependencies, autoprefixer, eslint-plugin-react-hooks, globals, postcss, tailwindcss-animate, @types/react-dom, typescript (+9 more)
 
 ### Community 40 - "errorMessage"
-Cohesion: 0.07
-Nodes (36): Cms(), Content, ContentForm(), Lead, LeadForm(), Leads(), Procedure, ProcedureForm() (+28 more)
+Cohesion: 0.11
+Nodes (27): Content, ContentForm(), Lead, LeadForm(), Leads(), Procedure, ProcedureForm(), Certificate() (+19 more)
 
 ### Community 41 - "dependencies"
 Cohesion: 0.11
@@ -408,8 +411,8 @@ Cohesion: 0.40
 Nodes (4): name, private, type, version
 
 ### Community 52 - "Index.tsx"
-Cohesion: 0.19
-Nodes (10): Header(), Marquee(), FALLBACK, TechContent, TechItem, Technology(), FALLBACK, Index() (+2 more)
+Cohesion: 0.26
+Nodes (9): About(), AboutContent, FALLBACK, Marquee(), useImage(), FALLBACK, Index(), SeoContent (+1 more)
 
 ### Community 53 - "compilerOptions"
 Cohesion: 0.18
@@ -432,16 +435,16 @@ Cohesion: 0.33
 Nodes (6): scripts, build, dev, lint, preview, typecheck
 
 ### Community 58 - "Encounter.tsx"
-Cohesion: 0.17
-Nodes (19): DocumentForm(), DocumentKind, SignDocumentPrompt(), EncounterDocuments(), EncounterSessions(), SessionQuickForm(), RecordForm(), RecordTimeline() (+11 more)
+Cohesion: 0.21
+Nodes (19): Cms(), ClinicalDocuments(), DocumentKind, SignDocumentPrompt(), EncounterDocuments(), EncounterSessions(), SessionQuickForm(), EncounterDetail() (+11 more)
 
 ### Community 59 - "scripts"
 Cohesion: 0.33
 Nodes (6): scripts, build, dev, lint, preview, typecheck
 
-### Community 60 - "Procedures.tsx"
-Cohesion: 0.33
-Nodes (5): FALLBACK, FALLBACK_PROCEDURES, Procedures(), ProceduresContent, proceduresApi
+### Community 60 - "button.tsx"
+Cohesion: 0.20
+Nodes (10): Header(), FALLBACK, FALLBACK_PROCEDURES, Procedures(), ProceduresContent, Button, buttonVariants, Calendar() (+2 more)
 
 ### Community 61 - "api/package.json"
 Cohesion: 0.20
@@ -455,9 +458,9 @@ Nodes (8): posts, source, biography, category, followers, fullName, profileUrl, 
 Cohesion: 0.25
 Nodes (8): SheetContent, SheetContentProps, SheetDescription, SheetFooter(), SheetHeader(), SheetOverlay, SheetTitle, sheetVariants
 
-### Community 64 - "routes/auth.ts"
-Cohesion: 0.22
-Nodes (12): signToken(), effectivePermissions(), rolePermissions, addDays(), sha256(), createStaffSession(), loginSchema, registerSchema (+4 more)
+### Community 64 - "patient.ts"
+Cohesion: 0.11
+Nodes (27): signToken(), escapeHtml(), mailerConfigured, MailInput, port, publicBaseUrl(), renderHtml(), sendMail() (+19 more)
 
 ### Community 65 - "check-encoding.js"
 Cohesion: 0.22
@@ -548,25 +551,37 @@ Nodes (3): "DocumentTemplate", "Tenant", "User"
 Cohesion: 0.33
 Nodes (5): FALLBACK, FALLBACK_TESTIMONIALS, Testimonials(), TestimonialsContent, testimonialsApi
 
+### Community 174 - "cloudSignature.ts"
+Cohesion: 0.14
+Nodes (19): hashContent(), loadConfig(), ProviderId, ProviderProfile, PROVIDERS, PublicSignatureConfig, requestToken(), saveConfig() (+11 more)
+
+### Community 175 - "alert-dialog.tsx"
+Cohesion: 0.22
+Nodes (8): AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter(), AlertDialogHeader(), AlertDialogOverlay, AlertDialogTitle
+
+### Community 176 - "card.tsx"
+Cohesion: 0.29
+Nodes (6): Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle
+
 ## Knowledge Gaps
 - **755 isolated node(s):** `SECTIONS`, `Intent`, `DocumentKind`, `PatientProfile`, `PrescriptionItem` (+750 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 837 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 838 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **68 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `cn()` connect `cn` to `breadcrumb.tsx`, `command.tsx`, `navigation-menu.tsx`, `sidebar.tsx`, `table.tsx`, `utils.ts`, `hooks/use-toast.ts`, `input-otp.tsx`, `alert.tsx`, `toggle-group.tsx`, `form.tsx`, `carousel.tsx`, `chart.tsx`, `button.tsx`, `web/src/lib/api.ts`, `context-menu.tsx`, `sheet.tsx`?**
-  _High betweenness centrality (0.027) - this node is a cross-community bridge._
-- **Why does `errorMessage()` connect `errorMessage` to `ImageCropper.tsx`, `Clinical.tsx`, `agenda.tsx`, `TemplateForm.tsx`, `lib/ui.tsx`, `Encounter.tsx`, `ScheduleSettings.tsx`, `AdminApp.tsx`?**
-  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+- **Why does `cn()` connect `cn` to `hooks/use-toast.ts`, `sidebar.tsx`, `utils.ts`, `toggle-group.tsx`, `pagination.tsx`, `web/src/lib/api.ts`, `context-menu.tsx`, `command.tsx`, `input-otp.tsx`, `alert.tsx`, `alert-dialog.tsx`, `card.tsx`, `carousel.tsx`, `form.tsx`, `chart.tsx`, `button.tsx`, `sheet.tsx`, `breadcrumb.tsx`, `navigation-menu.tsx`, `table.tsx`?**
+  _High betweenness centrality (0.030) - this node is a cross-community bridge._
+- **Why does `errorMessage()` connect `errorMessage` to `ImageCropper.tsx`, `Clinical.tsx`, `agenda.tsx`, `TemplateForm.tsx`, `lib/ui.tsx`, `Encounter.tsx`, `AdminPanel.tsx`, `AdminApp.tsx`?**
+  _High betweenness centrality (0.006) - this node is a cross-community bridge._
 - **Why does `dependencies` connect `dependencies` to `@radix-ui/react-toast`, `@radix-ui/react-toggle`, `devDependencies`, `@radix-ui/react-toggle-group`, `@radix-ui/react-tooltip`, `react`, `react-dom`, `react-hook-form`, `react-resizable-panels`, `recharts`, `sonner`, `tailwind-merge`, `tailwindcss-animate`, `@tanstack/react-query`, `vaul`, `zod`, `@radix-ui/react-avatar`, `axios`, `class-variance-authority`, `clsx`, `cmdk`, `date-fns`, `embla-carousel-react`, `@hookform/resolvers`, `input-otp`, `lucide-react`, `next-themes`, `@radix-ui/react-accordion`, `@radix-ui/react-alert-dialog`, `@radix-ui/react-context-menu`, `@radix-ui/react-checkbox`, `@radix-ui/react-collapsible`, `@radix-ui/react-navigation-menu`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-hover-card`, `@radix-ui/react-label`, `@radix-ui/react-menubar`, `@radix-ui/react-select`, `@radix-ui/react-progress`, `@radix-ui/react-radio-group`, `@radix-ui/react-scroll-area`, `react-day-picker`, `@radix-ui/react-slider`, `@radix-ui/react-switch`, `@radix-ui/react-tabs`?**
-  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+  _High betweenness centrality (0.005) - this node is a cross-community bridge._
 - **What connects `SECTIONS`, `Intent`, `DocumentKind` to the rest of the system?**
   _755 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `sections.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.05154639175257732 - nodes in this community are weakly interconnected._
 - **Should `cn` be split into smaller, more focused modules?**
-  _Cohesion score 0.06352087114337568 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06778476589797344 - nodes in this community are weakly interconnected._
 - **Should `devDependencies` be split into smaller, more focused modules?**
   _Cohesion score 0.044444444444444446 - nodes in this community are weakly interconnected._

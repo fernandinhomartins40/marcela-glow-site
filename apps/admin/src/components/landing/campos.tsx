@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight, ChevronUp, GripVertical, Image as ImageIcon,
 import { api, ConfirmDialog, Field } from '../../lib/ui'
 import { ImageCropper } from '../ImageCropper'
 import type { LandingData } from './types'
+import { FOTOS_DO_BUILD } from './fotosDoBuild'
 
 /**
  * Peças que várias seções reaproveitam: divisória com título, lista de textos,
@@ -380,6 +381,10 @@ export function ImageField({
   /* A proporção diz mais que os pixels: quem vai escolher a foto no celular
      precisa saber se procura uma retrato ou uma deitada. */
   const proporcao = formatoDe(target.width, target.height)
+  /* A miniatura mostra o que o site mostra: sem foto enviada, ele cai na que
+     veio no build — e não deixa o espaço vazio. */
+  const doBuild = FOTOS_DO_BUILD[slot]
+  const atual = current?.url ?? doBuild
 
   return (
     <div className="cms-foto">
@@ -401,8 +406,8 @@ export function ImageField({
         title={current ? 'Trocar esta foto' : 'Enviar uma foto'}
         aria-label={current ? `Trocar a foto: ${target.label}` : `Enviar a foto: ${target.label}`}
       >
-        {current ? (
-          <img src={current.url} alt={current.alt} />
+        {atual ? (
+          <img src={atual} alt={current?.alt ?? ''} />
         ) : (
           <span className="cms-foto-vazio">
             <ImageIcon size={22} aria-hidden="true" />
@@ -415,13 +420,15 @@ export function ImageField({
         <strong>{target.label}</strong>
         <span className="hint">
           {current
-            ? `Enviada · ${current.alt || 'sem descrição'}`
-            : 'Ainda usando a foto que veio pronta no site.'}
+            ? `Você enviou esta foto · ${current.alt || 'sem descrição'}`
+            : doBuild
+              ? 'Esta é a foto que veio pronta e está no site agora.'
+              : 'Este espaço está sem foto no site.'}
         </span>
         <div className="cms-foto-acoes">
           <button type="button" className="cms-btn primary" onClick={() => setCropping(true)}>
             <Upload size={13} aria-hidden="true" />
-            {current ? 'Trocar foto' : 'Enviar foto'}
+            {current ? 'Trocar foto' : doBuild ? 'Enviar outra foto' : 'Enviar foto'}
           </button>
           {current && (
             <button type="button" className="cms-btn cms-btn-danger" onClick={() => setRemoving(true)}>
