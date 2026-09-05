@@ -1,6 +1,14 @@
 import React from 'react'
 import { applyFields } from '../../lib/docFields'
-import { BLOCK_META, contentLabel, CORES_PADRAO, type Block, type Brand, type TemplateLayout } from './blocks'
+import {
+  BLOCK_META,
+  CORES_PADRAO,
+  ITEM_SOURCE_META,
+  itemSource,
+  type Block,
+  type Brand,
+  type TemplateLayout,
+} from './blocks'
 import type { DocumentKind } from '../DocumentTemplates'
 
 /**
@@ -126,22 +134,28 @@ function BlockView({
         </p>
       )
 
-    case 'items':
-      // Lista montada ao emitir. Fora de receita e pedido de exame não há
-      // itens, então o bloco não ocupa espaço na folha.
-      if (kind !== 'PRESCRIPTION' && kind !== 'EXAM_REQUEST') return null
+    case 'items': {
+      // A lista impressa é a do bloco, não a do tipo do documento: assim uma
+      // receita pode trazer exames, e cada bloco escolhe o seu.
+      const fonte = itemSource(block, kind)
+      const exemplos = {
+        medication: ['Dipirona 500mg — 1 comprimido a cada 6h', 'Arnica 30CH — 5 glóbulos 3x ao dia'],
+        exam: ['Hemograma completo — jejum de 4h', 'Coagulograma — jejum de 8h'],
+        guidance: ['Evitar exercício por 48 horas', 'Protetor solar FPS 50 a cada 3 horas'],
+      }[fonte]
       return (
         <div className="sheet-content">
           <p className="sheet-content-label" style={{ color: accent }}>
-            {contentLabel(kind)}
+            {(block.options?.titulo as string) || ITEM_SOURCE_META[fonte].titulo}
           </p>
           <ol>
-            <li>Item do documento — 1 caixa</li>
-            <li>Item do documento — uso contínuo</li>
+            {exemplos.map((e) => (
+              <li key={e}>{e}</li>
+            ))}
           </ol>
         </div>
       )
-
+    }
     case 'content':
       return (
         <div className="sheet-content">

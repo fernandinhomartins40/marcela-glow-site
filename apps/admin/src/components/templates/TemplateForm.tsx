@@ -10,6 +10,9 @@ import {
   BLOCK_META,
   CORES_PADRAO,
   inserirNaOrdem,
+  ITEM_SOURCE_META,
+  itemSource,
+  type ItemSource,
   blocosPadrao,
   ensureBlocks,
   novoBloco,
@@ -151,6 +154,7 @@ export function TemplateForm({
           {aba === 'folha' && (
             <BlocksEditor
               blocks={blocks}
+              kind={kindAtual}
               selecionado={selecionado}
               onSelect={setSelecionado}
               onChange={setBloco}
@@ -192,6 +196,7 @@ export function TemplateForm({
 
 function BlocksEditor({
   blocks,
+  kind,
   selecionado,
   onSelect,
   onChange,
@@ -200,6 +205,7 @@ function BlocksEditor({
   onAdd,
 }: {
   blocks: Block[]
+  kind: DocumentKind
   selecionado: string | null
   onSelect: (id: string) => void
   onChange: (id: string, patch: Partial<Block>) => void
@@ -211,8 +217,9 @@ function BlocksEditor({
   const presentes = new Set(blocks.map((b) => b.type))
   // Blocos que trazem dado do banco. Não são obrigatórios — só vale avisar
   // que estão fora, porque o dado deles não aparece sozinho.
-  const faltando = (['title', 'patient', 'items', 'content', 'signature'] as BlockType[])
-    .filter((t) => !presentes.has(t))
+  const faltando = (['title', 'patient', 'items', 'content', 'signature'] as BlockType[]).filter(
+    (t) => !presentes.has(t),
+  )
 
   return (
     <>
@@ -255,7 +262,9 @@ function BlocksEditor({
               </button>
             </div>
 
-            {selecionado === b.id && <BlockOptions block={b} onChange={(patch) => onChange(b.id, patch)} />}
+            {selecionado === b.id && (
+              <BlockOptions block={b} kind={kind} onChange={(patch) => onChange(b.id, patch)} />
+            )}
           </li>
         ))}
       </ul>
@@ -281,9 +290,46 @@ function BlocksEditor({
 }
 
 /** As opções mudam conforme o bloco: texto tem editor, espaço tem altura. */
-function BlockOptions({ block, onChange }: { block: Block; onChange: (patch: Partial<Block>) => void }) {
+function BlockOptions({
+  block,
+  kind,
+  onChange,
+}: {
+  block: Block
+  kind: DocumentKind
+  onChange: (patch: Partial<Block>) => void
+}) {
   return (
     <div className="block-options">
+      {block.type === 'items' && (
+        <>
+          <Field
+            label="Qual lista imprimir"
+            hint="Independe do tipo do documento: uma receita pode trazer os exames a fazer depois"
+          >
+            <select
+              value={itemSource(block, kind)}
+              onChange={(e) =>
+                onChange({ options: { ...block.options, source: e.target.value as ItemSource } })
+              }
+            >
+              {(Object.keys(ITEM_SOURCE_META) as ItemSource[]).map((f) => (
+                <option key={f} value={f}>
+                  {ITEM_SOURCE_META[f].label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Título da lista" hint="Vazio usa o nome padrão da lista escolhida">
+            <input
+              value={(block.options?.titulo as string) ?? ''}
+              onChange={(e) => onChange({ options: { ...block.options, titulo: e.target.value } })}
+              placeholder={ITEM_SOURCE_META[itemSource(block, kind)].titulo}
+            />
+          </Field>
+        </>
+      )}
+
       {block.type === 'text' && (
         <RichText
           value={block.html ?? ''}

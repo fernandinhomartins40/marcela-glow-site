@@ -81,7 +81,7 @@ export const BLOCK_META: Record<
   divider: { label: 'Linha divisória', hint: 'Separa duas partes', ordem: 1 },
   title: { label: 'Título do documento', hint: 'O título digitado na aba Conteúdo', unico: true, ordem: 2 },
   patient: { label: 'Dados da paciente', hint: 'Nome e CPF, direto do cadastro', unico: true, ordem: 3 },
-  items: { label: 'Medicamentos ou exames', hint: 'A lista montada ao emitir o documento', unico: true, ordem: 4 },
+  items: { label: 'Lista de itens', hint: 'Medicamentos, exames ou orientações — a escolha é do bloco', ordem: 4 },
   content: { label: 'Orientações', hint: 'O texto digitado na aba Conteúdo', unico: true, ordem: 5 },
   text: { label: 'Texto livre', hint: 'Parágrafo próprio, com campos automáticos', ordem: 6 },
   signature: { label: 'Assinatura', hint: 'Linha, nome e QR de verificação', unico: true, ordem: 7 },
@@ -98,6 +98,28 @@ export function inserirNaOrdem(blocos: Block[], novo: Block): Block[] {
   const i = blocos.findIndex((b) => BLOCK_META[b.type].ordem > alvo)
   if (i === -1) return [...blocos, novo]
   return [...blocos.slice(0, i), novo, ...blocos.slice(i)]
+}
+
+/**
+ * O que uma lista imprime.
+ *
+ * O bloco escolhe a lista, em vez de herdar do tipo do documento: uma receita
+ * pode trazer os exames a fazer depois, e um pedido de exame pode listar o
+ * preparo. Amarrar ao tipo impedia justamente o que se monta do zero.
+ */
+export type ItemSource = 'medication' | 'exam' | 'guidance'
+
+export const ITEM_SOURCE_META: Record<ItemSource, { label: string; titulo: string }> = {
+  medication: { label: 'Medicamentos', titulo: 'Medicamentos prescritos' },
+  exam: { label: 'Exames', titulo: 'Exames solicitados' },
+  guidance: { label: 'Orientações do catálogo', titulo: 'Orientações' },
+}
+
+/** A lista que o bloco imprime, com o padrão vindo do tipo do documento. */
+export function itemSource(block: Block, kind: DocumentKind): ItemSource {
+  const escolhido = block.options?.source as ItemSource | undefined
+  if (escolhido && escolhido in ITEM_SOURCE_META) return escolhido
+  return kind === 'EXAM_REQUEST' ? 'exam' : kind === 'GUIDANCE' ? 'guidance' : 'medication'
 }
 
 let contador = 0
@@ -163,9 +185,3 @@ export function tiposDisponiveis(blocos: Block[]): BlockType[] {
   )
 }
 
-/** Rótulo do conteúdo conforme o tipo do documento, para a prévia. */
-export function contentLabel(kind: DocumentKind): string {
-  if (kind === 'PRESCRIPTION') return 'Medicamentos prescritos'
-  if (kind === 'EXAM_REQUEST') return 'Exames solicitados'
-  return 'Texto do documento'
-}
