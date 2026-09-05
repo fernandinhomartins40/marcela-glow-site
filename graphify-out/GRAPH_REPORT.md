@@ -1,16 +1,16 @@
 # Graph Report - marcela-glow-site  (2026-09-05)
 
 ## Corpus Check
-- 216 files · ~369,593 words
+- 216 files · ~370,731 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1907 nodes · 3421 edges · 174 communities (86 shown, 68 thin omitted)
+- 1909 nodes · 3415 edges · 174 communities (86 shown, 68 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 22 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `64700adf`
+- Built from commit: `952d7e6c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -18,7 +18,7 @@
 - sections.tsx
 - cn
 - devDependencies
-- Landing.tsx
+- ImageCropper.tsx
 - Clinical.tsx
 - hooks/use-toast.ts
 - sidebar.tsx
@@ -176,13 +176,15 @@
 3. `"Tenant"` - 24 edges
 4. `api` - 24 edges
 5. `AppError` - 19 edges
-6. `Field()` - 19 edges
-7. `formatDateBR()` - 19 edges
-8. `useSection()` - 18 edges
+6. `formatDateBR()` - 19 edges
+7. `useSection()` - 18 edges
+8. `Field()` - 18 edges
 9. `compilerOptions` - 18 edges
 10. `compilerOptions` - 18 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `SectionEditor()` --calls--> `errorMessage()`  [EXTRACTED]
+  apps/admin/src/components/Landing.tsx → apps/admin/src/lib/ui.tsx
 - `AlertDescription` --calls--> `cn()`  [EXTRACTED]
   apps/web/src/components/ui/alert.tsx → apps/web/src/lib/utils.ts
 - `AlertTitle` --calls--> `cn()`  [EXTRACTED]
@@ -190,8 +192,6 @@
 - `AlertDialogContent` --calls--> `cn()`  [EXTRACTED]
   apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
 - `AlertDialogDescription` --calls--> `cn()`  [EXTRACTED]
-  apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
-- `AlertDialogFooter()` --calls--> `cn()`  [EXTRACTED]
   apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
 
 ## Import Cycles
@@ -211,9 +211,9 @@ Nodes (49): AccordionContent, AccordionItem, AccordionTrigger, Avatar, AvatarFal
 Cohesion: 0.04
 Nodes (44): devDependencies, autoprefixer, eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, postcss (+36 more)
 
-### Community 3 - "Landing.tsx"
-Cohesion: 0.10
-Nodes (29): ImageCropper(), onPointerMove(), pick(), scaleFactor(), submit(), zoom(), Fold(), HeadingFields() (+21 more)
+### Community 3 - "ImageCropper.tsx"
+Cohesion: 0.09
+Nodes (31): ImageCropper(), onPointerMove(), pick(), scaleFactor(), submit(), zoom(), Bloco(), cap() (+23 more)
 
 ### Community 4 - "Clinical.tsx"
 Cohesion: 0.13
@@ -549,7 +549,7 @@ Cohesion: 0.33
 Nodes (5): FALLBACK, FALLBACK_TESTIMONIALS, Testimonials(), TestimonialsContent, testimonialsApi
 
 ## Knowledge Gaps
-- **755 isolated node(s):** `Procedure`, `Lead`, `Content`, `router`, `staffOnly` (+750 more)
+- **755 isolated node(s):** `SECTIONS`, `Intent`, `DocumentKind`, `PatientProfile`, `PrescriptionItem` (+750 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 837 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **68 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -557,12 +557,12 @@ Nodes (5): FALLBACK, FALLBACK_TESTIMONIALS, Testimonials(), TestimonialsContent,
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `cn()` connect `cn` to `breadcrumb.tsx`, `command.tsx`, `navigation-menu.tsx`, `sidebar.tsx`, `table.tsx`, `utils.ts`, `hooks/use-toast.ts`, `input-otp.tsx`, `alert.tsx`, `toggle-group.tsx`, `form.tsx`, `carousel.tsx`, `chart.tsx`, `button.tsx`, `web/src/lib/api.ts`, `context-menu.tsx`, `sheet.tsx`?**
-  _High betweenness centrality (0.026) - this node is a cross-community bridge._
-- **Why does `errorMessage()` connect `errorMessage` to `Landing.tsx`, `Clinical.tsx`, `agenda.tsx`, `TemplateForm.tsx`, `lib/ui.tsx`, `Encounter.tsx`, `ScheduleSettings.tsx`, `AdminApp.tsx`?**
-  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+  _High betweenness centrality (0.027) - this node is a cross-community bridge._
+- **Why does `errorMessage()` connect `errorMessage` to `ImageCropper.tsx`, `Clinical.tsx`, `agenda.tsx`, `TemplateForm.tsx`, `lib/ui.tsx`, `Encounter.tsx`, `ScheduleSettings.tsx`, `AdminApp.tsx`?**
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
 - **Why does `dependencies` connect `dependencies` to `@radix-ui/react-toast`, `@radix-ui/react-toggle`, `devDependencies`, `@radix-ui/react-toggle-group`, `@radix-ui/react-tooltip`, `react`, `react-dom`, `react-hook-form`, `react-resizable-panels`, `recharts`, `sonner`, `tailwind-merge`, `tailwindcss-animate`, `@tanstack/react-query`, `vaul`, `zod`, `@radix-ui/react-avatar`, `axios`, `class-variance-authority`, `clsx`, `cmdk`, `date-fns`, `embla-carousel-react`, `@hookform/resolvers`, `input-otp`, `lucide-react`, `next-themes`, `@radix-ui/react-accordion`, `@radix-ui/react-alert-dialog`, `@radix-ui/react-context-menu`, `@radix-ui/react-checkbox`, `@radix-ui/react-collapsible`, `@radix-ui/react-navigation-menu`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-hover-card`, `@radix-ui/react-label`, `@radix-ui/react-menubar`, `@radix-ui/react-select`, `@radix-ui/react-progress`, `@radix-ui/react-radio-group`, `@radix-ui/react-scroll-area`, `react-day-picker`, `@radix-ui/react-slider`, `@radix-ui/react-switch`, `@radix-ui/react-tabs`?**
-  _High betweenness centrality (0.006) - this node is a cross-community bridge._
-- **What connects `Procedure`, `Lead`, `Content` to the rest of the system?**
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+- **What connects `SECTIONS`, `Intent`, `DocumentKind` to the rest of the system?**
   _755 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `sections.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.05154639175257732 - nodes in this community are weakly interconnected._

@@ -74,6 +74,64 @@ export function Points({ items }: { items: string[] }) {
 }
 
 /**
+ * O hero da prévia.
+ *
+ * Mostra um slide por vez, como o site — antes a prévia empilhava os três,
+ * o que cabia quando ela era uma coluna estreita ao lado do formulário. Com
+ * a prévia ocupando a página inteira, três heros em sequência viravam quase
+ * dois mil pixels de rolagem para ver o que o site mostra num lugar só.
+ *
+ * As bolinhas trocam de slide e são botões de verdade: comparar os três
+ * continua possível, agora a um clique em vez de uma rolagem.
+ */
+function HeroPreview({ draft, images }: { draft: any; images: LandingData['images'] }) {
+  const slides: any[] = draft.slides ?? []
+  const [atual, setAtual] = React.useState(0)
+  // Apagar o último slide deixaria o índice apontando para o vazio.
+  const index = Math.min(atual, Math.max(slides.length - 1, 0))
+  const slide = slides[index]
+  if (!slide) return null
+
+  return (
+    <div className="lp-carrossel">
+      <section className="lp lp-hero lp-marble">
+        <div className="lp-inner">
+          <span className="lp-watermark">{slide.watermark}</span>
+          <div className="lp-split">
+            <div className="lp-stack">
+              <p className="lp-eyebrow">{slide.eyebrow}</p>
+              <Title top={slide.titleTop} bottom={slide.titleBottom} level="hero" />
+              <p className="lp-lead">{slide.subtitle}</p>
+              <div className="lp-actions">
+                <span className="lp-btn lp-btn-cta">{draft.primaryCta}</span>
+                <span className="lp-btn lp-btn-outline">{draft.secondaryCta}</span>
+              </div>
+            </div>
+            <Figure image={images[`hero.${index}`]} ratio="4 / 5" label="foto do site" />
+          </div>
+        </div>
+      </section>
+
+      {slides.length > 1 && (
+        <div className="lp-troca">
+          {slides.map((s, i) => (
+            <button
+              key={i}
+              type="button"
+              className={i === index ? 'is-on' : ''}
+              onClick={() => setAtual(i)}
+              aria-label={`Ver o slide ${i + 1}${s.titleTop ? `: ${s.titleTop}` : ''}`}
+              aria-current={i === index}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+/**
  * A seção como ela sai no site.
  *
  * Aqui não há aproximação: as classes `lp-*` repetem os tokens, as fontes e a
@@ -103,40 +161,7 @@ export function SectionPreview({
   }
 
   if (id === 'HERO') {
-    const slides: any[] = draft.slides ?? []
-    return (
-      <div className="lp-slides">
-        {slides.map((slide, index) => (
-          <div key={index}>
-            {/* O site mostra um slide por vez; a prévia empilha para dar para
-                comparar os três sem esperar o carrossel girar. */}
-            <p className="lp-slide-tag">Slide {index + 1}</p>
-            <section className="lp lp-hero lp-marble">
-              <div className="lp-inner">
-                <span className="lp-watermark">{slide.watermark}</span>
-                <div className="lp-split">
-                  <div className="lp-stack">
-                    <p className="lp-eyebrow">{slide.eyebrow}</p>
-                    <Title top={slide.titleTop} bottom={slide.titleBottom} level="hero" />
-                    <p className="lp-lead">{slide.subtitle}</p>
-                    <div className="lp-actions">
-                      <span className="lp-btn lp-btn-cta">{draft.primaryCta}</span>
-                      <span className="lp-btn lp-btn-outline">{draft.secondaryCta}</span>
-                    </div>
-                  </div>
-                  <Figure image={images[`hero.${index}`]} ratio="4 / 5" label="foto do site" />
-                </div>
-                <div className="lp-dots" aria-hidden="true">
-                  {slides.map((_, dot) => (
-                    <span key={dot} className={`lp-dot${dot === index ? ' is-on' : ''}`} />
-                  ))}
-                </div>
-              </div>
-            </section>
-          </div>
-        ))}
-      </div>
-    )
+    return <HeroPreview draft={draft} images={images} />
   }
 
   if (id === 'ABOUT') {
