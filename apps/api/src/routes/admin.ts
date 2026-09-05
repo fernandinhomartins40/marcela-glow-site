@@ -631,13 +631,32 @@ router.delete('/sessions/:id', requirePermission('RECORD_WRITE'), async (req: Re
 
 router.get('/leads', requirePermission('LEAD_READ'), async (req, res, next) => {
   try {
+    /* Contato convertido sai do quadro: virou paciente e o acompanhamento passa
+       a ser a ficha. Manter no funil faz a coluna "Ganho" crescer sem parar e
+       esconde quem ainda precisa de atenção.
+
+       O registro continua no banco — guarda a origem e a data da conversão, que
+       alimentam o histórico — e volta com `includeConverted=true`. */
+    const includeConverted = req.query.includeConverted === 'true'
+
     const leads = await prisma.lead.findMany({
-      where: { tenantId: req.user!.tenantId },
+      where: {
+        tenantId: req.user!.tenantId,
+        ...(includeConverted ? {} : { patientId: null }),
+      },
       orderBy: { updatedAt: 'desc' },
       // O cartão mostra o vínculo com a ficha quando o contato já foi convertido
       include: { patient: { select: { id: true, name: true } } },
     })
-    res.json(leads)
+
+    // Quantos saíram do quadro, para a tela poder oferecer vê-los.
+    const converted = includeConverted
+      ? leads.filter((l: { patientId: string | null }) => l.patientId).length
+      : await prisma.lead.count({
+          where: { tenantId: req.user!.tenantId, patientId: { not: null } },
+        })
+
+    res.json({ leads, converted })
   } catch (err) {
     next(err)
   }

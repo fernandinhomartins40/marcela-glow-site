@@ -1,6 +1,6 @@
 import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FileText, Globe, Pencil, Plus, Sparkles, Trash2, UserPlus, UserRound, SlidersHorizontal } from 'lucide-react'
+import { FileText, Globe, Pencil, Plus, Sparkles, Trash2, UserPlus, UserRound, SlidersHorizontal, Eye, EyeOff } from 'lucide-react'
 import {
   api,
   Chip,
@@ -274,9 +274,18 @@ export function Leads() {
       (await api.get('/admin/lead-board')).data as { columns: LeadColumn[] | null },
   })
 
+  /* Convertidos saem do quadro por padrão. Ainda dá para revê-los: a origem e
+     a data da conversão continuam no registro e servem de histórico. */
+  const [verConvertidos, setVerConvertidos] = React.useState(false)
+
   const query = useQuery({
-    queryKey: ['leads'],
-    queryFn: async () => (await api.get('/admin/leads')).data as Lead[],
+    queryKey: ['leads', verConvertidos],
+    queryFn: async () =>
+      (
+        await api.get('/admin/leads', {
+          params: verConvertidos ? { includeConverted: true } : {},
+        })
+      ).data as { leads: Lead[]; converted: number },
   })
 
   const refresh = () => {
@@ -308,12 +317,29 @@ export function Leads() {
     },
   })
 
-  const leads = query.data ?? []
+  const leads = query.data?.leads ?? []
+  const convertidos = query.data?.converted ?? 0
 
   return (
     <>
       <Toolbar>
-        <span className="toolbar-title">{leads.length} leads</span>
+        <span className="toolbar-title">
+          {leads.length} {leads.length === 1 ? 'lead' : 'leads'}
+          {verConvertidos ? ' (com convertidos)' : ''}
+        </span>
+        {convertidos > 0 && (
+          <button
+            onClick={() => setVerConvertidos((v) => !v)}
+            title={
+              verConvertidos
+                ? 'Voltar a mostrar só quem ainda está no funil'
+                : 'Incluir os contatos que já viraram paciente'
+            }
+          >
+            {verConvertidos ? <EyeOff size={14} /> : <Eye size={14} />}
+            {verConvertidos ? 'Ocultar convertidos' : `Ver convertidos (${convertidos})`}
+          </button>
+        )}
         <button onClick={() => setEditandoColunas(true)}>
           <SlidersHorizontal size={14} />
           Colunas
