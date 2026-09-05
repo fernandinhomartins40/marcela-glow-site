@@ -9,6 +9,7 @@ import { ClinicalCatalog, ClinicalDocuments } from '../components/Clinical'
 import { DocumentTemplates } from '../components/DocumentTemplates'
 import { Certificate } from '../components/Certificate'
 import { Encounter } from '../components/Encounter'
+import { Dashboard } from '../components/Dashboard'
 
 export type AdminTab =
   | 'dashboard'
@@ -23,7 +24,7 @@ export type AdminTab =
   | 'settings'
 
 export function AdminPanel({ tab, data, currentUserId }: { tab: AdminTab; data: any; currentUserId?: string }) {
-  if (tab === 'dashboard') return <DashboardPage data={data} />
+  if (tab === 'dashboard') return <Dashboard data={data.dashboard} />
   if (tab === 'patients') return <Patients />
   if (tab === 'appointments') return <Schedule appointments={data.appointments} />
   if (tab === 'encounter') return <Encounter />
@@ -35,27 +36,6 @@ export function AdminPanel({ tab, data, currentUserId }: { tab: AdminTab; data: 
   return <SettingsPage settings={data.settings} />
 }
 
-function DashboardPage({ data }: { data: any }) {
-  const metrics = data.dashboard.metrics
-  return (
-    <>
-      <section className="stats">
-        <Stat label="Agendamentos" value={metrics.appointments} />
-        <Stat label="Pacientes" value={metrics.patients} />
-        <Stat label="Leads" value={metrics.leads} />
-        <Stat label="Faturamento" value={(metrics.revenueCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} />
-      </section>
-      <section className="grid two">
-        <List title="Próximos agendamentos" items={data.dashboard.nextAppointments} pick={(appointment: any) => `${appointment.patient?.name ?? appointment.name} - ${appointment.procedure?.title ?? 'Consulta'}`} />
-        <List title="Pacientes recentes" items={data.dashboard.recentPatients} pick={(patient: any) => `${patient.name} - ${patient.email}`} />
-      </section>
-    </>
-  )
-}
-
-function Stat({ label, value }: { label: string; value: string | number }) {
-  return <div className="stat"><span>{label}</span><strong>{value}</strong></div>
-}
 
 function RegistryPage() {
   const [area, setArea] = React.useState<'procedures' | 'medications' | 'exams' | 'guidance' | 'doctemplates'>('procedures')

@@ -224,52 +224,215 @@ const notifySchema = z.object({
 
 router.use(...staffOnly)
 
+/**
+ * Painel de controle da clínica.
+ *
+ * A pergunta que ele responde não é "quantos pacientes existem" — esse número
+ * só cresce e não muda decisão nenhuma. É "o que precisa de mim agora": quem
+ * chega hoje, o que está parado esperando alguém, e se o mês está acima ou
+ * abaixo do anterior.
+ *
+ * Por isso quase tudo aqui é contagem de pendência ou recorte de período, e
+ * cada bloco existe para virar um clique numa tela onde a coisa se resolve.
+ */
 router.get('/dashboard', requirePermission('DASHBOARD_READ'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = req.user!.tenantId
-    const startOfMonth = new Date()
-    startOfMonth.setDate(1)
-    startOfMonth.setHours(0, 0, 0, 0)
+    const agora = new Date()
+
+    const inicioDoDia = new Date(agora)
+    inicioDoDia.setHours(0, 0, 0, 0)
+    const fimDoDia = new Date(inicioDoDia)
+    fimDoDia.setDate(fimDoDia.getDate() + 1)
+
+    const inicioDoMes = new Date(agora.getFullYear(), agora.getMonth(), 1)
+    const inicioDoMesPassado = new Date(agora.getFullYear(), agora.getMonth() - 1, 1)
+
+    /* O mês passado é comparado até o mesmo dia do mês, não inteiro: no dia 3
+       comparar 3 dias contra 31 diria sempre que a clínica despencou. */
+    const mesmoDiaMesPassado = new Date(inicioDoMesPassado)
+    mesmoDiaMesPassado.setDate(Math.min(agora.getDate(), diasNoMes(inicioDoMesPassado)))
+    mesmoDiaMesPassado.setHours(23, 59, 59, 999)
+
+    const em7Dias = new Date(inicioDoDia)
+    em7Dias.setDate(em7Dias.getDate() + 7)
+
+    const há30Dias = new Date(inicioDoDia)
+    há30Dias.setDate(há30Dias.getDate() - 30)
 
     const [
-      appointments,
-      patients,
-      leads,
-      completedSessions,
-      revenue,
-      nextAppointments,
-      recentPatients,
+      hoje,
+      proximos,
+      aConfirmar,
+      semHorario,
+      receitasParaAssinar,
+      leadsParados,
+      pacientesNovosMes,
+      faturamentoMes,
+      faturamentoMesPassado,
+      atendimentosMes,
+      cancelamentos30,
+      concluidos30,
+      aniversariantes,
+      leadsPorEtapa,
     ] = await Promise.all([
-      prisma.appointment.count({ where: { tenantId } }),
-      prisma.patient.count({ where: { tenantId } }),
-      prisma.lead.count({ where: { tenantId } }),
-      prisma.procedureSession.count({ where: { tenantId, performedAt: { gte: startOfMonth } } }),
-      prisma.procedureSession.aggregate({ where: { tenantId }, _sum: { priceCents: true } }),
+      // A agenda de hoje, na ordem em que as pacientes chegam.
       prisma.appointment.findMany({
-        where: { tenantId, scheduledAt: { not: null } },
-        include: { procedure: { select: { title: true } }, patient: { select: { name: true } } },
+        where: {
+          tenantId,
+          status: { in: ['PENDING', 'CONFIRMED'] },
+          scheduledAt: { gte: inicioDoDia, lt: fimDoDia },
+        },
+        include: {
+          procedure: { select: { title: true, durationMin: true } },
+          patient: { select: { id: true, name: true } },
+        },
+        orderBy: { scheduledAt: 'asc' },
+      }),
+
+      /* Os próximos sete dias. Antes esta lista não filtrava data nem status,
+         então trazia consultas de meses atrás e canceladas junto. */
+      prisma.appointment.findMany({
+        where: {
+          tenantId,
+          status: { in: ['PENDING', 'CONFIRMED'] },
+          scheduledAt: { gte: fimDoDia, lt: em7Dias },
+        },
+        include: {
+          procedure: { select: { title: true, durationMin: true } },
+          patient: { select: { id: true, name: true } },
+        },
         orderBy: { scheduledAt: 'asc' },
         take: 8,
       }),
-      prisma.patient.findMany({ where: { tenantId }, orderBy: { createdAt: 'desc' }, take: 6 }),
+
+      // Pedido com horário marcado que ninguém confirmou ainda.
+      prisma.appointment.count({
+        where: { tenantId, status: 'PENDING', scheduledAt: { gte: inicioDoDia } },
+      }),
+
+      // Pedido que chegou pelo site e ainda não tem horário nenhum.
+      prisma.appointment.count({
+        where: { tenantId, status: 'PENDING', scheduledAt: null },
+      }),
+
+      // Documento escrito e nunca assinado — não vale nada para a paciente.
+      prisma.prescription.count({
+        where: { tenantId, status: 'DRAFT' },
+      }),
+
+      /* Contato que entrou no funil e parou. Trinta dias é o ponto em que a
+         clínica considera esfriado — antes disso ainda é acompanhamento. */
+      prisma.lead.count({
+        where: {
+          tenantId,
+          patientId: null,
+          status: { in: ['NEW', 'CONTACTED', 'QUALIFIED', 'PROPOSAL'] },
+          updatedAt: { lt: há30Dias },
+        },
+      }),
+
+      prisma.patient.count({ where: { tenantId, createdAt: { gte: inicioDoMes } } }),
+
+      prisma.procedureSession.aggregate({
+        where: { tenantId, performedAt: { gte: inicioDoMes } },
+        _sum: { priceCents: true },
+      }),
+
+      prisma.procedureSession.aggregate({
+        where: {
+          tenantId,
+          performedAt: { gte: inicioDoMesPassado, lte: mesmoDiaMesPassado },
+        },
+        _sum: { priceCents: true },
+      }),
+
+      prisma.procedureSession.count({ where: { tenantId, performedAt: { gte: inicioDoMes } } }),
+
+      prisma.appointment.count({
+        where: { tenantId, status: 'CANCELLED', cancelledAt: { gte: há30Dias } },
+      }),
+
+      prisma.appointment.count({
+        where: { tenantId, status: 'COMPLETED', scheduledAt: { gte: há30Dias } },
+      }),
+
+      /* Aniversário do mês: a lista sai de uma consulta crua porque o Prisma
+         não compara mês e dia de um DateTime sem trazer todo mundo. */
+      prisma.$queryRaw<{ id: string; name: string; birthDate: Date }[]>`
+        SELECT id, name, "birthDate"
+        FROM "Patient"
+        WHERE "tenantId" = ${tenantId}
+          AND "birthDate" IS NOT NULL
+          AND EXTRACT(MONTH FROM "birthDate") = ${agora.getMonth() + 1}
+        ORDER BY EXTRACT(DAY FROM "birthDate")
+        LIMIT 12
+      `,
+
+      // Quantos leads em cada etapa, para o funil não precisar de outra chamada.
+      prisma.lead.groupBy({
+        by: ['status'],
+        where: { tenantId, patientId: null },
+        _count: true,
+      }),
     ])
 
+    const receitaMes = faturamentoMes._sum.priceCents ?? 0
+    const receitaMesPassado = faturamentoMesPassado._sum.priceCents ?? 0
+
+    // Quantas faltaram do que era para acontecer — o número que diz se a
+    // agenda está furando.
+    const totalJulgado = cancelamentos30 + concluidos30
+    const taxaCancelamento = totalJulgado ? Math.round((cancelamentos30 / totalJulgado) * 100) : 0
+
     res.json({
-      metrics: {
-        appointments,
-        patients,
-        leads,
-        completedSessions,
-        revenueCents: revenue._sum.priceCents ?? 0,
+      hoje: hoje.map(comInicioEFim),
+      proximos: proximos.map(comInicioEFim),
+      pendencias: {
+        aConfirmar,
+        semHorario,
+        receitasParaAssinar,
+        leadsParados,
       },
-      nextAppointments,
-      recentPatients,
+      mes: {
+        receitaCents: receitaMes,
+        receitaMesPassadoCents: receitaMesPassado,
+        atendimentos: atendimentosMes,
+        pacientesNovos: pacientesNovosMes,
+        ticketMedioCents: atendimentosMes ? Math.round(receitaMes / atendimentosMes) : 0,
+      },
+      saude: {
+        taxaCancelamento,
+        cancelados30: cancelamentos30,
+        concluidos30: concluidos30,
+      },
+      aniversariantes,
+      funil: Object.fromEntries(
+        leadsPorEtapa.map((linha: { status: string; _count: number }) => [linha.status, linha._count]),
+      ),
     })
   } catch (err) {
     next(err)
   }
 })
 
+/** Quantos dias tem o mês da data — para comparar períodos equivalentes. */
+function diasNoMes(data: Date) {
+  return new Date(data.getFullYear(), data.getMonth() + 1, 0).getDate()
+}
+
+/**
+ * O fim da consulta, para a agenda do dia poder desenhar a faixa de ocupação.
+ * `endsAt` só é gravado na confirmação, então o pedido pendente cai na duração
+ * do procedimento — e, sem procedimento escolhido, em uma hora.
+ */
+function comInicioEFim<T extends { scheduledAt: Date | null; endsAt: Date | null; procedure: { durationMin?: number } | null }>(
+  consulta: T,
+) {
+  if (consulta.endsAt || !consulta.scheduledAt) return consulta
+  const minutos = consulta.procedure?.durationMin ?? 60
+  return { ...consulta, endsAt: new Date(consulta.scheduledAt.getTime() + minutos * 60_000) }
+}
 router.get('/patients', requirePermission('PATIENT_READ'), async (req, res, next) => {
   try {
     const search = typeof req.query.search === 'string' ? req.query.search.trim() : ''

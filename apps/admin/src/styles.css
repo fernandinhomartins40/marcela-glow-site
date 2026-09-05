@@ -205,6 +205,103 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 
 .form-grid { display: grid; gap: 14px; }
 
+/* ── Painel de controle ───────────────────────────────────────────────────── */
+/* A ordem visual segue a ordem em que a clinica pensa: o que esta travado, o
+   dia, o mes, a semana. O bloco de pendencias e o unico que some quando o
+   trabalho e feito — por isso ele fica no topo e tem a cor mais forte. */
+.painel { display: grid; gap: 14px; min-width: 0; }
+.painel svg { flex: none; }
+
+/* Pendencias */
+.painel-alertas { padding: 14px 16px 16px; background: var(--cream-soft); border: 1px solid var(--bronze); border-radius: 12px; }
+.painel-alertas h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--bronze); }
+.painel-alertas-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(212px, 1fr)); gap: 9px; }
+.painel-pendencia, main .painel-pendencia { position: relative; display: grid; grid-template-columns: auto auto minmax(0, 1fr); grid-template-areas: "icone n titulo" "texto texto texto"; align-items: center; gap: 3px 9px; min-height: 0 !important; padding: 12px 34px 12px 13px !important; text-align: left; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 10px; color: var(--espresso); }
+.painel-pendencia:hover, main .painel-pendencia:hover { background: var(--cream-deep); border-color: var(--bronze); transform: none; }
+/* `> svg` pegava a seta tambem, e o grid-area a jogava para a primeira
+   coluna por cima do position:absolute — a seta ficava sobre o icone. */
+.painel-pendencia > svg:not(.painel-pendencia-seta) { grid-area: icone; color: var(--bronze); }
+.painel-pendencia-n { grid-area: n; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
+.painel-pendencia-titulo { grid-area: titulo; font-size: 13px; font-weight: 600; }
+.painel-pendencia-texto { grid-area: texto; font-size: 11.5px; line-height: 1.45; color: var(--text-muted); }
+.painel-pendencia-seta { position: absolute; top: 15px; right: 12px; color: var(--bronze); opacity: .55; }
+.painel-pendencia:hover .painel-pendencia-seta { opacity: 1; }
+
+/* O dia ocupa mais largura que a coluna de numeros: e onde se olha primeiro */
+.painel-corpo { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.painel-coluna { display: grid; gap: 14px; min-width: 0; }
+
+.painel-card { min-width: 0; padding: 15px 16px 16px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 12px; }
+.painel-card > header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 13px; }
+.painel-card h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 3px; font-size: 15px; font-weight: 600; color: var(--espresso); }
+.painel-card h2 svg { color: var(--bronze); }
+.painel-card header p { margin: 0; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+.painel-acoes { display: flex; flex-wrap: wrap; gap: 7px; }
+.painel-acoes button, main .painel-acoes button { display: inline-flex; align-items: center; gap: 6px; min-height: 32px !important; padding: 6px 12px !important; font-size: 12px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 8px; color: var(--espresso); }
+.painel-acoes button:hover, main .painel-acoes button:hover { border-color: var(--bronze); background: var(--cream-deep); transform: none; }
+
+/* A proxima consulta, ou a que esta acontecendo: o relogio da recepcao */
+.painel-agora { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "tag tag" "nome acao" "quando acao"; align-items: center; gap: 2px 12px; margin-bottom: 13px; padding: 13px 14px; background: var(--cream-deep); border: 1px solid var(--border); border-radius: 10px; }
+.painel-agora.is-live { background: var(--espresso); border-color: var(--espresso); color: var(--marble-soft); }
+.painel-agora-tag { grid-area: tag; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 4px; font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--bronze); }
+.painel-agora.is-live .painel-agora-tag { color: var(--bronze-soft); }
+.painel-agora > strong { grid-area: nome; font-size: 16px; font-weight: 600; }
+.painel-agora-quando { grid-area: quando; font-size: 12px; color: var(--text-muted); }
+.painel-agora.is-live .painel-agora-quando { color: var(--bronze-soft); }
+.painel-agora button, main .painel-agora button { grid-area: acao; display: inline-flex; align-items: center; gap: 6px; min-height: 34px !important; padding: 7px 13px !important; font-size: 12.5px; background: var(--espresso); border: 1px solid var(--espresso); border-radius: 8px; color: var(--marble-soft); }
+.painel-agora.is-live button, main .painel-agora.is-live button { background: var(--marble-soft); border-color: var(--marble-soft); color: var(--espresso); }
+
+/* Lista de horarios */
+.painel-horarios { display: grid; gap: 1px; margin: 0; padding: 0; list-style: none; }
+.painel-horarios li { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 11px; align-items: center; padding: 9px 4px; border-top: 1px solid var(--border); }
+.painel-horarios li:first-child { border-top: 0; }
+/* O que ja passou continua na lista — a recepcao confere o que aconteceu —
+   mas apagado, para o olho ir direto ao que ainda vem. */
+.painel-horarios li.is-passado { opacity: .45; }
+/* A que esta acontecendo agora: fundo mais o tracinho na lateral, porque so
+   o fundo se perde entre linhas ja claras. */
+.painel-horarios li.is-agora { position: relative; background: var(--cream-deep); border-radius: 8px; padding-left: 12px; }
+.painel-horarios li.is-agora::before { content: ''; position: absolute; top: 8px; bottom: 8px; left: 3px; width: 3px; background: var(--espresso); border-radius: 999px; }
+.painel-horarios time { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--espresso); }
+.painel-horarios time.is-largo { font-size: 11.5px; font-weight: 500; text-transform: capitalize; color: var(--text-muted); }
+.painel-horarios li > div { display: grid; gap: 1px; min-width: 0; }
+.painel-horarios strong { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.painel-horarios span { font-size: 11.5px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.painel-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; font-size: 10.5px; font-weight: 500; border-radius: 999px; white-space: nowrap; }
+.painel-tag.is-warn { background: #fdf6e7; border: 1px solid #e8d6a8; color: #6b5417; }
+.painel-tag.is-ok { background: #eef6f0; border: 1px solid #cfe4d6; color: #3f7d55; }
+
+/* Receita do mes com a comparacao embutida */
+.painel-receita { display: grid; gap: 4px; margin-bottom: 14px; }
+.painel-receita > strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 34px; font-weight: 500; line-height: 1; color: var(--espresso); }
+.painel-receita-var { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; }
+.painel-receita-var.is-up { color: #3f7d55; }
+.painel-receita-var.is-down { color: #a33131; }
+.painel-receita-nota { font-size: 11.5px; color: var(--text-muted); }
+
+.painel-numeros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.painel-numero { display: grid; gap: 2px; padding: 10px 11px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 9px; }
+.painel-numero span { font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--text-muted); }
+.painel-numero strong { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Faltas: a barra diz de relance se a agenda esta furando */
+.painel-barra { height: 8px; background: var(--cream-deep); border-radius: 999px; overflow: hidden; }
+.painel-barra span { display: block; height: 100%; background: #a33131; border-radius: 999px; }
+.painel-legenda { margin: 9px 0 0; font-size: 12px; color: var(--text-muted); }
+.painel-legenda strong { color: var(--espresso); }
+
+/* Aniversariantes */
+.painel-pessoas { display: flex; flex-wrap: wrap; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.painel-pessoas button, main .painel-pessoas button { display: inline-flex; align-items: center; gap: 8px; min-height: 32px !important; padding: 5px 12px 5px 6px !important; font-size: 12.5px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 999px; color: var(--espresso); }
+.painel-pessoas button:hover, main .painel-pessoas button:hover { border-color: var(--bronze); background: var(--cream-deep); transform: none; }
+.painel-dia-mes { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; font-size: 10.5px; font-weight: 600; font-variant-numeric: tabular-nums; background: var(--cream-deep); border-radius: 50%; color: var(--bronze); }
+.painel-pessoas button:hover .painel-dia-mes { background: var(--marble-soft); }
+
+.painel-vazio { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--text-muted); }
+.painel-link, main .painel-link { min-height: 0 !important; padding: 0 4px !important; font-size: inherit; background: none; border: 0; color: var(--bronze); text-decoration: underline; text-underline-offset: 2px; }
+.painel-link:hover, main .painel-link:hover { color: var(--espresso); transform: none; }
+
 /* ── Gerenciador do site ──────────────────────────────────────────────────── */
 /* Toda seção segue a mesma ordem: escolher a aba, ligar ou desligar a seção,
    preencher os campos, ver a prévia no fim. Quem aprendeu a mexer na primeira
@@ -1066,6 +1163,9 @@ body.page-lock { overflow: hidden; }
      formulario nesta largura, os dois ficam estreitos demais — entao ela
      desce para baixo do formulario ja aqui, e nao so no celular. */
   .cms-previa-palco { padding: 10px; }
+  /* O dia e a coluna de numeros lado a lado ficam estreitos demais: com
+     menos de 1180px a lista de horarios corta o nome da paciente. */
+  .painel-corpo { grid-template-columns: minmax(0, 1fr); }
   .lp { max-width: 620px; }
 }
 
@@ -1139,6 +1239,11 @@ body.page-lock { overflow: hidden; }
   .cms-save-actions { flex-wrap: wrap; }
   .cms-save-actions button { flex: 1; }
   .cms-previa-palco { padding: 8px; }
+  .painel-numeros { grid-template-columns: minmax(0, 1fr); }
+  .painel-agora { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tag" "nome" "quando" "acao"; }
+  .painel-agora button { margin-top: 8px; justify-content: center; }
+  .painel-horarios li { grid-template-columns: 48px minmax(0, 1fr); row-gap: 5px; }
+  .painel-tag { grid-column: 2; justify-self: start; }
   .cms-cor { grid-template-columns: 40px minmax(0, 1fr); }
   .cms-cor-valor { grid-column: 1 / -1; }
   .cms-paleta { grid-template-columns: minmax(0, 1fr); }
