@@ -1256,3 +1256,18 @@ img, video, canvas { max-width: 100%; height: auto; }
 .block-card-hint { font-size: 11.5px; line-height: 1.45; color: var(--text-muted); }
 .block-cards button.is-missing { border-color: #d9a441; background: #fbf0e2; }
 .block-cards button.is-missing .block-card-head { color: #7d5220; }
+
+/* ── Onde o modelo aparece: cards que se marcam ───────────────────────────── */
+.context-picker { display: grid; gap: 4px; }
+.context-picker .hint { margin-bottom: 6px; }
+.context-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
+.context-cards button { display: flex; align-items: flex-start; gap: 10px; min-height: 0; padding: 11px 12px; text-align: left; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 9px; color: var(--espresso); }
+.context-cards button:hover { border-color: var(--bronze); background: var(--marble-soft); transform: none; }
+/* O quadrado troca de ícone para marca quando ativo: mostra o estado sem
+   precisar de um checkbox solto ao lado do texto. */
+.context-mark { width: 26px; height: 26px; flex: none; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 7px; background: var(--marble-soft); color: var(--text-muted); }
+.context-text { display: grid; gap: 2px; min-width: 0; }
+.context-text strong { font-size: 12.5px; font-weight: 600; }
+.context-text span { font-size: 11.5px; line-height: 1.45; color: var(--text-muted); }
+.context-cards button.is-active { border-color: var(--bronze); background: var(--marble-soft); }
+.context-cards button.is-active .context-mark { background: var(--espresso); border-color: var(--espresso); color: var(--cream-soft); }

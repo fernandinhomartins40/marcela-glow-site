@@ -1,6 +1,25 @@
 import React from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { AlertTriangle, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
+import {
+  AlertTriangle,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  FileSignature,
+  Plus,
+  Stethoscope,
+  Trash2,
+  UserRound,
+} from 'lucide-react'
+
+/** Ícone de cada tela, para o card ser reconhecido antes de ler. */
+const CONTEXT_ICON = {
+  encounter: Stethoscope,
+  documents: FileSignature,
+  patient: UserRound,
+  appointment: CalendarDays,
+} as const
 import { api, errorMessage, Field, FormRow, Modal, SubmitButton } from '../../lib/ui'
 import { RichText } from '../../lib/RichText'
 import { sampleValues } from '../../lib/docFields'
@@ -151,27 +170,38 @@ export function TemplateForm({
               <Field label="Título sugerido" hint="Vai para o documento; a médica pode trocar ao emitir">
                 <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Receita pós-procedimento" />
               </Field>
-              <div>
+              <div className="context-picker">
                 <p className="form-section-title">Onde este modelo aparece</p>
-                <p className="hint" style={{ marginBottom: 8 }}>
-                  Nenhuma marcada: o modelo é oferecido em todas as telas.
+                <p className="hint">
+                  Sem nenhuma escolhida, o modelo é oferecido em todas as telas.
                 </p>
-                {(Object.keys(CONTEXT_META) as TemplateContext[]).map((c) => (
-                  <label key={c} className="check-row">
-                    <input
-                      type="checkbox"
-                      checked={contexts.includes(c)}
-                      onChange={(e) =>
-                        setContexts((prev) =>
-                          e.target.checked ? [...prev, c] : prev.filter((x) => x !== c),
-                        )
-                      }
-                    />
-                    <span>
-                      {CONTEXT_META[c].label} — <span className="hint">{CONTEXT_META[c].hint}</span>
-                    </span>
-                  </label>
-                ))}
+                <div className="context-cards">
+                  {(Object.keys(CONTEXT_META) as TemplateContext[]).map((c) => {
+                    const Icone = CONTEXT_ICON[c]
+                    const ativo = contexts.includes(c)
+                    return (
+                      <button
+                        key={c}
+                        type="button"
+                        className={ativo ? 'is-active' : undefined}
+                        aria-pressed={ativo}
+                        onClick={() =>
+                          setContexts((prev) =>
+                            ativo ? prev.filter((x) => x !== c) : [...prev, c],
+                          )
+                        }
+                      >
+                        <span className="context-mark" aria-hidden="true">
+                          {ativo ? <Check size={12} /> : <Icone size={14} />}
+                        </span>
+                        <span className="context-text">
+                          <strong>{CONTEXT_META[c].label}</strong>
+                          <span>{CONTEXT_META[c].hint}</span>
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
               <Field label="Orientações" hint="Texto que já vem preenchido. Aceita campos como {{paciente}}">
