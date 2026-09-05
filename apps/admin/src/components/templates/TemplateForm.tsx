@@ -10,9 +10,12 @@ import {
   BLOCK_META,
   CORES_PADRAO,
   inserirNaOrdem,
+  CONTEXT_META,
+  contextsOf,
   ITEM_SOURCE_META,
   itemSource,
   type ItemSource,
+  type TemplateContext,
   blocosPadrao,
   ensureBlocks,
   novoBloco,
@@ -61,6 +64,7 @@ export function TemplateForm({
     fontSizePt: layoutInicial.fontSizePt ?? 11,
     paper: layoutInicial.paper ?? ('A4' as const),
   })
+  const [contexts, setContexts] = React.useState<TemplateContext[]>(contextsOf(layoutInicial))
   const [brand, setBrand] = React.useState<Brand>({ ...CORES_PADRAO, ...(layoutInicial.brand ?? {}) })
   const [blocks, setBlocks] = React.useState<Block[]>(
     template ? ensureBlocks(layoutInicial) : blocosPadrao(),
@@ -90,7 +94,7 @@ export function TemplateForm({
         kind: kindAtual,
         title: title || null,
         instructions: instructions || null,
-        layout: { ...pagina, brand, blocks },
+        layout: { ...pagina, brand, blocks, contexts },
       }
       if (template) await api.put(`/clinical/templates/${template.id}`, payload)
       else await api.post('/clinical/templates', payload)
@@ -99,7 +103,7 @@ export function TemplateForm({
   })
 
   const valid = name.trim().length >= 2
-  const layoutAtual: TemplateLayout = { ...pagina, brand, blocks }
+  const layoutAtual: TemplateLayout = { ...pagina, brand, blocks, contexts }
 
   return (
     <Modal
@@ -145,6 +149,29 @@ export function TemplateForm({
               <Field label="Título sugerido" hint="Vai para o documento; a médica pode trocar ao emitir">
                 <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Receita pós-procedimento" />
               </Field>
+              <div>
+                <p className="form-section-title">Onde este modelo aparece</p>
+                <p className="hint" style={{ marginBottom: 8 }}>
+                  Nenhuma marcada: o modelo é oferecido em todas as telas.
+                </p>
+                {(Object.keys(CONTEXT_META) as TemplateContext[]).map((c) => (
+                  <label key={c} className="check-row">
+                    <input
+                      type="checkbox"
+                      checked={contexts.includes(c)}
+                      onChange={(e) =>
+                        setContexts((prev) =>
+                          e.target.checked ? [...prev, c] : prev.filter((x) => x !== c),
+                        )
+                      }
+                    />
+                    <span>
+                      {CONTEXT_META[c].label} — <span className="hint">{CONTEXT_META[c].hint}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+
               <Field label="Orientações" hint="Texto que já vem preenchido. Aceita campos como {{paciente}}">
                 <textarea rows={9} value={instructions} onChange={(e) => setInstructions(e.target.value)} />
               </Field>
@@ -337,6 +364,71 @@ function BlockOptions({
           placeholder="Escreva o texto deste bloco…"
           minHeight={110}
         />
+      )}
+
+      {block.type === 'record' && (
+        <>
+          {([
+            ['queixa', 'Queixa principal'],
+            ['conduta', 'Conduta'],
+          ] as const).map(([chave, rotulo]) => (
+            <label key={chave} className="check-row">
+              <input
+                type="checkbox"
+                checked={block.options?.[chave] !== false}
+                onChange={(e) => onChange({ options: { ...block.options, [chave]: e.target.checked } })}
+              />
+              <span>{rotulo}</span>
+            </label>
+          ))}
+        </>
+      )}
+
+      {block.type === 'photos' && (
+        <>
+          {([
+            ['antes', 'Foto de antes'],
+            ['depois', 'Foto de depois'],
+          ] as const).map(([chave, rotulo]) => (
+            <label key={chave} className="check-row">
+              <input
+                type="checkbox"
+                checked={block.options?.[chave] !== false}
+                onChange={(e) => onChange({ options: { ...block.options, [chave]: e.target.checked } })}
+              />
+              <span>{rotulo}</span>
+            </label>
+          ))}
+          <Field label="Altura das fotos (mm)">
+            <input
+              type="number"
+              min={20}
+              max={120}
+              value={block.heightMm ?? 45}
+              onChange={(e) => onChange({ heightMm: Number(e.target.value) })}
+            />
+          </Field>
+        </>
+      )}
+
+      {block.type === 'consent' && (
+        <>
+          <RichText
+            value={block.html ?? ''}
+            onChange={(html) => onChange({ html })}
+            placeholder="Texto do termo que a paciente assina…"
+            minHeight={100}
+          />
+          <Field label="Espaço para assinar (mm)">
+            <input
+              type="number"
+              min={0}
+              max={60}
+              value={block.heightMm ?? 18}
+              onChange={(e) => onChange({ heightMm: Number(e.target.value) })}
+            />
+          </Field>
+        </>
       )}
 
       {(block.type === 'spacer' || block.type === 'signature') && (

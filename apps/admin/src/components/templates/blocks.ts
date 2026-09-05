@@ -14,6 +14,13 @@ export type BlockType =
   | 'patient'
   | 'content'
   | 'items'
+  | 'clinicalAlerts'
+  | 'patientCard'
+  | 'appointment'
+  | 'record'
+  | 'photos'
+  | 'consent'
+  | 'verification'
   | 'text'
   | 'signature'
   | 'divider'
@@ -43,6 +50,8 @@ export interface Brand {
 
 export interface TemplateLayout {
   blocks?: Block[]
+  /** Telas em que o modelo é oferecido; vazio aparece em todas. */
+  contexts?: TemplateContext[]
   brand?: Brand
   // Formato anterior, ainda gravado nos modelos criados antes dos blocos.
   headerHtml?: string
@@ -83,7 +92,14 @@ export const BLOCK_META: Record<
   patient: { label: 'Dados da paciente', hint: 'Nome e CPF, direto do cadastro', unico: true, ordem: 3 },
   items: { label: 'Lista de itens', hint: 'Medicamentos, exames ou orientações — a escolha é do bloco', ordem: 4 },
   content: { label: 'Orientações', hint: 'O texto digitado na aba Conteúdo', unico: true, ordem: 5 },
+  clinicalAlerts: { label: 'Alertas clínicos', hint: 'Alergias, medicações e comorbidades da ficha', unico: true, ordem: 3.5 },
+  patientCard: { label: 'Ficha resumida', hint: 'Quadro com nascimento, CPF, contato e convênio', unico: true, ordem: 3.6 },
+  appointment: { label: 'Dados do atendimento', hint: 'Data, hora, duração e procedimento', unico: true, ordem: 3.7 },
+  record: { label: 'Do prontuário', hint: 'Queixa, conduta e evolução do atendimento', unico: true, ordem: 4.5 },
+  photos: { label: 'Antes e depois', hint: 'Espaço para as fotos da sessão', unico: true, ordem: 5.5 },
   text: { label: 'Texto livre', hint: 'Parágrafo próprio, com campos automáticos', ordem: 6 },
+  consent: { label: 'Termo e ciência', hint: 'Texto do termo com linha para a paciente assinar', ordem: 6.5 },
+  verification: { label: 'Autenticação', hint: 'Código e QR de verificação do documento', unico: true, ordem: 7.5 },
   signature: { label: 'Assinatura', hint: 'Linha, nome e QR de verificação', unico: true, ordem: 7 },
   spacer: { label: 'Espaço', hint: 'Empurra o que vem depois', ordem: 8 },
 }
@@ -129,7 +145,32 @@ export function novoBloco(type: BlockType): Block {
   if (type === 'spacer') return { id, type, heightMm: 10 }
   if (type === 'signature') return { id, type, align: 'center', heightMm: 24, options: { qr: true } }
   if (type === 'text') return { id, type, html: '', align: 'left' }
+  if (type === 'photos') return { id, type, heightMm: 45, options: { antes: true, depois: true } }
+  if (type === 'consent') return { id, type, html: '', heightMm: 18 }
+  if (type === 'record') return { id, type, options: { queixa: true, conduta: true, evolucao: false } }
   return { id, type }
+}
+
+/**
+ * Onde o modelo é oferecido.
+ *
+ * Um termo de consentimento só faz sentido no atendimento; um atestado a
+ * recepção também emite. Sem isso toda tela mostra a lista inteira, e achar o
+ * modelo certo fica pior conforme a biblioteca cresce.
+ */
+export type TemplateContext = 'encounter' | 'documents' | 'patient' | 'appointment'
+
+export const CONTEXT_META: Record<TemplateContext, { label: string; hint: string }> = {
+  encounter: { label: 'Atendimento', hint: 'Ao atender a paciente, com a consulta aberta' },
+  documents: { label: 'Documentos', hint: 'Na tela de documentos, para emitir avulso' },
+  patient: { label: 'Ficha da paciente', hint: 'A partir do cadastro, fora de uma consulta' },
+  appointment: { label: 'Agenda', hint: 'A partir de um agendamento' },
+}
+
+/** Onde o modelo aparece; vazio significa em todas as telas. */
+export function contextsOf(layout: TemplateLayout | null | undefined): TemplateContext[] {
+  const lista = layout?.contexts
+  return Array.isArray(lista) && lista.length ? lista : []
 }
 
 export const CORES_PADRAO = { accentColor: '#b08d57', textColor: '#2c2c2c' }

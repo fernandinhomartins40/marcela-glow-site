@@ -166,6 +166,115 @@ function BlockView({
           )}
         </div>
       )
+    case 'clinicalAlerts':
+      // O que precisa ser visto antes de prescrever, direto da ficha.
+      return (
+        <div className="sheet-alerts">
+          {[
+            ['Alergias', values.alergias],
+            ['Medicações em uso', values.medicacoes],
+            ['Comorbidades', values.comorbidades],
+          ]
+            .filter(([, v]) => v)
+            .map(([rotulo, v]) => (
+              <p key={rotulo}>
+                <strong style={{ color: accent }}>{rotulo}:</strong> {v}
+              </p>
+            ))}
+        </div>
+      )
+
+    case 'patientCard':
+      return (
+        <dl className="sheet-card">
+          {[
+            ['Nascimento', values.paciente_nascimento],
+            ['CPF', values.paciente_cpf],
+            ['Telefone', values.paciente_telefone],
+            ['E-mail', values.paciente_email],
+          ]
+            .filter(([, v]) => v)
+            .map(([rotulo, v]) => (
+              <div key={rotulo}>
+                <dt>{rotulo}</dt>
+                <dd>{v}</dd>
+              </div>
+            ))}
+        </dl>
+      )
+
+    case 'appointment':
+      return (
+        <p className="sheet-patient">
+          <strong style={{ color: accent }}>Atendimento:</strong> {values.atendimento_data}
+          {values.atendimento_hora ? ` às ${values.atendimento_hora}` : ''}
+          {values.procedimento ? ` · ${values.procedimento}` : ''}
+        </p>
+      )
+
+    case 'record': {
+      const partes = [
+        block.options?.queixa !== false && ['Queixa', values.queixa],
+        block.options?.conduta !== false && ['Conduta', values.conduta],
+      ].filter(Boolean) as [string, string][]
+      return (
+        <div className="sheet-content">
+          {partes
+            .filter(([, v]) => v)
+            .map(([rotulo, v]) => (
+              <p key={rotulo} className="sheet-instructions">
+                <strong style={{ color: accent }}>{rotulo}:</strong> {v}
+              </p>
+            ))}
+        </div>
+      )
+    }
+
+    case 'photos':
+      // Molduras vazias: as fotos entram na impressão do documento emitido.
+      return (
+        <div className="sheet-photos" style={{ height: `${block.heightMm ?? 45}px` }}>
+          {block.options?.antes !== false && (
+            <figure>
+              <span />
+              <figcaption>Antes</figcaption>
+            </figure>
+          )}
+          {block.options?.depois !== false && (
+            <figure>
+              <span />
+              <figcaption>Depois</figcaption>
+            </figure>
+          )}
+        </div>
+      )
+
+    case 'consent':
+      return (
+        <div className="sheet-consent">
+          <div
+            className="sheet-rich"
+            dangerouslySetInnerHTML={{
+              __html: applyFields(block.html || 'Declaro estar ciente das orientações recebidas.', values),
+            }}
+          />
+          <div style={{ height: `${block.heightMm ?? 18}px` }} />
+          <span className="sheet-line" style={{ borderColor: accent }} />
+          <span className="sheet-signer">{values.paciente}</span>
+        </div>
+      )
+
+    case 'verification':
+      return (
+        <div className="sheet-verification">
+          <span className="sheet-qr" aria-hidden="true" />
+          <span>
+            Confira a autenticidade em {values.clinica_endereco ? '' : ''}
+            <strong>{values.codigo_verificacao}</strong>
+          </span>
+        </div>
+      )
+
     case 'text':
       return (
         <div

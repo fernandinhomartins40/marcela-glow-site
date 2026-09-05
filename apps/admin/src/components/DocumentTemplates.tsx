@@ -17,7 +17,7 @@ import {
   Toolbar,
 } from '../lib/ui'
 import { TemplateForm } from './templates/TemplateForm'
-import type { TemplateLayout } from './templates/blocks'
+import { CONTEXT_META, contextsOf, type TemplateLayout } from './templates/blocks'
 
 /**
  * Biblioteca de modelos de documento.
@@ -139,6 +139,11 @@ export function DocumentTemplates() {
                 <>
                   {t.items?.length ? <span>{t.items.length} item(ns)</span> : null}
                   {t.layout ? <span>Layout próprio</span> : <span>Layout padrão</span>}
+                  <span>
+                    {contextsOf(t.layout).length
+                      ? contextsOf(t.layout).map((c) => CONTEXT_META[c].label).join(', ')
+                      : 'Em todas as telas'}
+                  </span>
                 </>
               }
               actions={

@@ -74,6 +74,8 @@ const brandSchema = z.object({
 const layoutSchema = z.object({
   /** Blocos da folha, na ordem de impressao. Vazio usa o arranjo padrao. */
   blocks: z.array(blockSchema).optional(),
+  /** Telas em que o modelo e oferecido; vazio aparece em todas. */
+  contexts: z.array(z.enum(['encounter', 'documents', 'patient', 'appointment'])).optional(),
   brand: brandSchema.optional(),
 
   /* Campos do primeiro formato, antes dos blocos. Continuam aceitos para os

@@ -16,7 +16,7 @@ export interface DocField {
   label: string
   /** Valor mostrado na prévia, para a folha não ficar cheia de chaves */
   sample: string
-  group: 'paciente' | 'documento' | 'clinica'
+  group: 'paciente' | 'clinico' | 'atendimento' | 'documento' | 'clinica'
 }
 
 export const DOC_FIELDS: DocField[] = [
@@ -25,6 +25,25 @@ export const DOC_FIELDS: DocField[] = [
   { key: 'paciente_nascimento', label: 'Data de nascimento', sample: '12/03/1992', group: 'paciente' },
   { key: 'paciente_idade', label: 'Idade', sample: '34 anos', group: 'paciente' },
   { key: 'paciente_endereco', label: 'Endereço da paciente', sample: 'Chapadão do Sul/MS', group: 'paciente' },
+
+  { key: 'paciente_rg', label: 'RG da paciente', sample: '12.345.678-9', group: 'paciente' },
+  { key: 'paciente_telefone', label: 'Telefone da paciente', sample: '(67) 98001-6042', group: 'paciente' },
+  { key: 'paciente_email', label: 'E-mail da paciente', sample: 'ana.beatriz@exemplo.com.br', group: 'paciente' },
+  { key: 'paciente_profissao', label: 'Profissão', sample: 'Advogada', group: 'paciente' },
+
+  // Dados clínicos — o que precisa constar num atestado ou antes de prescrever.
+  { key: 'alergias', label: 'Alergias', sample: 'Dipirona, Látex', group: 'clinico' },
+  { key: 'medicacoes', label: 'Medicações em uso', sample: 'Losartana 50mg', group: 'clinico' },
+  { key: 'comorbidades', label: 'Comorbidades', sample: 'Hipertensão', group: 'clinico' },
+  { key: 'tipo_sanguineo', label: 'Tipo sanguíneo', sample: 'O+', group: 'clinico' },
+  { key: 'tipo_pele', label: 'Tipo de pele', sample: 'Fototipo III', group: 'clinico' },
+
+  // Atendimento — vem da consulta em que o documento está sendo emitido.
+  { key: 'atendimento_data', label: 'Data do atendimento', sample: '04/09/2026', group: 'atendimento' },
+  { key: 'atendimento_hora', label: 'Hora do atendimento', sample: '14:00', group: 'atendimento' },
+  { key: 'atendimento_duracao', label: 'Duração', sample: '60 min', group: 'atendimento' },
+  { key: 'queixa', label: 'Queixa principal', sample: 'Linhas de expressão na testa', group: 'atendimento' },
+  { key: 'conduta', label: 'Conduta', sample: 'Retorno em 30 dias', group: 'atendimento' },
 
   { key: 'data', label: 'Data de hoje', sample: '04/09/2026', group: 'documento' },
   { key: 'data_extenso', label: 'Data por extenso', sample: '4 de setembro de 2026', group: 'documento' },
@@ -42,6 +61,8 @@ export const DOC_FIELDS: DocField[] = [
 
 export const GROUP_LABEL: Record<DocField['group'], string> = {
   paciente: 'Paciente',
+  clinico: 'Dados clínicos',
+  atendimento: 'Atendimento',
   documento: 'Documento',
   clinica: 'Clínica',
 }
