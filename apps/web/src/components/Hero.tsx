@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useLanding, useSection } from "@/hooks/useLanding";
+import { useImage, useLanding, useSection } from "@/hooks/useLanding";
 import draEditorial from "@/assets/dra-marcela-editorial.jpg";
 import draPortrait from "@/assets/dra-marcela-portrait.jpg";
 import marble from "@/assets/marble-texture.jpg";
@@ -56,6 +56,9 @@ const Hero = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const { content, isVisible } = useSection<HeroContent>("HERO", FALLBACK);
   const { data: landing } = useLanding();
+  /* O slot do marmore existia na API desde o inicio e ninguem o lia: trocar a
+     textura no painel nao mudava nada no site. */
+  const fundo = useImage("background.marble", marble, "");
   const slides = content.slides.length ? content.slides : FALLBACK.slides;
 
   useEffect(() => {
@@ -86,10 +89,16 @@ const Hero = () => {
       id="home"
       className="relative min-h-[100svh] w-full overflow-hidden bg-marble"
     >
-      {/* Marble base background */}
+      {/* A textura do marmore sobre o gradiente da paleta.
+
+          `mix-blend-multiply` no lugar de opacidade: a foto e um bege claro e,
+          apenas transparente, ela lavava a cor de baixo — trocar a marca para
+          verde deixava o fundo bege de novo, porque a foto cobria o gradiente.
+          Multiplicando, ela vira sombra e veio sobre qualquer cor, que e o que
+          uma textura deve fazer. */}
       <div
-        className="absolute inset-0 bg-cover bg-center opacity-60"
-        style={{ backgroundImage: `url(${marble})` }}
+        className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-multiply"
+        style={{ backgroundImage: `url(${fundo.src})` }}
       />
       <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background/60" />
 

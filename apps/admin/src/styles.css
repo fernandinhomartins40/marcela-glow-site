@@ -331,6 +331,28 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .cms-foto-texto strong { font-size: 13px; color: var(--espresso); }
 .cms-foto-acoes { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 4px; }
 
+/* Campos de cor */
+.cms-cor { display: grid; grid-template-columns: 44px minmax(0, 1fr) 104px; gap: 12px; align-items: center; padding: 9px 11px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 9px; }
+/* O seletor nativo desenha a propria moldura; sem zerar isso sobra uma borda
+   cinza do sistema em volta da cor. */
+.cms-cor input[type=color] { width: 44px; height: 40px; min-height: 40px; padding: 0; background: none; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; }
+.cms-cor input[type=color]::-webkit-color-swatch-wrapper { padding: 3px; }
+.cms-cor input[type=color]::-webkit-color-swatch { border: 0; border-radius: 5px; }
+.cms-cor label { display: grid; gap: 2px; min-width: 0; cursor: pointer; }
+.cms-cor label strong { font-size: 13px; font-weight: 600; color: var(--espresso); }
+.cms-cor label span { font-size: 11.5px; line-height: 1.4; color: var(--text-muted); }
+.cms-cor-valor, main .cms-cor-valor { width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; text-transform: lowercase; text-align: center; }
+
+/* Previa da paleta: as cores conversando, nao seis quadradinhos soltos */
+.cms-paleta { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 12px; }
+.cms-paleta > div { display: grid; align-content: start; gap: 9px; padding: 22px 20px; border: 1px solid var(--border); border-radius: 10px; }
+.cms-paleta p { margin: 0; font-size: 10.5px; font-weight: 500; letter-spacing: .16em; }
+.cms-paleta strong { font-family: Cormorant Garamond, Georgia, serif; font-size: 27px; font-weight: 400; line-height: 1.15; }
+.cms-paleta span { display: block; width: 46px; height: 1px; }
+.cms-paleta-botoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px; }
+.cms-paleta-botoes span { width: auto; height: auto; padding: 9px 16px; font-size: 10.5px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; border-radius: 3px; }
+.cms-paleta-botoes span:last-child { border: 1px solid; background: transparent; }
+
 /* Prévia embutida: fecha a página e recebe a largura inteira */
 .cms-previa { padding: 15px 16px 16px; background: linear-gradient(180deg, var(--cream-soft), var(--cream-soft) 120px); }
 .cms-previa-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 13px; }
@@ -1117,6 +1139,9 @@ body.page-lock { overflow: hidden; }
   .cms-save-actions { flex-wrap: wrap; }
   .cms-save-actions button { flex: 1; }
   .cms-previa-palco { padding: 8px; }
+  .cms-cor { grid-template-columns: 40px minmax(0, 1fr); }
+  .cms-cor-valor { grid-column: 1 / -1; }
+  .cms-paleta { grid-template-columns: minmax(0, 1fr); }
   .segmented { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
   .segmented button { width: 100%; }
   /* Mesma razão no rodapé: "Cancelar" e o botão de ação se sobrepunham. */

@@ -1,9 +1,14 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, UserRound, X } from "lucide-react";
+import { useImage } from "@/hooks/useLanding";
 import logoMD from "@/assets/logo-md.png";
 
 const Header = () => {
+  /* A logo do topo e a mesma do rodape: trocar no painel precisa mudar os
+     dois. Antes so o rodape lia o storage, entao o site ficava com a logo
+     nova embaixo e a antiga em cima. */
+  const logo = useImage("footer.logo", logoMD, "MD - Dra. Marcela Duch");
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -52,8 +57,8 @@ const Header = () => {
             aria-label="Dra. Marcela Duch"
           >
             <img
-              src={logoMD}
-              alt="MD - Dra. Marcela Duch"
+              src={logo.src}
+              alt={logo.alt}
               className="h-9 sm:h-10 md:h-12 w-auto shrink-0 transition-transform duration-500 group-hover:scale-105"
               width={48}
               height={48}

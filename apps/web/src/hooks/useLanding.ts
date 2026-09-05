@@ -11,6 +11,7 @@ import { landingApi, type LandingResponse } from "@/lib/api";
  */
 
 export type SectionId =
+  | "THEME"
   | "HERO"
   | "ABOUT"
   | "PROCEDURES"

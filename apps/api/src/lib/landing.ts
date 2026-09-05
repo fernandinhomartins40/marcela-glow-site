@@ -130,6 +130,46 @@ export const seoSchema = z.object({
   ogImage: imageSlot,
 })
 
+// ── Cores ────────────────────────────────────────────────────────────────────
+
+/**
+ * Uma cor da paleta, no formato que o CSS do site espera: "H S% L%".
+ *
+ * Os tokens do site são declarados sem `hsl()` em volta (`--bronze: 28 22% 55%`)
+ * justamente para poderem ser compostos com opacidade — `hsl(var(--bronze) / .5)`.
+ * Guardar a cor nesse mesmo formato deixa o valor entrar direto na folha de
+ * estilo, sem conversão em nenhuma ponta.
+ *
+ * A validação é estrita porque este valor é interpolado dentro de um `<style>`:
+ * aceitar texto livre aqui seria deixar o painel escrever CSS arbitrário na
+ * página pública.
+ */
+const hslColor = z
+  .string()
+  .trim()
+  .regex(/^\d{1,3} \d{1,3}% \d{1,3}%$/, 'Use o formato "matiz saturação% luminosidade%", por exemplo "28 22% 55%"')
+  .refine((v) => {
+    const [h, s, l] = v.split(/[ %]+/).map(Number)
+    return h <= 360 && s <= 100 && l <= 100
+  }, 'Matiz vai até 360, saturação e luminosidade até 100%')
+
+/**
+ * A paleta do site.
+ *
+ * São seis cores, não as dezenas de tokens que o CSS declara: as outras são
+ * derivadas destas por opacidade ou mistura. Expor todas transformaria a tela
+ * num painel de designer, e a decisão que a clínica realmente toma é "a marca
+ * mudou de bronze para verde".
+ */
+export const themeSchema = z.object({
+  cream: hslColor,
+  creamDeep: hslColor,
+  espresso: hslColor,
+  bronze: hslColor,
+  bronzeLight: hslColor,
+  marbleVein: hslColor,
+})
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const LANDING_SCHEMAS = {
@@ -141,6 +181,7 @@ export const LANDING_SCHEMAS = {
   APPOINTMENT: appointmentSchema,
   FOOTER: footerSchema,
   SEO: seoSchema,
+  THEME: themeSchema,
 } as const
 
 export type LandingSectionId = keyof typeof LANDING_SCHEMAS
@@ -285,6 +326,17 @@ export const LANDING_DEFAULTS: { [K in LandingSectionId]: z.input<(typeof LANDIN
     newsletterTitle: 'Novidades',
     newsletterLead: 'Receba conteúdos sobre saúde da pele e novidades da clínica.',
     logo: null,
+  },
+  /* Os mesmos valores que `apps/web/src/index.css` declara como padrão. Se um
+     dia a marca mudar no CSS, este bloco precisa acompanhar — é o que
+     "Restaurar padrão" devolve. */
+  THEME: {
+    cream: '36 35% 96%',
+    creamDeep: '34 28% 88%',
+    espresso: '22 30% 14%',
+    bronze: '28 22% 55%',
+    bronzeLight: '32 25% 75%',
+    marbleVein: '36 25% 80%',
   },
   SEO: {
     title: 'Dra. Marcela Duch — Medicina Estética',

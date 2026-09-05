@@ -400,6 +400,10 @@ model Testimonial {
 /// Seções editáveis da landing. O identificador espelha o componente que a
 /// renderiza, para o preview do painel e a página nunca divergirem.
 enum LandingSection {
+  /// Paleta de cores do site — nao e uma faixa da pagina, mas mora aqui
+  /// porque tem o mesmo ciclo de vida: e editada, guardada por tenant e
+  /// restaurada ao padrao pela mesma rota que as demais.
+  THEME
   HERO
   ABOUT
   PROCEDURES

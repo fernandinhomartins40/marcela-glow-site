@@ -8,6 +8,7 @@ import Technology from "@/components/Technology";
 import Testimonials from "@/components/Testimonials";
 import Appointment from "@/components/Appointment";
 import Footer from "@/components/Footer";
+import Theme from "@/components/Theme";
 import { useImage, useSection } from "@/hooks/useLanding";
 
 interface SeoContent {
@@ -54,6 +55,8 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
+      {/* Escreve os tokens de cor antes de qualquer secao pintar. */}
+      <Theme />
       <Header />
       <main>
         <Hero />

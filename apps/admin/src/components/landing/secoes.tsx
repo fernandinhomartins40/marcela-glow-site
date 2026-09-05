@@ -1,6 +1,7 @@
 import React from 'react'
 import { Field } from '../../lib/ui'
 import { Bloco, HeadingFields, ImageField, RepeatingList, StringList } from './campos'
+import { CORES, ColorField } from './cores'
 import type { LandingData, SectionId } from './types'
 
 /**
@@ -36,6 +37,31 @@ export function SectionFields({
   targets: LandingData['imageTargets']
   onChanged: () => void
 }) {
+  if (id === 'THEME') {
+    return (
+      <Bloco
+        title="Cores da marca"
+        hint="Seis cores, e o site inteiro se pinta a partir delas."
+        nota={
+          <>
+            Mudar aqui muda <strong>todas as secoes de uma vez</strong> — inclusive o menu
+            do topo e a faixa rolante, que nao tem aba propria.
+          </>
+        }
+      >
+        {CORES.map((c) => (
+          <ColorField
+            key={c.campo}
+            nome={c.nome}
+            onde={c.onde}
+            valor={draft[c.campo] ?? ''}
+            onChange={(hsl) => set(c.campo, hsl)}
+          />
+        ))}
+      </Bloco>
+    )
+  }
+
   if (id === 'HERO') {
     const slides: any[] = draft.slides ?? []
     return (

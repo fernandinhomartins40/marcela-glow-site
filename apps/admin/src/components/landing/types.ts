@@ -8,6 +8,7 @@ import type { CropTarget } from '../../lib/imageCrop'
  */
 
 export type SectionId =
+  | 'THEME'
   | 'HERO'
   | 'ABOUT'
   | 'PROCEDURES'

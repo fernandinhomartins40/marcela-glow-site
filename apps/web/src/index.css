@@ -51,11 +51,31 @@
     --bronze-light: 32 25% 75%;      /* Bronze claro */
     --marble-vein: 36 25% 80%;       /* Veio do mármore */
 
-    /* Gradientes */
-    --gradient-marble: linear-gradient(135deg, hsl(36 35% 96%) 0%, hsl(33 28% 90%) 50%, hsl(32 25% 86%) 100%);
-    --gradient-espresso: linear-gradient(180deg, hsl(24 25% 20%) 0%, hsl(22 30% 14%) 100%);
-    --gradient-overlay-dark: linear-gradient(180deg, transparent 0%, hsl(22 30% 14% / 0.85) 100%);
-    --gradient-overlay-light: linear-gradient(180deg, transparent 40%, hsl(36 35% 96% / 0.4) 100%);
+    /* Gradientes
+
+       Compostos a partir dos tokens acima, não com as cores repetidas em
+       texto. Escritos literalmente, eles ignoravam a paleta que o painel
+       define: trocar a marca para verde pintava a marca d'água e deixava o
+       fundo de mármore bege, porque o fundo vinha daqui.
+
+       Os tons intermediários do mármore saem do próprio creme, escurecido em
+       camadas de preto translúcido — assim a transição acompanha qualquer cor
+       sem precisar de três tokens só para ela. */
+    --gradient-marble:
+      linear-gradient(
+        135deg,
+        hsl(var(--cream)) 0%,
+        color-mix(in srgb, hsl(var(--cream)) 88%, hsl(var(--cream-deep))) 50%,
+        hsl(var(--cream-deep)) 100%
+      );
+    --gradient-espresso:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, hsl(var(--espresso)) 82%, white) 0%,
+        hsl(var(--espresso)) 100%
+      );
+    --gradient-overlay-dark: linear-gradient(180deg, transparent 0%, hsl(var(--espresso) / 0.85) 100%);
+    --gradient-overlay-light: linear-gradient(180deg, transparent 40%, hsl(var(--cream) / 0.4) 100%);
   }
 
   .dark {
@@ -181,9 +201,12 @@
     content: "";
     position: absolute;
     inset: 0;
+    /* As duas manchas de luz do marmore: clareiam e escurecem a propria cor
+       de fundo, em vez de trazerem um bege proprio que sobreviveria a troca
+       de paleta. */
     background-image:
-      radial-gradient(ellipse at 20% 30%, hsl(36 30% 98% / 0.6), transparent 50%),
-      radial-gradient(ellipse at 80% 70%, hsl(28 22% 75% / 0.3), transparent 50%);
+      radial-gradient(ellipse at 20% 30%, color-mix(in srgb, hsl(var(--cream)) 70%, white) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, hsl(var(--bronze-light) / 0.3), transparent 50%);
     pointer-events: none;
   }
 

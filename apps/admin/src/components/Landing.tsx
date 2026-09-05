@@ -8,6 +8,7 @@ import {
   EyeOff,
   Layers,
   Lock,
+  Palette,
   MessageSquareQuote,
   PanelBottom,
   RotateCcw,
@@ -21,6 +22,7 @@ import type { LucideIcon } from 'lucide-react'
 import { api, ConfirmDialog, errorMessage } from '../lib/ui'
 import { SectionFields } from './landing/secoes'
 import { SectionPreview } from './landing/preview'
+import { ColorPreview } from './landing/cores'
 import type { SectionId, SectionState, LandingData } from './landing/types'
 
 /**
@@ -52,6 +54,7 @@ const SECTIONS: {
   /** O que a pessoa vai reconhecer ao abrir o site — vocabulário dela, não do código. */
   about: string
 }[] = [
+  { id: 'THEME', label: 'Cores', icon: Palette, about: 'A paleta da marca. Muda o site inteiro de uma vez — todas as seções usam estas cores.' },
   { id: 'HERO', label: 'Primeira tela', icon: Sparkles, about: 'O carrossel grande que aparece assim que o site abre, com os botões de agendar.' },
   { id: 'ABOUT', label: 'Sobre a doutora', icon: UserRound, about: 'A foto ao lado do texto de apresentação, com o número do CRM.' },
   { id: 'PROCEDURES', label: 'Tratamentos', icon: Layers, about: 'O título e o texto que apresentam a lista de tratamentos.' },
@@ -302,6 +305,10 @@ function SectionEditor({
 
       {save.isError && <p className="error">{errorMessage(save.error)}</p>}
 
+      {/* A paleta não liga nem desliga: o site sempre tem cor, e o que existe
+          aqui é qual cor. Restaurar devolve a de fábrica. */}
+      {id !== 'THEME' && (
+        <>
       {/* Ligar e desligar abre a página: é a decisão que muda o site inteiro,
           e no cabeçalho ela ficava a um clique de "Restaurar". */}
       <div className="cms-card cms-switch">
@@ -324,6 +331,8 @@ function SectionEditor({
           <span aria-hidden="true" />
         </button>
       </div>
+        </>
+      )}
 
       <div className="cms-form">
         <SectionFields
@@ -351,7 +360,11 @@ function SectionEditor({
           </span>
         </div>
         <div className="cms-previa-palco">
-          <SectionPreview id={id} draft={draft} images={images} />
+          {id === 'THEME' ? (
+            <ColorPreview cores={draft as Record<string, string>} />
+          ) : (
+            <SectionPreview id={id} draft={draft} images={images} />
+          )}
         </div>
       </section>
 
