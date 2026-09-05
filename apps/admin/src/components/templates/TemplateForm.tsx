@@ -10,10 +10,12 @@ import {
   BLOCK_META,
   CORES_PADRAO,
   inserirNaOrdem,
+  BLOCK_GROUP_META,
   CONTEXT_META,
   contextsOf,
   ITEM_SOURCE_META,
   itemSource,
+  type BlockGroup,
   type ItemSource,
   type TemplateContext,
   blocosPadrao,
@@ -297,19 +299,37 @@ function BlocksEditor({
       </ul>
 
       {disponiveis.length > 0 && (
-        <div className="block-add">
-          <span className="hint">Adicionar bloco:</span>
-          {disponiveis.map((t) => (
-            <button
-              key={t}
-              type="button"
-              className={faltando.includes(t) ? 'is-missing' : undefined}
-              onClick={() => onAdd(t)}
-            >
-              <Plus size={13} aria-hidden="true" />
-              {BLOCK_META[t].label}
-            </button>
-          ))}
+        <div className="block-catalog">
+          <p className="form-section-title">Adicionar bloco</p>
+          {(Object.keys(BLOCK_GROUP_META) as BlockGroup[]).map((g) => {
+            const doGrupo = disponiveis.filter((t) => BLOCK_META[t].grupo === g)
+            if (!doGrupo.length) return null
+            return (
+              <section key={g}>
+                <header>
+                  <strong>{BLOCK_GROUP_META[g].label}</strong>
+                  <span>{BLOCK_GROUP_META[g].hint}</span>
+                </header>
+                <div className="block-cards">
+                  {doGrupo.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      className={faltando.includes(t) ? 'is-missing' : undefined}
+                      onClick={() => onAdd(t)}
+                    >
+                      <span className="block-card-head">
+                        <Plus size={13} aria-hidden="true" />
+                        {BLOCK_META[t].label}
+                      </span>
+                      {/* A explicação fica onde a escolha acontece, não só depois */}
+                      <span className="block-card-hint">{BLOCK_META[t].hint}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )
+          })}
         </div>
       )}
     </>

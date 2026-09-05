@@ -82,27 +82,44 @@ export interface TemplateLayout {
  * campo automático dentro de um texto livre ({{paciente}}, {{data}}), então
  * travar a remoção só tiraria liberdade de quem monta a folha do zero.
  */
+/**
+ * `grupo`: como os blocos são agrupados na hora de adicionar. Um bloco que
+ * puxa dado do banco e um que só ocupa espaço não se escolhem pelo mesmo
+ * critério, e listá-los juntos obriga a ler tudo para achar um.
+ *
+ * `unico`: só cabe uma vez na folha. `ordem`: onde entra ao ser adicionado.
+ */
+export type BlockGroup = 'dados' | 'clinico' | 'texto' | 'estrutura'
+
+export const BLOCK_GROUP_META: Record<BlockGroup, { label: string; hint: string }> = {
+  dados: { label: 'Dados da paciente e da clínica', hint: 'Vêm do cadastro, preenchidos ao emitir' },
+  clinico: { label: 'Do atendimento', hint: 'Puxam a consulta em que o documento é emitido' },
+  texto: { label: 'Texto e assinatura', hint: 'O que você escreve e o que a paciente ou a médica assina' },
+  estrutura: { label: 'Estrutura da folha', hint: 'Organizam o espaço, sem conteúdo próprio' },
+}
+
 export const BLOCK_META: Record<
   BlockType,
-  { label: string; hint: string; unico?: boolean; ordem: number }
+  { label: string; hint: string; unico?: boolean; ordem: number; grupo: BlockGroup }
 > = {
-  clinic: { label: 'Logo e dados da clínica', hint: 'Cabeçalho com a marca', unico: true, ordem: 0 },
-  divider: { label: 'Linha divisória', hint: 'Separa duas partes', ordem: 1 },
-  title: { label: 'Título do documento', hint: 'O título digitado na aba Conteúdo', unico: true, ordem: 2 },
-  patient: { label: 'Dados da paciente', hint: 'Nome e CPF, direto do cadastro', unico: true, ordem: 3 },
-  items: { label: 'Lista de itens', hint: 'Medicamentos, exames ou orientações — a escolha é do bloco', ordem: 4 },
-  content: { label: 'Orientações', hint: 'O texto digitado na aba Conteúdo', unico: true, ordem: 5 },
-  clinicalAlerts: { label: 'Alertas clínicos', hint: 'Alergias, medicações e comorbidades da ficha', unico: true, ordem: 3.5 },
-  patientCard: { label: 'Ficha resumida', hint: 'Quadro com nascimento, CPF, contato e convênio', unico: true, ordem: 3.6 },
-  appointment: { label: 'Dados do atendimento', hint: 'Data, hora, duração e procedimento', unico: true, ordem: 3.7 },
-  record: { label: 'Do prontuário', hint: 'Queixa, conduta e evolução do atendimento', unico: true, ordem: 4.5 },
-  photos: { label: 'Antes e depois', hint: 'Espaço para as fotos da sessão', unico: true, ordem: 5.5 },
-  text: { label: 'Texto livre', hint: 'Parágrafo próprio, com campos automáticos', ordem: 6 },
-  consent: { label: 'Termo e ciência', hint: 'Texto do termo com linha para a paciente assinar', ordem: 6.5 },
-  verification: { label: 'Autenticação', hint: 'Código e QR de verificação do documento', unico: true, ordem: 7.5 },
-  signature: { label: 'Assinatura', hint: 'Linha, nome e QR de verificação', unico: true, ordem: 7 },
-  spacer: { label: 'Espaço', hint: 'Empurra o que vem depois', ordem: 8 },
+  clinic: { label: 'Logo e dados da clínica', hint: 'Cabeçalho com a marca, endereço e telefone', unico: true, ordem: 0, grupo: 'dados' },
+  divider: { label: 'Linha divisória', hint: 'Separa duas partes da folha', ordem: 1, grupo: 'estrutura' },
+  title: { label: 'Título do documento', hint: 'O título digitado na aba Conteúdo', unico: true, ordem: 2, grupo: 'dados' },
+  patient: { label: 'Dados da paciente', hint: 'Nome e CPF, direto do cadastro', unico: true, ordem: 3, grupo: 'dados' },
+  clinicalAlerts: { label: 'Alertas clínicos', hint: 'Alergias, medicações em uso e comorbidades', unico: true, ordem: 3.5, grupo: 'clinico' },
+  patientCard: { label: 'Ficha resumida', hint: 'Nascimento, CPF, telefone e e-mail em quadro', unico: true, ordem: 3.6, grupo: 'dados' },
+  appointment: { label: 'Dados do atendimento', hint: 'Data, hora e procedimento da consulta', unico: true, ordem: 3.7, grupo: 'clinico' },
+  items: { label: 'Lista de itens', hint: 'Medicamentos, exames ou orientações do catálogo', ordem: 4, grupo: 'clinico' },
+  record: { label: 'Do prontuário', hint: 'Queixa principal e conduta registradas', unico: true, ordem: 4.5, grupo: 'clinico' },
+  content: { label: 'Orientações', hint: 'O texto digitado na aba Conteúdo', unico: true, ordem: 5, grupo: 'texto' },
+  photos: { label: 'Antes e depois', hint: 'Espaço reservado para as fotos da sessão', unico: true, ordem: 5.5, grupo: 'clinico' },
+  text: { label: 'Texto livre', hint: 'Parágrafo próprio, com campos automáticos', ordem: 6, grupo: 'texto' },
+  consent: { label: 'Termo e ciência', hint: 'Texto com linha para a paciente assinar', ordem: 6.5, grupo: 'texto' },
+  signature: { label: 'Assinatura da médica', hint: 'Linha, nome e registro profissional', unico: true, ordem: 7, grupo: 'texto' },
+  verification: { label: 'Autenticação', hint: 'Código e QR para conferir o documento', unico: true, ordem: 7.5, grupo: 'estrutura' },
+  spacer: { label: 'Espaço', hint: 'Empurra o que vem depois para baixo', ordem: 8, grupo: 'estrutura' },
 }
+
 /**
  * Onde o bloco entra ao ser devolvido.
  *
