@@ -106,13 +106,19 @@ export function montarManifesto(
 
      Precisam ser os PNG e não só o SVG: o Chrome no Android exige um PNG de
      192px ou maior para oferecer a instalação, e um manifesto com apenas SVG
-     não satisfaz o requisito — o app simplesmente não aparecia como
-     instalável. */
+     não satisfaz o requisito.
+
+     E o caminho precisa ser absoluto. Este manifesto é servido de
+     `/api/landing/manifest/...`, e o navegador resolve `src` relativo ao
+     endereço do próprio manifesto — `icon-192.png` virava
+     `/api/landing/manifest/icon-192.png`, que responde 404. A instalação então
+     era oferecida, falhava ao buscar o ícone, e o navegador parava de
+     oferecê-la sem dizer por quê. */
   if (lista.length === 0) {
     lista.push(
-      { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-      { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-      { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      { src: `${base}icon-192.png`, sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: `${base}icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: `${base}icon-512.png`, sizes: '512x512', type: 'image/png', purpose: 'maskable' },
     )
   }
 
