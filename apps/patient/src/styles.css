@@ -155,3 +155,50 @@
     @apply inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[0.7rem] font-medium tracking-wide;
   }
 }
+
+/* ── Aplicativo instalado ─────────────────────────────────────────────────── */
+/* Vale só sob `.is-app`, que existe quando o portal roda em modo standalone.
+   Aberto pelo navegador nada aqui se aplica: lá a barra de endereço e o botão
+   de voltar já dizem que aquilo é uma página. */
+
+/* Rolagem elástica e seleção de texto são gestos de página, e num aplicativo
+   eles fazem a tela parecer solta. O texto de conteúdo continua selecionável —
+   copiar o endereço da clínica ou o código de uma receita segue valendo. */
+.is-app {
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.is-app p,
+.is-app li,
+.is-app code,
+.is-app input,
+.is-app textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* A seção entra deslizando, como num app. 180ms é curto o bastante para não
+   atrasar quem já sabe onde vai, e longo o bastante para o olho acompanhar. */
+.tela-entra {
+  animation: tela-entra 0.18s ease-out;
+}
+
+@keyframes tela-entra {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Quem pediu menos movimento no sistema recebe a troca sem animação. */
+@media (prefers-reduced-motion: reduce) {
+  .tela-entra {
+    animation: none;
+  }
+}

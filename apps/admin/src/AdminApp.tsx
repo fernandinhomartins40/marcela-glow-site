@@ -19,6 +19,8 @@ import {
 import { api, errorMessage, ROLE_LABELS, TOKEN_KEY } from './lib/ui'
 import { Login } from './pages/Login'
 import { AdminPanel, type AdminTab } from './pages/AdminPanel'
+import { AppBar } from './components/AppBar'
+import { useAplicativoInstalado } from './lib/standalone'
 import './styles.css'
 
 const queryClient = new QueryClient()
@@ -103,6 +105,10 @@ function Shell() {
     ? requestedTab as AdminTab
     : 'dashboard'
   const [navOpen, setNavOpen] = React.useState(false)
+  /* Instalado, o painel troca a gaveta lateral por barra inferior. No
+     navegador nada muda: ali a pessoa tem a barra do sistema por perto e a
+     tela costuma ser maior. */
+  const comoApp = useAplicativoInstalado()
   const data = useAdminData()
   const me = useQuery({
     queryKey: ['me'],
@@ -128,7 +134,7 @@ function Shell() {
   }
 
   return (
-    <div className={`app-shell ${navOpen ? 'nav-open' : ''}`}>
+    <div className={`app-shell ${navOpen ? 'nav-open' : ''} ${comoApp ? 'is-app' : ''}`}>
       <button className="nav-scrim" hidden={!navOpen} onClick={() => setNavOpen(false)} aria-label="Fechar navegação" tabIndex={-1} />
       <aside className="app-nav">
         <div className="brand">
@@ -186,6 +192,17 @@ function Shell() {
         )}
         {data.data && <AdminPanel tab={tab} data={data.data} currentUserId={me.data?.id} />}
       </main>
+
+      {comoApp && (
+        <AppBar
+          tab={tab}
+          onNavigate={go}
+          onSignOut={() => {
+            localStorage.removeItem(TOKEN_KEY)
+            window.location.reload()
+          }}
+        />
+      )}
     </div>
   )
 }

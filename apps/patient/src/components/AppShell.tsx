@@ -3,6 +3,7 @@ import { CalendarDays, FileText, Home, LogOut, MessageCircle, type LucideIcon } 
 import { logout } from '@/lib/api'
 import { firstName, initials } from '@/lib/format'
 import { cn } from './ui'
+import { useAplicativoInstalado } from '@/lib/standalone'
 
 export type SectionId = 'inicio' | 'consultas' | 'prescricoes' | 'mensagens'
 
@@ -28,8 +29,14 @@ export function AppShell({
   pending?: number
   children: React.ReactNode
 }) {
+  /* Instalado, o portal deixa de se comportar como página: o cabeçalho desce
+     abaixo do entalhe da câmera, a rolagem para no limite em vez de revelar o
+     fundo do sistema, e a troca de seção desliza. Pelo navegador nada disso
+     muda — lá a barra de endereço e o botão de voltar já dão esse contexto. */
+  const comoApp = useAplicativoInstalado()
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className={cn('min-h-screen bg-background', comoApp && 'is-app')}>
       {/* Navegação lateral — desktop */}
       <aside className="hidden md:flex fixed inset-y-0 left-0 w-[13.5rem] lg:w-60 flex-col border-r border-border bg-card">
         <div className="px-6 py-6 border-b border-border">
@@ -97,7 +104,10 @@ export function AppShell({
       </aside>
 
       {/* Topo — mobile */}
-      <header className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-5 h-16 bg-card border-b border-border">
+      <header
+        className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-5 h-16 bg-card border-b border-border"
+        style={comoApp ? { paddingTop: 'env(safe-area-inset-top)', height: 'calc(4rem + env(safe-area-inset-top))' } : undefined}
+      >
         <div className="min-w-0">
           <p className="font-display text-sm tracking-[0.2em] uppercase text-primary truncate">
             Dra. Marcela Duch
@@ -114,7 +124,11 @@ export function AppShell({
       {/* Conteúdo */}
       <div className="md:pl-[13.5rem] lg:pl-60">
         <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-10 py-6 sm:py-8 lg:pb-12">
-          {children}
+          {/* `key` na seção ativa: sem ela o React reaproveita o nó e a animação
+              não reinicia, então a troca acontece sem movimento nenhum. */}
+          <div key={active} className={comoApp ? 'tela-entra' : undefined}>
+            {children}
+          </div>
           {/* Espaçador: garante que a navegação fixa do mobile não cubra o fim do conteúdo */}
           <div className="h-24 md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }} aria-hidden="true" />
         </main>

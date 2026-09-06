@@ -1655,3 +1655,183 @@ img, video, canvas { max-width: 100%; height: auto; }
 /* O seletor de etapa precisa caber o nome da coluna, não só três letras. */
 .lead-actions select, main .lead-actions select { flex: 0 1 auto; width: auto; min-width: 104px; max-width: 130px; height: 30px; padding: 0 6px; font-size: 12px; }
 .lead-actions { flex-wrap: wrap; }
+
+/* ── Aplicativo instalado ─────────────────────────────────────────────────── */
+/* Tudo aqui vale só sob `.app-shell.is-app`, que só existe quando o painel
+   roda em modo standalone. Aberto pelo navegador a folha não muda em nada: lá a
+   pessoa tem barra de endereço, botão de voltar e abas, e a página pode se
+   comportar como página.
+
+   As quatro diferenças são as que separam "site no celular" de "aplicativo":
+   navegação ao alcance do polegar, respeito ao entalhe e à barra de gestos,
+   transição entre telas, e a ausência dos gestos que denunciam uma página web. */
+
+/* A gaveta lateral e o botão que a abre não existem no app — quem navega é a
+   barra de baixo. */
+.app-shell.is-app .app-nav,
+.app-shell.is-app .nav-scrim,
+.app-shell.is-app .nav-toggle { display: none !important; }
+
+.app-shell.is-app { padding-left: 0; }
+.app-shell.is-app main {
+  /* O rodapé da barra mais a faixa de gestos do sistema: sem isto o último
+     cartão da página fica atrás da navegação e não dá para tocá-lo. */
+  padding-bottom: calc(4.25rem + env(safe-area-inset-bottom) + 1rem);
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+/* O cabeçalho começa abaixo do entalhe da câmera, não sob ele. */
+.app-shell.is-app main > header { padding-top: calc(env(safe-area-inset-top) + 0.5rem); }
+
+/* Sem seleção de texto nem rolagem elástica: os dois são gestos de página, e
+   num app eles fazem a tela parecer solta. O texto de conteúdo volta a ser
+   selecionável logo abaixo — copiar um telefone ou um código continua valendo. */
+.app-shell.is-app {
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.app-shell.is-app p,
+.app-shell.is-app td,
+.app-shell.is-app code,
+.app-shell.is-app input,
+.app-shell.is-app textarea,
+.app-shell.is-app .verify-url {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* A barra */
+.app-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  background: var(--cream-soft);
+  border-top: 1px solid var(--border);
+  /* A sombra separa a barra do conteúdo que rola por baixo dela. */
+  box-shadow: 0 -8px 24px rgba(47, 34, 27, .08);
+}
+.app-bar button, main .app-bar button {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  /* 56px é o alvo de toque confortável; abaixo disso o dedo erra o ícone. */
+  min-height: 56px !important;
+  padding: 6px 2px !important;
+  font-size: 10.5px;
+  font-weight: 500;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: var(--text-muted);
+}
+.app-bar button:hover, main .app-bar button:hover { transform: none; }
+.app-bar button.is-active, main .app-bar button.is-active {
+  background: var(--cream-deep);
+  color: var(--espresso);
+  font-weight: 600;
+}
+.app-bar svg { flex: none; }
+
+/* A folha de "Mais" — sobe do rodapé, como num app */
+.folha-fundo, main .folha-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  min-height: 0 !important;
+  padding: 0 !important;
+  background: rgba(31, 23, 19, .45);
+  border: 0;
+  border-radius: 0;
+  animation: folha-fundo-entra .18s ease;
+}
+.folha {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 46;
+  max-height: 82svh;
+  overflow-y: auto;
+  padding: 8px 14px calc(14px + env(safe-area-inset-bottom));
+  background: var(--cream-soft);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -14px 40px rgba(47, 34, 27, .22);
+  animation: folha-sobe .22s cubic-bezier(.2, .8, .3, 1);
+}
+/* A alça diz que a folha veio de baixo e pode voltar para lá. */
+.folha-alca { width: 36px; height: 4px; margin: 0 auto 10px; background: var(--border); border-radius: 999px; }
+/* A regra global de `header` tem wrap, borda e 22px de margem — dentro da
+   folha ela empilhava o titulo e o X em linhas separadas. */
+.folha header { display: flex; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 10px; margin: 0 0 8px; padding: 0; border: 0; }
+.folha header strong { font-size: 15px; font-weight: 600; color: var(--espresso); }
+.folha header button, main .folha header button {
+  width: 34px !important; height: 34px !important; min-height: 34px !important; padding: 0 !important;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid var(--border); border-radius: 9px; color: var(--text-muted);
+}
+.folha ul { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.folha li button, main .folha li button {
+  width: 100%;
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 56px !important;
+  padding: 10px 12px !important;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: var(--espresso);
+}
+.folha li button:hover, main .folha li button:hover { background: var(--cream-deep); transform: none; }
+.folha li button.is-active, main .folha li button.is-active { background: var(--cream-deep); }
+.folha li span { display: grid; gap: 2px; min-width: 0; }
+.folha li strong { font-size: 13.5px; font-weight: 600; }
+.folha li em { font-size: 11.5px; font-style: normal; line-height: 1.4; color: var(--text-muted); }
+.folha-sair, main .folha-sair {
+  width: 100%;
+  min-height: 46px !important;
+  margin-top: 10px;
+  font-size: 13px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: #a33131;
+}
+
+/* A transição entre telas: a nova entra deslizando da direita, como num app.
+   Curta de propósito — 180ms é o limite em que o movimento ainda informa sem
+   atrasar quem já sabe onde está indo. */
+.app-shell.is-app main > *:not(header) { animation: tela-entra .18s ease-out; }
+
+@keyframes tela-entra {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes folha-sobe {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes folha-fundo-entra {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Quem pediu menos movimento no sistema recebe a troca sem animação — a
+   navegação continua funcionando igual. */
+@media (prefers-reduced-motion: reduce) {
+  .app-shell.is-app main > *:not(header),
+  .folha,
+  .folha-fundo { animation: none; }
+}

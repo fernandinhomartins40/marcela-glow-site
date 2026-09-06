@@ -6,6 +6,7 @@ import { TOKEN_KEY } from '@/lib/api'
 import { Dashboard } from '@/pages/Dashboard'
 import { Login } from '@/pages/Login'
 import './styles.css'
+import { registrarModoAplicativo } from '@/lib/standalone'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,6 +35,10 @@ function App() {
     </Routes>
   )
 }
+
+/* Antes do React: o roteador redireciona a rota raiz e descarta a query,
+   entao o `?app=1` do manifesto precisa ser lido aqui. */
+registrarModoAplicativo()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
