@@ -1835,3 +1835,85 @@ img, video, canvas { max-width: 100%; height: auto; }
   .folha,
   .folha-fundo { animation: none; }
 }
+
+/* ── Entrada do aplicativo ────────────────────────────────────────────────── */
+/* A abertura e o login em coluna única valem só sob `.is-app`. Pelo navegador o
+   login continua com as duas colunas e o retrato — ali há largura para isso, e
+   a pessoa chegou por um link, não abrindo um ícone. */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: max(2rem, env(safe-area-inset-top)) 1.5rem max(2rem, env(safe-area-inset-bottom));
+  background: linear-gradient(160deg, var(--cream-soft), var(--cream-deep));
+}
+.splash-marca { display: grid; justify-items: center; gap: 6px; text-align: center; animation: splash-entra .5s cubic-bezier(.2, .8, .3, 1); }
+/* O monograma respira uma vez enquanto a tela dura — movimento suficiente para
+   a abertura parecer viva, curto para não virar espera. */
+.splash-mono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 74px;
+  height: 74px;
+  margin-bottom: 8px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 30px;
+  letter-spacing: .06em;
+  background: var(--espresso);
+  border-radius: 20px;
+  color: var(--cream-soft);
+  animation: splash-pulsa 1.6s ease-in-out infinite;
+}
+.splash-marca strong { font-family: 'Playfair Display', Georgia, serif; font-size: 22px; font-weight: 500; letter-spacing: .04em; color: var(--espresso); }
+.splash-marca em { font-size: 11px; font-style: normal; letter-spacing: .22em; text-transform: uppercase; color: var(--bronze); }
+
+@keyframes splash-entra {
+  from { opacity: 0; transform: translateY(10px) scale(.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes splash-pulsa {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* Login em modo aplicativo: uma coluna, sem moldura de cartão */
+.auth-shell.is-app { padding: max(1.5rem, env(safe-area-inset-top)) 1.25rem max(1.5rem, env(safe-area-inset-bottom)); align-items: start; }
+.auth-shell.is-app .auth-panel {
+  grid-template-columns: minmax(0, 1fr);
+  width: min(26rem, 100%);
+  margin-top: 6vh;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+/* O formulário perde a moldura: num app ele é a tela, não um cartão sobre uma
+   página. */
+.auth-shell.is-app .form { padding: 0; background: transparent; border: 0; }
+.auth-mono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 18px;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 23px;
+  letter-spacing: .06em;
+  background: var(--espresso);
+  border-radius: 16px;
+  color: var(--cream-soft);
+}
+/* Alvos maiores: no celular o dedo erra um campo de 42px. */
+/* 16px nao e estetica: abaixo disso o iOS aplica zoom ao focar o campo e a
+   tela salta. A regra global de input tem dois :not() e vence uma classe
+   sozinha, por isso o !important em vez de empilhar mais seletores. */
+.auth-shell.is-app input:not([type=checkbox]):not([type=radio]) { min-height: 50px !important; font-size: 16px !important; padding: 13px 14px; }
+.auth-shell.is-app button[type="submit"] { min-height: 52px; font-size: 14px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-marca, .splash-mono { animation: none; }
+}

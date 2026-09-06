@@ -202,3 +202,111 @@
     animation: none;
   }
 }
+
+/* ── Entrada do aplicativo ────────────────────────────────────────────────── */
+/* A abertura de marca só existe em modo standalone e só na primeira vez da
+   sessão: um app nativo mostra a marca enquanto carrega, um site cai direto no
+   formulário, e é essa diferença de um segundo que faz o PWA parecer
+   instalado. Pelo navegador nunca aparece — ali a pessoa já viu a marca na aba
+   e na barra de endereço. */
+
+.splash {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: max(2rem, env(safe-area-inset-top)) 1.5rem max(2rem, env(safe-area-inset-bottom));
+  background: linear-gradient(160deg, hsl(var(--card)), hsl(var(--secondary)));
+}
+.splash-marca {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+  animation: splash-entra 0.5s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+/* O monograma respira uma vez enquanto a tela dura: movimento suficiente para a
+   abertura parecer viva, curto para não virar espera. */
+.splash-mono {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 74px;
+  height: 74px;
+  margin-bottom: 8px;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 30px;
+  letter-spacing: 0.06em;
+  background: hsl(var(--espresso));
+  border-radius: 20px;
+  color: hsl(var(--cream));
+  animation: splash-pulsa 1.6s ease-in-out infinite;
+}
+.splash-marca strong {
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: hsl(var(--primary));
+}
+.splash-marca em {
+  font-size: 11px;
+  font-style: normal;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: hsl(var(--bronze));
+}
+
+/* O monograma no topo do formulário, no lugar do nome escrito. */
+.auth-mono {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 18px;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 23px;
+  letter-spacing: 0.06em;
+  background: hsl(var(--espresso));
+  border-radius: 16px;
+  color: hsl(var(--cream));
+}
+
+/* Campos maiores no app: o dedo erra um alvo de 42px, e abaixo de 16px o iOS
+   aplica zoom ao focar, fazendo a tela saltar. */
+.is-app input:not([type="checkbox"]):not([type="radio"]) {
+  min-height: 50px;
+  font-size: 16px;
+}
+.is-app button[type="submit"] {
+  min-height: 52px;
+}
+
+@keyframes splash-entra {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes splash-pulsa {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-marca,
+  .splash-mono {
+    animation: none;
+  }
+}

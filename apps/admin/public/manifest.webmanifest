@@ -3,6 +3,7 @@
   "short_name": "Marcela CRM",
   "description": "Painel administrativo da Clinica Dra. Marcela",
   "start_url": "/admin/?app=1",
+  "scope": "/admin/",
   "display": "standalone",
   "background_color": "#f6f2ec",
   "theme_color": "#17201b",

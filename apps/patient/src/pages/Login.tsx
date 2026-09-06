@@ -3,6 +3,8 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { api, getErrorMessage, TOKEN_KEY, tenantSlug } from '@/lib/api'
 import { Feedback } from '@/components/ui'
 import marbleTexture from '@/assets/marble-texture.jpg'
+import { Splash, useAbertura } from '@/components/Splash'
+import { useAplicativoInstalado } from '@/lib/standalone'
 
 const demoPatient = {
   label: 'Paciente demo',
@@ -18,6 +20,10 @@ export function Login() {
   const [password, setPassword] = React.useState('')
   const [showPassword, setShowPassword] = React.useState(false)
   const [error, setError] = React.useState('')
+  /* Instalado, a entrada e a de um aplicativo: a marca aparece primeiro e o
+     formulario recebe o monograma no lugar do nome escrito. */
+  const comoApp = useAplicativoInstalado()
+  const abrindo = useAbertura(comoApp)
   const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const isRegister = mode === 'register'
@@ -54,8 +60,10 @@ export function Login() {
     }
   }
 
+  if (abrindo) return <Splash marca="Minha Jornada" sub="Portal da paciente" />
+
   return (
-    <main className="min-h-screen grid lg:grid-cols-2">
+    <main className={`min-h-screen grid lg:grid-cols-2${comoApp ? ' is-app' : ''}`}>
       {/* Painel da marca — decorativo, escondido no mobile para não empurrar o formulário */}
       <div className="relative hidden lg:flex flex-col justify-between p-12 bg-[hsl(var(--espresso))] overflow-hidden">
         <div
@@ -95,6 +103,11 @@ export function Login() {
         <div className="w-full max-w-sm">
           {/* Cabeçalho da marca no mobile */}
           <div className="lg:hidden mb-8 text-center">
+            {comoApp && (
+              <span className="auth-mono mx-auto" aria-hidden="true">
+                MD
+              </span>
+            )}
             <p className="font-display text-base tracking-[0.2em] uppercase text-primary">
               Dra. Marcela Duch
             </p>

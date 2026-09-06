@@ -3,6 +3,7 @@
   "short_name": "Minha Jornada",
   "description": "Painel VIP de acompanhamento da paciente",
   "start_url": "/paciente/?app=1",
+  "scope": "/paciente/",
   "display": "standalone",
   "background_color": "#fff8f1",
   "theme_color": "#6f4f45",

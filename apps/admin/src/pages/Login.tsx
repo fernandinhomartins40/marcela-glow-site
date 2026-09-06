@@ -2,6 +2,8 @@ import React from 'react'
 import { api, errorMessage, tenantSlug, TOKEN_KEY } from '../lib/ui'
 import draPortrait from '../assets/dra-marcela-portrait.jpg'
 import marbleTexture from '../assets/marble-texture.jpg'
+import { Splash, useAbertura } from '../components/Splash'
+import { useAplicativoInstalado } from '../lib/standalone'
 
 const demoAdmin = {
   label: 'Admin demo',
@@ -20,6 +22,12 @@ export function Login() {
   const [password, setPassword] = React.useState('')
   const [mode, setMode] = React.useState<'login' | 'register'>('login')
   const [error, setError] = React.useState('')
+  /* Instalado, a entrada é a de um aplicativo: marca aparecendo primeiro e
+     formulário centrado numa coluna. As duas colunas com retrato são desenho
+     de página larga, e num celular elas viram o retrato empurrando o campo de
+     e-mail para fora da dobra. */
+  const comoApp = useAplicativoInstalado()
+  const abrindo = useAbertura(comoApp)
 
   function fillDemo(user: typeof demoAdmin) {
     setMode('login')
@@ -46,10 +54,15 @@ export function Login() {
     }
   }
 
+  if (abrindo) return <Splash marca="Marcela CRM" sub="Painel da clínica" />
+
   return (
-    <main className="auth-shell">
+    <main className={`auth-shell${comoApp ? ' is-app' : ''}`}>
       <div className="auth-bg" style={{ backgroundImage: `url(${marbleTexture})` }} />
       <section className="auth-panel">
+        {/* No app a marca já apareceu na abertura; repeti-la ao lado do
+            formulário só rouba a altura de que o teclado vai precisar. */}
+        {!comoApp && (
         <div className="auth-copy">
           <span className="eyebrow">CRM médico</span>
           <h1>Dra. Marcela</h1>
@@ -58,8 +71,14 @@ export function Login() {
             <img src={draPortrait} alt="Dra. Marcela Duch" />
           </div>
         </div>
+        )}
         <form onSubmit={submit} className="form">
           <div>
+            {comoApp && (
+              <span className="auth-mono" aria-hidden="true">
+                MD
+              </span>
+            )}
             <span className="eyebrow">Acesso da equipe</span>
             <h2>{mode === 'login' ? 'Entrar no painel' : 'Criar primeiro acesso'}</h2>
           </div>
