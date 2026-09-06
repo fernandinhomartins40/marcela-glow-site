@@ -1,7 +1,7 @@
 # Graph Report - marcela-glow-site  (2026-09-06)
 
 ## Corpus Check
-- 238 files · ~464,824 words
+- 238 files · ~465,356 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `54d1ac34`
+- Built from commit: `a08c59fc`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -187,19 +187,19 @@
 6. `Field()` - 21 edges
 7. `formatDateBR()` - 19 edges
 8. `prisma` - 19 edges
-9. `useSection()` - 18 edges
-10. `Modal()` - 18 edges
+9. `Modal()` - 18 edges
+10. `useSection()` - 18 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `"TreatmentPlan"` --references--> `Procedure`  [EXTRACTED]
   packages/database/prisma/migrations/20260907000000_jornada/migration.sql → apps/patient/src/lib/api.ts
+- `NotificationsPanel()` --indirect_call--> `enablePushNotifications()`  [INFERRED]
+  apps/patient/src/components/sections.tsx → apps/patient/src/lib/api.ts
 - `AlertDescription` --calls--> `cn()`  [EXTRACTED]
   apps/web/src/components/ui/alert.tsx → apps/web/src/lib/utils.ts
 - `AlertTitle` --calls--> `cn()`  [EXTRACTED]
   apps/web/src/components/ui/alert.tsx → apps/web/src/lib/utils.ts
 - `AlertDialogContent` --calls--> `cn()`  [EXTRACTED]
-  apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
-- `AlertDialogDescription` --calls--> `cn()`  [EXTRACTED]
   apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
 
 ## Import Cycles
@@ -585,7 +585,7 @@ Cohesion: 0.67
 Nodes (3): Badge(), BadgeProps, badgeVariants
 
 ## Knowledge Gaps
-- **796 isolated node(s):** `Campo`, `Procedimento`, `Plano`, `STATUS`, `prisma` (+791 more)
+- **796 isolated node(s):** `prisma`, `Tone`, `BusyInterval`, `ConflictCheck`, `DayAvailability` (+791 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 894 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **69 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -593,12 +593,12 @@ Nodes (3): Badge(), BadgeProps, badgeVariants
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `cn()` connect `cn` to `breadcrumb.tsx`, `command.tsx`, `navigation-menu.tsx`, `sidebar.tsx`, `hooks/use-toast.ts`, `utils.ts`, `alert.tsx`, `form.tsx`, `carousel.tsx`, `card.tsx`, `chart.tsx`, `toggle-group.tsx`, `badge.tsx`, `pagination.tsx`, `web/src/lib/api.ts`, `drawer.tsx`, `button.tsx`, `sheet.tsx`?**
-  _High betweenness centrality (0.026) - this node is a cross-community bridge._
+  _High betweenness centrality (0.027) - this node is a cross-community bridge._
 - **Why does `errorMessage()` connect `errorMessage` to `PwaSettings.tsx`, `Encounter.tsx`, `agenda.tsx`, `TemplateForm.tsx`, `AdminPanel.tsx`, `lib/ui.tsx`, `planos.tsx`, `AdminApp.tsx`?**
-  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+  _High betweenness centrality (0.009) - this node is a cross-community bridge._
 - **Why does `dependencies` connect `dependencies` to `@radix-ui/react-toast`, `@radix-ui/react-toggle`, `devDependencies`, `@radix-ui/react-toggle-group`, `@radix-ui/react-tooltip`, `react`, `react-dom`, `react-hook-form`, `react-resizable-panels`, `recharts`, `sonner`, `tailwind-merge`, `tailwindcss-animate`, `@tanstack/react-query`, `vaul`, `zod`, `@radix-ui/react-avatar`, `axios`, `class-variance-authority`, `clsx`, `cmdk`, `date-fns`, `embla-carousel-react`, `@hookform/resolvers`, `input-otp`, `lucide-react`, `next-themes`, `@radix-ui/react-accordion`, `@radix-ui/react-alert-dialog`, `@radix-ui/react-context-menu`, `@radix-ui/react-checkbox`, `@radix-ui/react-collapsible`, `@radix-ui/react-navigation-menu`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-hover-card`, `@radix-ui/react-label`, `@radix-ui/react-menubar`, `@radix-ui/react-select`, `@radix-ui/react-progress`, `@radix-ui/react-radio-group`, `@radix-ui/react-scroll-area`, `react-day-picker`, `@radix-ui/react-slider`, `@radix-ui/react-switch`, `@radix-ui/react-tabs`?**
   _High betweenness centrality (0.004) - this node is a cross-community bridge._
-- **What connects `Campo`, `Procedimento`, `Plano` to the rest of the system?**
+- **What connects `prisma`, `Tone`, `BusyInterval` to the rest of the system?**
   _796 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `cn` be split into smaller, more focused modules?**
   _Cohesion score 0.060285563194077206 - nodes in this community are weakly interconnected._
