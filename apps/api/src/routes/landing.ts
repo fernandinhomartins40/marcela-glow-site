@@ -6,6 +6,14 @@ import { AppError, NotFoundError } from '../lib/errors'
 import { audit } from '../lib/audit'
 import { buildStorageKey, presignUpload, publicFileUrl, s3Bucket, storageConfigured } from '../lib/storage'
 import {
+  montarManifesto,
+  PWA_APPS,
+  PWA_DEFAULTS,
+  PWA_SETTING_KEY,
+  pwaSettingsSchema,
+  type PwaAppId,
+} from '../lib/pwa'
+import {
   IMAGE_TARGETS,
   LANDING_DEFAULTS,
   LANDING_SCHEMAS,
@@ -246,6 +254,111 @@ router.delete('/admin/images/:slot', ...staffOnly, requirePermission('CMS_WRITE'
     await prisma.landingImage.delete({ where: { id: existing.id } })
     await audit(req, 'DELETE', 'landingImage', existing.id, { slot })
     res.json({ slot })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Aplicativos instaláveis
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** A configuração gravada, ou o padrão quando a clínica nunca editou. */
+async function carregarPwa(tenantId: string) {
+  const linha = await prisma.clinicSetting.findUnique({
+    where: { key_tenantId: { key: PWA_SETTING_KEY, tenantId } },
+  })
+  /* Conteúdo gravado por uma versão antiga do schema pode não bater mais; aí
+     o padrão vale, para o app não perder o manifesto por dado velho. */
+  const parsed = linha ? pwaSettingsSchema.safeParse(linha.value) : null
+  return parsed?.success ? parsed.data : PWA_DEFAULTS
+}
+
+/** As URLs dos ícones de um app, pelos slots que o painel enviou. */
+async function iconesDe(app: PwaAppId, tenantId: string) {
+  const prefixo = PWA_APPS[app].slotPrefix
+  const linhas = await prisma.landingImage.findMany({
+    where: { tenantId, slot: { startsWith: `${prefixo}.` } },
+  })
+  return Object.fromEntries(
+    linhas.map((linha: { slot: string; storageKey: string }) => [
+      linha.slot.slice(prefixo.length + 1),
+      publicFileUrl(linha.storageKey),
+    ]),
+  ) as Partial<Record<string, string>>
+}
+
+/**
+ * O manifesto que o navegador lê.
+ *
+ * Público de propósito: quem instala o app da paciente ainda não fez login, e
+ * o navegador busca este arquivo sem enviar credencial nenhuma.
+ */
+router.get('/manifest/:app.webmanifest', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const app = String(req.params.app) as PwaAppId
+    if (!PWA_APPS[app]) throw new NotFoundError('Aplicativo')
+
+    const slug = typeof req.query.tenantSlug === 'string' ? req.query.tenantSlug : undefined
+    const tenant = slug
+      ? await prisma.tenant.findUnique({ where: { slug } })
+      : await prisma.tenant.findFirst({ where: { isActive: true }, orderBy: { createdAt: 'asc' } })
+    if (!tenant) throw new NotFoundError('Clinica')
+
+    const [config, icones] = await Promise.all([carregarPwa(tenant.id), iconesDe(app, tenant.id)])
+
+    /* O tipo do manifesto importa: com `application/json` alguns navegadores
+       aceitam, mas o Chrome só reconhece o arquivo como manifesto com este. */
+    res.type('application/manifest+json')
+    /* Cache curto: a clínica troca o nome e quer ver o efeito, mas cada aba
+       aberta não precisa buscar de novo a cada navegação. */
+    res.set('Cache-Control', 'public, max-age=300')
+    res.json(montarManifesto(app, config[app], icones))
+  } catch (err) {
+    next(err)
+  }
+})
+
+/** A configuração para a tela do painel, com os ícones já enviados. */
+router.get('/admin/pwa', ...staffOnly, requirePermission('CMS_READ'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = req.user!.tenantId
+    const [config, admin, patient] = await Promise.all([
+      carregarPwa(tenantId),
+      iconesDe('admin', tenantId),
+      iconesDe('patient', tenantId),
+    ])
+    res.json({ config, icons: { admin, patient }, defaults: PWA_DEFAULTS })
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.put('/admin/pwa', ...staffOnly, requirePermission('CMS_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = pwaSettingsSchema.parse(req.body)
+    const tenantId = req.user!.tenantId
+    const linha = await prisma.clinicSetting.upsert({
+      where: { key_tenantId: { key: PWA_SETTING_KEY, tenantId } },
+      create: { key: PWA_SETTING_KEY, value: body, tenantId },
+      update: { value: body },
+    })
+    await audit(req, 'UPDATE', 'pwaSettings', linha.id, {})
+    res.json({ config: body })
+  } catch (err) {
+    next(err)
+  }
+})
+
+/** Volta ao manifesto de fábrica — os ícones enviados continuam. */
+router.delete('/admin/pwa', ...staffOnly, requirePermission('CMS_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = req.user!.tenantId
+    await prisma.clinicSetting
+      .delete({ where: { key_tenantId: { key: PWA_SETTING_KEY, tenantId } } })
+      .catch(() => null)
+    await audit(req, 'DELETE', 'pwaSettings', tenantId, {})
+    res.json({ config: PWA_DEFAULTS })
   } catch (err) {
     next(err)
   }

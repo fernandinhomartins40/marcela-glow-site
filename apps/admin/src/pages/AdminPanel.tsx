@@ -9,6 +9,7 @@ import { Landing } from '../components/Landing'
 import { ClinicalCatalog, ClinicalDocuments } from '../components/Clinical'
 import { DocumentTemplates } from '../components/DocumentTemplates'
 import { Certificate } from '../components/Certificate'
+import { PwaSettings } from '../components/PwaSettings'
 import { Encounter } from '../components/Encounter'
 import { Dashboard } from '../components/Dashboard'
 
@@ -117,16 +118,21 @@ function SettingsPage({ settings }: { settings: any }) {
      certificado — cair em Agenda e pedir que ela ache a sub-aba sozinha
      desperdica o link. */
   const [params, setParams] = useSearchParams()
-  const area = params.get('aba') === 'certificate' ? 'certificate' : 'schedule'
-  const setArea = (proxima: 'schedule' | 'certificate') =>
-    setParams(proxima === 'certificate' ? { aba: proxima } : {}, { replace: true })
+  const abaPedida = params.get('aba')
+  const area =
+    abaPedida === 'certificate' || abaPedida === 'apps' ? abaPedida : 'schedule'
+  const setArea = (proxima: 'schedule' | 'certificate' | 'apps') =>
+    setParams(proxima === 'schedule' ? {} : { aba: proxima }, { replace: true })
   return (
     <div className="grid" style={{ gap: 14 }}>
       <div className="area-tabs" role="tablist">
         <button role="tab" aria-selected={area === 'schedule'} className={area === 'schedule' ? 'active' : ''} onClick={() => setArea('schedule')}>Agenda</button>
         <button role="tab" aria-selected={area === 'certificate'} className={area === 'certificate' ? 'active' : ''} onClick={() => setArea('certificate')}>Certificado digital</button>
+        <button role="tab" aria-selected={area === 'apps'} className={area === 'apps' ? 'active' : ''} onClick={() => setArea('apps')}>Aplicativos</button>
       </div>
-      {area === 'certificate' ? (
+      {area === 'apps' ? (
+        <PwaSettings />
+      ) : area === 'certificate' ? (
         <Certificate />
       ) : (
         <>

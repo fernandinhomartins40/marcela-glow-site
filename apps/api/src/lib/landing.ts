@@ -205,6 +205,23 @@ export const IMAGE_TARGETS: Record<string, { width: number; height: number; mime
   'background.marble': { width: 1920, height: 1080, mime: 'image/jpeg', label: 'Fundo de mármore' },
   'footer.logo': { width: 512, height: 512, mime: 'image/png', label: 'Logo' },
   'seo.og': { width: 1200, height: 630, mime: 'image/jpeg', label: 'Imagem de compartilhamento' },
+
+  /* Icones dos aplicativos instalaveis.
+
+     Sao PNG porque o manifesto precisa de fundo transparente possivel e as
+     lojas de aplicativo nao aceitam JPEG. Os quatro tamanhos existem porque
+     cada sistema pede o seu: 192 e o basico do Android, 512 alimenta a tela de
+     abertura, 180 e o da tela inicial do iPhone, e o maskable e recortado pelo
+     launcher em circulo ou quadrado arredondado — por isso ele pede margem de
+     seguranca ao redor da marca. */
+  'app.admin.192': { width: 192, height: 192, mime: 'image/png', label: 'Painel — icone 192' },
+  'app.admin.512': { width: 512, height: 512, mime: 'image/png', label: 'Painel — icone 512' },
+  'app.admin.apple': { width: 180, height: 180, mime: 'image/png', label: 'Painel — icone do iPhone' },
+  'app.admin.maskable': { width: 512, height: 512, mime: 'image/png', label: 'Painel — icone com mascara' },
+  'app.patient.192': { width: 192, height: 192, mime: 'image/png', label: 'Portal — icone 192' },
+  'app.patient.512': { width: 512, height: 512, mime: 'image/png', label: 'Portal — icone 512' },
+  'app.patient.apple': { width: 180, height: 180, mime: 'image/png', label: 'Portal — icone do iPhone' },
+  'app.patient.maskable': { width: 512, height: 512, mime: 'image/png', label: 'Portal — icone com mascara' },
 }
 
 /** Conteúdo de partida: o que hoje está escrito nos componentes de `apps/web`. */
