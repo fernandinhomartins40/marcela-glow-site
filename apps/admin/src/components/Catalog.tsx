@@ -20,6 +20,7 @@ import {
 } from '../lib/ui'
 import { BoardSettings } from './leads/BoardSettings'
 import { COLUNAS_PADRAO, iconOf, normalizeColumns, type LeadColumn } from './leads/board'
+import { useArrasteDeCartao } from './leads/arraste'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Procedimentos oferecidos pela clínica
@@ -266,7 +267,16 @@ export function Leads() {
   const [editandoColunas, setEditandoColunas] = React.useState(false)
   /* Coluna sob o cursor durante o arraste: sem isso não há como mostrar onde
      o card vai cair, e soltar vira aposta. */
-  const [alvo, setAlvo] = React.useState<string | null>(null)
+  /* Arraste por ponteiro no lugar da API do HTML5, que é de mouse e não
+     dispara em celular — o quadro ficava sem jeito de mover um lead ali. */
+  const arraste = useArrasteDeCartao({
+    onSoltar: (id, status) => {
+      const lead = leads.find((l) => l.id === id)
+      // Soltar na mesma coluna não é mudança: evita uma escrita à toa.
+      if (lead && lead.status !== status) move.mutate({ id, status })
+    },
+  })
+  const alvo = arraste.alvo
 
   const board = useQuery({
     queryKey: ['lead-board'],
@@ -361,27 +371,11 @@ export function Leads() {
             return (
               <div
                 key={column.status}
+                /* O hook de arraste acha a coluna sob o dedo por este atributo,
+                   já que sem `dragover` não há evento que diga onde se está. */
+                data-coluna={column.status}
                 className={alvo === column.status ? 'is-drop-target' : undefined}
                 style={{ borderTopColor: cor }}
-                /* Sem preventDefault no dragOver o navegador recusa o drop. */
-                onDragOver={(e) => {
-                  e.preventDefault()
-                  if (alvo !== column.status) setAlvo(column.status)
-                }}
-                onDragLeave={(e) => {
-                  // Só limpa ao sair da coluna inteira, não ao passar por um card.
-                  if (!e.currentTarget.contains(e.relatedTarget as Node)) setAlvo(null)
-                }}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  setAlvo(null)
-                  const id = e.dataTransfer.getData('text/plain')
-                  const lead = leads.find((l) => l.id === id)
-                  // Soltar na mesma coluna não é mudança: evita uma escrita à toa.
-                  if (lead && lead.status !== column.status) {
-                    move.mutate({ id, status: column.status })
-                  }
-                }}
               >
                 <h3>
                   <span className="kanban-icon" style={{ background: cor }}>
@@ -395,13 +389,8 @@ export function Leads() {
                 {items.map((lead) => (
                   <div
                     key={lead.id}
-                    className="lead-card"
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData('text/plain', lead.id)
-                      e.dataTransfer.effectAllowed = 'move'
-                    }}
-                    onDragEnd={() => setAlvo(null)}
+                    className={`lead-card${arraste.itemId === lead.id ? ' is-dragging' : ''}`}
+                    onPointerDown={arraste.pegar(lead.id)}
                   >
                     <strong>{lead.name}</strong>
                     <span>{lead.origin ?? 'origem direta'}</span>

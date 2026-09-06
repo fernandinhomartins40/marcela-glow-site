@@ -121,7 +121,11 @@ main header .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .14em;
 /* Colunas configuráveis: o número varia. Elas ficam sempre numa faixa só e a
    rolagem é horizontal — um funil quebrado em duas linhas perde a ordem das
    etapas, que é justamente o que o quadro comunica. */
-.kanban { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(200px, 1fr); gap: 12px; overflow-x: auto; align-items: start; padding-bottom: 4px; }
+/* As colunas rolam na horizontal. `scroll-snap` faz o deslize parar com uma
+   coluna inteira na tela em vez de meia — sem ele o quadro para em qualquer
+   ponto e a leitura fica sempre cortada no celular. */
+.kanban { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(200px, 1fr); gap: 12px; overflow-x: auto; align-items: start; padding-bottom: 4px; scroll-snap-type: x proximity; overscroll-behavior-x: contain; }
+.kanban > div { scroll-snap-align: start; }
 /* A faixa colorida é a borda da própria coluna, não do título: com o padding
    de 10px ela ficava recuada das laterais e descolava do card abaixo. */
 .kanban > div {
@@ -137,6 +141,17 @@ main header .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .14em;
   background: var(--marble-soft);
   box-shadow: 0 0 0 3px rgba(156,130,104,.18);
 }
+/* `touch-action: none` e o que permite ao arraste por ponteiro chamar
+   preventDefault e impedir a rolagem enquanto o cartao e movido. Sem isto o
+   navegador rola o quadro e o arraste nunca acontece no dedo.
+
+   Fica so no cartao: o resto da coluna continua rolavel, senao a pessoa nao
+   conseguiria deslizar entre as etapas. */
+.lead-card { touch-action: none; -webkit-user-select: none; user-select: none; }
+/* O cartao sendo arrastado sai do fluxo visual: levanta e fica translucido,
+   para a coluna de destino aparecer por baixo dele. */
+.lead-card.is-dragging { opacity: .55; transform: scale(1.02); box-shadow: 0 10px 26px rgba(47, 34, 27, .22); cursor: grabbing; }
+
 .kanban h3 { display: flex; align-items: center; gap: 7px; margin: 0; padding: 10px 0 2px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--espresso); }
 /* O display precisa de !important: `.kanban span { display: block }`, do
    layout antigo, e mais especifico por vir depois e ganha do inline-flex —
@@ -1285,7 +1300,10 @@ body.page-lock { overflow: hidden; }
 /* Tablet deitado / notebook pequeno */
 @media (max-width: 1024px) {
   .cms-tab { font-size: 12px; padding: 7px 10px; }
-  .kanban { grid-template-columns: repeat(5, minmax(150px, 1fr)); }
+  /* Um template fixo de cinco colunas anula o `grid-auto-flow: column` e
+     espreme as sete etapas em cinco faixas de 150px. Aqui as colunas so
+     encolhem um pouco e o quadro continua rolando. */
+  .kanban { grid-auto-columns: minmax(180px, 1fr); }
   .block-form { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .block-form > button { grid-column: 1 / -1; }
 }
@@ -1335,12 +1353,19 @@ body.page-lock { overflow: hidden; }
   .day-list li button { grid-template-columns: 56px minmax(0,1fr); grid-template-areas: "time body" "chip chip"; row-gap: 6px; }
   .day-list li button .chip { grid-area: chip; justify-self: start; }
   .stats, .two, .three, .duration-row { grid-template-columns: minmax(0,1fr); }
-  /* Cinco colunas de 140px somam 700px+: num celular de 390px o quadro só
-     existia atrás de rolagem lateral, e comparar as etapas ficava impossível.
-     Empilhado, cada etapa é uma seção com sua contagem. */
-  .kanban { grid-template-columns: minmax(0, 1fr); overflow: visible; }
-  .kanban > div { padding: 12px 14px; }
-  .kanban h3 { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  /* Empilhar as etapas numa coluna so — o que esta regra fazia antes — tirava
+     do quadro a unica coisa que ele tem: ver as etapas lado a lado. E, como o
+     `grid-template-columns` brigava com o `auto-flow: column` de cima, as
+     colunas acabavam se sobrepondo em vez de empilhar.
+
+     Agora cada coluna ocupa quase a largura da tela e o quadro rola na
+     horizontal, parando com uma etapa inteira a vista. A faixa de 12px que
+     sobra na direita mostra que ha mais coluna adiante. */
+  .kanban { grid-auto-columns: calc(100vw - 3.5rem); gap: 10px; }
+  .kanban > div { padding: 0 12px 12px; }
+  .kanban h3 { padding: 12px 0 4px; font-size: 11.5px; }
+  /* Alvo de toque maior nos botoes do cartao: 30px erra o dedo. */
+  .lead-actions button { min-height: 38px !important; min-width: 38px !important; }
   .schedule-toolbar { flex-wrap: wrap; row-gap: 10px; }
   .week-nav { width: 100%; justify-content: space-between; }
   .week-nav strong { min-width: 0; flex: 1; }
