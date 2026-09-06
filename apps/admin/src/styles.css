@@ -351,18 +351,16 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .cms-mapa li { display: inline-flex; align-items: center; }
 .cms-mapa li.is-fixo { gap: 5px; padding: 4px 9px; font-size: 11.5px; background: var(--cream-deep); border-radius: 6px; color: var(--text-muted); }
 .cms-mapa li.is-fixo svg { opacity: .6; }
-.cms-mapa button, main .cms-mapa button { display: inline-flex; align-items: center; gap: 5px; min-height: 26px !important; padding: 4px 10px !important; font-size: 11.5px; background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--espresso); }
-.cms-mapa button:hover, main .cms-mapa button:hover { border-color: var(--bronze); background: var(--marble-soft); transform: none; }
-.cms-mapa button.is-active, main .cms-mapa button.is-active { background: var(--espresso); border-color: var(--espresso); color: var(--marble-soft); font-weight: 600; }
+/* Os itens sao texto, nao botao: a regua diz onde a secao aparece no site, e
+   quem escolhe sao as abas. Com botoes aqui a tela ganhava tres barras beges
+   empilhadas fazendo a mesma coisa. */
+.cms-mapa li:not(.is-fixo) { padding: 4px 2px; font-size: 11.5px; color: var(--text-muted); }
+.cms-mapa li.is-active { font-weight: 600; color: var(--espresso); }
 /* Escondida do site: riscada, porque o lugar dela na sequencia continua. */
-.cms-mapa button.is-off, main .cms-mapa button.is-off { text-decoration: line-through; opacity: .55; }
+.cms-mapa li.is-off { text-decoration: line-through; opacity: .6; }
+.cms-mapa li.is-off svg { margin-left: 4px; }
 .cms-mapa-nota { display: flex; align-items: center; gap: 6px; margin: 0; font-size: 11px; color: var(--text-muted); }
 
-.cms-tabs { display: flex; flex-wrap: wrap; gap: 3px; padding: 4px; background: var(--cream-deep); border: 1px solid var(--border); border-radius: 10px; }
-.cms-tab, main .cms-tab { display: inline-flex; align-items: center; gap: 7px; min-height: 34px; padding: 7px 13px; font-size: 12.5px; font-weight: 500; background: transparent; border: 1px solid transparent; border-radius: 7px; color: var(--text-muted); }
-.cms-tab:hover:not(.is-active), main .cms-tab:hover:not(.is-active) { background: var(--marble-soft); color: var(--espresso); transform: none; }
-.cms-tab.is-active, main .cms-tab.is-active { background: var(--cream-soft); border-color: var(--border); font-weight: 600; color: var(--espresso); box-shadow: 0 1px 3px rgba(60, 43, 30, .07); }
-.cms-tab-off { opacity: .6; }
 
 .cms-editor { display: grid; gap: 14px; min-width: 0; }
 
@@ -731,10 +729,6 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .check-row { display: flex; align-items: center; gap: 9px; font-size: 13px; cursor: pointer; }
 .check-row input { width: 16px; height: 16px; margin: 0; accent-color: var(--espresso); }
 
-.segmented { display: inline-flex; gap: 3px; padding: 3px; background: var(--cream-deep); border-radius: 8px; }
-.segmented button { min-height: 32px; padding: 6px 14px; font-size: 12.5px; background: transparent; border: 0; border-radius: 6px; color: var(--text-muted); }
-.segmented button.active { background: var(--cream-soft); color: var(--espresso); font-weight: 600; }
-.segmented button:hover:not(.active) { transform: none; color: var(--espresso); }
 
 .confirm-backdrop { align-items: center; justify-content: center; }
 .confirm-box { width: min(400px, calc(100% - 32px)); margin: auto; padding: 22px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
@@ -776,10 +770,65 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 }
 
 /* ── Área clínica ────────────────────────────────────────────────────────── */
-.area-tabs { display: flex; gap: 2px; margin-bottom: 16px; border-bottom: 1px solid var(--border); }
-.area-tabs button { min-height: 36px; padding: 8px 16px; font-size: 13px; background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; color: var(--text-muted); }
-.area-tabs button:hover:not(.active) { color: var(--espresso); transform: none; }
-.area-tabs button.active { color: var(--espresso); font-weight: 600; border-bottom-color: var(--espresso); }
+/* ── Abas ────────────────────────────────────────────────────────────────── */
+/* Um estilo só para escolher entre seções irmãs, onde antes havia três:
+   `.segmented` era pílula com raio 8, `.cms-tabs` pílula com raio 10 e
+   `.area-tabs` era sublinhado. Na tela do Site as duas linguagens apareciam
+   empilhadas, uma sobre a outra.
+
+   A caixa bege fecha o grupo: dentro dela as opções sao do mesmo conjunto, e
+   a pastilha clara diz qual está aberta. Os três nomes de classe continuam
+   porque cada tela usa o seu — o que estava inconsistente era o estilo. */
+.area-tabs, .segmented, .cms-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 4px;
+  background: var(--cream-deep);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+/* `.segmented` divide a barra com outros botões, então não estica. */
+.segmented { display: inline-flex; }
+.area-tabs { margin-bottom: 16px; }
+
+.area-tabs button, main .area-tabs button,
+.segmented button, main .segmented button,
+.cms-tab, main .cms-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px !important;
+  padding: 7px 14px !important;
+  font-size: 12.5px;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: var(--text-muted);
+}
+
+.area-tabs button:hover:not(.active), main .area-tabs button:hover:not(.active),
+.segmented button:hover:not(.active), main .segmented button:hover:not(.active),
+.cms-tab:hover:not(.is-active), main .cms-tab:hover:not(.is-active) {
+  background: var(--marble-soft);
+  color: var(--espresso);
+  transform: none;
+}
+
+/* A sombra de um pixel levanta a pastilha do fundo bege — sem ela, a aba
+   aberta e as fechadas ficam no mesmo plano e a diferença some em telas de
+   brilho baixo. */
+.area-tabs button.active, main .area-tabs button.active,
+.segmented button.active, main .segmented button.active,
+.cms-tab.is-active, main .cms-tab.is-active {
+  background: var(--cream-soft);
+  border-color: var(--border);
+  font-weight: 600;
+  color: var(--espresso);
+  box-shadow: 0 1px 3px rgba(60, 43, 30, .07);
+}
+.cms-tab-off { opacity: .6; }
 
 .legal-warning, .legal-ok { display: flex; gap: 11px; padding: 13px 15px; border-radius: 9px; align-items: flex-start; }
 .legal-warning { background: #fbf0e2; border: 1px solid #e6c99b; color: #7d5220; }
@@ -818,7 +867,6 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .doc-item .field-label { font-size: 11px; }
 
 @media (max-width: 760px) {
-  .area-tabs { overflow-x: auto; }
   .qr-box { flex-direction: column; align-items: flex-start; }
   /* Aqui a coluna da página fica estreita de verdade e duas colunas de campo
      apertariam o rótulo: empilha. */
@@ -1262,9 +1310,11 @@ body.page-lock { overflow: hidden; }
   .perm-groups { grid-template-columns: minmax(0, 1fr); }
   /* As oito abas quebrariam em seis linhas e empurrariam o formulario para
      fora da primeira dobra; em fila rolavel elas ocupam uma linha so. */
-  .cms-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
-  .cms-tabs::-webkit-scrollbar { display: none; }
-  .cms-tab { flex: none; }
+  /* Fila rolável em vez de quebrar em cinco linhas e empurrar o conteúdo
+     para fora da primeira dobra. */
+  .area-tabs, .segmented, .cms-tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .area-tabs::-webkit-scrollbar, .segmented::-webkit-scrollbar, .cms-tabs::-webkit-scrollbar { display: none; }
+  .area-tabs button, .segmented button, .cms-tab { flex: none; }
   .cms-head-actions { width: 100%; }
   .cms-head-actions .cms-btn { flex: 1; justify-content: center; }
   .cms-save { flex-direction: column; align-items: stretch; }
@@ -1279,8 +1329,6 @@ body.page-lock { overflow: hidden; }
   .cms-cor { grid-template-columns: 40px minmax(0, 1fr); }
   .cms-cor-valor { grid-column: 1 / -1; }
   .cms-paleta { grid-template-columns: minmax(0, 1fr); }
-  .segmented { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; }
-  .segmented button { width: 100%; }
   /* Mesma razão no rodapé: "Cancelar" e o botão de ação se sobrepunham. */
   .drawer-footer { flex-direction: column-reverse; }
   .drawer-footer button { width: 100%; }

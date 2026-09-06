@@ -102,6 +102,10 @@ export function Landing() {
 
   return (
     <div className="cms">
+      {/* A regua da pagina: a ordem real das secoes, com as duas partes que
+          nao se editam aqui. Nao e navegacao — as abas abaixo fazem isso — e
+          sim a resposta a 'onde isto aparece no site' e 'por que nao acho o
+          menu do topo'. */}
       <div className="cms-mapa">
         <p className="cms-mapa-titulo">A página, de cima a baixo</p>
         <ol>
@@ -117,22 +121,14 @@ export function Landing() {
             const meta = SECTIONS.find((sec) => sec.id === parte.id)!
             const data = query.data!.sections[parte.id]
             return (
-              <li key={parte.id}>
-                <button
-                  type="button"
-                  className={`${active === parte.id ? 'is-active' : ''}${
-                    data.isVisible ? '' : ' is-off'
-                  }`}
-                  onClick={() => setActive(parte.id)}
-                  title={
-                    data.isVisible
-                      ? `Editar: ${meta.about}`
-                      : 'Esta seção está escondida do site'
-                  }
-                >
-                  {meta.label}
-                  {!data.isVisible && <EyeOff size={11} aria-hidden="true" />}
-                </button>
+              <li
+                key={parte.id}
+                className={`${active === parte.id ? 'is-active' : ''}${
+                  data.isVisible ? '' : ' is-off'
+                }`}
+              >
+                {meta.label}
+                {!data.isVisible && <EyeOff size={11} aria-hidden="true" />}
               </li>
             )
           })}
