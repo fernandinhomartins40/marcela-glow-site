@@ -43,9 +43,19 @@ export function Schedule({ appointments }: { appointments: Appointment[] }) {
   const [creating, setCreating] = React.useState(false)
 
   const days = weekDays(anchor)
+
+  /* O dia aberto tem de estar sempre dentro da semana a vista.
+
+     A semana vai de segunda a sabado, entao num domingo — ou depois de mudar
+     de semana pelas setas — o dia selecionado ficava fora dela. No desktop isso
+     passava despercebido porque as seis colunas apareciam de qualquer forma; no
+     celular, que desenha so a coluna selecionada, a grade ficava vazia. */
+  const diaVisivel = days.some((d) => dateKey(d) === dateKey(selectedDay))
+    ? selectedDay
+    : days[0]
   const byDay = React.useMemo(() => groupByDay(appointments), [appointments])
   const pending = React.useMemo(() => pendingQueue(appointments), [appointments])
-  const dayAppointments = byDay.get(dateKey(selectedDay)) ?? []
+  const dayAppointments = byDay.get(dateKey(diaVisivel)) ?? []
 
   return (
     <div className="schedule">
@@ -112,13 +122,13 @@ export function Schedule({ appointments }: { appointments: Appointment[] }) {
         <WeekGrid
           days={days}
           byDay={byDay}
-          selectedDay={selectedDay}
+          selectedDay={diaVisivel}
           onSelectDay={setSelectedDay}
           onSelectAppointment={setDetail}
         />
 
         <DayList
-          day={selectedDay}
+          day={diaVisivel}
           appointments={dayAppointments}
           onSelectAppointment={setDetail}
         />
@@ -184,7 +194,12 @@ function WeekGrid({
           {days.map((day) => {
             const items = (byDay.get(dateKey(day)) ?? []).filter((a) => a.status !== 'CANCELLED')
             return (
-              <div key={day.toISOString()} className="day-col">
+              /* A coluna do dia escolhido se marca: no celular so ela aparece, e
+                 sem a marca o CSS nao teria como saber qual manter. */
+              <div
+                key={day.toISOString()}
+                className={`day-col${dateKey(day) === dateKey(selectedDay) ? ' is-dia' : ''}`}
+              >
                 {GRID_HOURS.map((hour) => (
                   <div key={hour} className="hour-slot" />
                 ))}
