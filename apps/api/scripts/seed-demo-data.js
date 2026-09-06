@@ -39,10 +39,26 @@ function dia(offset, hora = 9, minuto = 0) {
   return d
 }
 
-function anos(idade) {
-  const d = new Date()
-  d.setFullYear(d.getFullYear() - idade)
-  return d
+/**
+ * Data de nascimento a partir da idade e da posição na lista.
+ *
+ * Antes esta função só subtraía o ano da data de hoje, então todas as quinze
+ * pacientes nasciam no mesmo dia e mês — o do dia em que o seed rodou. No
+ * painel isso aparecia como doze aniversariantes no dia 05, e a data ainda
+ * mudava a cada execução.
+ *
+ * O índice espalha mês e dia de forma determinística: o mesmo seed gera
+ * sempre as mesmas datas, e elas caem em meses diferentes. Os passos 7 e 23
+ * são primos com 12 e 28, então percorrem todos os meses e boa parte dos dias
+ * antes de repetir.
+ *
+ * O dia para em 28 de propósito: 29, 30 e 31 não existem em todo mês, e um
+ * 31 de fevereiro viraria 3 de março sem ninguém perceber.
+ */
+function nascimento(idade, indice) {
+  const mes = (indice * 7) % 12
+  const dia = ((indice * 23) % 28) + 1
+  return new Date(Date.UTC(new Date().getFullYear() - idade, mes, dia))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -359,7 +375,7 @@ async function main() {
       email: mail,
       phone: telefone(i),
       cpf: cpf(i),
-      birthDate: anos(p.idade),
+      birthDate: nascimento(p.idade, i),
       gender: p.gender,
       maritalStatus: p.maritalStatus,
       occupation: p.occupation,
