@@ -1,7 +1,9 @@
 import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
+  ArrowRight,
   BookOpen,
   FileSignature,
   FlaskConical,
@@ -650,6 +652,8 @@ function SignResult({
   result: { compliance: Compliance; url: string; qr: string }
   onClose: () => void
 }) {
+  const navigate = useNavigate()
+
   return (
     <Modal
       title="Documento assinado"
@@ -664,6 +668,20 @@ function SignResult({
             <div>
               <strong>Atenção à validade legal</strong>
               <p>{result.compliance.warning}</p>
+              {/* O aviso diz o que falta; sem o caminho, quem le tem de achar
+                  sozinho a sub-aba dentro de Ajustes. */}
+              <button
+                type="button"
+                className="legal-link"
+                onClick={() => {
+                  onClose()
+                  navigate('/settings?aba=certificate')
+                }}
+              >
+                <ShieldCheck size={14} aria-hidden="true" />
+                Configurar o certificado digital
+                <ArrowRight size={13} aria-hidden="true" />
+              </button>
             </div>
           </div>
         )}

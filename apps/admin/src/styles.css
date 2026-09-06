@@ -761,6 +761,12 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .legal-warning svg, .legal-ok svg { flex-shrink: 0; margin-top: 1px; }
 .legal-warning strong, .legal-ok strong { display: block; font-size: 13px; margin-bottom: 3px; }
 .legal-warning p, .legal-ok p { margin: 0; font-size: 12.5px; line-height: 1.55; }
+/* O caminho para resolver o aviso, dentro do proprio aviso. Herda a cor do
+   bloco em vez de trazer a do painel: um bronze aqui dentro competiria com o
+   ambar e o link pareceria de outro assunto. */
+.legal-link, main .legal-link { display: inline-flex; align-items: center; gap: 7px; min-height: 32px !important; margin-top: 9px; padding: 6px 12px !important; font-size: 12.5px; font-weight: 500; background: rgba(255, 255, 255, .55); border: 1px solid currentColor; border-radius: 8px; color: inherit; }
+.legal-link:hover, main .legal-link:hover { background: #fff; transform: none; }
+.legal-link svg { flex: none; margin-top: 0 !important; }
 
 .qr-box { display: flex; gap: 16px; align-items: center; padding: 15px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 9px; }
 .qr-box img { width: 132px; height: 132px; flex-shrink: 0; border-radius: 7px; background: #fff; }

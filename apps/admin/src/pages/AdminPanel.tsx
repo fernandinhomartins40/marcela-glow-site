@@ -1,4 +1,5 @@
 import React from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Schedule } from '../components/Schedule'
 import { ScheduleSettings } from '../components/ScheduleSettings'
 import { Patients } from '../components/Patients'
@@ -111,7 +112,14 @@ function SecurityPage({ data, currentUserId }: { data: any; currentUserId?: stri
 
 function SettingsPage({ settings }: { settings: any }) {
   const [showRaw, setShowRaw] = React.useState(false)
-  const [area, setArea] = React.useState<'schedule' | 'certificate'>('schedule')
+  /* A aba pode vir na URL (`/settings?aba=certificate`): o aviso de validade
+     legal, na tela de assinatura, precisa mandar a pessoa direto ao
+     certificado — cair em Agenda e pedir que ela ache a sub-aba sozinha
+     desperdica o link. */
+  const [params, setParams] = useSearchParams()
+  const area = params.get('aba') === 'certificate' ? 'certificate' : 'schedule'
+  const setArea = (proxima: 'schedule' | 'certificate') =>
+    setParams(proxima === 'certificate' ? { aba: proxima } : {}, { replace: true })
   return (
     <div className="grid" style={{ gap: 14 }}>
       <div className="area-tabs" role="tablist">
