@@ -1340,12 +1340,6 @@ body.page-lock { overflow: hidden; }
   .cms-save-actions button { flex: 1; }
   .cms-previa-palco { padding: 8px; }
   .painel-numeros { grid-template-columns: minmax(0, 1fr); }
-  /* Tres numeros lado a lado em 390px cortam o valor no meio. */
-  .fin-resumo { grid-template-columns: minmax(0, 1fr); }
-  /* A linha de cobranca vira bloco: nome em cima, valor e acoes embaixo. */
-  .fin-item { grid-template-columns: minmax(0, 1fr); }
-  .fin-item-valor { justify-items: start; }
-  .fin-item-acoes { width: 100%; }
   .painel-agora { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tag" "nome" "quando" "acao"; }
   .painel-agora button { margin-top: 8px; justify-content: center; }
   .painel-horarios li { grid-template-columns: 48px minmax(0, 1fr); row-gap: 5px; }
@@ -2053,3 +2047,28 @@ img, video, canvas { max-width: 100%; height: auto; }
 .fin-pagamentos li { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--text-muted); }
 .fin-pagamentos svg { color: #3f7d55; }
 .fin-vazio { margin: 0; padding: 22px; font-size: 12.5px; line-height: 1.6; text-align: center; color: var(--text-muted); background: var(--cream-soft); border: 1px solid var(--border); border-radius: 11px; }
+
+/* O responsivo do financeiro precisa vir depois das regras acima.
+
+   Na primeira versao ele foi parar no bloco de 640px que existe no meio do
+   arquivo — antes das regras principais, que por virem depois venciam a
+   cascata. O resultado: a tela ignorava o celular por completo, com os tres
+   numeros cortados e o nome da paciente por cima do valor. */
+@media (max-width: 640px) {
+  /* Tres numeros lado a lado em 390px cortam o valor no meio. */
+  .fin-resumo { grid-template-columns: minmax(0, 1fr); }
+  .fin-numero { padding: 13px 14px; }
+  .fin-numero strong { font-size: 26px; }
+
+  /* A linha vira bloco: quem e o que em cima, valor e acoes embaixo. Com tres
+     colunas em 390px o nome e o valor disputavam o mesmo espaco. */
+  .fin-item { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .fin-item-valor { flex-direction: row; justify-items: start; align-items: baseline; }
+  /* Valor, quanto falta e a etiqueta na mesma linha, que sobra larga. */
+  .fin-item-valor { display: flex; flex-wrap: wrap; gap: 8px; }
+  .fin-item-acoes { width: 100%; }
+  /* Botao de largura inteira: com dois lado a lado o rotulo quebra em duas
+     linhas e o alvo de toque fica irregular. */
+  .fin-item-acoes .cms-btn { flex: 1; justify-content: center; }
+  .fin-formas ul { gap: 6px 16px; }
+}

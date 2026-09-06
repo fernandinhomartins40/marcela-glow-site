@@ -1,7 +1,7 @@
 # Graph Report - marcela-glow-site  (2026-09-06)
 
 ## Corpus Check
-- 232 files · ~431,645 words
+- 232 files · ~431,814 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5d2c2673`
+- Built from commit: `f73a4e95`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -190,16 +190,16 @@
 10. `compilerOptions` - 18 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `DrawerFooter()` --calls--> `cn()`  [EXTRACTED]
-  apps/web/src/components/ui/drawer.tsx → apps/web/src/lib/utils.ts
-- `DrawerHeader()` --calls--> `cn()`  [EXTRACTED]
-  apps/web/src/components/ui/drawer.tsx → apps/web/src/lib/utils.ts
-- `ResizableHandle()` --calls--> `cn()`  [EXTRACTED]
-  apps/web/src/components/ui/resizable.tsx → apps/web/src/lib/utils.ts
-- `ResizablePanelGroup()` --calls--> `cn()`  [EXTRACTED]
-  apps/web/src/components/ui/resizable.tsx → apps/web/src/lib/utils.ts
 - `AlertDescription` --calls--> `cn()`  [EXTRACTED]
   apps/web/src/components/ui/alert.tsx → apps/web/src/lib/utils.ts
+- `AlertTitle` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert.tsx → apps/web/src/lib/utils.ts
+- `AlertDialogContent` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
+- `AlertDialogDescription` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
+- `AlertDialogFooter()` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
 
 ## Import Cycles
 - None detected.
@@ -580,7 +580,7 @@ Cohesion: 0.52
 Nodes (6): ArrasteInfo, inicioDasColunas(), pararSaltos(), rolarSePerto(), saltarColuna(), useArrasteDeCartao()
 
 ## Knowledge Gaps
-- **786 isolated node(s):** `queryClient`, `NAV_GROUPS`, `NAV_ITEMS`, `Consulta`, `DashboardData` (+781 more)
+- **786 isolated node(s):** `PRINCIPAIS`, `SECUNDARIAS`, `Tone`, `BusyInterval`, `ConflictCheck` (+781 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 879 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **69 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -588,12 +588,12 @@ Nodes (6): ArrasteInfo, inicioDasColunas(), pararSaltos(), rolarSePerto(), salta
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `cn()` connect `cn` to `breadcrumb.tsx`, `command.tsx`, `navigation-menu.tsx`, `sidebar.tsx`, `hooks/use-toast.ts`, `utils.ts`, `toggle-group.tsx`, `alert.tsx`, `form.tsx`, `carousel.tsx`, `card.tsx`, `badge.tsx`, `chart.tsx`, `pagination.tsx`, `web/src/lib/api.ts`, `drawer.tsx`, `button.tsx`, `sheet.tsx`?**
-  _High betweenness centrality (0.034) - this node is a cross-community bridge._
+  _High betweenness centrality (0.024) - this node is a cross-community bridge._
 - **Why does `errorMessage()` connect `errorMessage` to `PwaSettings.tsx`, `lib/ui.tsx`, `agenda.tsx`, `TemplateForm.tsx`, `ficha.tsx`, `Finance.tsx`, `api`, `AdminApp.tsx`?**
-  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
 - **Why does `dependencies` connect `dependencies` to `@radix-ui/react-toast`, `@radix-ui/react-toggle`, `devDependencies`, `@radix-ui/react-toggle-group`, `@radix-ui/react-tooltip`, `react`, `react-dom`, `react-hook-form`, `react-resizable-panels`, `recharts`, `sonner`, `tailwind-merge`, `tailwindcss-animate`, `@tanstack/react-query`, `vaul`, `zod`, `@radix-ui/react-avatar`, `axios`, `class-variance-authority`, `clsx`, `cmdk`, `date-fns`, `embla-carousel-react`, `@hookform/resolvers`, `input-otp`, `lucide-react`, `next-themes`, `@radix-ui/react-accordion`, `@radix-ui/react-alert-dialog`, `@radix-ui/react-context-menu`, `@radix-ui/react-checkbox`, `@radix-ui/react-collapsible`, `@radix-ui/react-navigation-menu`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-hover-card`, `@radix-ui/react-label`, `@radix-ui/react-menubar`, `@radix-ui/react-select`, `@radix-ui/react-progress`, `@radix-ui/react-radio-group`, `@radix-ui/react-scroll-area`, `react-day-picker`, `@radix-ui/react-slider`, `@radix-ui/react-switch`, `@radix-ui/react-tabs`?**
-  _High betweenness centrality (0.006) - this node is a cross-community bridge._
-- **What connects `queryClient`, `NAV_GROUPS`, `NAV_ITEMS` to the rest of the system?**
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+- **What connects `PRINCIPAIS`, `SECUNDARIAS`, `Tone` to the rest of the system?**
   _786 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `cn` be split into smaller, more focused modules?**
   _Cohesion score 0.060285563194077206 - nodes in this community are weakly interconnected._
