@@ -39,8 +39,12 @@ const Header = () => {
 
   return (
     <header
+      /* O cabecalho e transparente no topo da pagina, para o hero aparecer
+         inteiro por baixo. Mas o menu aberto herda esse fundo: os links ficavam
+         sobre a foto e o texto do hero, ilegiveis. Com o menu aberto o fundo
+         entra, mesmo sem rolagem. */
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled
+        isScrolled || isMobileMenuOpen
           ? "bg-background/95 backdrop-blur-md border-b border-border"
           : "bg-transparent"
       }`}
@@ -56,18 +60,27 @@ const Header = () => {
             className="flex shrink-0 items-center gap-2 lg:gap-3 group"
             aria-label="Dra. Marcela Duch"
           >
+            {/* 36px no celular contra 48px no tablet: a logo é o único sinal de
+                marca ali em cima, já que o nome fica escondido, e nesse tamanho
+                ela vira um detalhe do canto. Sobe para 44px sem engordar o
+                cabeçalho, que tem 72px de altura. */}
             <img
               src={logo.src}
               alt={logo.alt}
-              className="h-9 sm:h-10 md:h-12 w-auto shrink-0 transition-transform duration-500 group-hover:scale-105"
+              className="h-11 sm:h-11 md:h-12 w-auto shrink-0 transition-transform duration-500 group-hover:scale-105"
               width={48}
               height={48}
             />
-            <div className="hidden sm:flex flex-col leading-tight whitespace-nowrap">
-              <span className="font-display text-sm lg:text-base xl:text-lg tracking-[0.14em] lg:tracking-[0.18em] xl:tracking-[0.25em] uppercase text-primary">
+            {/* O nome ficava escondido abaixo de 640px e sobrava o monograma sozinho:
+                quem abre o site pelo celular via um símbolo sem saber de quem é.
+                Agora ele aparece, com o tracking apertado para caber ao lado do
+                botão de menu — e o registro do CRM continua só a partir do tablet,
+                onde há largura para as duas linhas sem espremer nada. */}
+            <div className="flex flex-col leading-tight whitespace-nowrap">
+              <span className="font-display text-[0.8125rem] sm:text-sm lg:text-base xl:text-lg tracking-[0.08em] sm:tracking-[0.14em] lg:tracking-[0.18em] xl:tracking-[0.25em] uppercase text-primary">
                 Dra. Marcela Duch
               </span>
-              <span className="text-[0.75rem] sm:text-[0.55rem] xl:text-[0.6rem] tracking-[0.2em] xl:tracking-[0.3em] uppercase text-muted-foreground">
+              <span className="hidden sm:block text-[0.75rem] sm:text-[0.55rem] xl:text-[0.6rem] tracking-[0.2em] xl:tracking-[0.3em] uppercase text-muted-foreground">
                 Médica · CRM/MS 5691
               </span>
             </div>
