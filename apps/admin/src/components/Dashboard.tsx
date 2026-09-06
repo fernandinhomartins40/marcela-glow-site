@@ -227,47 +227,21 @@ export function Dashboard({ data }: { data: DashboardData }) {
           )}
         </section>
 
-        <div className="painel-coluna">
-          <section className="painel-card">
-            <header>
-              <div>
-                <h2>O mês</h2>
-                <p>Comparado ao mês passado, até o mesmo dia.</p>
-              </div>
-            </header>
-            <Receita atual={mes.receitaCents} anterior={mes.receitaMesPassadoCents} />
-            <div className="painel-numeros">
-              <Numero rotulo="Atendimentos" valor={String(mes.atendimentos)} />
-              <Numero rotulo="Ticket médio" valor={dinheiro(mes.ticketMedioCents)} />
-              <Numero rotulo="Pacientes novas" valor={String(mes.pacientesNovos)} />
+        <section className="painel-card">
+          <header>
+            <div>
+              <h2>O mês</h2>
+              <p>Comparado ao mês passado, até o mesmo dia.</p>
             </div>
-          </section>
+          </header>
+          <Receita atual={mes.receitaCents} anterior={mes.receitaMesPassadoCents} />
+          <div className="painel-numeros">
+            <Numero rotulo="Atendimentos" valor={String(mes.atendimentos)} />
+            <Numero rotulo="Ticket médio" valor={dinheiro(mes.ticketMedioCents)} />
+            <Numero rotulo="Pacientes novas" valor={String(mes.pacientesNovos)} />
+          </div>
+        </section>
 
-          <section className="painel-card">
-            <header>
-              <div>
-                <h2>Faltas e cancelamentos</h2>
-                <p>Nos últimos 30 dias.</p>
-              </div>
-            </header>
-            {saude.cancelados30 + saude.concluidos30 === 0 ? (
-              <p className="painel-vazio">Ainda não há atendimentos concluídos no período.</p>
-            ) : (
-              <>
-                <div className="painel-barra" role="img" aria-label={`${saude.taxaCancelamento}% cancelados`}>
-                  <span style={{ width: `${saude.taxaCancelamento}%` }} />
-                </div>
-                <p className="painel-legenda">
-                  <strong>{saude.taxaCancelamento}%</strong> cancelados — {saude.cancelados30} de{' '}
-                  {saude.cancelados30 + saude.concluidos30} consultas.
-                </p>
-              </>
-            )}
-          </section>
-        </div>
-      </div>
-
-      <div className="painel-corpo">
         <section className="painel-card">
           <header>
             <div>
@@ -298,6 +272,28 @@ export function Dashboard({ data }: { data: DashboardData }) {
                 </li>
               ))}
             </ol>
+          )}
+        </section>
+
+        <section className="painel-card">
+          <header>
+            <div>
+              <h2>Faltas e cancelamentos</h2>
+              <p>Nos últimos 30 dias.</p>
+            </div>
+          </header>
+          {saude.cancelados30 + saude.concluidos30 === 0 ? (
+            <p className="painel-vazio">Ainda não há atendimentos concluídos no período.</p>
+          ) : (
+            <>
+              <div className="painel-barra" role="img" aria-label={`${saude.taxaCancelamento}% cancelados`}>
+                <span style={{ width: `${saude.taxaCancelamento}%` }} />
+              </div>
+              <p className="painel-legenda">
+                <strong>{saude.taxaCancelamento}%</strong> cancelados — {saude.cancelados30} de{' '}
+                {saude.cancelados30 + saude.concluidos30} consultas.
+              </p>
+            </>
           )}
         </section>
 

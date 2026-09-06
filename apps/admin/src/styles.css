@@ -228,8 +228,34 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .painel-pendencia:hover .painel-pendencia-seta { opacity: 1; }
 
 /* O dia ocupa mais largura que a coluna de numeros: e onde se olha primeiro */
-.painel-corpo { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; align-items: start; }
-.painel-coluna { display: grid; gap: 14px; min-width: 0; }
+/* Uma grade so para todos os cartoes.
+
+   Antes eram duas grades de duas colunas, uma sob a outra, e uma delas ainda
+   agrupava dois cartoes numa coluna propria. O vazio se acumulava no pe do
+   lado mais curto: num dia de sete consultas, 179px na primeira grade e 270px
+   na segunda — o buraco ao lado dos aniversariantes.
+
+   Com `grid-auto-flow: dense` cada cartao sobe para a primeira lacuna onde
+   couber, entao a diferenca de altura se espalha em vez de virar um bloco
+   branco no fim. `align-items: start` continua: esticar o cartao ate a altura
+   do vizinho so trocaria o buraco de lugar, para dentro dele. */
+.painel-corpo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: dense; gap: 14px; align-items: start; }
+/* A largura inteira e para a agenda do dia, que e a lista mais consultada e a
+   unica que ganha com espaco. Nas demais o texto e curto: esticadas, o nome
+   fica num canto e a etiqueta no outro, com um vao de quase mil pixels no meio
+   — pior de ler que a coluna estreita. */
+.painel-corpo > .painel-dia { grid-column: 1 / -1; }
+/* Os dois cartoes curtos — faltas e aniversariantes — vivem na mesma faixa
+   vertical da coluna direita, enquanto a esquerda leva as duas listas longas.
+   Assim o que sobra fica repartido entre eles em vez de virar um rastro de
+   270px no pe da coluna, que era o buraco ao lado dos aniversariantes.
+
+   `align-content: start` no lugar de esticar: um cartao de um nome so, alto
+   como uma lista de seis, seria vazio por dentro em vez de por fora. */
+.painel-corpo { align-content: start; }
+/* Numa lista larga o conteudo fica preso a uma medida legivel em vez de se
+   esparramar ate a borda. */
+.painel-dia .painel-horarios li { grid-template-columns: 52px minmax(0, 1fr) auto; max-width: 820px; }
 
 .painel-card { min-width: 0; padding: 15px 16px 16px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 12px; }
 .painel-card > header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 13px; }

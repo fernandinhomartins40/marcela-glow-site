@@ -1,16 +1,16 @@
 # Graph Report - marcela-glow-site  (2026-09-06)
 
 ## Corpus Check
-- 221 files · ~420,232 words
+- 221 files · ~420,364 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1938 nodes · 3463 edges · 175 communities (86 shown, 68 thin omitted)
+- 1938 nodes · 3461 edges · 175 communities (86 shown, 68 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 22 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `3ff77536`
+- Built from commit: `b70418d9`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -183,6 +183,8 @@
 10. `compilerOptions` - 18 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `CatalogForm()` --calls--> `errorMessage()`  [EXTRACTED]
+  apps/admin/src/components/Clinical.tsx → apps/admin/src/lib/ui.tsx
 - `AlertDescription` --calls--> `cn()`  [EXTRACTED]
   apps/web/src/components/ui/alert.tsx → apps/web/src/lib/utils.ts
 - `AlertTitle` --calls--> `cn()`  [EXTRACTED]
@@ -190,8 +192,6 @@
 - `AlertDialogContent` --calls--> `cn()`  [EXTRACTED]
   apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
 - `AlertDialogDescription` --calls--> `cn()`  [EXTRACTED]
-  apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
-- `AlertDialogFooter()` --calls--> `cn()`  [EXTRACTED]
   apps/web/src/components/ui/alert-dialog.tsx → apps/web/src/lib/utils.ts
 
 ## Import Cycles
@@ -549,12 +549,7 @@ Cohesion: 0.67
 Nodes (3): Badge(), BadgeProps, badgeVariants
 
 ## Knowledge Gaps
-- **761 isolated node(s):** `bcrypt`, `{
-  AppointmentStatus, CatalogKind, ContentStatus, DocumentKind, Gender,
-  LeadStatus, MaritalStatus, MedicationControl, MessageSender,
-  NotificationChannel, PrescriptionStatus, PrismaClient, RecordType, UserRole,
-  BloodType,
-}`, `prisma`, `PROCEDIMENTOS`, `MEDICAMENTOS` (+756 more)
+- **761 isolated node(s):** `CatalogKind`, `Control`, `CatalogItem`, `DocItem`, `ClinicalDocument` (+756 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 848 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **68 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -562,17 +557,12 @@ Nodes (3): Badge(), BadgeProps, badgeVariants
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `cn()` connect `cn` to `breadcrumb.tsx`, `command.tsx`, `navigation-menu.tsx`, `sidebar.tsx`, `card.tsx`, `utils.ts`, `hooks/use-toast.ts`, `drawer.tsx`, `alert.tsx`, `toggle-group.tsx`, `badge.tsx`, `form.tsx`, `carousel.tsx`, `chart.tsx`, `pagination.tsx`, `web/src/lib/api.ts`, `button.tsx`, `sheet.tsx`?**
-  _High betweenness centrality (0.020) - this node is a cross-community bridge._
+  _High betweenness centrality (0.029) - this node is a cross-community bridge._
 - **Why does `errorMessage()` connect `errorMessage` to `Landing.tsx`, `Encounter.tsx`, `agenda.tsx`, `TemplateForm.tsx`, `lib/ui.tsx`, `Clinical.tsx`, `ScheduleSettings.tsx`, `AdminApp.tsx`?**
   _High betweenness centrality (0.007) - this node is a cross-community bridge._
-- **Why does `dependencies` connect `dependencies` to `@radix-ui/react-toast`, `@radix-ui/react-toggle`, `devDependencies`, `@radix-ui/react-toggle-group`, `@radix-ui/react-tooltip`, `react`, `react-dom`, `react-hook-form`, `react-resizable-panels`, `recharts`, `sonner`, `tailwind-merge`, `tailwindcss-animate`, `@tanstack/react-query`, `vaul`, `zod`, `@radix-ui/react-avatar`, `axios`, `class-variance-authority`, `clsx`, `cmdk`, `date-fns`, `embla-carousel-react`, `@hookform/resolvers`, `input-otp`, `lucide-react`, `next-themes`, `@radix-ui/react-accordion`, `@radix-ui/react-alert-dialog`, `@radix-ui/react-context-menu`, `@radix-ui/react-checkbox`, `@radix-ui/react-collapsible`, `@radix-ui/react-navigation-menu`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-hover-card`, `@radix-ui/react-label`, `@radix-ui/react-menubar`, `@radix-ui/react-select`, `@radix-ui/react-progress`, `@radix-ui/react-radio-group`, `@radix-ui/react-scroll-area`, `react-day-picker`, `@radix-ui/react-slider`, `@radix-ui/react-switch`, `@radix-ui/react-tabs`?**
-  _High betweenness centrality (0.006) - this node is a cross-community bridge._
-- **What connects `bcrypt`, `{
-  AppointmentStatus, CatalogKind, ContentStatus, DocumentKind, Gender,
-  LeadStatus, MaritalStatus, MedicationControl, MessageSender,
-  NotificationChannel, PrescriptionStatus, PrismaClient, RecordType, UserRole,
-  BloodType,
-}`, `prisma` to the rest of the system?**
+- **Why does `prisma` connect `templates.ts` to `patient.ts`, `middleware/auth.ts`, `scheduling.ts`, `admin.ts`, `appointments.ts`, `routes/clinical.ts`, `routes/landing.ts`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
+- **What connects `CatalogKind`, `Control`, `CatalogItem` to the rest of the system?**
   _761 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `sections.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.05154639175257732 - nodes in this community are weakly interconnected._
