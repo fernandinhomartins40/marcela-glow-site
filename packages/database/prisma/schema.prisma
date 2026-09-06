@@ -225,6 +225,9 @@ model Tenant {
   businessHours       BusinessHour[]
   scheduleBlocks      ScheduleBlock[]
   catalogItems        CatalogItem[]
+  charges             Charge[]
+  payments            Payment[]
+  receipts            Receipt[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -290,6 +293,10 @@ model Procedure {
   bufferMin    Int      @default(0)
   /// Se false, o procedimento não é oferecido no agendamento online
   isBookable   Boolean  @default(true)
+  /// Preço de tabela, em centavos. Vira a sugestão ao lançar o procedimento
+  /// numa paciente — o valor cobrado continua vivendo na sessão, porque
+  /// desconto e pacote fazem o mesmo procedimento sair por preços diferentes.
+  priceCents   Int?
   tenantId     String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -399,6 +406,31 @@ model Testimonial {
 
 /// Seções editáveis da landing. O identificador espelha o componente que a
 /// renderiza, para o preview do painel e a página nunca divergirem.
+/// Como a paciente pagou. `OTHER` existe para o caso raro não previsto —
+/// sem ele a recepção inventaria uma forma errada para poder salvar.
+enum PaymentMethod {
+  PIX
+  CASH
+  DEBIT
+  CREDIT
+  TRANSFER
+  HEALTH_PLAN
+  OTHER
+}
+
+/// Situação do que foi cobrado.
+///
+/// `PENDING` e `PAID` cobrem o caso normal. `PARTIAL` existe porque parcelar
+/// é comum em estética e sem ele um pagamento de metade não teria como ser
+/// registrado. `CANCELLED` guarda o histórico de uma cobrança desfeita, que
+/// apagar perderia.
+enum ChargeStatus {
+  PENDING
+  PARTIAL
+  PAID
+  CANCELLED
+}
+
 enum LandingSection {
   /// Paleta de cores do site — nao e uma faixa da pagina, mas mora aqui
   /// porque tem o mesmo ciclo de vida: e editada, guardada por tenant e
@@ -554,6 +586,7 @@ model Patient {
   pushSubscriptions PushSubscription[]
   attachments       Attachment[]
   leads             Lead[]
+  charges           Charge[]
 
   @@unique([email, tenantId])
   @@unique([cpf, tenantId])
@@ -617,6 +650,8 @@ model MedicalRecord {
   createdBy   User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
   appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
   attachments Attachment[]
+  charge      Charge?      @relation(fields: [chargeId], references: [id])
+  chargeId    String?
 
   @@index([patientId, occurredAt])
   @@index([appointmentId])
@@ -641,8 +676,103 @@ model ProcedureSession {
   procedure   Procedure?   @relation(fields: [procedureId], references: [id], onDelete: SetNull)
   tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  Charge      Charge?
 
   @@index([appointmentId])
+}
+
+/// O que foi cobrado por um procedimento realizado.
+///
+/// Separado de `ProcedureSession` porque as duas coisas têm ciclos de vida
+/// diferentes: o procedimento aconteceu e não muda mais, enquanto a cobrança
+/// nasce pendente, recebe pagamentos e pode ser cancelada. Manter o valor em
+/// `ProcedureSession.priceCents` teria sido mais simples, mas ali não cabe
+/// "pago pela metade em duas formas".
+model Charge {
+  id            String       @id @default(cuid())
+  tenantId      String
+  patientId     String
+  /// A sessão que originou a cobrança. Opcional porque a clínica pode cobrar
+  /// algo sem procedimento registrado — uma taxa, um produto vendido.
+  sessionId     String?      @unique
+  description   String
+  amountCents   Int
+  /// Desconto concedido, guardado à parte do valor: sem isso não há como
+  /// saber depois se o preço baixo foi tabela ou cortesia.
+  discountCents Int          @default(0)
+  status        ChargeStatus @default(PENDING)
+  /// Quando o serviço foi prestado — é a data que vale para o imposto,
+  /// e pode diferir do dia em que a cobrança foi lançada.
+  issuedAt      DateTime     @default(now())
+  dueAt         DateTime?
+  notes         String?
+  createdById   String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient       Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  session       ProcedureSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  payments      Payment[]
+  receipts      Receipt[]
+  MedicalRecord MedicalRecord[]
+
+  @@index([tenantId, issuedAt])
+  @@index([tenantId, status])
+}
+
+/// Um recebimento. Uma cobrança pode ter vários: entrada no Pix e o resto no
+/// cartão é rotina, e sem esta tabela o segundo apagaria o primeiro.
+model Payment {
+  id          String        @id @default(cuid())
+  tenantId    String
+  chargeId    String
+  amountCents Int
+  method      PaymentMethod
+  paidAt      DateTime      @default(now())
+  /// Número da máquina, id da transação Pix — o que permite conferir depois.
+  reference   String?
+  notes       String?
+  createdById String?
+  createdAt   DateTime      @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  charge Charge @relation(fields: [chargeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, paidAt])
+}
+
+/// Recibo entregue à paciente.
+///
+/// Guardado como registro próprio, e não gerado na hora a partir da cobrança,
+/// por duas razões: a numeração precisa ser sequencial e sem furos para valer
+/// perante a Receita, e o recibo tem de continuar dizendo o que dizia mesmo
+/// que a cobrança mude depois. Por isso os campos abaixo são cópia congelada.
+model Receipt {
+  id           String    @id @default(cuid())
+  tenantId     String
+  chargeId     String
+  /// Sequencial por tenant e por ano, o que a numeração de recibo exige.
+  number       Int
+  year         Int
+  /// Cópia do momento da emissão: nome, CPF, descrição e valor.
+  patientName  String
+  patientCpf   String?
+  description  String
+  amountCents  Int
+  issuedAt     DateTime  @default(now())
+  /// Recibo cancelado continua na base: a numeração não pode ter furo, e o
+  /// cancelamento é o que se explica à Receita.
+  cancelledAt  DateTime?
+  cancelReason String?
+  createdById  String?
+  createdAt    DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  charge Charge @relation(fields: [chargeId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, year, number])
+  @@index([tenantId, issuedAt])
 }
 
 /// Documento clínico entregue à paciente: receita, pedido de exame ou

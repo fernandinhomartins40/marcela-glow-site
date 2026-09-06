@@ -334,17 +334,17 @@ router.get('/dashboard', requirePermission('DASHBOARD_READ'), async (req: Reques
 
       prisma.patient.count({ where: { tenantId, createdAt: { gte: inicioDoMes } } }),
 
-      prisma.procedureSession.aggregate({
-        where: { tenantId, performedAt: { gte: inicioDoMes } },
-        _sum: { priceCents: true },
+      /* O que entrou de fato, dos pagamentos registrados. Antes isto somava
+         `ProcedureSession.priceCents`, que e o cobrado — um mes com tudo
+         faturado e nada recebido aparecia como se estivesse pago. */
+      prisma.payment.aggregate({
+        where: { tenantId, paidAt: { gte: inicioDoMes } },
+        _sum: { amountCents: true },
       }),
 
-      prisma.procedureSession.aggregate({
-        where: {
-          tenantId,
-          performedAt: { gte: inicioDoMesPassado, lte: mesmoDiaMesPassado },
-        },
-        _sum: { priceCents: true },
+      prisma.payment.aggregate({
+        where: { tenantId, paidAt: { gte: inicioDoMesPassado, lte: mesmoDiaMesPassado } },
+        _sum: { amountCents: true },
       }),
 
       prisma.procedureSession.count({ where: { tenantId, performedAt: { gte: inicioDoMes } } }),
@@ -377,8 +377,8 @@ router.get('/dashboard', requirePermission('DASHBOARD_READ'), async (req: Reques
       }),
     ])
 
-    const receitaMes = faturamentoMes._sum.priceCents ?? 0
-    const receitaMesPassado = faturamentoMesPassado._sum.priceCents ?? 0
+    const receitaMes = faturamentoMes._sum.amountCents ?? 0
+    const receitaMesPassado = faturamentoMesPassado._sum.amountCents ?? 0
 
     // Quantas faltaram do que era para acontecer — o número que diz se a
     // agenda está furando.
@@ -745,6 +745,30 @@ router.post('/sessions', requirePermission('RECORD_WRITE'), async (req: Request,
       },
       include: { procedure: { select: { id: true, title: true } }, patient: { select: { id: true, name: true } } },
     })
+
+    /* O procedimento com valor vira cobrança na mesma hora.
+
+       Sem isto o financeiro nasceria vazio e a recepção teria de lançar duas
+       vezes a mesma coisa — o que, na prática, significa que a segunda não
+       aconteceria e o mês fecharia errado.
+
+       Sem valor não cria nada: é o caso do retorno de cortesia, e inventar
+       uma cobrança de zero real encheria a lista de linhas sem sentido. Elas
+       aparecem no aviso de "procedimentos sem cobrança" da tela financeira. */
+    if (body.priceCents && body.priceCents > 0) {
+      await prisma.charge.create({
+        data: {
+          tenantId: req.user!.tenantId,
+          patientId: patient.id,
+          sessionId: session.id,
+          description: session.procedure?.title ?? 'Procedimento',
+          amountCents: body.priceCents,
+          issuedAt: session.performedAt,
+          createdById: req.user!.userId,
+        },
+      })
+    }
+
     await audit(req, 'CREATE', 'procedureSession', session.id, { patientId: patient.id })
     res.status(201).json(session)
   } catch (err) {

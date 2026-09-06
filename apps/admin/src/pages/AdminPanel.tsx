@@ -12,6 +12,7 @@ import { Certificate } from '../components/Certificate'
 import { PwaSettings } from '../components/PwaSettings'
 import { Encounter } from '../components/Encounter'
 import { Dashboard } from '../components/Dashboard'
+import { Finance } from '../components/Finance'
 
 export type AdminTab =
   | 'dashboard'
@@ -20,6 +21,7 @@ export type AdminTab =
   | 'patients'
   | 'documents'
   | 'registry'
+  | 'finance'
   | 'leads'
   | 'cms'
   | 'security'
@@ -32,6 +34,7 @@ export function AdminPanel({ tab, data, currentUserId }: { tab: AdminTab; data: 
   if (tab === 'encounter') return <Encounter />
   if (tab === 'documents') return <ClinicalDocuments />
   if (tab === 'registry') return <RegistryPage />
+  if (tab === 'finance') return <Finance />
   if (tab === 'leads') return <Leads />
   if (tab === 'cms') return <SitePage cms={data.cms} />
   if (tab === 'security') return <SecurityPage data={data} currentUserId={currentUserId} />

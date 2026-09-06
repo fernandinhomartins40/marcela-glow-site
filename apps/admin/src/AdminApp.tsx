@@ -14,6 +14,7 @@ import {
   Stethoscope,
   UserRound,
   Users,
+  Wallet,
   X,
 } from 'lucide-react'
 import { api, errorMessage, ROLE_LABELS, TOKEN_KEY } from './lib/ui'
@@ -32,6 +33,7 @@ const NAV_GROUPS = [
       ['dashboard', LayoutDashboard, 'Dashboard', 'Visão geral do movimento da clínica'],
       ['encounter', Stethoscope, 'Atendimento', 'Atender a paciente e registrar o prontuário'],
       ['appointments', CalendarDays, 'Agenda', 'Consultas marcadas e horários livres'],
+      ['finance', Wallet, 'Financeiro', 'Cobranças, pagamentos e recibos'],
     ],
   },
   {

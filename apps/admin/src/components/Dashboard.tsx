@@ -231,7 +231,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
           <header>
             <div>
               <h2>O mês</h2>
-              <p>Comparado ao mês passado, até o mesmo dia.</p>
+              <p>O que entrou no caixa, comparado ao mês passado até o mesmo dia.</p>
             </div>
           </header>
           <Receita atual={mes.receitaCents} anterior={mes.receitaMesPassadoCents} />

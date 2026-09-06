@@ -1340,6 +1340,12 @@ body.page-lock { overflow: hidden; }
   .cms-save-actions button { flex: 1; }
   .cms-previa-palco { padding: 8px; }
   .painel-numeros { grid-template-columns: minmax(0, 1fr); }
+  /* Tres numeros lado a lado em 390px cortam o valor no meio. */
+  .fin-resumo { grid-template-columns: minmax(0, 1fr); }
+  /* A linha de cobranca vira bloco: nome em cima, valor e acoes embaixo. */
+  .fin-item { grid-template-columns: minmax(0, 1fr); }
+  .fin-item-valor { justify-items: start; }
+  .fin-item-acoes { width: 100%; }
   .painel-agora { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tag" "nome" "quando" "acao"; }
   .painel-agora button { margin-top: 8px; justify-content: center; }
   .painel-horarios li { grid-template-columns: 48px minmax(0, 1fr); row-gap: 5px; }
@@ -1959,3 +1965,53 @@ img, video, canvas { max-width: 100%; height: auto; }
 /* O icone tem fundo proprio e nao pode ser cortado pelo enquadramento. */
 .cms-icone-thumb, main .cms-icone-thumb { width: 92px; aspect-ratio: 1; max-height: none; }
 .cms-icone-thumb img { object-fit: contain; }
+
+/* ── Financeiro ───────────────────────────────────────────────────────────── */
+/* A ordem visual segue a das perguntas: quanto entrou, o que falta receber, o
+   que ficou sem lancamento. Depois a lista, que e onde se age. */
+.fin { display: grid; gap: 14px; min-width: 0; }
+.fin svg { flex: none; }
+.fin-topo { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.fin-mes { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-muted); }
+.fin-mes input { width: auto; min-width: 150px; }
+
+.fin-resumo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.fin-numero { display: grid; gap: 4px; padding: 15px 16px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 11px; }
+/* O recebido e o numero que a clinica procura primeiro. */
+.fin-numero.is-destaque { background: var(--espresso); border-color: var(--espresso); }
+.fin-numero.is-destaque strong, .fin-numero.is-destaque .fin-numero-rotulo { color: var(--marble-soft); }
+.fin-numero.is-destaque .fin-numero-nota { color: var(--bronze-soft); }
+.fin-numero-rotulo { display: inline-flex; align-items: center; gap: 6px; font-size: 10.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--bronze); }
+.fin-numero strong { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 30px; font-weight: 500; line-height: 1.05; color: var(--espresso); }
+.fin-numero-nota { font-size: 11.5px; line-height: 1.45; color: var(--text-muted); }
+
+/* O procedimento sem cobranca e o furo do modelo antigo: ele precisa gritar,
+   porque some dos totais sem deixar rastro. */
+.fin-alerta { display: flex; align-items: flex-start; gap: 9px; margin: 0; padding: 11px 13px; font-size: 12.5px; line-height: 1.55; background: #fdf6e7; border: 1px solid #e8d6a8; border-radius: 10px; color: #6b5417; }
+.fin-alerta svg { margin-top: 2px; }
+
+.fin-formas { padding: 13px 16px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 11px; }
+.fin-formas h3 { margin: 0 0 9px; font-size: 10.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--bronze); }
+.fin-formas ul { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0; padding: 0; list-style: none; }
+.fin-formas li { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; color: var(--text-muted); }
+.fin-formas strong { font-variant-numeric: tabular-nums; color: var(--espresso); }
+
+.fin-lista { display: grid; gap: 8px; }
+.fin-item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px 16px; align-items: start; padding: 13px 15px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; }
+/* Cancelada fica apagada mas continua na lista: apagar faria o mes deixar de
+   bater com o que ja foi declarado. */
+.fin-item.is-cancelled { opacity: .5; }
+.fin-item.is-paid { border-left: 3px solid #3f7d55; }
+.fin-item.is-pending, .fin-item.is-partial { border-left: 3px solid var(--bronze); }
+.fin-item-quem { display: grid; gap: 2px; min-width: 0; }
+.fin-item-quem strong { font-size: 13.5px; font-weight: 600; }
+.fin-item-quem span { font-size: 12px; color: var(--text-muted); }
+.fin-data { font-size: 11.5px !important; }
+.fin-item-valor { display: grid; justify-items: end; gap: 4px; }
+.fin-item-valor strong { font-size: 15px; font-variant-numeric: tabular-nums; }
+.fin-parcial { font-size: 11px; color: var(--text-muted); }
+.fin-item-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.fin-pagamentos { grid-column: 1 / -1; display: grid; gap: 3px; margin: 4px 0 0; padding: 9px 0 0; list-style: none; border-top: 1px solid var(--border); }
+.fin-pagamentos li { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--text-muted); }
+.fin-pagamentos svg { color: #3f7d55; }
+.fin-vazio { margin: 0; padding: 22px; font-size: 12.5px; line-height: 1.6; text-align: center; color: var(--text-muted); background: var(--cream-soft); border: 1px solid var(--border); border-radius: 11px; }
