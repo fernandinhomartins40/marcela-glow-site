@@ -13,9 +13,9 @@ import type { AdminTab } from '../pages/AdminPanel'
 /**
  * Barra inferior de navegação, só no aplicativo instalado.
  *
- * O painel tem dez seções, e uma barra comporta quatro ou cinco antes de os
- * rótulos começarem a se cortar. As quatro escolhidas são as que se abrem todo
- * dia; o resto vive atrás de "Mais", que sobe como folha a partir do rodapé.
+ * O painel tem onze seções, e uma barra comporta cinco antes de os rótulos
+ * começarem a se cortar. As quatro escolhidas são as que se abrem todo dia; o
+ * resto vive atrás de "Mais", que sobe como folha a partir do rodapé.
  *
  * Por que barra inferior e não a gaveta lateral que o painel já tem: numa mão
  * só, o topo da tela de um celular grande é inalcançável sem reposicionar o
@@ -23,15 +23,28 @@ import type { AdminTab } from '../pages/AdminPanel'
  * do sistema por perto e a tela costuma ser maior.
  */
 
-const PRINCIPAIS: { id: AdminTab; label: string; icon: LucideIcon }[] = [
+/**
+ * A barra, com "Atender" no meio e em destaque.
+ *
+ * Ele fica no centro porque é a ação que a médica repete o dia inteiro, e o
+ * centro da barra é o ponto que o polegar alcança sem reposicionar o
+ * aparelho. Elevado, ele também vira a referência visual da barra: os outros
+ * quatro se leem em relação a ele.
+ *
+ * A ordem não é arbitrária — o que vem antes e depois dele são as telas de
+ * onde se chega a um atendimento: o dia de hoje e a agenda de um lado, as
+ * pacientes e o resto do outro.
+ */
+const PRINCIPAIS: { id: AdminTab; label: string; icon: LucideIcon; destaque?: true }[] = [
   { id: 'dashboard', label: 'Hoje', icon: LayoutDashboard },
-  { id: 'encounter', label: 'Atender', icon: Stethoscope },
   { id: 'appointments', label: 'Agenda', icon: CalendarDays },
+  { id: 'encounter', label: 'Atender', icon: Stethoscope, destaque: true },
   { id: 'patients', label: 'Pacientes', icon: Users },
 ]
 
 /** O que não coube na barra — abre na folha de "Mais". */
 const SECUNDARIAS: { id: AdminTab; label: string; hint: string }[] = [
+  { id: 'finance', label: 'Financeiro', hint: 'Cobranças, pagamentos e recibos' },
   { id: 'documents', label: 'Documentos', hint: 'Assinar e enviar receitas e pedidos de exame' },
   { id: 'registry', label: 'Cadastros', hint: 'Procedimentos, medicamentos, exames e modelos' },
   { id: 'leads', label: 'Leads', hint: 'Contatos interessados vindos do site' },
@@ -115,14 +128,22 @@ export function AppBar({
       )}
 
       <nav className="app-bar" aria-label="Navegação principal">
-        {PRINCIPAIS.map(({ id, label, icon: Icon }) => (
+        {PRINCIPAIS.map(({ id, label, icon: Icon, destaque }) => (
           <button
             key={id}
-            className={tab === id ? 'is-active' : ''}
+            className={`${tab === id ? 'is-active' : ''}${destaque ? ' is-destaque' : ''}`}
             onClick={() => ir(id)}
             aria-current={tab === id ? 'page' : undefined}
           >
-            <Icon size={21} aria-hidden="true" />
+            {/* O ícone do destaque vem dentro de um círculo próprio, que sobe
+                acima da barra — sem o invólucro não há o que elevar. */}
+            {destaque ? (
+              <span className="app-bar-circulo">
+                <Icon size={24} aria-hidden="true" />
+              </span>
+            ) : (
+              <Icon size={21} aria-hidden="true" />
+            )}
             {label}
           </button>
         ))}

@@ -1707,7 +1707,9 @@ img, video, canvas { max-width: 100%; height: auto; }
 .app-shell.is-app main {
   /* O rodapé da barra mais a faixa de gestos do sistema: sem isto o último
      cartão da página fica atrás da navegação e não dá para tocá-lo. */
-  padding-bottom: calc(4.25rem + env(safe-area-inset-bottom) + 1rem);
+  /* A barra mais os 26px que o botao em destaque sobe alem dela, mais a faixa
+     de gestos: sem tudo isso o ultimo cartao fica sob o circulo. */
+  padding-bottom: calc(4.25rem + 26px + env(safe-area-inset-bottom) + 1rem);
   padding-left: max(1rem, env(safe-area-inset-left));
   padding-right: max(1rem, env(safe-area-inset-right));
 }
@@ -1773,6 +1775,42 @@ img, video, canvas { max-width: 100%; height: auto; }
   font-weight: 600;
 }
 .app-bar svg { flex: none; }
+
+/* O botao em destaque: sobe acima da barra, como o obturador de um app de
+   camera. Ele marca a acao que se repete o dia inteiro e vira a referencia
+   visual da barra — os outros quatro se leem em relacao a ele.
+
+   A barra precisa de `overflow: visible` para o circulo poder sair dela, e de
+   margem no topo para o circulo nao ser cortado pelo conteudo que rola por
+   baixo. */
+.app-bar { overflow: visible; margin-top: 26px; }
+.app-bar button.is-destaque, main .app-bar button.is-destaque { position: relative; background: transparent; }
+.app-bar-circulo {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: var(--espresso);
+  /* O anel na cor do fundo separa o circulo da barra, senao os dois se fundem
+     e o botao parece so um icone maior. */
+  border: 4px solid var(--cream-soft);
+  border-radius: 50%;
+  color: var(--marble-soft);
+  box-shadow: 0 6px 18px rgba(47, 34, 27, .28);
+  transition: transform .16s ease;
+}
+/* O rotulo desce para caber sob o circulo, que ocupa o espaco do icone. */
+.app-bar button.is-destaque { padding-top: 30px !important; }
+.app-bar button.is-destaque:active .app-bar-circulo { transform: translateX(-50%) scale(.94); }
+/* Na secao aberta o circulo troca de cor em vez de ganhar o fundo bege dos
+   outros — ele ja e escuro, e o fundo o apagaria. */
+.app-bar button.is-destaque.is-active, main .app-bar button.is-destaque.is-active { background: transparent; color: var(--espresso); }
+.app-bar button.is-destaque.is-active .app-bar-circulo { background: var(--bronze); }
 
 /* A folha de "Mais" — sobe do rodapé, como num app */
 .folha-fundo, main .folha-fundo {
