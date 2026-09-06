@@ -1105,6 +1105,9 @@ main .data-actions button.encounter-open {
 .day-head span { font-size: 10px; letter-spacing: .12em; color: var(--text-muted); }
 .day-head strong { font-size: 17px; font-weight: 500; }
 .day-head.selected { background: var(--cream-deep); }
+/* A regra global de `button:hover` sobe 1px, e no dia selecionado isso
+   desalinhava a fila inteira em relacao aos vizinhos. */
+.day-head:hover, main .day-head:hover { transform: none; }
 .day-head.today strong { color: var(--bronze); }
 .week-body { position: relative; height: 420px; }
 .hour-col { border-right: 1px solid var(--border); }
@@ -1118,11 +1121,7 @@ main .data-actions button.encounter-open {
 .hour-slot { height: calc(100% / 13); border-bottom: 1px solid rgba(216,202,184,.45); }
 /* `min-width: 0` no grid do evento: sem ele o nome longo define a largura
    mínima da coluna e o ellipsis nunca chega a agir. */
-.event { position: absolute; left: 2px; right: 2px; min-width: 0; min-height: 0; display: grid; align-content: start; gap: 1px; padding: 3px 4px; border: 0; border-bottom: 2px solid transparent; border-left: 3px solid; border-radius: 5px; cursor: pointer; overflow: hidden; text-align: left; font-size: 10px; line-height: 1.25; }
-/* A borda de baixo transparente e o que separa duas consultas seguidas: sem
-   ela um evento das 07h e outro das 08h se encostam e viram um bloco so, sem
-   divisao visivel. `background-clip: padding-box` impede o fundo de pintar por
-   baixo dela. */
+.event { position: absolute; left: 2px; right: 2px; min-width: 0; min-height: 0; display: grid; align-content: start; gap: 1px; padding: 3px 4px; border: 0; border-left: 3px solid; border-radius: 5px; cursor: pointer; overflow: hidden; text-align: left; font-size: 10px; line-height: 1.25; }
 .event strong { font-size: 10px; font-weight: 600; }
 .event span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .event.success { background: #e4efe6; border-color: #4a7d58; color: #2c5236; }
@@ -1132,7 +1131,6 @@ main .data-actions button.encounter-open {
 /* Depois das classes de cor: elas usam o atalho `background`, que reinicia o
    clip para border-box e faria o fundo pintar por baixo da borda que separa
    duas consultas seguidas. */
-.event.success, .event.warning, .event.info, .event.neutral { background-clip: padding-box; }
 
 .day-list { grid-area: day; min-width: 0; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
 .day-list h3 { margin: 0 0 12px; font-size: 14px; text-transform: capitalize; }
@@ -1381,6 +1379,18 @@ body.page-lock { overflow: hidden; }
   .schedule-toolbar { flex-wrap: wrap; row-gap: 10px; }
   .week-nav { width: 100%; justify-content: space-between; }
   .week-nav strong { min-width: 0; flex: 1; }
+  /* "Hoje" media 67px e "Novo agendamento" o resto, com o grupo ocupando 278
+     de 361px disponiveis — dois alvos de tamanhos diferentes e uma faixa vazia
+     a direita. Metade da linha para cada um resolve as duas coisas. */
+  .schedule-toolbar .toolbar-right { display: flex; width: 100%; gap: 8px; }
+  .schedule-toolbar .toolbar-right > * { flex: 1; justify-content: center; }
+  /* "Novo agendamento" mais o icone nao cabem em 177px e o rotulo quebrava em
+     duas linhas, deixando os dois botoes com alturas diferentes. Fonte um
+     ponto menor e recuo justo resolvem sem encolher o alvo de toque. */
+  /* Os dois sao componentes diferentes — um botao de acao e o "hoje" da barra
+     — e vinham com 42px e 32px de altura. Lado a lado com a mesma largura, a
+     diferenca de altura fica obvia. */
+  .schedule-toolbar .toolbar-right > * { min-height: 40px !important; padding-left: 8px !important; padding-right: 8px !important; font-size: 12px; white-space: nowrap; }
   .toolbar { flex-wrap: wrap; }
   .search-box { min-width: 0; max-width: none; flex-basis: 100%; }
   .toolbar-check { flex: 1 1 auto; }

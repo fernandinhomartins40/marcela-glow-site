@@ -217,7 +217,17 @@ function WeekGrid({
                     <button
                       key={appointment.id}
                       className={`event ${statusMeta(appointment.status).tone}`}
-                      style={{ top: `${top}%`, height: `${Math.max(height, 4)}%` }}
+                      /* A altura desconta 3px para duas consultas seguidas nao
+                         se encostarem. Vai aqui e nao no CSS porque `margin`
+                         nao vale em `position: absolute` e uma borda
+                         transparente ocuparia espaco dentro da propria caixa —
+                         as duas tentativas anteriores. Descontando na altura, o
+                         topo fica no lugar e o evento segue alinhado com a sua
+                         faixa de horario. */
+                      style={{
+                        top: `${top}%`,
+                        height: `calc(${Math.max(height, 4)}% - 3px)`,
+                      }}
                       onClick={() => onSelectAppointment(appointment)}
                       title={`${clinicTime(appointment.scheduledAt)} · ${appointment.name}`}
                     >
