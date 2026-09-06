@@ -25,6 +25,10 @@ const ESSENCIAIS = [
   self.registration.scope,
   `${self.registration.scope}manifest.webmanifest`,
   `${self.registration.scope}icon.svg`,
+  // O PNG de 192 e o que o navegador exige para oferecer a instalacao:
+  // sem ele em cache, um primeiro acesso offline nao teria como instalar.
+  `${self.registration.scope}icon-192.png`,
+  `${self.registration.scope}icon-512.png`,
 ]
 
 self.addEventListener('install', (event) => {

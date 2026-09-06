@@ -102,13 +102,32 @@ export function montarManifesto(
   if (icones.maskable) {
     lista.push({ src: icones.maskable, sizes: '512x512', type: 'image/png', purpose: 'maskable' })
   }
-  /* Sem nenhum ícone enviado, o SVG do build responde por todos os tamanhos —
-     é o que já acontecia antes desta tela existir. */
+  /* Sem nenhum ícone enviado, valem os do build.
+
+     Precisam ser os PNG e não só o SVG: o Chrome no Android exige um PNG de
+     192px ou maior para oferecer a instalação, e um manifesto com apenas SVG
+     não satisfaz o requisito — o app simplesmente não aparecia como
+     instalável. */
   if (lista.length === 0) {
-    lista.push({ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' })
+    lista.push(
+      { src: 'icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: 'icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+    )
   }
 
   return {
+    /* O `id` é o que separa um aplicativo do outro para o navegador.
+
+       Sem ele a identidade sai da URL do manifesto — e como os dois HTMLs
+       apontam para `/api/landing/manifest/...`, na mesma origem e com o
+       caminho quase igual, o navegador podia tratá-los como o mesmo app:
+       instalar o segundo substituía o primeiro na tela de início.
+
+       O valor é o próprio `scope`, que já é único por app e não muda quando
+       a clínica edita nome ou cores — trocar o `id` de um app instalado o
+       faria aparecer como um aplicativo novo, deixando o antigo órfão. */
+    id: base,
     name: config.name,
     short_name: config.shortName,
     ...(config.description ? { description: config.description } : {}),
