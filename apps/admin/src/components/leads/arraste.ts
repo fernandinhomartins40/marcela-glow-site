@@ -34,26 +34,94 @@ export interface ArrasteInfo {
 }
 
 /**
- * Rola o quadro quando o ponteiro chega perto da borda.
+ * Leva o quadro à coluna seguinte quando o cartão encosta na borda.
  *
- * A velocidade cresce conforme o dedo se aproxima da margem: perto da borda a
- * pessoa quer atravessar várias colunas, no meio da faixa quer ajustar. Um
- * valor fixo faria o quadro voar ou não sair do lugar.
+ * A primeira versão rolava alguns pixels por evento de movimento. Funcionava
+ * na teoria e não na mão: uma coluna mede 345px num celular, então atravessar
+ * uma exigia manter o dedo parado dentro de uma faixa de 56px por vinte
+ * eventos seguidos. Na prática só dava para mover o cartão para a coluna
+ * vizinha, que é a única que chega a aparecer na tela.
+ *
+ * Agora cada encostada na borda salta uma coluna inteira, com o intervalo
+ * abaixo entre um salto e o outro. Encostar e esperar percorre o quadro
+ * etapa a etapa, e o cartão pode ir para a última coluna sem o dedo precisar
+ * de pontaria.
  */
-const FAIXA_BORDA = 56
-const VELOCIDADE_MAX = 18
+const FAIXA_BORDA = 64
+const INTERVALO_SALTO = 420
+
+/**
+ * O começo de cada coluna, em coordenada de rolagem.
+ *
+ * Vem do próprio DOM em vez de `scrollWidth / n`: as colunas podem ter
+ * larguras diferentes — o CSS as define em `1fr` com mínimo, e a última não
+ * tem a folga do gap — e uma média erraria o alinhamento a cada salto.
+ */
+function inicioDasColunas(quadro: HTMLElement): number[] {
+  const base = quadro.getBoundingClientRect().left - quadro.scrollLeft
+  return Array.from(quadro.children, (c) =>
+    Math.round((c as HTMLElement).getBoundingClientRect().left - base),
+  )
+}
+
+/** Salta uma coluna para o lado pedido. Devolve se houve para onde ir. */
+function saltarColuna(direcao: 'esq' | 'dir'): boolean {
+  const quadro = document.querySelector<HTMLElement>('.kanban')
+  if (!quadro) return false
+
+  const inicios = inicioDasColunas(quadro)
+  const atual = quadro.scrollLeft
+  /* Tolerância de 4px: o `scroll-snap` e o arredondamento do navegador deixam
+     a rolagem alguns décimos fora do início exato da coluna, e sem a folga o
+     salto acharia que ainda está na anterior. */
+  const proximo = direcao === 'dir'
+    ? inicios.find((x) => x > atual + 4)
+    : [...inicios].reverse().find((x) => x < atual - 4)
+
+  if (proximo === undefined) return false
+  quadro.scrollTo({ left: proximo, behavior: 'smooth' })
+  return true
+}
+
+/**
+ * Decide se o ponteiro está numa borda e, se estiver, agenda os saltos.
+ *
+ * O intervalo é guardado fora do React porque só existe um arraste por vez, e
+ * um estado faria o efeito remontar a cada salto.
+ */
+let saltoEmCurso: { direcao: string; timer: number } | null = null
+
+function pararSaltos() {
+  if (saltoEmCurso) {
+    window.clearInterval(saltoEmCurso.timer)
+    saltoEmCurso = null
+  }
+}
 
 function rolarSePerto(x: number) {
   const quadro = document.querySelector<HTMLElement>('.kanban')
   if (!quadro) return
   const r = quadro.getBoundingClientRect()
 
-  if (x < r.left + FAIXA_BORDA) {
-    const forca = (r.left + FAIXA_BORDA - x) / FAIXA_BORDA
-    quadro.scrollLeft -= Math.ceil(forca * VELOCIDADE_MAX)
-  } else if (x > r.right - FAIXA_BORDA) {
-    const forca = (x - (r.right - FAIXA_BORDA)) / FAIXA_BORDA
-    quadro.scrollLeft += Math.ceil(forca * VELOCIDADE_MAX)
+  const direcao: 'esq' | 'dir' | null =
+    x < r.left + FAIXA_BORDA ? 'esq' : x > r.right - FAIXA_BORDA ? 'dir' : null
+
+  if (!direcao) {
+    pararSaltos()
+    return
+  }
+  // Já saltando para este lado: deixa o intervalo seguir.
+  if (saltoEmCurso?.direcao === direcao) return
+
+  pararSaltos()
+  /* O primeiro salto sai na hora — esperar 420ms para o quadro reagir faria
+     a borda parecer morta. */
+  saltarColuna(direcao)
+  saltoEmCurso = {
+    direcao,
+    timer: window.setInterval(() => {
+      if (!saltarColuna(direcao)) pararSaltos()
+    }, INTERVALO_SALTO),
   }
 }
 
@@ -79,6 +147,8 @@ export function useArrasteDeCartao({
 
   const limpar = React.useCallback(() => {
     if (vivo.current?.timer) window.clearTimeout(vivo.current.timer)
+    // Sem isto o quadro continuaria saltando depois de soltar o cartão.
+    pararSaltos()
     vivo.current = null
     setInfo({ itemId: null, alvo: null })
   }, [])
