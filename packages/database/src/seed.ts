@@ -8,6 +8,7 @@ import {
   NotificationChannel,
   Permission,
   PrescriptionStatus,
+  TreatmentPlanStatus,
   UserRole,
 } from '@prisma/client'
 import bcrypt from 'bcryptjs'
@@ -133,6 +134,16 @@ async function main() {
       imageUrl: null,
       isActive: true,
       displayOrder: 3,
+      defaultSessions: 3,
+      intervalDays: 45,
+      fieldSchema: [
+        { key: 'area', label: 'Área tratada', hint: 'Face, pescoço, colo, glúteos' },
+        { key: 'produto', label: 'Produto', hint: 'Sculptra, Radiesse, Ellansé' },
+        { key: 'diluicao', label: 'Diluição' },
+        { key: 'frascos', label: 'Frascos por sessão' },
+      ],
+      careBefore: 'Chegue com a pele limpa, sem maquiagem. Suspenda anti-inflamatórios 48h antes.',
+      careAfter: 'Massageie a área 5 minutos, 5 vezes ao dia, por 5 dias. O resultado é progressivo ao longo de 2 a 3 meses.',
     },
     {
       number: '04',
@@ -163,6 +174,14 @@ async function main() {
       imageUrl: null,
       isActive: true,
       displayOrder: 6,
+      defaultSessions: 3,
+      intervalDays: 30,
+      fieldSchema: [
+        { key: 'area', label: 'Área tratada', hint: 'Rosto, pescoço, colo, mãos' },
+        { key: 'produto', label: 'Produto' },
+        { key: 'volume', label: 'Volume por sessão' },
+      ],
+      careAfter: 'Pequenas pápulas no local das injeções são normais e somem em até 48h. Use protetor solar todos os dias.',
     },
   ]
 
@@ -381,24 +400,117 @@ async function main() {
   })
   console.log(`✅ Paciente demo criado/encontrado: ${patient.name} (${patient.email})`)
 
-  const skinbooster = procedures.find((p) => p.title.includes('Skinbooster'))
-  if (skinbooster) {
-    const existingSession = await prisma.procedureSession.findFirst({
-      where: { patientId: patient.id, procedureId: skinbooster.id, tenantId: tenant.id },
-    })
-    const sessionPayload = {
-      patientId: patient.id,
-      procedureId: skinbooster.id,
-      tenantId: tenant.id,
-      notes: 'Evolução com melhora de luminosidade e hidratação.',
-      priceCents: 180000,
+
+  // ── Jornada da paciente demo ──────────────────────────────────────────────
+  // O login de teste do portal precisa ter o que mostrar: sem plano, a aba
+  // Jornada abre vazia e não dá para conferir se a tela funciona. São dois —
+  // um em andamento e um concluído — porque é a diferença entre eles que a
+  // tela precisa saber desenhar.
+  const planosDemo: {
+    procedimento: string
+    titulo: string
+    status: TreatmentPlanStatus
+    total: number
+    feitas: number
+    /** Dias atrás da primeira sessão. */
+    inicio: number
+    intervalo: number
+    details: Record<string, string>
+    careBefore?: string
+    careAfter?: string
+    internalNotes?: string
+  }[] = [
+    {
+      procedimento: 'Bioestimuladores de Colágeno',
+      titulo: 'Bioestimulador de colágeno',
+      status: TreatmentPlanStatus.ACTIVE,
+      total: 3,
+      feitas: 2,
+      inicio: 90,
+      intervalo: 45,
+      details: {
+        area: 'Terço médio e mandíbula',
+        produto: 'Radiesse',
+        diluicao: '1:1 com lidocaína',
+        frascos: '1,5ml por lado',
+      },
+      careBefore: 'Chegue com a pele limpa, sem maquiagem. Suspenda anti-inflamatórios 48h antes.',
+      careAfter:
+        'Massageie a área 5 minutos, 5 vezes ao dia, por 5 dias. O colágeno se forma aos poucos: o resultado é progressivo ao longo de 2 a 3 meses.',
+      internalNotes: 'Hipotireoidismo controlado — sem contraindicação. Boa resposta na primeira sessão.',
+    },
+    {
+      procedimento: 'Skinbooster & Hidratação',
+      titulo: 'Skinbooster',
+      status: TreatmentPlanStatus.COMPLETED,
+      total: 3,
+      feitas: 3,
+      inicio: 180,
+      intervalo: 30,
+      details: { area: 'Face completa', produto: 'Restylane Vital', volume: '2ml por sessão' },
+      careAfter:
+        'Pequenas pápulas no local das injeções são normais e somem em até 48h. Use protetor solar todos os dias.',
+    },
+  ]
+
+  for (const dados of planosDemo) {
+    const procedimento = procedures.find((p) => p.title === dados.procedimento)
+    if (!procedimento) continue
+
+    const ultima = dados.feitas > 0 ? dados.inicio - (dados.feitas - 1) * dados.intervalo : dados.inicio
+    const desde = (diasAtras: number, hora = 10) => {
+      const d = new Date()
+      d.setHours(hora, 30, 0, 0)
+      d.setDate(d.getDate() - diasAtras)
+      return d
     }
 
-    if (existingSession) {
-      await prisma.procedureSession.update({ where: { id: existingSession.id }, data: sessionPayload })
-    } else {
-      await prisma.procedureSession.create({ data: sessionPayload })
+    const camposPlano = {
+      title: dados.titulo,
+      status: dados.status,
+      totalSessions: dados.total,
+      intervalDays: dados.intervalo,
+      details: dados.details,
+      careBefore: dados.careBefore ?? null,
+      careAfter: dados.careAfter ?? null,
+      internalNotes: dados.internalNotes ?? null,
+      startedAt: desde(dados.inicio),
+      completedAt: dados.status === TreatmentPlanStatus.COMPLETED ? desde(ultima, 11) : null,
+      patientId: patient.id,
+      procedureId: procedimento.id,
+      tenantId: tenant.id,
     }
+
+    const jaExiste = await prisma.treatmentPlan.findFirst({
+      where: { tenantId: tenant.id, patientId: patient.id, procedureId: procedimento.id },
+    })
+    const plano = jaExiste
+      ? await prisma.treatmentPlan.update({ where: { id: jaExiste.id }, data: camposPlano })
+      : await prisma.treatmentPlan.create({ data: camposPlano })
+
+    for (let n = 1; n <= dados.feitas; n += 1) {
+      const quando = dados.inicio - (n - 1) * dados.intervalo
+      const temSessao = await prisma.procedureSession.findFirst({
+        where: { planId: plano.id, sessionNumber: n },
+      })
+      if (temSessao) continue
+      await prisma.procedureSession.create({
+        data: {
+          performedAt: desde(quando),
+          priceCents: 190000,
+          notes:
+            n === 1
+              ? `Primeira sessão de ${dados.total}. Procedimento realizado sem intercorrências.`
+              : `${n}ª sessão de ${dados.total}. Boa evolução em relação à anterior.`,
+          patientId: patient.id,
+          procedureId: procedimento.id,
+          planId: plano.id,
+          sessionNumber: n,
+          tenantId: tenant.id,
+        },
+      })
+    }
+    console.log(`✅ Plano de tratamento: ${dados.titulo} (${dados.feitas}/${dados.total})`)
   }
 
   const existingPrescription = await prisma.prescription.findFirst({
