@@ -107,7 +107,7 @@ const Procedures = () => {
                 <span className="font-display text-3xl text-accent/60 group-hover:text-accent transition-colors">
                   {proc.number}
                 </span>
-                <span className="label-eyebrow text-right text-[0.65rem]">
+                <span className="label-eyebrow text-right text-[0.75rem] sm:text-[0.65rem]">
                   {proc.subtitle}
                 </span>
               </div>
@@ -121,7 +121,7 @@ const Procedures = () => {
                 {proc.description}
               </p>
 
-              <button className="link-underline text-[0.7rem] tracking-[0.3em] uppercase text-accent font-medium mt-8 self-start">
+              <button className="link-underline text-[0.78rem] sm:text-[0.7rem] tracking-[0.3em] uppercase text-accent font-medium mt-8 self-start">
                 Saiba mais
               </button>
             </article>

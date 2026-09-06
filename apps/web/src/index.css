@@ -229,9 +229,13 @@
     font-weight: 400;
   }
 
+  /* A sobrelinha era fixa em 0.7rem: 11px no celular, com 0.3em de espaco
+     entre letras. Nesse tamanho o texto em maiusculas vira um risco cinza,
+     e ele carrega a unica indicacao do que a secao trata. Cresce com a
+     largura ate o valor antigo, que ja funcionava no desktop. */
   .label-eyebrow {
     font-family: "Inter", sans-serif;
-    font-size: 0.7rem;
+    font-size: clamp(0.7rem, 3.2vw, 0.8rem);
     font-weight: 500;
     letter-spacing: 0.3em;
     text-transform: uppercase;
@@ -248,7 +252,11 @@
      em vw dava um título de 136px que empurrava o resto do hero para fora da
      viewport. O min() faz a dimensão mais escassa mandar. */
   .type-hero {
-    font-size: clamp(3.5rem, min(11vw, 17svh), 8.5rem);
+    /* O piso de 3.5rem (56px) vinha do desktop e nao cabia no celular: com
+       393px de largura, "Saude" sozinho tomava a linha toda e o resto do
+       hero era empurrado para baixo da dobra. Agora o piso acompanha a
+       largura, e o teto continua o mesmo. */
+    font-size: clamp(2.75rem, min(11vw, 17svh), 8.5rem);
     line-height: 0.88;
     letter-spacing: -0.015em;
   }
@@ -268,7 +276,7 @@
 
   /* Linha de apoio sob o título de seção */
   .type-lead {
-    font-size: clamp(1.05rem, 1.7vw, 1.4rem);
+    font-size: clamp(1.05rem, max(1.7vw, 4.2vw), 1.4rem);
     line-height: 1.45;
   }
 

@@ -67,7 +67,7 @@ const Header = () => {
               <span className="font-display text-sm lg:text-base xl:text-lg tracking-[0.14em] lg:tracking-[0.18em] xl:tracking-[0.25em] uppercase text-primary">
                 Dra. Marcela Duch
               </span>
-              <span className="text-[0.55rem] xl:text-[0.6rem] tracking-[0.2em] xl:tracking-[0.3em] uppercase text-muted-foreground">
+              <span className="text-[0.75rem] sm:text-[0.55rem] xl:text-[0.6rem] tracking-[0.2em] xl:tracking-[0.3em] uppercase text-muted-foreground">
                 Médica · CRM/MS 5691
               </span>
             </div>
@@ -82,7 +82,7 @@ const Header = () => {
               <button
                 key={link.id}
                 onClick={() => scrollToSection(link.id)}
-                className="link-underline whitespace-nowrap text-[0.6rem] xl:text-[0.65rem] 2xl:text-[0.7rem] tracking-[0.1em] xl:tracking-[0.16em] 2xl:tracking-[0.25em] uppercase font-medium text-foreground/80 hover:text-foreground transition-colors"
+                className="link-underline whitespace-nowrap text-[0.75rem] sm:text-[0.6rem] xl:text-[0.65rem] 2xl:text-[0.7rem] tracking-[0.1em] xl:tracking-[0.16em] 2xl:tracking-[0.25em] uppercase font-medium text-foreground/80 hover:text-foreground transition-colors"
               >
                 {link.label}
               </button>

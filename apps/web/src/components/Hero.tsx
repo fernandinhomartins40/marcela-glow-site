@@ -113,20 +113,20 @@ const Hero = () => {
       </div>
 
       {/* Conteúdo principal */}
-      <div className="relative container mx-auto px-5 sm:px-6 lg:px-10 min-h-[100svh] flex items-center pt-24 pb-20 lg:pt-[max(6rem,12svh)] lg:pb-[max(5rem,10svh)]">
-        <div className="grid lg:grid-cols-12 gap-6 md:gap-8 w-full items-center">
+      <div className="relative container mx-auto px-5 sm:px-6 lg:px-10 min-h-[100svh] flex items-center pt-[max(5rem,9svh)] pb-[max(3.5rem,7svh)] lg:pt-[max(6rem,12svh)] lg:pb-[max(5rem,10svh)]">
+        <div className="grid lg:grid-cols-12 gap-[min(1.5rem,2.6svh)] md:gap-8 w-full items-center">
           {/* Texto à esquerda */}
           <div className="lg:col-span-7 z-10 order-2 lg:order-1">
             <div key={`txt-${index}`} className="animate-slide-up">
-              <p className="label-eyebrow mb-4 md:mb-6 lg:mb-[min(1.5rem,2.6svh)]">{slide.eyebrow}</p>
+              <p className="label-eyebrow mb-[min(1rem,1.8svh)] md:mb-6 lg:mb-[min(1.5rem,2.6svh)]">{slide.eyebrow}</p>
               <h1 className="font-display type-hero text-primary text-balance">
                 <span className="block">{slide.titleTop}</span>
                 <span className="block italic font-light">{slide.titleBottom}</span>
               </h1>
-              <p className="font-editorial-italic type-lead text-foreground/70 mt-6 md:mt-7 lg:text-[clamp(1.05rem,min(1.7vw,2.4svh),1.4rem)] lg:mt-[min(1.75rem,3svh)] max-w-lg">
+              <p className="font-editorial-italic type-lead text-foreground/70 mt-[min(1.5rem,2.6svh)] md:mt-7 lg:text-[clamp(1.05rem,min(1.7vw,2.4svh),1.4rem)] lg:mt-[min(1.75rem,3svh)] max-w-lg">
                 {slide.subtitle}
               </p>
-              <div className="grid sm:flex sm:flex-row gap-3 sm:gap-4 mt-8 md:mt-10 lg:mt-[min(2.5rem,4.5svh)] [&>button]:lg:whitespace-nowrap [&>button]:lg:px-6 [&>button]:lg:tracking-[0.14em] [&>button]:min-[1200px]:px-10 [&>button]:min-[1200px]:tracking-[0.2em]">
+              <div className="grid sm:flex sm:flex-row gap-3 sm:gap-4 mt-[min(2rem,3.6svh)] md:mt-10 lg:mt-[min(2.5rem,4.5svh)] [&>button]:lg:whitespace-nowrap [&>button]:lg:px-6 [&>button]:lg:tracking-[0.14em] [&>button]:min-[1200px]:px-10 [&>button]:min-[1200px]:tracking-[0.2em]">
                 <Button
                   variant="cta"
                   size="lg"
@@ -147,9 +147,23 @@ const Hero = () => {
 
           {/* Imagem à direita */}
           <div className="lg:col-span-5 z-10 order-1 lg:order-2">
+            {/* No celular a largura mandava menos que a altura: `min(72vw, 26svh)`
+                num aparelho de 393×873 dava 26svh ≈ 227px, ou 58% da largura, com
+                o resto virando margem vazia dos lados. A foto e o rosto da
+                clinica e aparecia como uma miniatura.
+
+                Agora ela ocupa a largura da coluna ate um teto em `svh`, calibrado
+                para os dois botoes ainda caberem na primeira dobra: com 42svh a foto
+                ficava linda e o segundo botao saia da tela.
+
+                Num iPhone SE (667px de altura) o segundo botao ainda fica ~30px
+                abaixo da dobra. Encolher mais resolveria a conta e devolveria a
+                foto ao tamanho de miniatura que motivou este ajuste — entao ali
+                a pagina rola um dedo, que e o comportamento normal de um site
+                no celular. */}
             <div
               key={`img-${index}`}
-              className="relative aspect-[4/5] w-[min(72vw,26svh)] min-[420px]:w-[min(20rem,28svh)] sm:w-[min(24rem,32svh)] md:w-[min(28rem,34svh)] lg:w-auto lg:h-full lg:max-h-[68svh] mx-auto animate-reveal"
+              className="relative aspect-[4/5] w-full max-w-[min(80vw,34svh)] min-[420px]:max-w-[min(20rem,36svh)] sm:max-w-[min(24rem,42svh)] md:max-w-[min(28rem,46svh)] lg:w-auto lg:max-w-none lg:h-full lg:max-h-[68svh] mx-auto animate-reveal"
             >
               <img
                 src={image?.url ?? FALLBACK_IMAGES[index % FALLBACK_IMAGES.length]}
@@ -193,7 +207,7 @@ const Hero = () => {
             aria-label={`Slide ${i + 1}`}
           />
         ))}
-        <span className="ml-3 text-[0.65rem] tracking-[0.3em] uppercase text-muted-foreground whitespace-nowrap">
+        <span className="ml-3 text-[0.75rem] sm:text-[0.65rem] tracking-[0.3em] uppercase text-muted-foreground whitespace-nowrap">
           {String(index + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
         </span>
       </div>

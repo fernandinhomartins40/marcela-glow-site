@@ -8,7 +8,7 @@ const buttonVariants = cva(
   // `max-w-full` + quebra de palavra: o rótulo longo ("Ver Todos os Protocolos")
   // com tracking largo media 350px e furava a viewport de 360px, criando scroll
   // horizontal na página inteira. Sem `whitespace-nowrap` o texto acomoda.
-  "inline-flex max-w-full items-center justify-center gap-2 break-words text-center text-xs sm:text-sm font-medium tracking-[0.14em] sm:tracking-[0.2em] uppercase ring-offset-background transition-all duration-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0",
+  "inline-flex max-w-full items-center justify-center gap-2 break-words text-center text-[0.8125rem] sm:text-sm font-medium tracking-[0.1em] sm:tracking-[0.2em] uppercase ring-offset-background transition-all duration-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0",
   {
     variants: {
       variant: {

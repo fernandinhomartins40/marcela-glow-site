@@ -60,7 +60,7 @@ const About = () => {
               <div className="absolute inset-3 border border-[hsl(var(--cream))]/40 pointer-events-none" />
               {/* Tag flutuante — tangencia o canto sem cobrir a imagem */}
               <div className="absolute -bottom-5 -right-5 bg-primary text-primary-foreground px-5 py-3.5 hidden lg:block">
-                <p className="text-[0.65rem] tracking-[0.3em] uppercase opacity-70">{content.crmLabel}</p>
+                <p className="text-[0.75rem] sm:text-[0.65rem] tracking-[0.3em] uppercase opacity-70">{content.crmLabel}</p>
                 <p className="font-display text-2xl">{content.crmNumber}</p>
               </div>
             </div>

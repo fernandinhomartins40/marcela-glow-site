@@ -160,7 +160,7 @@ const Appointment = () => {
                 <div key={block.label} className="flex items-start gap-5">
                   <div className="w-8 h-px bg-[hsl(var(--bronze))] mt-3 shrink-0" />
                   <div>
-                    <p className="text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-2">
+                    <p className="text-[0.75rem] sm:text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-2">
                       {block.label}
                     </p>
                     {block.lines.map((line) => (

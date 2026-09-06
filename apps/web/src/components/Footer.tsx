@@ -97,7 +97,7 @@ const Footer = () => {
             <p className="font-display text-lg tracking-[0.25em] uppercase text-[hsl(var(--cream))] mb-2">
               Dra. Marcela Duch
             </p>
-            <p className="text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-6">
+            <p className="text-[0.75rem] sm:text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-6">
               Médica · CRM/MS 5691
             </p>
             <p className="font-editorial-italic text-lg text-[hsl(var(--cream))]/60 leading-snug max-w-xs">
@@ -150,13 +150,13 @@ const Footer = () => {
             <p className="label-eyebrow mb-6">Contato</p>
             <ul className="space-y-5 text-sm font-light tracking-wide text-[hsl(var(--cream))]/70">
               <li>
-                <p className="text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-1.5">
+                <p className="text-[0.75rem] sm:text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-1.5">
                   Endereço
                 </p>
                 <p>{content.address}</p>
               </li>
               <li>
-                <p className="text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-1.5">
+                <p className="text-[0.75rem] sm:text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-1.5">
                   Telefone
                 </p>
                 <a
@@ -169,7 +169,7 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <p className="text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-1.5">
+                <p className="text-[0.75rem] sm:text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-1.5">
                   E-mail
                 </p>
                 <a
@@ -180,7 +180,7 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <p className="text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-1.5">
+                <p className="text-[0.75rem] sm:text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-1.5">
                   Atendimento
                 </p>
                 <p>Segunda a sexta · 9h às 18h</p>
@@ -218,7 +218,7 @@ const Footer = () => {
 
         {/* Barra inferior */}
         <div className="border-t border-[hsl(var(--cream))]/15 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-5 text-[0.7rem] tracking-[0.15em] uppercase text-[hsl(var(--cream))]/50">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-5 text-[0.78rem] sm:text-[0.7rem] tracking-[0.15em] uppercase text-[hsl(var(--cream))]/50">
             <p>
               © {new Date().getFullYear()} Dra. Marcela Duch · Todos os direitos reservados
             </p>

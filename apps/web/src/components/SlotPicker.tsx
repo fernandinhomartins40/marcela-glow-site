@@ -126,7 +126,7 @@ const SlotPicker = ({
       {/* Passo 1 — dia */}
       <div className="border-b border-[hsl(var(--cream))]/10 p-4 sm:p-5">
         <div className="mb-3 flex items-center justify-between gap-4">
-          <span className="text-[0.6rem] uppercase tracking-[0.28em] text-[hsl(var(--bronze-light))]">
+          <span className="text-[0.75rem] sm:text-[0.6rem] uppercase tracking-[0.28em] text-[hsl(var(--bronze-light))]">
             Escolha o dia
           </span>
           <div className="hidden gap-1 sm:flex">
@@ -175,13 +175,13 @@ const SlotPicker = ({
                       : "border-[hsl(var(--cream))]/20 text-[hsl(var(--cream))]/75 hover:border-[hsl(var(--bronze))] hover:text-[hsl(var(--cream))]",
                   )}
                 >
-                  <span className="text-[0.55rem] uppercase tracking-[0.2em] opacity-70">
+                  <span className="text-[0.75rem] sm:text-[0.55rem] uppercase tracking-[0.2em] opacity-70">
                     {weekday}
                   </span>
                   <span className="font-display text-2xl leading-none">
                     {dayOfMonth}
                   </span>
-                  <span className="text-[0.55rem] uppercase tracking-[0.2em] opacity-70">
+                  <span className="text-[0.75rem] sm:text-[0.55rem] uppercase tracking-[0.2em] opacity-70">
                     {month}
                   </span>
                 </button>
@@ -201,7 +201,7 @@ const SlotPicker = ({
           {periods.map((period) => (
             <div key={period.id}>
               <div className="mb-2.5 flex items-center gap-3">
-                <span className="text-[0.6rem] uppercase tracking-[0.28em] text-[hsl(var(--bronze-light))]">
+                <span className="text-[0.75rem] sm:text-[0.6rem] uppercase tracking-[0.28em] text-[hsl(var(--bronze-light))]">
                   {period.label}
                 </span>
                 <span className="h-px flex-1 bg-[hsl(var(--cream))]/10" />

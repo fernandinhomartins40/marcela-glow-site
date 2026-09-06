@@ -87,7 +87,7 @@ const Testimonials = () => {
 
             <footer className="mt-8 md:mt-12">
               <div className="divider-luxe mb-5" />
-              <p className="text-[0.7rem] tracking-[0.3em] uppercase text-primary font-medium">
+              <p className="text-[0.78rem] sm:text-[0.7rem] tracking-[0.3em] uppercase text-primary font-medium">
                 {current.authorName}
               </p>
             </footer>
@@ -114,7 +114,7 @@ const Testimonials = () => {
                   aria-label={`Ir para depoimento ${index + 1}`}
                 />
               ))}
-              <span className="ml-2 text-[0.65rem] tracking-[0.3em] uppercase text-muted-foreground">
+              <span className="ml-2 text-[0.75rem] sm:text-[0.65rem] tracking-[0.3em] uppercase text-muted-foreground">
                 {String(activeIndex + 1).padStart(2, "0")} / {String(testimonials.length).padStart(2, "0")}
               </span>
             </div>
