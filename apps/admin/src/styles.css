@@ -1109,18 +1109,30 @@ main .data-actions button.encounter-open {
 .week-body { position: relative; height: 420px; }
 .hour-col { border-right: 1px solid var(--border); }
 .hour-mark { height: calc(100% / 13); position: relative; }
-.hour-mark span { position: absolute; top: -6px; right: 6px; font-size: 10px; color: var(--text-muted); }
+/* O rotulo fica dentro da propria faixa. Com `top: -6px` a primeira hora subia
+   para fora do corpo e se sobrepunha a linha dos dias — visivel em qualquer
+   largura, so que no celular, onde os dias sao botoes altos, ela encostava no
+   numero do dia. */
+.hour-mark span { position: absolute; top: 2px; right: 6px; font-size: 10px; color: var(--text-muted); }
 .day-col { position: relative; border-left: 1px solid var(--border); }
 .hour-slot { height: calc(100% / 13); border-bottom: 1px solid rgba(216,202,184,.45); }
 /* `min-width: 0` no grid do evento: sem ele o nome longo define a largura
    mínima da coluna e o ellipsis nunca chega a agir. */
-.event { position: absolute; left: 2px; right: 2px; min-width: 0; min-height: 0; display: grid; align-content: start; gap: 1px; padding: 3px 4px; border: 0; border-left: 3px solid; border-radius: 5px; cursor: pointer; overflow: hidden; text-align: left; font-size: 10px; line-height: 1.25; }
+.event { position: absolute; left: 2px; right: 2px; min-width: 0; min-height: 0; display: grid; align-content: start; gap: 1px; padding: 3px 4px; border: 0; border-bottom: 2px solid transparent; border-left: 3px solid; border-radius: 5px; cursor: pointer; overflow: hidden; text-align: left; font-size: 10px; line-height: 1.25; }
+/* A borda de baixo transparente e o que separa duas consultas seguidas: sem
+   ela um evento das 07h e outro das 08h se encostam e viram um bloco so, sem
+   divisao visivel. `background-clip: padding-box` impede o fundo de pintar por
+   baixo dela. */
 .event strong { font-size: 10px; font-weight: 600; }
 .event span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .event.success { background: #e4efe6; border-color: #4a7d58; color: #2c5236; }
 .event.warning { background: #f7ecdc; border-color: #b8813c; color: #7d5220; }
 .event.info    { background: #e6ecf2; border-color: #5a7794; color: #36506b; }
 .event.neutral { background: var(--cream-deep); border-color: var(--bronze); color: var(--text-muted); }
+/* Depois das classes de cor: elas usam o atalho `background`, que reinicia o
+   clip para border-box e faria o fundo pintar por baixo da borda que separa
+   duas consultas seguidas. */
+.event.success, .event.warning, .event.info, .event.neutral { background-clip: padding-box; }
 
 .day-list { grid-area: day; min-width: 0; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
 .day-list h3 { margin: 0 0 12px; font-size: 14px; text-transform: capitalize; }
@@ -2084,10 +2096,13 @@ img, video, canvas { max-width: 100%; height: auto; }
 @media (max-width: 760px) {
   .week-head, .week-body { min-width: 0; }
 
-  /* O cabecalho deixa de ser parte da grade e vira a fila de selecao: seis
-     botoes de largura igual, sem a coluna vazia das horas. */
-  .week-head { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  .week-head .hour-col { display: none; }
+  /* O cabecalho continua com a coluna das horas, so que vazia.
+
+     Escondendo-a, o cabecalho passava a ter seis colunas e o corpo sete: o
+     primeiro dia comecava em 17px e a coluna do dia no corpo em 63px, com os
+     dois desalinhados por toda a largura da faixa de horas. Mantida vazia, os
+     dois se alinham sozinhos. */
+  .week-head { grid-template-columns: 46px repeat(6, minmax(0, 1fr)); }
   .day-head { padding: 10px 2px; border-left: 0; border-right: 1px solid var(--border); }
   .day-head:last-child { border-right: 0; }
   /* O dia aberto precisa se distinguir de relance: e a unica coluna que a
@@ -2100,6 +2115,10 @@ img, video, canvas { max-width: 100%; height: auto; }
   .week-body { grid-template-columns: 46px minmax(0, 1fr); height: 460px; }
   .day-col { display: none; }
   .day-col.is-dia { display: block; }
+
+  /* Fonte um pouco maior: a coluna das horas tem 46px e o rotulo e lido de
+     relance ao lado de um evento que agora ocupa a largura da tela. */
+  .hour-mark span { right: 8px; font-size: 11px; }
 
   /* Com a coluna larga, o evento pode respirar: horario e nome em tamanho de
      leitura, e o nome inteiro em duas linhas quando precisar. */
