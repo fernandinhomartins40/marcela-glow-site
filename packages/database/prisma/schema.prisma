@@ -668,8 +668,6 @@ model MedicalRecord {
   createdBy   User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
   appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
   attachments Attachment[]
-  charge      Charge?      @relation(fields: [chargeId], references: [id])
-  chargeId    String?
 
   @@index([patientId, occurredAt])
   @@index([appointmentId])
@@ -799,7 +797,6 @@ model Charge {
   session       ProcedureSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
   payments      Payment[]
   receipts      Receipt[]
-  MedicalRecord MedicalRecord[]
 
   @@index([tenantId, issuedAt])
   @@index([tenantId, status])

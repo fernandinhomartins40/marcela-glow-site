@@ -2163,16 +2163,20 @@ img, video, canvas { max-width: 100%; height: auto; }
    A barra vive na coluna `counts` da linha, entre o texto e as acoes. Largura
    fixa porque ela compara planos entre si: barra elastica faria "2 de 3"
    parecer maior que "8 de 12" so por caber mais texto ao lado. */
-.plano-barra {
+/* Vence `.data-counts span`, que e mais especifico e faz o span encolher ate o
+   conteudo — com isso a largura da barra virava zero e todas as barras
+   pareciam iguais, independente do progresso. */
+.data-counts .plano-barra {
   display: block;
+  flex: none;
   width: 96px;
   height: 5px;
   border-radius: 999px;
-  background: var(--cream-soft);
+  background: var(--cream-deep);
   overflow: hidden;
 }
 
-.plano-barra-preenchida {
+.data-counts .plano-barra-preenchida {
   display: block;
   height: 100%;
   border-radius: 999px;
@@ -2183,5 +2187,5 @@ img, video, canvas { max-width: 100%; height: auto; }
 @media (max-width: 720px) {
   /* No celular a linha ja empilha; a barra ocupa a largura toda em vez de
      ficar como um traco solto ao lado do texto. */
-  .plano-barra { width: 100%; }
+  .data-counts .plano-barra { width: 100%; }
 }

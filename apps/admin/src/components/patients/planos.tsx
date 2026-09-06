@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2, Pause, Play, Plus, Sparkles, SquarePen, XCircle } from 'lucide-react'
 import {
   api,
+  Chip,
   ConfirmDialog,
   DataList,
   DataRow,
@@ -68,11 +69,13 @@ export interface Plano {
   }
 }
 
-const STATUS: Record<Plano['status'], { label: string; classe: string }> = {
-  ACTIVE: { label: 'Em andamento', classe: 'chip-ok' },
-  PAUSED: { label: 'Pausado', classe: 'chip-warn' },
-  COMPLETED: { label: 'Concluído', classe: 'chip-ok' },
-  CANCELLED: { label: 'Cancelado', classe: 'chip-muted' },
+/* Os tons vem da paleta que o painel ja usa (.chip.success e irmaos): inventar
+   classe nova aqui daria um chip sem cor nenhuma, que foi o que aconteceu. */
+const STATUS: Record<Plano['status'], { label: string; tom: 'success' | 'warning' | 'info' | 'neutral' }> = {
+  ACTIVE: { label: 'Em andamento', tom: 'info' },
+  PAUSED: { label: 'Pausado', tom: 'warning' },
+  COMPLETED: { label: 'Concluído', tom: 'success' },
+  CANCELLED: { label: 'Cancelado', tom: 'neutral' },
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -138,11 +141,7 @@ export function PlanosPanel({ patientId }: { patientId: string }) {
               icon={Sparkles}
               title={plano.title}
               dimmed={plano.status === 'CANCELLED'}
-              chips={
-                <span className={`chip ${STATUS[plano.status].classe}`}>
-                  {STATUS[plano.status].label}
-                </span>
-              }
+              chips={<Chip tone={STATUS[plano.status].tom}>{STATUS[plano.status].label}</Chip>}
               meta={
                 <>
                   <span>

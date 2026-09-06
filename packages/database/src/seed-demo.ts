@@ -13,6 +13,7 @@ import {
   PrescriptionStatus,
   PrismaClient,
   RecordType,
+  TreatmentPlanStatus,
   UserRole,
 } from '@prisma/client'
 import bcrypt from 'bcryptjs'
@@ -65,6 +66,8 @@ const PROCEDIMENTOS = [
       'Avaliação facial e corporal completa, com análise de pele, histórico de saúde e definição do plano de tratamento.',
     durationMin: 60,
     bufferMin: 10,
+    defaultSessions: 1,
+    careAfter: 'Traga suas dúvidas anotadas e, se possível, fotos recentes. Evite maquiagem pesada no dia.',
   },
   {
     number: '02',
@@ -74,6 +77,15 @@ const PROCEDIMENTOS = [
       'Aplicação para suavizar linhas de expressão da testa, glabela e região dos olhos. Resultado progressivo em até 15 dias.',
     durationMin: 45,
     bufferMin: 15,
+    defaultSessions: 1,
+    intervalDays: 150,
+    fieldSchema: [
+      { key: 'areas', label: 'Áreas aplicadas', hint: 'Testa, glabela, periorbital' },
+      { key: 'unidades', label: 'Unidades', hint: 'Total aplicado na sessão' },
+      { key: 'marca', label: 'Marca do produto' },
+    ],
+    careBefore: 'Suspenda anti-inflamatórios e bebida alcoólica 48h antes. Avise se estiver usando anticoagulante.',
+    careAfter: 'Não deite nem abaixe a cabeça por 4 horas. Evite exercício físico, sauna e massagem no rosto por 24h. O resultado completo aparece em até 15 dias.',
   },
   {
     number: '03',
@@ -83,6 +95,15 @@ const PROCEDIMENTOS = [
       'Reposição de volume em lábios, olheiras, malar ou mento, com técnica adequada a cada região.',
     durationMin: 60,
     bufferMin: 15,
+    defaultSessions: 1,
+    intervalDays: 365,
+    fieldSchema: [
+      { key: 'regiao', label: 'Região', hint: 'Lábios, olheiras, malar, mento' },
+      { key: 'volume', label: 'Volume aplicado', hint: 'Em ml' },
+      { key: 'produto', label: 'Produto' },
+    ],
+    careBefore: 'Evite álcool e anti-inflamatórios por 48h. Se tiver histórico de herpes labial, avise — pode ser necessário antiviral antes.',
+    careAfter: 'Inchaço e pequenos roxos são esperados nos primeiros dias. Compressa fria nas primeiras 24h, sem massagear a região.',
   },
   {
     number: '04',
@@ -92,6 +113,16 @@ const PROCEDIMENTOS = [
       'Estimula a produção natural de colágeno para melhorar flacidez de face, pescoço e colo.',
     durationMin: 60,
     bufferMin: 15,
+    defaultSessions: 3,
+    intervalDays: 45,
+    fieldSchema: [
+      { key: 'area', label: 'Área tratada', hint: 'Face, pescoço, colo, glúteos' },
+      { key: 'produto', label: 'Produto', hint: 'Radiesse, Sculptra, Ellansé' },
+      { key: 'diluicao', label: 'Diluição' },
+      { key: 'frascos', label: 'Frascos por sessão' },
+    ],
+    careBefore: 'Chegue com a pele limpa, sem maquiagem. Suspenda anti-inflamatórios 48h antes.',
+    careAfter: 'Massageie a área 5 minutos, 5 vezes ao dia, por 5 dias. O colágeno se forma aos poucos: o resultado é progressivo ao longo de 2 a 3 meses.',
   },
   {
     number: '05',
@@ -100,6 +131,15 @@ const PROCEDIMENTOS = [
     description: 'Microinjeções de ácido hialurônico que devolvem viço e maciez à pele.',
     durationMin: 45,
     bufferMin: 10,
+    defaultSessions: 3,
+    intervalDays: 30,
+    fieldSchema: [
+      { key: 'area', label: 'Área tratada', hint: 'Face, pescoço, mãos' },
+      { key: 'produto', label: 'Produto' },
+      { key: 'volume', label: 'Volume por sessão', hint: 'Em ml' },
+    ],
+    careBefore: 'Evite ácidos e esfoliantes por 3 dias antes.',
+    careAfter: 'Pequenas pápulas no local das injeções são normais e somem em até 48h. Use protetor solar todos os dias.',
   },
   {
     number: '06',
@@ -108,6 +148,15 @@ const PROCEDIMENTOS = [
     description: 'Renova a camada superficial da pele, clareando manchas e melhorando a textura.',
     durationMin: 40,
     bufferMin: 10,
+    defaultSessions: 4,
+    intervalDays: 21,
+    fieldSchema: [
+      { key: 'agente', label: 'Ativo utilizado', hint: 'Glicólico, salicílico, retinoico' },
+      { key: 'concentracao', label: 'Concentração' },
+      { key: 'tempo', label: 'Tempo de permanência' },
+    ],
+    careBefore: 'Suspenda ácidos e retinoides 5 dias antes. Não se exponha ao sol na semana anterior.',
+    careAfter: 'A pele descama entre o 3º e o 7º dia — não puxe nem esfregue. Protetor solar FPS 50 a cada 3 horas é obrigatório.',
   },
   {
     number: '07',
@@ -116,6 +165,16 @@ const PROCEDIMENTOS = [
     description: 'Indução de colágeno para cicatrizes de acne, poros dilatados e textura irregular.',
     durationMin: 50,
     bufferMin: 15,
+    defaultSessions: 5,
+    intervalDays: 30,
+    fieldSchema: [
+      { key: 'area', label: 'Área tratada' },
+      { key: 'profundidade', label: 'Profundidade da agulha', hint: 'Em mm' },
+      { key: 'ativo', label: 'Ativo aplicado', hint: 'Drug delivery' },
+      { key: 'indicacao', label: 'Indicação', hint: 'Cicatriz de acne, poros, textura' },
+    ],
+    careBefore: 'Suspenda ácidos 5 dias antes. Avise se tiver herpes ativo ou lesão de acne inflamada na área.',
+    careAfter: 'Vermelhidão parecida com queimadura de sol por 24 a 48h. Só água termal e hidratante indicado nas primeiras 24h. Sem maquiagem, sol ou academia por 3 dias.',
   },
   {
     number: '08',
@@ -124,6 +183,13 @@ const PROCEDIMENTOS = [
     description: 'Extração, higienização e hidratação, indicada como manutenção da rotina de cuidados.',
     durationMin: 60,
     bufferMin: 10,
+    defaultSessions: 6,
+    intervalDays: 30,
+    fieldSchema: [
+      { key: 'tipoPele', label: 'Tipo de pele' },
+      { key: 'extracao', label: 'Grau de extração' },
+    ],
+    careAfter: 'Evite sol direto por 24h e não use maquiagem no restante do dia.',
   },
   {
     number: '09',
@@ -133,6 +199,7 @@ const PROCEDIMENTOS = [
     durationMin: 30,
     bufferMin: 5,
     isBookable: false,
+    defaultSessions: 1,
   },
 ]
 
@@ -207,6 +274,19 @@ const PACIENTES = [
   { name: 'Renata Siqueira Nogueira', idade: 33, gender: Gender.FEMALE, city: 'Chapadão do Sul', skinType: 'Fototipo II', allergies: null, conditions: null, referralSource: 'Instagram', bloodType: BloodType.B_POSITIVE, maritalStatus: MaritalStatus.MARRIED, occupation: 'Arquiteta' },
   { name: 'Tatiane Oliveira Braga', idade: 44, gender: Gender.FEMALE, city: 'Chapadão do Sul', skinType: 'Fototipo IV', allergies: 'Sulfa', conditions: null, referralSource: 'Google', bloodType: BloodType.A_NEGATIVE, maritalStatus: MaritalStatus.MARRIED, occupation: 'Dentista' },
 ]
+
+/** Preco medio por sessao, em centavos — o que a clinica cobra de fato. */
+const PRECO_SESSAO: Record<string, number> = {
+  'Consulta de avaliação': 35000,
+  'Toxina botulínica': 120000,
+  'Preenchimento facial': 150000,
+  'Bioestimulador de colágeno': 190000,
+  Skinbooster: 90000,
+  'Peeling químico': 45000,
+  Microagulhamento: 55000,
+  'Limpeza de pele profunda': 25000,
+  'Retorno de acompanhamento': 0,
+}
 
 const LEADS = [
   { name: 'Bianca Ferraz', interest: 'Toxina botulínica', status: LeadStatus.NEW, source: 'Instagram' },
@@ -488,6 +568,330 @@ async function main() {
   console.log(
     `📝 Prontuários: ${await prisma.medicalRecord.count({ where: { tenantId: tenant.id } })}` +
       ` · Sessões realizadas: ${await prisma.procedureSession.count({ where: { tenantId: tenant.id } })}`,
+  )
+
+  // ── Planos de tratamento (a jornada) ──────────────────────────────────────
+  // Os planos são o que dá sentido às sessões: sem eles a paciente vê uma lista
+  // solta de procedimentos e não sabe onde está. Aqui eles cobrem todos os
+  // estados que as telas precisam mostrar — começando, no meio, quase no fim,
+  // pausado, concluído e cancelado — porque um seed só com o caso feliz esconde
+  // exatamente os casos que quebram na hora de testar.
+  //
+  // As três primeiras pacientes têm acesso ao portal, então são elas que
+  // recebem as jornadas mais completas.
+  const proc = (titulo: string) => procedimentos.find((p) => p.title === titulo)!
+
+  const PLANOS: {
+    paciente: number
+    procedimento: string
+    status: TreatmentPlanStatus
+    total: number
+    feitas: number
+    /** Dias atrás em que a primeira sessão aconteceu. */
+    inicio: number
+    intervalo: number
+    details: Record<string, string>
+    careBefore?: string
+    careAfter?: string
+    internalNotes?: string
+  }[] = [
+    // Ana Beatriz (portal) — a jornada mais rica: três planos em fases diferentes.
+    {
+      paciente: 0,
+      procedimento: 'Bioestimulador de colágeno',
+      status: TreatmentPlanStatus.ACTIVE,
+      total: 3,
+      feitas: 2,
+      inicio: 96,
+      intervalo: 45,
+      details: { area: 'Terço médio e mandíbula', produto: 'Radiesse', diluicao: '1:1 com lidocaína', frascos: '1,5ml por lado' },
+      careAfter:
+        'Massageie a área 5 minutos, 5 vezes ao dia, por 5 dias. O resultado é progressivo: a firmeza aparece ao longo de 2 a 3 meses.',
+      internalNotes: 'Pele fina no terço médio — manter diluição maior. Respondeu bem à primeira sessão.',
+    },
+    {
+      paciente: 0,
+      procedimento: 'Skinbooster',
+      status: TreatmentPlanStatus.ACTIVE,
+      total: 3,
+      feitas: 1,
+      inicio: 28,
+      intervalo: 30,
+      details: { area: 'Face completa', produto: 'Restylane Vital', volume: '2ml' },
+      internalNotes: 'Combinar com o bioestimulador — intercalar as datas para não sobrecarregar.',
+    },
+    {
+      paciente: 0,
+      procedimento: 'Toxina botulínica',
+      status: TreatmentPlanStatus.COMPLETED,
+      total: 1,
+      feitas: 1,
+      inicio: 150,
+      intervalo: 150,
+      details: { areas: 'Testa, glabela e periorbital', unidades: '32U', marca: 'Botox' },
+      internalNotes: 'Glabela forte, precisou de 4U a mais que o previsto.',
+    },
+
+    // Carolina (portal) — começando agora: mostra o plano quase vazio.
+    {
+      paciente: 1,
+      procedimento: 'Microagulhamento',
+      status: TreatmentPlanStatus.ACTIVE,
+      total: 5,
+      feitas: 1,
+      inicio: 30,
+      intervalo: 30,
+      details: {
+        area: 'Face — região malar e mandíbula',
+        profundidade: '1,5mm',
+        ativo: 'Ácido hialurônico não reticulado',
+        indicacao: 'Cicatriz de acne',
+      },
+      careBefore: 'Avise se sentir formigamento no lábio nos dias anteriores — pode ser herpes, e adiamos a sessão.',
+      internalNotes: 'Cicatrizes distensíveis respondem melhor. Reavaliar profundidade na 3ª sessão.',
+    },
+    {
+      paciente: 1,
+      procedimento: 'Peeling químico',
+      status: TreatmentPlanStatus.PAUSED,
+      total: 4,
+      feitas: 2,
+      inicio: 120,
+      intervalo: 21,
+      details: { agente: 'Ácido glicólico', concentracao: '30%', tempo: '5 minutos' },
+      internalNotes: 'Pausado a pedido da paciente — viagem de trabalho. Retomar em março.',
+    },
+
+    // Daniela (portal) — plano longo e quase no fim: exercita a barra cheia.
+    {
+      paciente: 2,
+      procedimento: 'Limpeza de pele profunda',
+      status: TreatmentPlanStatus.ACTIVE,
+      total: 6,
+      feitas: 5,
+      inicio: 160,
+      intervalo: 30,
+      details: { tipoPele: 'Mista com tendência acneica', extracao: 'Moderada' },
+      careAfter: 'Evite sol direto por 24h e não use maquiagem no restante do dia.',
+    },
+    {
+      paciente: 2,
+      procedimento: 'Preenchimento facial',
+      status: TreatmentPlanStatus.COMPLETED,
+      total: 1,
+      feitas: 1,
+      inicio: 200,
+      intervalo: 365,
+      details: { regiao: 'Olheiras', volume: '1ml', produto: 'Belotero Balance' },
+      internalNotes: 'Vaso proeminente à esquerda — técnica com cânula, entrada lateral.',
+    },
+    {
+      paciente: 2,
+      procedimento: 'Bioestimulador de colágeno',
+      status: TreatmentPlanStatus.CANCELLED,
+      total: 3,
+      feitas: 0,
+      inicio: 60,
+      intervalo: 45,
+      details: { area: 'Colo', produto: 'Sculptra' },
+      internalNotes: 'Cancelado: paciente optou por adiar por questão financeira. Retomar conversa no segundo semestre.',
+    },
+
+    // Demais pacientes — volume para a lista da médica não parecer vazia.
+    {
+      paciente: 3,
+      procedimento: 'Toxina botulínica',
+      status: TreatmentPlanStatus.ACTIVE,
+      total: 1,
+      feitas: 0,
+      inicio: 5,
+      intervalo: 150,
+      details: { areas: 'Testa e glabela', unidades: '24U', marca: 'Dysport' },
+    },
+    {
+      paciente: 4,
+      procedimento: 'Bioestimulador de colágeno',
+      status: TreatmentPlanStatus.COMPLETED,
+      total: 3,
+      feitas: 3,
+      inicio: 140,
+      intervalo: 45,
+      details: { area: 'Face e pescoço', produto: 'Sculptra', diluicao: '8ml', frascos: '2 frascos' },
+      internalNotes: 'Concluiu as três sessões. Avaliar necessidade de manutenção em 12 meses.',
+    },
+    {
+      paciente: 5,
+      procedimento: 'Skinbooster',
+      status: TreatmentPlanStatus.ACTIVE,
+      total: 3,
+      feitas: 2,
+      inicio: 65,
+      intervalo: 30,
+      details: { area: 'Face e pescoço', produto: 'Profhilo', volume: '2ml' },
+    },
+    {
+      paciente: 6,
+      procedimento: 'Microagulhamento',
+      status: TreatmentPlanStatus.ACTIVE,
+      total: 5,
+      feitas: 3,
+      inicio: 95,
+      intervalo: 30,
+      details: { area: 'Face completa', profundidade: '1,0mm', ativo: 'Vitamina C', indicacao: 'Textura e poros' },
+    },
+    {
+      paciente: 7,
+      procedimento: 'Peeling químico',
+      status: TreatmentPlanStatus.ACTIVE,
+      total: 4,
+      feitas: 1,
+      inicio: 22,
+      intervalo: 21,
+      details: { agente: 'Ácido salicílico', concentracao: '20%', tempo: '4 minutos' },
+    },
+    {
+      paciente: 8,
+      procedimento: 'Limpeza de pele profunda',
+      status: TreatmentPlanStatus.ACTIVE,
+      total: 6,
+      feitas: 2,
+      inicio: 62,
+      intervalo: 30,
+      details: { tipoPele: 'Oleosa', extracao: 'Intensa' },
+    },
+    {
+      paciente: 9,
+      procedimento: 'Preenchimento facial',
+      status: TreatmentPlanStatus.COMPLETED,
+      total: 1,
+      feitas: 1,
+      inicio: 75,
+      intervalo: 365,
+      details: { regiao: 'Lábios', volume: '0,8ml', produto: 'Juvéderm Ultra' },
+    },
+    {
+      paciente: 10,
+      procedimento: 'Bioestimulador de colágeno',
+      status: TreatmentPlanStatus.PAUSED,
+      total: 3,
+      feitas: 1,
+      inicio: 80,
+      intervalo: 45,
+      details: { area: 'Glúteos', produto: 'Radiesse', diluicao: '1:2', frascos: '3ml por lado' },
+      internalNotes: 'Diabética — acompanhar cicatrização com atenção. Pausado até controle glicêmico melhorar.',
+    },
+    {
+      paciente: 11,
+      procedimento: 'Skinbooster',
+      status: TreatmentPlanStatus.ACTIVE,
+      total: 3,
+      feitas: 0,
+      inicio: 2,
+      intervalo: 30,
+      details: { area: 'Face', produto: 'Restylane Vital', volume: '2ml' },
+    },
+    {
+      paciente: 12,
+      procedimento: 'Microagulhamento',
+      status: TreatmentPlanStatus.CANCELLED,
+      total: 5,
+      feitas: 1,
+      inicio: 110,
+      intervalo: 30,
+      details: { area: 'Face', profundidade: '0,5mm', ativo: 'Ácido hialurônico', indicacao: 'Rejuvenescimento' },
+      internalNotes: 'Cancelado por baixa adesão — faltou a duas sessões seguidas.',
+    },
+    {
+      paciente: 13,
+      procedimento: 'Toxina botulínica',
+      status: TreatmentPlanStatus.COMPLETED,
+      total: 1,
+      feitas: 1,
+      inicio: 175,
+      intervalo: 150,
+      details: { areas: 'Periorbital', unidades: '16U', marca: 'Botox' },
+    },
+    {
+      paciente: 14,
+      procedimento: 'Peeling químico',
+      status: TreatmentPlanStatus.ACTIVE,
+      total: 4,
+      feitas: 3,
+      inicio: 88,
+      intervalo: 21,
+      details: { agente: 'Ácido retinoico', concentracao: '5%', tempo: '6 horas' },
+      internalNotes: 'Fototipo IV — risco de hiperpigmentação. Reforçar protetor solar a cada retorno.',
+    },
+  ]
+
+  let planosCriados = 0
+  let sessoesDePlano = 0
+  for (const dados of PLANOS) {
+    const paciente = pacientes[dados.paciente]
+    const procedimento = proc(dados.procedimento)
+
+    // Idempotência: o par paciente+procedimento identifica o plano no seed.
+    const existente = await prisma.treatmentPlan.findFirst({
+      where: { tenantId: tenant.id, patientId: paciente.id, procedureId: procedimento.id },
+    })
+
+    const ultimaSessao = dados.feitas > 0 ? dados.inicio - (dados.feitas - 1) * dados.intervalo : dados.inicio
+
+    const campos = {
+      title: procedimento.title,
+      status: dados.status,
+      totalSessions: dados.total,
+      intervalDays: dados.intervalo,
+      details: dados.details,
+      careBefore: dados.careBefore ?? null,
+      careAfter: dados.careAfter ?? null,
+      internalNotes: dados.internalNotes ?? null,
+      startedAt: dia(-dados.inicio, 10),
+      completedAt: dados.status === TreatmentPlanStatus.COMPLETED ? dia(-ultimaSessao, 11) : null,
+      patientId: paciente.id,
+      procedureId: procedimento.id,
+      createdById: doctor.id,
+      tenantId: tenant.id,
+    }
+
+    const plano = existente
+      ? await prisma.treatmentPlan.update({ where: { id: existente.id }, data: campos })
+      : await prisma.treatmentPlan.create({ data: campos })
+    planosCriados += 1
+
+    // As sessões do plano, espaçadas pelo intervalo e numeradas na série. É o
+    // que faz a barra de progresso do portal mostrar um número verdadeiro.
+    for (let n = 1; n <= dados.feitas; n += 1) {
+      const quandoAtras = dados.inicio - (n - 1) * dados.intervalo
+      const jaExiste = await prisma.procedureSession.findFirst({
+        where: { planId: plano.id, sessionNumber: n },
+      })
+      if (jaExiste) continue
+      await prisma.procedureSession.create({
+        data: {
+          performedAt: dia(-quandoAtras, 10, 30),
+          priceCents: PRECO_SESSAO[dados.procedimento] ?? 50000,
+          notes:
+            n === 1
+              ? `Primeira sessão de ${dados.total}. Procedimento realizado sem intercorrências.`
+              : `${n}ª sessão de ${dados.total}. Boa evolução em relação à anterior, sem eventos adversos.`,
+          patientId: paciente.id,
+          procedureId: procedimento.id,
+          planId: plano.id,
+          sessionNumber: n,
+          tenantId: tenant.id,
+        },
+      })
+      sessoesDePlano += 1
+    }
+  }
+  console.log(
+    `✨ Planos de tratamento: ${planosCriados}` +
+      ` (${PLANOS.filter((p) => p.status === TreatmentPlanStatus.ACTIVE).length} em andamento,` +
+      ` ${PLANOS.filter((p) => p.status === TreatmentPlanStatus.PAUSED).length} pausados,` +
+      ` ${PLANOS.filter((p) => p.status === TreatmentPlanStatus.COMPLETED).length} concluídos,` +
+      ` ${PLANOS.filter((p) => p.status === TreatmentPlanStatus.CANCELLED).length} cancelados)` +
+      ` · Sessões vinculadas: ${sessoesDePlano}`,
   )
 
   // ── Receitas ──────────────────────────────────────────────────────────────
