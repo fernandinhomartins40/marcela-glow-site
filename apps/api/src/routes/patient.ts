@@ -278,7 +278,7 @@ router.get('/dashboard', async (req, res, next) => {
   try {
     const patientId = req.user!.userId
     const tenantId = req.user!.tenantId
-    const [patient, appointments, sessions, prescriptions, notifications, messages, attachments] = await Promise.all([
+    const [patient, appointments, sessions, prescriptions, notifications, messages, attachments, plans] = await Promise.all([
       prisma.patient.findFirst({
         where: { id: patientId, tenantId },
         select: { id: true, name: true, email: true, phone: true, birthDate: true },
@@ -303,9 +303,73 @@ router.get('/dashboard', async (req, res, next) => {
       prisma.notification.findMany({ where: { patientId, tenantId }, orderBy: { createdAt: 'desc' }, take: 8 }),
       prisma.message.findMany({ where: { patientId, tenantId }, orderBy: { createdAt: 'desc' }, take: 10 }),
       prisma.attachment.findMany({ where: { patientId, tenantId, visibility: 'PATIENT_VISIBLE' }, orderBy: { createdAt: 'desc' }, take: 20 }),
+
+      /* Os planos de tratamento — a jornada.
+
+         Cancelado não vem: é um plano que a clínica desfez, e mostrá-lo à
+         paciente levantaria uma pergunta sobre algo que já foi resolvido.
+         Pausado vem, porque a paciente precisa saber que ele existe e está
+         esperando por ela. */
+      prisma.treatmentPlan.findMany({
+        where: { patientId, tenantId, status: { in: ['ACTIVE', 'PAUSED', 'COMPLETED'] } },
+        include: {
+          procedure: { select: { title: true, careBefore: true, careAfter: true, fieldSchema: true } },
+          sessions: {
+            select: {
+              id: true,
+              sessionNumber: true,
+              performedAt: true,
+              beforePhotoUrl: true,
+              afterPhotoUrl: true,
+            },
+            orderBy: { performedAt: 'asc' },
+          },
+        },
+        orderBy: [{ status: 'asc' }, { updatedAt: 'desc' }],
+      }),
     ])
     if (!patient) throw new UnauthorizedError()
-    res.json({ patient, appointments, sessions, prescriptions, notifications, messages, attachments })
+
+    /* `internalNotes` fica de fora, e por isso o plano é montado campo a
+       campo em vez de devolvido inteiro: é a anotação que a médica escreve
+       para a equipe, e um `select` esquecido a entregaria à paciente. */
+    const jornada = plans.map((plano) => {
+      const feitas = plano.sessions.length
+      return {
+        id: plano.id,
+        title: plano.title,
+        status: plano.status,
+        totalSessions: plano.totalSessions,
+        intervalDays: plano.intervalDays,
+        details: plano.details,
+        // A orientação do plano tem precedência sobre a do procedimento:
+        // quando a médica escreveu algo para esta paciente, é o que vale.
+        careBefore: plano.careBefore ?? plano.procedure?.careBefore ?? null,
+        careAfter: plano.careAfter ?? plano.procedure?.careAfter ?? null,
+        fieldSchema: plano.procedure?.fieldSchema ?? null,
+        startedAt: plano.startedAt,
+        completedAt: plano.completedAt,
+        sessions: plano.sessions,
+        progresso: {
+          feitas,
+          total: plano.totalSessions,
+          restantes: Math.max(plano.totalSessions - feitas, 0),
+          percentual:
+            plano.totalSessions > 0 ? Math.round((feitas / plano.totalSessions) * 100) : 0,
+        },
+      }
+    })
+
+    res.json({
+      patient,
+      appointments,
+      sessions,
+      prescriptions,
+      notifications,
+      messages,
+      attachments,
+      plans: jornada,
+    })
   } catch (err) {
     next(err)
   }

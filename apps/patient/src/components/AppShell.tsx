@@ -1,16 +1,26 @@
 import React from 'react'
-import { CalendarDays, FileText, Home, LogOut, MessageCircle, type LucideIcon } from 'lucide-react'
+import { CalendarDays, FileText, Home, LogOut, MessageCircle, Sparkles, type LucideIcon } from 'lucide-react'
 import { logout } from '@/lib/api'
 import { firstName, initials } from '@/lib/format'
 import { cn } from './ui'
+import logoMD from '@/assets/logo-md.png'
 import { useAplicativoInstalado } from '@/lib/standalone'
 
-export type SectionId = 'inicio' | 'consultas' | 'prescricoes' | 'mensagens'
+export type SectionId = 'inicio' | 'consultas' | 'jornada' | 'prescricoes' | 'mensagens'
 
 /** `badge: true` marca onde o contador de pendências aparece. */
-export const SECTIONS: { id: SectionId; label: string; icon: LucideIcon; badge?: boolean }[] = [
+/**
+ * As seções do portal.
+ *
+ * "Minha jornada" fica no meio e em destaque: é o que dá sentido ao nome do
+ * aplicativo e o que a paciente abre para saber onde está no tratamento. O
+ * centro da barra é também o ponto que o polegar alcança sem reposicionar o
+ * aparelho.
+ */
+export const SECTIONS: { id: SectionId; label: string; icon: LucideIcon; badge?: boolean; destaque?: true }[] = [
   { id: 'inicio', label: 'Início', icon: Home, badge: true },
   { id: 'consultas', label: 'Consultas', icon: CalendarDays },
+  { id: 'jornada', label: 'Jornada', icon: Sparkles, destaque: true },
   { id: 'prescricoes', label: 'Prescrições', icon: FileText },
   { id: 'mensagens', label: 'Mensagens', icon: MessageCircle },
 ]
@@ -108,13 +118,18 @@ export function AppShell({
         className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-5 h-16 bg-card border-b border-border"
         style={comoApp ? { paddingTop: 'env(safe-area-inset-top)', height: 'calc(4rem + env(safe-area-inset-top))' } : undefined}
       >
-        <div className="min-w-0">
+        {/* A logo faltava no topo: sobrava so o texto, e o portal perdia a
+            marca justamente na tela que a paciente mais abre. */}
+        <div className="flex items-center gap-3 min-w-0">
+          <img src={logoMD} alt="" className="h-9 w-auto shrink-0" width={36} height={36} />
+          <div className="min-w-0">
           <p className="font-display text-sm tracking-[0.2em] uppercase text-primary truncate">
             Dra. Marcela Duch
           </p>
           <p className="text-[0.6rem] tracking-[0.2em] uppercase text-muted-foreground">
             Portal da paciente
           </p>
+          </div>
         </div>
         <button onClick={logout} className="btn-ghost h-10 px-3 shrink-0" aria-label="Sair da conta">
           <LogOut size={16} aria-hidden="true" />
@@ -140,7 +155,9 @@ export function AppShell({
         aria-label="Navegação principal"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
-        <ul className="grid grid-cols-4">
+        {/* Cinco colunas: a Jornada entrou no meio e a grade de quatro deixava
+            a ultima secao sem lugar. */}
+        <ul className="grid grid-cols-5">
           {SECTIONS.map((section) => {
             const Icon = section.icon
             const isActive = active === section.id
@@ -151,10 +168,20 @@ export function AppShell({
                   aria-current={isActive ? 'page' : undefined}
                   className={cn(
                     'relative w-full flex flex-col items-center justify-center gap-1 py-2.5 min-h-[3.75rem] transition-colors',
+                    section.destaque && 'pt-8',
                     isActive ? 'text-primary' : 'text-muted-foreground',
                   )}
                 >
-                  <Icon size={19} aria-hidden="true" />
+                  {/* A Jornada sobe num circulo acima da barra: e o que da
+                      sentido ao nome do aplicativo, e o centro da barra e o
+                      ponto que o polegar alcanca sem mover o aparelho. */}
+                  {section.destaque ? (
+                    <span className="pat-circulo">
+                      <Icon size={22} aria-hidden="true" />
+                    </span>
+                  ) : (
+                    <Icon size={19} aria-hidden="true" />
+                  )}
                   <span className="text-[0.65rem] tracking-wide">{section.label}</span>
                   {section.badge && pending ? (
                     <span

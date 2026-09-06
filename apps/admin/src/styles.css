@@ -2158,3 +2158,30 @@ img, video, canvas { max-width: 100%; height: auto; }
   .schedule-queue { position: static; }
   .schedule-queue ul { max-height: 44vh; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
 }
+
+/* ── Planos de tratamento (jornada) ───────────────────────────────────────────
+   A barra vive na coluna `counts` da linha, entre o texto e as acoes. Largura
+   fixa porque ela compara planos entre si: barra elastica faria "2 de 3"
+   parecer maior que "8 de 12" so por caber mais texto ao lado. */
+.plano-barra {
+  display: block;
+  width: 96px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--cream-soft);
+  overflow: hidden;
+}
+
+.plano-barra-preenchida {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--bronze);
+  transition: width .4s ease;
+}
+
+@media (max-width: 720px) {
+  /* No celular a linha ja empilha; a barra ocupa a largura toda em vez de
+     ficar como um traco solto ao lado do texto. */
+  .plano-barra { width: 100%; }
+}

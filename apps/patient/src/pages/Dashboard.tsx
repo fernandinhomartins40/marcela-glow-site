@@ -8,10 +8,14 @@ import { AppShell, type SectionId } from '@/components/AppShell'
 import { DashboardSkeleton } from '@/components/sections'
 import { HomePage } from '@/pages/sections/Home'
 import { AppointmentsPage } from '@/pages/sections/Appointments'
+import { Jornada } from './sections/Jornada'
 import { PrescriptionsPage } from '@/pages/sections/Prescriptions'
 import { MessagesPage } from '@/pages/sections/Messages'
 
-const SECTION_IDS: SectionId[] = ['inicio', 'consultas', 'prescricoes', 'mensagens']
+/* A lista que valida a URL. Uma seção que existe na navegação mas falta aqui é
+   silenciosamente rejeitada e cai em `inicio` — foi o que aconteceu com a
+   jornada, que aparecia na barra e não abria. */
+const SECTION_IDS: SectionId[] = ['inicio', 'consultas', 'jornada', 'prescricoes', 'mensagens']
 
 export function Dashboard() {
   const navigateTo = useNavigate()
@@ -66,6 +70,7 @@ export function Dashboard() {
 
           {section === 'inicio' && <HomePage data={data} onRequest={() => navigate('consultas')} />}
           {section === 'consultas' && <AppointmentsPage data={data} />}
+          {section === 'jornada' && <Jornada data={data} />}
           {section === 'prescricoes' && <PrescriptionsPage data={data} />}
           {section === 'mensagens' && <MessagesPage data={data} />}
         </>

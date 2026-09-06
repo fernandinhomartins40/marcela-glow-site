@@ -127,6 +127,10 @@ export interface DashboardData {
   messages: Message[]
   attachments: Attachment[]
   procedures: Procedure[]
+  /* Os planos de tratamento. O tipo fica solto de proposito: a forma dos
+     campos personalizados vem do procedimento e muda quando a clinica a
+     edita, entao amarra-la aqui obrigaria a mexer no front a cada mudanca. */
+  plans?: unknown[]
 }
 
 export interface Slot {

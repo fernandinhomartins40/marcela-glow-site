@@ -42,6 +42,7 @@ import {
   Toolbar,
   type Tone,
 } from '../../lib/ui'
+import { PlanosPanel } from './planos'
 import { useDebounced } from '../../lib/useDebounced'
 import { labelOf, GENDERS, MARITAL_STATUSES, BLOOD_TYPES, REFERRAL_SOURCES, type Patient } from './shared'
 
@@ -140,7 +141,7 @@ export function PatientDetail({ id, onClose }: { id: string; onClose: () => void
   const tabs = [
     ['timeline', `Evoluções (${p.records?.length ?? 0})`],
     ['documents', `Documentos (${p.prescriptions?.length ?? 0})`],
-    ['procedures', `Procedimentos (${p.sessions?.length ?? 0})`],
+    ['procedures', 'Jornada'],
     ['files', `Arquivos (${p.attachments?.length ?? 0})`],
   ] as const
 
@@ -313,6 +314,14 @@ export function PatientDetail({ id, onClose }: { id: string; onClose: () => void
               })}
             </DataList>
           ))}
+
+        {tab === 'procedures' && (
+          <>
+            <PlanosPanel patientId={id} />
+
+            <p className="form-section-title">Sessões registradas</p>
+          </>
+        )}
 
         {tab === 'procedures' &&
           (!p.sessions?.length ? (

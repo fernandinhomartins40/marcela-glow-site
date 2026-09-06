@@ -228,6 +228,7 @@ model Tenant {
   charges             Charge[]
   payments            Payment[]
   receipts            Receipt[]
+  treatmentPlans      TreatmentPlan[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -279,31 +280,47 @@ model UserPermission {
 // ─────────────────────────────────────────────────────────────────────────────
 
 model Procedure {
-  id           String   @id @default(cuid())
-  number       String
-  title        String
-  subtitle     String
-  description  String
-  imageUrl     String?
-  isActive     Boolean  @default(true)
-  displayOrder Int      @default(0)
+  id              String   @id @default(cuid())
+  number          String
+  title           String
+  subtitle        String
+  description     String
+  imageUrl        String?
+  isActive        Boolean  @default(true)
+  displayOrder    Int      @default(0)
   /// Duração do atendimento em minutos — base para o cálculo de horários livres
-  durationMin  Int      @default(60)
+  durationMin     Int      @default(60)
   /// Intervalo de limpeza/preparo somado após o atendimento
-  bufferMin    Int      @default(0)
+  bufferMin       Int      @default(0)
   /// Se false, o procedimento não é oferecido no agendamento online
-  isBookable   Boolean  @default(true)
+  isBookable      Boolean  @default(true)
   /// Preço de tabela, em centavos. Vira a sugestão ao lançar o procedimento
   /// numa paciente — o valor cobrado continua vivendo na sessão, porque
   /// desconto e pacote fazem o mesmo procedimento sair por preços diferentes.
-  priceCents   Int?
-  tenantId     String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  priceCents      Int?
+  /// Quantas sessões este procedimento costuma levar. É só a sugestão: o
+  /// número que vale é o do plano de cada paciente, porque a mesma técnica
+  /// pede três aplicações numa pessoa e cinco em outra.
+  defaultSessions Int      @default(1)
+  /// Dias entre uma sessão e a seguinte, para a agenda sugerir o retorno.
+  intervalDays    Int?
+  /// Que campos este procedimento precisa registrar por paciente — área,
+  /// produto, dose. Cada item é `{ key, label, hint? }`; os valores ficam no
+  /// plano. Guardar aqui a FORMA e ali o CONTEÚDO evita repetir a definição
+  /// em cada paciente e permite mudá-la sem tocar nos planos existentes.
+  fieldSchema     Json?
+  /// Orientações que valem para toda paciente deste procedimento. O plano
+  /// pode acrescentar as suas.
+  careBefore      String?
+  careAfter       String?
+  tenantId        String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  appointments Appointment[]
-  sessions     ProcedureSession[]
+  tenant         Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointments   Appointment[]
+  sessions       ProcedureSession[]
+  treatmentPlans TreatmentPlan[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -587,6 +604,7 @@ model Patient {
   attachments       Attachment[]
   leads             Lead[]
   charges           Charge[]
+  treatmentPlans    TreatmentPlan[]
 
   @@unique([email, tenantId])
   @@unique([cpf, tenantId])
@@ -669,16 +687,82 @@ model ProcedureSession {
   priceCents     Int?
   /// Consulta em que o procedimento foi realizado
   appointmentId  String?
+  /// O plano de tratamento a que esta sessão pertence, quando há um. Fica
+  /// opcional porque procedimento avulso continua existindo — uma aplicação
+  /// única não precisa de plano para ser registrada.
+  planId         String?
+  /// Qual sessão da série esta é: a "2ª de 5". Guardado em vez de contado na
+  /// hora porque a ordem cronológica não basta — uma sessão pode ser lançada
+  /// depois, com data retroativa, e a numeração mudaria sozinha.
+  sessionNumber  Int?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  patient     Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  procedure   Procedure?   @relation(fields: [procedureId], references: [id], onDelete: SetNull)
-  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  patient     Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  procedure   Procedure?     @relation(fields: [procedureId], references: [id], onDelete: SetNull)
+  tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointment Appointment?   @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
   Charge      Charge?
+  plan        TreatmentPlan? @relation(fields: [planId], references: [id], onDelete: SetNull)
 
   @@index([appointmentId])
+}
+
+/// Situação de um plano de tratamento.
+///
+/// `PAUSED` existe porque a paciente às vezes interrompe — viagem, gravidez,
+/// intercorrência — e some da agenda sem ter desistido. Sem esse estado ela
+/// ficaria eternamente "em andamento" ou seria dada como abandonada.
+enum TreatmentPlanStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+/// O plano de tratamento de uma paciente: quantas sessões, com que intervalo,
+/// e o que a médica definiu para o caso dela.
+///
+/// Existe porque procedimento estético raramente é evento único: bioestimulador
+/// pede três aplicações, microagulhamento cinco, e o número muda de pessoa para
+/// pessoa. Sem o plano, `ProcedureSession` era uma lista solta — nem a médica
+/// sabia quantas faltavam nem a paciente via a própria jornada.
+model TreatmentPlan {
+  id            String              @id @default(cuid())
+  tenantId      String
+  patientId     String
+  procedureId   String?
+  /// Cópia do nome do procedimento no momento em que o plano nasceu: o
+  /// cadastro pode ser renomeado depois, e o histórico da paciente não deve
+  /// mudar por causa disso.
+  title         String
+  status        TreatmentPlanStatus @default(ACTIVE)
+  /// Quantas sessões esta paciente precisa. Vem do procedimento como sugestão
+  /// e a médica ajusta.
+  totalSessions Int                 @default(1)
+  intervalDays  Int?
+  /// Os valores dos campos que o procedimento declarou: `{ area: "terço
+  /// médio", produto: "Radiesse 1,5ml" }`. É o que a paciente vê como
+  /// "seu plano".
+  details       Json?
+  /// Orientações específicas desta paciente, somadas às do procedimento.
+  careBefore    String?
+  careAfter     String?
+  /// Anotação que fica só para a equipe — nunca aparece no portal.
+  internalNotes String?
+  startedAt     DateTime            @default(now())
+  completedAt   DateTime?
+  createdById   String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  tenant    Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  patient   Patient            @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  procedure Procedure?         @relation(fields: [procedureId], references: [id], onDelete: SetNull)
+  sessions  ProcedureSession[]
+
+  @@index([tenantId, status])
+  @@index([patientId])
 }
 
 /// O que foi cobrado por um procedimento realizado.

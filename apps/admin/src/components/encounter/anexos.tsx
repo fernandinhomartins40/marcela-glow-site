@@ -240,11 +240,30 @@ export function SessionQuickForm({
   onSaved: () => void
 }) {
   const [form, setForm] = React.useState({
+    planId: '',
     procedureId: '',
     performedAt: new Date().toISOString().slice(0, 10),
     notes: '',
     price: '',
   })
+
+  /* Os planos em aberto desta paciente.
+
+     Sessão registrada solta não conta para o progresso: o plano continuaria
+     em "2 de 5" com a terceira já feita, e a paciente veria isso no portal.
+     Por isso a escolha aparece antes do procedimento. */
+  const planos = useQuery({
+    queryKey: ['plans', patientId],
+    queryFn: async () =>
+      (await api.get('/plans', { params: { patientId } })).data as {
+        id: string
+        title: string
+        status: string
+        procedureId: string | null
+        progresso: { feitas: number; total: number }
+      }[],
+  })
+  const emAberto = (planos.data ?? []).filter((p) => p.status === 'ACTIVE' || p.status === 'PAUSED')
 
   const procedures = useQuery({
     queryKey: ['procedures-admin'],
@@ -257,6 +276,7 @@ export function SessionQuickForm({
       api.post('/admin/sessions', {
         patientId,
         appointmentId,
+        planId: form.planId || undefined,
         procedureId: form.procedureId || undefined,
         performedAt: new Date(`${form.performedAt}T12:00:00`).toISOString(),
         notes: form.notes || undefined,
@@ -280,6 +300,34 @@ export function SessionQuickForm({
       }
     >
       <div className="form-grid">
+        {emAberto.length > 0 && (
+          <Field
+            label="Plano de tratamento"
+            hint="A sessão entra na contagem do plano e aparece na jornada da paciente."
+          >
+            <select
+              value={form.planId}
+              onChange={(e) => {
+                const plano = emAberto.find((p) => p.id === e.target.value)
+                // O plano já diz qual é o procedimento: escolher de novo
+                // abriria espaço para registrar a sessão no procedimento errado.
+                setForm({
+                  ...form,
+                  planId: e.target.value,
+                  procedureId: plano?.procedureId ?? form.procedureId,
+                })
+              }}
+            >
+              <option value="">Sessão avulsa (fora de plano)</option>
+              {emAberto.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title} ({p.progresso.feitas + 1}ª de {p.progresso.total})
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
+
         <FormRow>
           <Field label="Procedimento">
             <select value={form.procedureId} onChange={(e) => setForm({ ...form, procedureId: e.target.value })}>

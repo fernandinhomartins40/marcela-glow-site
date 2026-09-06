@@ -703,6 +703,9 @@ const sessionSchema = z.object({
   performedAt: z.string().datetime({ offset: true }).optional(),
   notes: z.string().optional(),
   priceCents: z.number().int().min(0).optional(),
+  /* Quando a sessao pertence a um plano, ela recebe o numero da serie e o
+     portal da paciente consegue dizer "2a de 5". */
+  planId: z.string().min(1).optional(),
 })
 
 router.get('/sessions', requirePermission('RECORD_READ'), async (req: Request, res: Response, next: NextFunction) => {
@@ -733,11 +736,29 @@ router.post('/sessions', requirePermission('RECORD_WRITE'), async (req: Request,
     })
     if (!patient) throw new NotFoundError('Paciente')
 
+    /* A sessão que pertence a um plano recebe o número da série.
+
+       O número sai da contagem do que já existe, e não da ordem por data:
+       uma sessão pode ser lançada depois com data retroativa, e numerar por
+       ordem cronológica faria a "3ª" virar "2ª" sozinha no histórico que a
+       paciente já tinha visto. */
+    let sessionNumber: number | undefined
+    if (body.planId) {
+      const plano = await prisma.treatmentPlan.findFirst({
+        where: { id: body.planId, tenantId: req.user!.tenantId },
+        include: { _count: { select: { sessions: true } } },
+      })
+      if (!plano) throw new NotFoundError('Plano de tratamento')
+      sessionNumber = plano._count.sessions + 1
+    }
+
     const session = await prisma.procedureSession.create({
       data: {
         patientId: patient.id,
         procedureId: body.procedureId || null,
         appointmentId: body.appointmentId || null,
+        planId: body.planId || null,
+        sessionNumber,
         performedAt: body.performedAt ? new Date(body.performedAt) : new Date(),
         notes: body.notes,
         priceCents: body.priceCents,
@@ -767,6 +788,19 @@ router.post('/sessions', requirePermission('RECORD_WRITE'), async (req: Request,
           createdById: req.user!.userId,
         },
       })
+    }
+
+    /* Fechada a última sessão prevista, o plano se conclui sozinho. Deixar
+       isso para um clique manual faria o portal da paciente mostrar "5 de 5"
+       com o plano ainda em andamento. */
+    if (body.planId && sessionNumber) {
+      const plano = await prisma.treatmentPlan.findUnique({ where: { id: body.planId } })
+      if (plano && plano.status === 'ACTIVE' && sessionNumber >= plano.totalSessions) {
+        await prisma.treatmentPlan.update({
+          where: { id: body.planId },
+          data: { status: 'COMPLETED', completedAt: new Date() },
+        })
+      }
     }
 
     await audit(req, 'CREATE', 'procedureSession', session.id, { patientId: patient.id })
