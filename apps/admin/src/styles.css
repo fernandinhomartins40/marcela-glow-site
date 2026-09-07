@@ -1113,7 +1113,13 @@ main .data-actions button.encounter-open {
    precisa de 33px so para as duas linhas de texto mais o recuo — o nome ficava
    cortado ao meio, escondido pelo `overflow: hidden`. 546px dao 42px por hora,
    com folga para o cartao respirar. */
-.week-body { position: relative; height: 546px; }
+/* A altura vem das horas, não de um número fixo.
+ *
+ * 546px para 13 horas davam 42px por hora, e uma consulta de 30 minutos virava
+ * uma caixa de 21px — menos que uma linha de texto, com o nome transbordando.
+ * Amarrando a altura à quantidade de horas, a menor consulta da agenda sempre
+ * cabe: 60px por hora dão 30px para meia hora, que é o cartão de duas linhas. */
+.week-body { position: relative; height: calc(13 * 60px); }
 .hour-col { border-right: 1px solid var(--border); }
 .hour-mark { height: calc(100% / 13); position: relative; }
 /* O rotulo fica dentro da propria faixa. Com `top: -6px` a primeira hora subia
@@ -1129,8 +1135,12 @@ main .data-actions button.encounter-open {
    duas linhas preenchem a caixa e nada muda, mas numa de duas horas o texto
    ficava colado no topo com um vazio embaixo. Centrado, ele fica no meio da
    celula em qualquer duracao. */
-.event { position: absolute; min-width: 0; min-height: 0; display: grid; align-content: center; gap: 2px; padding: 5px 8px; border: 0; border-left: 3px solid; border-radius: 5px; cursor: pointer; overflow: hidden; text-align: left; font-size: 10px; line-height: 1.3; }
-.event strong { font-size: 10px; font-weight: 600; }
+/* `min-height` em vez de zero: uma consulta de meia hora desenhava 21px e o
+   nome saía por cima da borda. O cartão nunca fica menor que suas duas linhas,
+   ainda que isso o faça avançar sobre a faixa de horário seguinte — é melhor
+   ler o nome do que respeitar a régua. */
+.event { position: absolute; min-width: 0; min-height: 34px; display: grid; align-content: center; gap: 2px; padding: 5px 8px; border: 0; border-left: 3px solid; border-radius: 5px; cursor: pointer; overflow: hidden; text-align: left; font-size: 11px; line-height: 1.35; }
+.event strong { font-size: 11px; font-weight: 600; }
 .event span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .event.success { background: #e4efe6; border-color: #4a7d58; color: #2c5236; }
 .event.warning { background: #f7ecdc; border-color: #b8813c; color: #7d5220; }
@@ -1302,7 +1312,8 @@ body.page-lock { overflow: hidden; }
   .schedule { gap: 10px; }
   .schedule-queue { top: 8px; padding: 12px; }
   .schedule-queue ul { max-height: 48vh; }
-  .week-body { height: 340px; }
+  /* Tela baixa: 46px por hora ainda comportam o cartão de duas linhas. */
+  .week-body { height: calc(13 * 46px); }
   .day-list { padding: 12px; }
   .drawer { padding: 16px; gap: 14px; }
 }
