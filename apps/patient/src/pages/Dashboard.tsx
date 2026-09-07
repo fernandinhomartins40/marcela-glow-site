@@ -9,6 +9,7 @@ import { DashboardSkeleton } from '@/components/sections'
 import { HomePage } from '@/pages/sections/Home'
 import { AppointmentsPage } from '@/pages/sections/Appointments'
 import { Jornada } from './sections/Jornada'
+import { JornadaDetalhe } from './sections/JornadaDetalhe'
 import { PrescriptionsPage } from '@/pages/sections/Prescriptions'
 import { MessagesPage } from '@/pages/sections/Messages'
 
@@ -19,10 +20,14 @@ const SECTION_IDS: SectionId[] = ['inicio', 'consultas', 'jornada', 'prescricoes
 
 export function Dashboard() {
   const navigateTo = useNavigate()
-  const { section: requestedSection } = useParams()
-  const section = SECTION_IDS.includes(requestedSection as SectionId)
-    ? requestedSection as SectionId
-    : null
+  const { section: requestedSection, planoId } = useParams()
+  /* Em `/jornada/:planoId` o parametro `section` nao existe — quem manda e a
+     rota. Sem isto o detalhe cairia no redirecionamento para `/inicio`. */
+  const section: SectionId | null = planoId
+    ? 'jornada'
+    : SECTION_IDS.includes(requestedSection as SectionId)
+      ? (requestedSection as SectionId)
+      : null
   const query = useQuery({ queryKey: ['patient-dashboard'], queryFn: fetchDashboard })
 
   const data = query.data
@@ -30,8 +35,11 @@ export function Dashboard() {
   const greeting = firstName(patientName)
   const unread = data?.notifications.filter((notification) => !notification.readAt).length ?? 0
 
-  function navigate(id: SectionId) {
-    navigateTo(`/${id}`)
+  /* Aceita a secao ou um caminho inteiro (`/jornada/<id>`). O prefixo so
+     entra quando falta: montar `/${id}` com um caminho ja barrado daria
+     `//jornada/...`, que o roteador nao casa. */
+  function navigate(destino: SectionId | string) {
+    navigateTo(destino.startsWith('/') ? destino : `/${destino}`)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -59,18 +67,32 @@ export function Dashboard() {
 
       {data && (
         <>
-          <div className="mb-6">
-            <h1 className="font-display text-3xl sm:text-4xl text-primary">
-              {greeting ? `Olá, ${greeting}` : 'Olá'}
-            </h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
-              Acompanhe sua jornada de cuidado com a Dra. Marcela.
-            </p>
-          </div>
+          {/* A saudacao abre a secao, mas nao a pagina de um tratamento: ali a
+              paciente ja escolheu o que quer ver, e repetir "Ola" so empurra o
+              conteudo para baixo. */}
+          {!planoId && (
+            <div className="mb-6">
+              <h1 className="font-display text-3xl sm:text-4xl text-primary">
+                {greeting ? `Olá, ${greeting}` : 'Olá'}
+              </h1>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                Acompanhe sua jornada de cuidado com a Dra. Marcela.
+              </p>
+            </div>
+          )}
 
           {section === 'inicio' && <HomePage data={data} onRequest={() => navigate('consultas')} />}
           {section === 'consultas' && <AppointmentsPage data={data} />}
-          {section === 'jornada' && <Jornada data={data} />}
+          {section === 'jornada' &&
+            (planoId ? (
+              <JornadaDetalhe
+                data={data}
+                planoId={planoId}
+                onVoltar={() => navigateTo('/jornada')}
+              />
+            ) : (
+              <Jornada data={data} onAbrir={(id) => navigate(`/jornada/${id}`)} />
+            ))}
           {section === 'prescricoes' && <PrescriptionsPage data={data} />}
           {section === 'mensagens' && <MessagesPage data={data} />}
         </>

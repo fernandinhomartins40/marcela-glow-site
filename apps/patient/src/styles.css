@@ -152,7 +152,22 @@
   }
 
   .chip {
-    @apply inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[0.7rem] font-medium tracking-wide;
+    @apply inline-flex shrink-0 items-center gap-1.5 h-6 px-2.5 rounded-full text-[0.7rem] font-medium tracking-wide whitespace-nowrap;
+  }
+
+  /* O cartao de tratamento na jornada. E um botao, entao precisa desfazer o
+     alinhamento central que o navegador da a <button> e voltar a ser bloco. */
+  .jornada-cartao {
+    @apply block w-full text-left panel panel-pad transition-all duration-200
+           hover:border-accent/40 hover:shadow-sm
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent
+           active:scale-[0.995];
+  }
+
+  .jornada-voltar {
+    @apply inline-flex items-center gap-2 -ml-1 px-1 py-1 text-sm text-muted-foreground
+           rounded-md transition-colors duration-200 hover:text-primary
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent;
   }
 }
 

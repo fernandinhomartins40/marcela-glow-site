@@ -31,6 +31,9 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/inicio" replace />} />
+      {/* O detalhe de um tratamento tem URL propria: assim o voltar do celular
+          funciona, o link sobrevive a recarga e o app nao perde o lugar. */}
+      <Route path="/jornada/:planoId" element={<Dashboard />} />
       <Route path="/:section" element={<Dashboard />} />
       <Route path="*" element={<Navigate to="/inicio" replace />} />
     </Routes>
