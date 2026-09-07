@@ -1129,7 +1129,7 @@ main .data-actions button.encounter-open {
    duas linhas preenchem a caixa e nada muda, mas numa de duas horas o texto
    ficava colado no topo com um vazio embaixo. Centrado, ele fica no meio da
    celula em qualquer duracao. */
-.event { position: absolute; left: 2px; right: 2px; min-width: 0; min-height: 0; display: grid; align-content: center; gap: 1px; padding: 3px 6px; border: 0; border-left: 3px solid; border-radius: 5px; cursor: pointer; overflow: hidden; text-align: left; font-size: 10px; line-height: 1.3; }
+.event { position: absolute; min-width: 0; min-height: 0; display: grid; align-content: center; gap: 2px; padding: 5px 8px; border: 0; border-left: 3px solid; border-radius: 5px; cursor: pointer; overflow: hidden; text-align: left; font-size: 10px; line-height: 1.3; }
 .event strong { font-size: 10px; font-weight: 600; }
 .event span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .event.success { background: #e4efe6; border-color: #4a7d58; color: #2c5236; }
@@ -2143,7 +2143,9 @@ img, video, canvas { max-width: 100%; height: auto; }
 
   /* Com a coluna larga, o evento pode respirar: horario e nome em tamanho de
      leitura, e o nome inteiro em duas linhas quando precisar. */
-  .event { padding: 5px 8px; font-size: 12px; }
+  /* Altura minima de duas linhas mais o respiro: uma consulta curta desenhava
+     uma caixa de 30px e o nome saia cortado pela metade. */
+  .event { padding: 7px 10px; font-size: 12px; min-height: 46px; }
   .event strong { font-size: 12px; }
   .event span { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 

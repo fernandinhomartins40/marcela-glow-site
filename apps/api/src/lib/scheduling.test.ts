@@ -3,6 +3,7 @@ import {
   addDaysISO,
   clinicTimeToUtc,
   clinicWeekday,
+  overlaps,
   utcToClinicDate,
   utcToClinicTime,
 } from './scheduling'
@@ -73,5 +74,46 @@ describe('addDaysISO', () => {
 
   it('anda para trás com valor negativo', () => {
     expect(addDaysISO('2026-09-02', -3)).toBe('2026-08-30')
+  })
+})
+
+/**
+ * Duas pacientes no mesmo horário é o erro que não pode acontecer: a agenda
+ * aceita, ninguém percebe até as duas chegarem, e não há como desfazer o
+ * constrangimento. `overlaps` é a regra que impede isso, e é barata de quebrar
+ * sem ninguém notar — daí valer o teste.
+ */
+describe('conflito de horário', () => {
+  const em = (hora: string) => new Date(`2026-09-10T${hora}:00.000Z`)
+
+  it('recusa quando uma começa dentro da outra', () => {
+    expect(overlaps(em('10:00'), em('11:00'), em('10:30'), em('11:30'))).toBe(true)
+  })
+
+  it('recusa quando uma engole a outra por inteiro', () => {
+    expect(overlaps(em('10:00'), em('12:00'), em('10:30'), em('11:00'))).toBe(true)
+    expect(overlaps(em('10:30'), em('11:00'), em('10:00'), em('12:00'))).toBe(true)
+  })
+
+  it('recusa duas exatamente no mesmo horário', () => {
+    expect(overlaps(em('14:00'), em('15:00'), em('14:00'), em('15:00'))).toBe(true)
+  })
+
+  /* Encostar não é conflito: uma consulta que termina às 11h e outra que começa
+     às 11h são a agenda cheia funcionando, não erro. Se isto virasse conflito, a
+     clínica não conseguiria marcar consultas seguidas. */
+  it('aceita quando uma termina onde a outra começa', () => {
+    expect(overlaps(em('10:00'), em('11:00'), em('11:00'), em('12:00'))).toBe(false)
+    expect(overlaps(em('11:00'), em('12:00'), em('10:00'), em('11:00'))).toBe(false)
+  })
+
+  it('aceita horários separados', () => {
+    expect(overlaps(em('09:00'), em('10:00'), em('14:00'), em('15:00'))).toBe(false)
+  })
+
+  it('não depende da ordem dos argumentos', () => {
+    const a: [Date, Date] = [em('10:00'), em('11:00')]
+    const b: [Date, Date] = [em('10:30'), em('11:30')]
+    expect(overlaps(...a, ...b)).toBe(overlaps(...b, ...a))
   })
 })

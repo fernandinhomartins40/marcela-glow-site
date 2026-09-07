@@ -202,3 +202,68 @@ export const GRID_HOURS = Array.from(
   { length: GRID_END_HOUR - GRID_START_HOUR },
   (_, i) => GRID_START_HOUR + i,
 )
+
+/**
+ * Distribui em colunas as consultas que se cruzam no tempo.
+ *
+ * Na grade da semana toda consulta ocupava a largura inteira do dia, então duas
+ * no mesmo horário eram desenhadas uma sobre a outra — dois nomes impressos no
+ * mesmo lugar, ilegíveis, e sem nada indicando que ali havia duas.
+ *
+ * O algoritmo é o de agenda: percorre em ordem de início e encaixa cada uma na
+ * primeira coluna livre; se nenhuma estiver, abre outra. As que se cruzam
+ * formam um grupo e dividem a largura por igual — encolher só as concorrentes
+ * mantém as consultas isoladas com a coluna inteira, que é o caso comum.
+ */
+export function distribuirColunas(
+  itens: Appointment[],
+): { appointment: Appointment; coluna: number; colunas: number }[] {
+  const comTempo = itens
+    .filter((a) => a.scheduledAt)
+    .map((a) => {
+      const inicio = minutesFromMidnight(a.scheduledAt!)
+      return {
+        appointment: a,
+        inicio,
+        fim: a.endsAt ? minutesFromMidnight(a.endsAt) : inicio + 60,
+      }
+    })
+    .sort((a, b) => a.inicio - b.inicio || a.fim - b.fim)
+
+  const resultado: { appointment: Appointment; coluna: number; colunas: number }[] = []
+  /* Um grupo é uma sequência de consultas encadeadas por sobreposição: A cruza
+     B, B cruza C, então as três dividem a mesma largura mesmo que A e C não se
+     toquem. Sem isso a largura mudaria no meio do grupo e as caixas ficariam
+     desalinhadas entre si. */
+  let grupo: typeof comTempo = []
+  let fimDoGrupo = -1
+
+  const fecharGrupo = () => {
+    if (grupo.length === 0) return
+    const colunas: number[] = [] // fim ocupado de cada coluna
+    const posicoes = grupo.map((item) => {
+      let coluna = colunas.findIndex((fim) => fim <= item.inicio)
+      if (coluna === -1) {
+        coluna = colunas.length
+        colunas.push(item.fim)
+      } else {
+        colunas[coluna] = item.fim
+      }
+      return { appointment: item.appointment, coluna }
+    })
+    for (const posicao of posicoes) {
+      resultado.push({ ...posicao, colunas: colunas.length })
+    }
+    grupo = []
+    fimDoGrupo = -1
+  }
+
+  for (const item of comTempo) {
+    if (grupo.length > 0 && item.inicio >= fimDoGrupo) fecharGrupo()
+    grupo.push(item)
+    fimDoGrupo = Math.max(fimDoGrupo, item.fim)
+  }
+  fecharGrupo()
+
+  return resultado
+}

@@ -18,6 +18,7 @@ import {
   clinicDate,
   clinicTime,
   dateKey,
+  distribuirColunas,
   dayLabel,
   fullDayLabel,
   fromDateTimeLocalValue,
@@ -220,7 +221,7 @@ function WeekGrid({
                   <div key={hour} className="hour-slot" />
                 ))}
 
-                {items.map((appointment) => {
+                {distribuirColunas(items).map(({ appointment, coluna, colunas }) => {
                   const startMin = minutesFromMidnight(appointment.scheduledAt!)
                   const endMin = appointment.endsAt
                     ? minutesFromMidnight(appointment.endsAt)
@@ -228,6 +229,13 @@ function WeekGrid({
                   const top = ((startMin - GRID_START_HOUR * 60) / totalMinutes) * 100
                   const height = ((endMin - startMin) / totalMinutes) * 100
                   if (top < 0 || top > 100) return null
+
+                  /* Consultas que se cruzam dividem a largura da coluna. Antes
+                     todas ocupavam a faixa inteira e a segunda cobria a
+                     primeira: dois nomes impressos um sobre o outro, ilegíveis
+                     e sem indicar que havia duas. */
+                  const largura = 100 / colunas
+                  const esquerda = largura * coluna
 
                   return (
                     <button
@@ -243,6 +251,8 @@ function WeekGrid({
                       style={{
                         top: `${top}%`,
                         height: `calc(${Math.max(height, 4)}% - 3px)`,
+                        left: `calc(${esquerda}% + 2px)`,
+                        width: `calc(${largura}% - 4px)`,
                       }}
                       onClick={() => onSelectAppointment(appointment)}
                       title={`${clinicTime(appointment.scheduledAt)} · ${appointment.name}`}

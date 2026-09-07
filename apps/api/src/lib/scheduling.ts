@@ -120,7 +120,17 @@ export function addDaysISO(dateISO: string, days: number): string {
   return base.toISOString().slice(0, 10)
 }
 
-function overlaps(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date): boolean {
+/**
+ * Dois intervalos se cruzam?
+ *
+ * A regra que impede duas pacientes no mesmo horario. Comparacao estrita nas
+ * duas pontas de proposito: uma consulta que termina exatamente quando a outra
+ * comeca nao e conflito — e a agenda cheia funcionando.
+ *
+ * Exportada para teste: e a regra mais critica do sistema e a mais barata de
+ * quebrar sem ninguem notar.
+ */
+export function overlaps(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date): boolean {
   return aStart < bEnd && bStart < aEnd
 }
 
