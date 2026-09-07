@@ -26,6 +26,8 @@ interface Sessao {
 export interface Plano {
   id: string
   title: string
+  /** Usado para abrir o pedido de horario ja no procedimento certo. */
+  procedureId: string | null
   status: 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'CANCELLED'
   totalSessions: number
   intervalDays: number | null

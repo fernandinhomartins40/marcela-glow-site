@@ -392,19 +392,29 @@ async function main() {
   console.log(`👥 Equipe: ${equipe.length} integrantes`)
 
   // ── Horário de funcionamento ──────────────────────────────────────────────
-  // Segunda a sexta 08:00–18:00, sábado 08:00–12:00.
-  for (const [weekday, startTime, endTime] of [
-    [1, '08:00', '18:00'], [2, '08:00', '18:00'], [3, '08:00', '18:00'],
-    [4, '08:00', '18:00'], [5, '08:00', '18:00'], [6, '08:00', '12:00'],
-  ]) {
-    const existente = await prisma.businessHour.findFirst({ where: { tenantId: tenant.id, weekday } })
-    if (existente) {
-      await prisma.businessHour.update({ where: { id: existente.id }, data: { startTime, endTime, isActive: true } })
-    } else {
-      await prisma.businessHour.create({ data: { tenantId: tenant.id, weekday, startTime, endTime } })
+  // Segunda a sexta 08:00–12:00 e 13:30–18:00, sábado 08:00–12:00.
+  //
+  // O dia inteiro e reescrito, nao a primeira janela que aparecer: o seed de
+  // usuarios ja gravou manha e tarde separadas, e atualizar so uma delas
+  // deixava `08:00-18:00` convivendo com `13:30-18:00`. A sobreposicao fazia a
+  // agenda oferecer cada horario da tarde duas vezes, no portal e no site.
+  const EXPEDIENTE = [
+    [1, ['08:00', '12:00'], ['13:30', '18:00']],
+    [2, ['08:00', '12:00'], ['13:30', '18:00']],
+    [3, ['08:00', '12:00'], ['13:30', '18:00']],
+    [4, ['08:00', '12:00'], ['13:30', '18:00']],
+    [5, ['08:00', '12:00'], ['13:30', '18:00']],
+    [6, ['08:00', '12:00']],
+  ]
+  for (const [weekday, ...janelas] of EXPEDIENTE) {
+    await prisma.businessHour.deleteMany({ where: { tenantId: tenant.id, weekday } })
+    for (const [startTime, endTime] of janelas) {
+      await prisma.businessHour.create({
+        data: { tenantId: tenant.id, weekday, startTime, endTime, isActive: true },
+      })
     }
   }
-  console.log('🕐 Horário de funcionamento: seg–sex 8h–18h, sáb 8h–12h')
+  console.log('🕐 Horário de funcionamento: seg–sex 8h–12h e 13h30–18h, sáb 8h–12h')
 
   // ── Procedimentos ─────────────────────────────────────────────────────────
   const procedimentos = []

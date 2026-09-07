@@ -339,6 +339,10 @@ router.get('/dashboard', async (req, res, next) => {
         id: plano.id,
         title: plano.title,
         status: plano.status,
+        /* O portal usa isto para ja abrir o pedido de horario no procedimento
+           certo — sem ele a paciente teria que reescolher na lista o mesmo
+           tratamento que acabou de abrir. */
+        procedureId: plano.procedureId,
         totalSessions: plano.totalSessions,
         intervalDays: plano.intervalDays,
         details: plano.details,

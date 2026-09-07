@@ -2,6 +2,7 @@ import { ArrowLeft, CalendarDays, Check, CircleDashed, Info } from 'lucide-react
 import type { DashboardData } from '@/lib/api'
 import { cn, StatusChip } from '@/components/ui'
 import { dataCurta, proximaPrevista, type Plano } from './Jornada'
+import { JornadaAcoes } from './JornadaAcoes'
 
 /**
  * Um tratamento por inteiro.
@@ -200,6 +201,8 @@ export function JornadaDetalhe({
             </section>
           )}
         </div>
+
+        {plano.status !== 'CANCELLED' && <JornadaAcoes plano={plano} />}
       </article>
     </div>
   )
