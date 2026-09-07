@@ -75,3 +75,47 @@ export function useAplicativoInstalado(): boolean {
   const [instalado] = React.useState(ehAplicativoInstalado)
   return instalado
 }
+
+/**
+ * Marca o documento como aplicativo e desliga o zoom por pinça.
+ *
+ * `user-scalable=no` na meta viewport não resolve: o iOS o ignora desde a
+ * versão 10, de propósito, para que página nenhuma bloqueie acessibilidade. O
+ * que ele respeita é `touch-action`, e o duplo toque precisa ser cancelado no
+ * gesto.
+ *
+ * Só vale instalado. No navegador o zoom continua funcionando — ali é uma
+ * página, e uma página que não deixa aproximar o texto é um problema de
+ * acessibilidade, não um app.
+ *
+ * A classe vai no `<html>`, não num `<div>`: pinça e duplo toque acontecem no
+ * documento inteiro, inclusive sobre a barra de navegação, que é justamente
+ * onde o zoom denuncia que aquilo não é um app.
+ */
+export function marcarDocumentoComoAplicativo(): void {
+  if (typeof document === 'undefined') return
+  if (!ehAplicativoInstalado()) return
+
+  document.documentElement.classList.add('modo-aplicativo')
+
+  /* O gesto de pinça do Safari não é coberto por `touch-action` em todos os
+     casos, então é cancelado direto. `passive: false` é obrigatório: sem ele o
+     `preventDefault` é ignorado. */
+  const cancelar = (evento: Event) => evento.preventDefault()
+  document.addEventListener('gesturestart', cancelar, { passive: false })
+  document.addEventListener('gesturechange', cancelar, { passive: false })
+
+  /* Duplo toque amplia mesmo com `touch-action` posto. Dois toques em menos de
+     300ms são o gesto; acima disso é a pessoa tocando rápido em dois botões
+     diferentes, que deve continuar funcionando. */
+  let ultimoToque = 0
+  document.addEventListener(
+    'touchend',
+    (evento) => {
+      const agora = Date.now()
+      if (agora - ultimoToque < 300) evento.preventDefault()
+      ultimoToque = agora
+    },
+    { passive: false },
+  )
+}

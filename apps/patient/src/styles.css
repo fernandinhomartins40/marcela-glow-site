@@ -387,3 +387,36 @@ button:active .pat-circulo {
     transition: none;
   }
 }
+
+/* ── Zoom desligado no aplicativo instalado ───────────────────────────────────
+   Ampliar a tela com dois dedos e a coisa que mais denuncia que um PWA nao e um
+   app: o menu escorrega, a barra sai do lugar e nada volta sozinho. `touch-action`
+   e o que o iOS respeita (ele ignora `user-scalable=no` desde a versao 10, de
+   proposito, para que pagina nenhuma bloqueie acessibilidade).
+
+   Vale so instalado. No navegador o zoom continua funcionando — ali e uma
+   pagina, e pagina que nao deixa aproximar o texto e problema de acessibilidade. */
+html.modo-aplicativo,
+html.modo-aplicativo body {
+  touch-action: pan-x pan-y;
+  /* O Safari amplia o campo ao focar quando a fonte e menor que 16px, e depois
+     nao desfaz — a tela fica torta pelo resto da sessao. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Rolagem continua livre onde precisa: listas, modais, qualquer area que role.
+   `pan-x pan-y` ja permite, mas areas com rolagem propria precisam do proprio
+   `touch-action` para nao herdar restricao de ancestral. */
+html.modo-aplicativo [data-rolagem],
+html.modo-aplicativo .overflow-y-auto,
+html.modo-aplicativo .overflow-auto {
+  touch-action: pan-y;
+}
+
+/* Campo de texto abaixo de 16px faz o Safari aproximar ao focar. */
+html.modo-aplicativo input,
+html.modo-aplicativo select,
+html.modo-aplicativo textarea {
+  font-size: max(16px, 1em);
+}
