@@ -1,9 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { z } from 'zod'
 import { prisma } from '@marcela/database'
-import { authenticate, requirePermission, requireStaff } from '../middleware/auth'
+import { authenticate, requireAnyPermission, requirePermission, requireStaff } from '../middleware/auth'
 import { AppError, NotFoundError } from '../lib/errors'
 import { audit } from '../lib/audit'
+import { clinicTimeToUtc, utcToClinicDate } from '../lib/scheduling'
 
 /**
  * Controle financeiro da clínica.
@@ -56,7 +57,7 @@ async function reavaliar(chargeId: string) {
  * Devolve o resumo e a lista na mesma chamada porque a tela mostra os dois
  * juntos e separá-los faria duas viagens para desenhar uma página só.
  */
-router.get('/', ...staffOnly, requirePermission('DASHBOARD_READ'), async (req: Request, res: Response, next: NextFunction) => {
+router.get('/', ...staffOnly, requireAnyPermission('FINANCE_OPERATE', 'FINANCE_MANAGE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = req.user!.tenantId
     const agora = new Date()
@@ -138,7 +139,7 @@ const chargeSchema = z.object({
   notes: z.string().trim().max(500).optional(),
 })
 
-router.post('/charges', ...staffOnly, requirePermission('PATIENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/charges', ...staffOnly, requirePermission('FINANCE_OPERATE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = chargeSchema.parse(req.body)
     if (body.discountCents > body.amountCents) {
@@ -166,7 +167,7 @@ router.post('/charges', ...staffOnly, requirePermission('PATIENT_WRITE'), async 
   }
 })
 
-router.patch('/charges/:id', ...staffOnly, requirePermission('PATIENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+router.patch('/charges/:id', ...staffOnly, requirePermission('FINANCE_OPERATE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = chargeSchema.partial().parse(req.body)
     const id = String(req.params.id)
@@ -199,7 +200,7 @@ router.patch('/charges/:id', ...staffOnly, requirePermission('PATIENT_WRITE'), a
  * Uma cobrança apagada some do histórico e o mês fechado deixa de bater com o
  * que foi declarado. Cancelada, ela continua visível e explicável.
  */
-router.post('/charges/:id/cancel', ...staffOnly, requirePermission('PATIENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/charges/:id/cancel', ...staffOnly, requirePermission('FINANCE_MANAGE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = String(req.params.id)
     const atual = await prisma.charge.findFirst({
@@ -235,7 +236,7 @@ const paymentSchema = z.object({
   notes: z.string().trim().max(300).optional(),
 })
 
-router.post('/charges/:id/payments', ...staffOnly, requirePermission('PATIENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/charges/:id/payments', ...staffOnly, requirePermission('FINANCE_OPERATE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = paymentSchema.parse(req.body)
     const chargeId = String(req.params.id)
@@ -281,7 +282,7 @@ router.post('/charges/:id/payments', ...staffOnly, requirePermission('PATIENT_WR
   }
 })
 
-router.delete('/payments/:id', ...staffOnly, requirePermission('PATIENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+router.delete('/payments/:id', ...staffOnly, requirePermission('FINANCE_MANAGE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = String(req.params.id)
     const pagamento = await prisma.payment.findFirst({ where: { id, tenantId: req.user!.tenantId } })
@@ -308,7 +309,7 @@ router.delete('/payments/:id', ...staffOnly, requirePermission('PATIENT_WRITE'),
  * cálculo ficasse fora dela, e número repetido é exatamente o que a Receita não
  * aceita.
  */
-router.post('/charges/:id/receipt', ...staffOnly, requirePermission('PATIENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/charges/:id/receipt', ...staffOnly, requirePermission('FINANCE_OPERATE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = req.user!.tenantId
     const chargeId = String(req.params.id)
@@ -373,7 +374,7 @@ router.post('/charges/:id/receipt', ...staffOnly, requirePermission('PATIENT_WRI
 
 const cancelReceiptSchema = z.object({ reason: z.string().trim().min(3).max(300) })
 
-router.post('/receipts/:id/cancel', ...staffOnly, requirePermission('PATIENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+router.post('/receipts/:id/cancel', ...staffOnly, requirePermission('FINANCE_MANAGE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = cancelReceiptSchema.parse(req.body)
     const id = String(req.params.id)
@@ -400,7 +401,7 @@ router.post('/receipts/:id/cancel', ...staffOnly, requirePermission('PATIENT_WRI
  * Traz os cancelados junto e em ordem de número: é assim que o contador confere
  * se a sequência está inteira.
  */
-router.get('/receipts', ...staffOnly, requirePermission('DASHBOARD_READ'), async (req: Request, res: Response, next: NextFunction) => {
+router.get('/receipts', ...staffOnly, requireAnyPermission('FINANCE_OPERATE', 'FINANCE_MANAGE'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const ano = req.query.ano ? Number(req.query.ano) : new Date().getFullYear()
     const receipts = await prisma.receipt.findMany({
@@ -418,6 +419,235 @@ router.get('/receipts', ...staffOnly, requirePermission('DASHBOARD_READ'), async
         totalCents: validos.reduce((s, r) => s + r.amountCents, 0),
       },
     })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Caixa do dia
+//
+// O sistema sempre soube quanto foi recebido — a soma dos pagamentos. O que
+// faltava era a outra metade da conferência: quanto a secretária conta na
+// gaveta ao fim do expediente. A diferença entre as duas é o que revela troco
+// errado, lançamento esquecido ou furo, e é a razão de o fechamento existir.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Meia-noite do dia da clínica, em UTC — a chave do caixa. */
+function diaDoCaixa(iso?: string): Date {
+  const dia = iso ?? utcToClinicDate(new Date())
+  return clinicTimeToUtc(dia, '00:00')
+}
+
+/** Quanto entrou no dia, por meio de pagamento. */
+async function totaisDoDia(tenantId: string, dia: Date) {
+  const fim = new Date(dia)
+  fim.setUTCDate(fim.getUTCDate() + 1)
+
+  const pagamentos = await prisma.payment.findMany({
+    where: { tenantId, paidAt: { gte: dia, lt: fim } },
+    select: { amountCents: true, method: true },
+  })
+
+  const porMeio: Record<string, number> = {}
+  for (const pagamento of pagamentos) {
+    porMeio[pagamento.method] = (porMeio[pagamento.method] ?? 0) + pagamento.amountCents
+  }
+
+  return {
+    porMeio,
+    /* Só dinheiro entra na conferência da gaveta: cartão e Pix se conferem pelo
+       extrato, não pela contagem. */
+    dinheiroCents: porMeio.CASH ?? 0,
+    totalCents: pagamentos.reduce((soma, pagamento) => soma + pagamento.amountCents, 0),
+    quantidade: pagamentos.length,
+  }
+}
+
+/** Quem supervisiona vê o esperado a qualquer momento; quem conta, não. */
+function supervisiona(req: Request): boolean {
+  return (
+    req.user!.role === 'ADMIN' || (req.user!.permissions ?? []).includes('FINANCE_MANAGE')
+  )
+}
+
+/**
+ * GET /cash — o caixa de um dia.
+ *
+ * A resposta esconde o esperado em dinheiro enquanto o caixa está aberto: a
+ * contagem é cega de propósito. Mostrar o valor antes transformaria a
+ * conferência em confirmação, e um furo passaria sem ninguém notar.
+ */
+router.get('/cash', ...staffOnly, requireAnyPermission('FINANCE_OPERATE', 'FINANCE_MANAGE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = req.user!.tenantId
+    const dia = diaDoCaixa(req.query.dia ? String(req.query.dia) : undefined)
+    const totais = await totaisDoDia(tenantId, dia)
+
+    const sessao = await prisma.cashSession.findUnique({
+      where: { tenantId_date: { tenantId, date: dia } },
+      include: {
+        closedBy: { select: { id: true, name: true } },
+        approvedBy: { select: { id: true, name: true } },
+      },
+    })
+
+    const fechado = sessao?.status === 'CLOSED' || sessao?.status === 'APPROVED'
+
+    res.json({
+      dia: utcToClinicDate(dia),
+      sessao,
+      recebido: {
+        totalCents: totais.totalCents,
+        quantidade: totais.quantidade,
+        porMeio: totais.porMeio,
+      },
+      esperadoDinheiroCents:
+        fechado || supervisiona(req) ? (sessao?.openingCents ?? 0) + totais.dinheiroCents : null,
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
+const aberturaSchema = z.object({
+  dia: z.string().optional(),
+  openingCents: z.number().int().min(0).max(100000000).optional().default(0),
+})
+
+/** POST /cash/open — registra o troco inicial da gaveta. */
+router.post('/cash/open', ...staffOnly, requirePermission('FINANCE_OPERATE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = aberturaSchema.parse(req.body)
+    const tenantId = req.user!.tenantId
+    const dia = diaDoCaixa(body.dia)
+
+    const existente = await prisma.cashSession.findUnique({
+      where: { tenantId_date: { tenantId, date: dia } },
+    })
+    if (existente && existente.status !== 'OPEN') {
+      throw new AppError('Este caixa já foi fechado.', 409, 'CASH_CLOSED')
+    }
+
+    const sessao = existente
+      ? await prisma.cashSession.update({
+          where: { id: existente.id },
+          data: { openingCents: body.openingCents },
+        })
+      : await prisma.cashSession.create({
+          data: { tenantId, date: dia, openingCents: body.openingCents },
+        })
+
+    await audit(req, 'CREATE', 'cashSession', sessao.id, { opening: body.openingCents })
+    res.status(201).json(sessao)
+  } catch (err) {
+    next(err)
+  }
+})
+
+const fechamentoSchema = z.object({
+  dia: z.string().optional(),
+  /** O que a secretária contou na gaveta. */
+  countedCashCents: z.number().int().min(0).max(100000000),
+  notes: z.string().trim().max(1000).optional(),
+})
+
+/**
+ * POST /cash/close — a secretária conta e fecha.
+ *
+ * Os totais são congelados aqui. Um pagamento lançado com data retroativa
+ * depois disso não pode reescrever a conferência que já foi feita: a diferença
+ * registrada é a que existia no momento da contagem.
+ */
+router.post('/cash/close', ...staffOnly, requirePermission('FINANCE_OPERATE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = fechamentoSchema.parse(req.body)
+    const tenantId = req.user!.tenantId
+    const dia = diaDoCaixa(body.dia)
+    const totais = await totaisDoDia(tenantId, dia)
+
+    const existente = await prisma.cashSession.findUnique({
+      where: { tenantId_date: { tenantId, date: dia } },
+    })
+    if (existente && existente.status !== 'OPEN') {
+      throw new AppError('Este caixa já foi fechado.', 409, 'CASH_CLOSED')
+    }
+
+    const abertura = existente?.openingCents ?? 0
+    const esperado = abertura + totais.dinheiroCents
+    const dados = {
+      status: 'CLOSED' as const,
+      countedCashCents: body.countedCashCents,
+      expectedCashCents: esperado,
+      differenceCents: body.countedCashCents - esperado,
+      totalReceivedCents: totais.totalCents,
+      notes: body.notes,
+      closedAt: new Date(),
+      closedById: req.user!.userId,
+    }
+
+    const sessao = existente
+      ? await prisma.cashSession.update({ where: { id: existente.id }, data: dados })
+      : await prisma.cashSession.create({
+          data: { tenantId, date: dia, openingCents: 0, ...dados },
+        })
+
+    await audit(req, 'UPDATE', 'cashSession', sessao.id, { difference: sessao.differenceCents })
+    res.json(sessao)
+  } catch (err) {
+    next(err)
+  }
+})
+
+const aprovacaoSchema = z.object({
+  reviewNotes: z.string().trim().max(1000).optional(),
+})
+
+/** POST /cash/:id/approve — a médica confere e aprova. */
+router.post('/cash/:id/approve', ...staffOnly, requirePermission('FINANCE_MANAGE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = aprovacaoSchema.parse(req.body)
+    const sessao = await prisma.cashSession.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+    })
+    if (!sessao) throw new NotFoundError('Caixa')
+    if (sessao.status !== 'CLOSED') {
+      throw new AppError('Só um caixa fechado pode ser aprovado.', 409, 'CASH_NOT_CLOSED')
+    }
+
+    const atualizada = await prisma.cashSession.update({
+      where: { id: sessao.id },
+      data: {
+        status: 'APPROVED',
+        approvedAt: new Date(),
+        approvedById: req.user!.userId,
+        reviewNotes: body.reviewNotes,
+      },
+    })
+
+    await audit(req, 'UPDATE', 'cashSession', atualizada.id, { approved: true })
+    res.json(atualizada)
+  } catch (err) {
+    next(err)
+  }
+})
+
+/** GET /cash/history — os fechamentos do período, para a médica acompanhar. */
+router.get('/cash/history', ...staffOnly, requirePermission('FINANCE_MANAGE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const sessoes = await prisma.cashSession.findMany({
+      where: {
+        tenantId: req.user!.tenantId,
+        ...(req.query.pendentes === '1' ? { status: 'CLOSED' as const } : {}),
+      },
+      include: {
+        closedBy: { select: { id: true, name: true } },
+        approvedBy: { select: { id: true, name: true } },
+      },
+      orderBy: { date: 'desc' },
+      take: 90,
+    })
+    res.json(sessoes)
   } catch (err) {
     next(err)
   }

@@ -152,6 +152,34 @@ export function requirePermission(...permissions: string[]) {
   }
 }
 
+/**
+ * Exige **ao menos uma** das permissoes.
+ *
+ * `requirePermission` cobra todas (`every`), o que e o certo para acumular
+ * exigencias. Mas ha rota que dois papeis alcancam por caminhos diferentes: o
+ * relatorio do caixa serve a secretaria, que opera, e a medica, que
+ * supervisiona — e nenhuma das duas tem a permissao da outra. Com `every` a
+ * lista das duas trancaria a porta para ambas.
+ */
+export function requireAnyPermission(...permissions: string[]) {
+  return (req: Request, _res: Response, next: NextFunction): void => {
+    if (!req.user) {
+      next(new UnauthorizedError())
+      return
+    }
+    if (req.user.role === 'ADMIN') {
+      next()
+      return
+    }
+    const granted = new Set(req.user.permissions ?? [])
+    if (!permissions.some((permission) => granted.has(permission))) {
+      next(new ForbiddenError('Permissao insuficiente para realizar esta acao'))
+      return
+    }
+    next()
+  }
+}
+
 export function requirePatient(req: Request, _res: Response, next: NextFunction): void {
   if (!req.user) {
     next(new UnauthorizedError())

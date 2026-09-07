@@ -47,7 +47,7 @@ const NAV_GROUPS = [
       ['reception', ConciergeBell, 'Recepção', 'Chegadas, confirmações e encaixes do dia', 'APPOINTMENT_WRITE'],
       ['encounter', Stethoscope, 'Atendimento', 'Atender a paciente e registrar o prontuário', 'RECORD_WRITE'],
       ['appointments', CalendarDays, 'Agenda', 'Consultas marcadas e horários livres', 'APPOINTMENT_READ'],
-      ['finance', Wallet, 'Financeiro', 'Cobranças, pagamentos e recibos', 'SETTINGS_READ'],
+      ['finance', Wallet, 'Financeiro', 'Cobranças, pagamentos e recibos', 'FINANCE_OPERATE|FINANCE_MANAGE'],
     ],
   },
   {
@@ -164,8 +164,11 @@ function Shell() {
      esperar meio segundo. */
   const permissoes: string[] = me.data?.permissions ?? []
   const data = useAdminData(permissoes)
+  /* `A|B` significa "basta uma": o Financeiro serve a secretaria, que opera,
+     e a medica, que supervisiona — e nenhuma das duas tem a permissao da
+     outra. Exigir as duas esconderia a aba de ambas. */
   const podeVer = React.useCallback(
-    (permissao: string) => permissoes.includes(permissao),
+    (permissao: string) => permissao.split('|').some((p) => permissoes.includes(p)),
     [permissoes],
   )
   const gruposVisiveis = React.useMemo(
@@ -188,7 +191,8 @@ function Shell() {
   React.useEffect(() => {
     if (!me.data || !primeiraPermitida) return
     const atual = NAV_ITEMS.find(({ item }) => item[0] === tab)
-    if (atual && !permissoes.includes(atual.item[4])) navigate(`/${primeiraPermitida}`, { replace: true })
+    const permitida = atual && atual.item[4].split('|').some((p) => permissoes.includes(p))
+    if (atual && !permitida) navigate(`/${primeiraPermitida}`, { replace: true })
   }, [me.data, navigate, permissoes, primeiraPermitida, tab])
 
   function go(next: AdminTab) {

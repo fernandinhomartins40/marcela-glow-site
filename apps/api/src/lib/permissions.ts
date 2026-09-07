@@ -22,6 +22,8 @@ export const rolePermissions: Record<UserRole | 'PATIENT', Permission[]> = {
     'USER_MANAGE',
     'AUDIT_READ',
     'FILE_MANAGE',
+    'FINANCE_OPERATE',
+    'FINANCE_MANAGE',
   ],
   DOCTOR: [
     'DASHBOARD_READ',
@@ -35,12 +37,18 @@ export const rolePermissions: Record<UserRole | 'PATIENT', Permission[]> = {
     'PRESCRIPTION_WRITE',
     'PRESCRIPTION_SIGN',
     'FILE_MANAGE',
+    /* Supervisiona o caixa sem operar: em consultorio o dinheiro entra pela
+       recepcao. A medica acompanha o periodo, aprova o fechamento e estorna
+       o que estiver errado — nao e ela quem recebe no balcao. */
+    'FINANCE_MANAGE',
   ],
   STAFF: ['DASHBOARD_READ', 'PATIENT_READ', 'APPOINTMENT_READ', 'APPOINTMENT_WRITE', 'LEAD_READ', 'LEAD_WRITE'],
-  RECEPTION: ['DASHBOARD_READ', 'PATIENT_READ', 'PATIENT_WRITE', 'APPOINTMENT_READ', 'APPOINTMENT_WRITE', 'LEAD_READ', 'LEAD_WRITE'],
+  // A recepcao opera o caixa: cobra, recebe e fecha o dia. Nao aprova o
+  // proprio fechamento nem estorna — isso e supervisao.
+  RECEPTION: ['DASHBOARD_READ', 'PATIENT_READ', 'PATIENT_WRITE', 'APPOINTMENT_READ', 'APPOINTMENT_WRITE', 'LEAD_READ', 'LEAD_WRITE', 'FINANCE_OPERATE'],
   ASSISTANT: ['PATIENT_READ', 'RECORD_READ', 'APPOINTMENT_READ', 'FILE_MANAGE'],
   CONTENT_EDITOR: ['CMS_READ', 'CMS_WRITE'],
-  FINANCE: ['DASHBOARD_READ', 'PATIENT_READ', 'APPOINTMENT_READ', 'SETTINGS_READ'],
+  FINANCE: ['DASHBOARD_READ', 'PATIENT_READ', 'APPOINTMENT_READ', 'SETTINGS_READ', 'FINANCE_OPERATE', 'FINANCE_MANAGE'],
   PATIENT: [],
 }
 

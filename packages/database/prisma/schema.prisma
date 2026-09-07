@@ -155,6 +155,14 @@ enum Permission {
   USER_MANAGE
   AUDIT_READ
   FILE_MANAGE
+  /// Operar o caixa do dia: lancar cobranca, receber pagamento, emitir
+  /// recibo, fechar o caixa. E o que a secretaria faz — o dinheiro entra
+  /// pela recepcao, nao pelo consultorio.
+  FINANCE_OPERATE
+  /// Supervisionar: relatorios do periodo, aprovar fechamento, estornar
+  /// pagamento, cancelar recibo. Quem opera o caixa nao deve validar o
+  /// proprio fechamento.
+  FINANCE_MANAGE
 }
 
 enum AuthSubjectType {
@@ -229,6 +237,7 @@ model Tenant {
   payments            Payment[]
   receipts            Receipt[]
   treatmentPlans      TreatmentPlan[]
+  cashSessions        CashSession[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -260,6 +269,8 @@ model User {
   confirmedAppointments Appointment[]        @relation("AppointmentConfirmer")
 
   @@unique([email, tenantId])
+  cashClosed   CashSession[] @relation("CashClosedBy")
+  cashApproved CashSession[] @relation("CashApprovedBy")
 }
 
 model UserPermission {
@@ -1181,4 +1192,67 @@ model PushSubscription {
 
   patient Patient? @relation(fields: [patientId], references: [id], onDelete: Cascade)
   tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+/// Situação do fechamento de caixa.
+///
+/// `OPEN` é o dia em andamento; `CLOSED` é a secretária dizendo "contei, é
+/// isto"; `APPROVED` é a médica conferindo depois. A aprovação é um estado
+/// separado porque quem opera o caixa não deve ser quem o valida.
+enum CashSessionStatus {
+  OPEN
+  CLOSED
+  APPROVED
+}
+
+/// Fechamento de caixa do dia.
+///
+/// O sistema já sabia quanto foi recebido — soma dos pagamentos. O que faltava
+/// era a outra metade da conferência: quanto a secretária *conta* na gaveta ao
+/// fim do expediente. A diferença entre as duas é o que revela furo, troco
+/// errado ou lançamento esquecido, e é a razão de o fechamento existir.
+///
+/// A contagem é cega de propósito: a secretária informa o que contou sem ver o
+/// esperado. Mostrar o valor antes transformaria a conferência em confirmação.
+model CashSession {
+  id       String            @id @default(cuid())
+  tenantId String
+  /// O dia do caixa, à meia-noite no fuso da clínica.
+  date     DateTime
+  status   CashSessionStatus @default(OPEN)
+
+  /// Troco deixado na gaveta na abertura — entra no esperado em dinheiro.
+  openingCents Int @default(0)
+
+  /// Quanto a secretária contou em dinheiro ao fechar.
+  countedCashCents Int?
+  /// Quanto o sistema esperava em dinheiro: abertura + pagamentos em CASH.
+  /// Congelado no fechamento, para que um lançamento retroativo não reescreva
+  /// a conferência que já foi feita.
+  expectedCashCents Int?
+  /// Contado menos esperado. Positivo é sobra, negativo é falta.
+  differenceCents   Int?
+  /// Total recebido no dia por todos os meios, congelado junto.
+  totalReceivedCents Int?
+
+  /// Explicação da diferença, quando há.
+  notes String?
+
+  closedAt     DateTime?
+  closedById   String?
+  approvedAt   DateTime?
+  approvedById String?
+  /// Observação da médica ao conferir.
+  reviewNotes  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant     Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  closedBy   User?  @relation("CashClosedBy", fields: [closedById], references: [id], onDelete: SetNull)
+  approvedBy User?  @relation("CashApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  /// Um caixa por dia: o fechamento é do expediente, não do turno.
+  @@unique([tenantId, date])
+  @@index([tenantId, status])
 }

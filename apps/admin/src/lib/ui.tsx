@@ -954,3 +954,26 @@ export function permissionLabel(id: string) {
   }
   return id
 }
+
+/**
+ * As permissões de quem está usando o painel.
+ *
+ * A mesma consulta que o `AdminApp` faz para montar o menu, reaproveitada pela
+ * chave do cache. Telas que mudam de cara conforme o papel — o Financeiro, que
+ * a secretária opera e a médica supervisiona — perguntam aqui em vez de receber
+ * a resposta por props atravessando três componentes.
+ */
+export function usePermissoes() {
+  const query = useQuery({
+    queryKey: ['me'],
+    queryFn: async () => (await api.get('/auth/me')).data,
+    staleTime: 5 * 60 * 1000,
+  })
+  const permissoes: string[] = query.data?.permissions ?? []
+  return {
+    carregando: query.isLoading,
+    permissoes,
+    pode: (permissao: string) =>
+      query.data?.role === 'ADMIN' || permissoes.includes(permissao),
+  }
+}

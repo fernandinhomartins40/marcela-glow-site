@@ -10,7 +10,9 @@ import {
   TrendingUp,
   Wallet,
 } from 'lucide-react'
-import { api, Chip, ConfirmDialog, errorMessage, Field, formatMoney, Modal, parseMoney } from '../lib/ui'
+import { api, Chip, ConfirmDialog, errorMessage, Field, formatMoney,
+  usePermissoes, Modal, parseMoney } from '../lib/ui'
+import { Caixa } from './Caixa'
 
 /**
  * Controle financeiro da clínica.
@@ -84,6 +86,7 @@ function mesAtual() {
 }
 
 export function Finance() {
+  const { pode } = usePermissoes()
   const [mes, setMes] = React.useState(mesAtual)
   const [pagando, setPagando] = React.useState<Cobranca | null>(null)
   const [cancelando, setCancelando] = React.useState<Cobranca | null>(null)
@@ -127,6 +130,10 @@ export function Finance() {
       </div>
 
       {emitir.isError && <p className="error">{errorMessage(emitir.error)}</p>}
+
+      {/* O caixa do dia vem antes do resumo do mês: no balcão a pergunta é
+          sempre "como está hoje", e é ali que o fechamento acontece. */}
+      <Caixa podeSupervisionar={pode('FINANCE_MANAGE')} />
 
       <section className="fin-resumo">
         <Numero
