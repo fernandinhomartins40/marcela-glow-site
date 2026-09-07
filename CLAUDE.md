@@ -103,7 +103,12 @@ Grafo: 1784 nos, 3157 arestas (commit `c0c48cd2`).
 
 ## Convencoes
 
-- Conversa e commits em portugues (pt-BR).
+- **Sempre conversar em portugues do Brasil (pt-BR) no chat**, em toda resposta
+  e em qualquer contexto — inclusive apos compactacao da conversa, ao retomar
+  uma sessao antiga ou ao responder sobre codigo escrito em ingles. Nao mudar de
+  idioma por causa do idioma da pergunta, dos nomes de simbolos ou de mensagens
+  de erro em ingles.
+- Commits e comentarios de codigo tambem em pt-BR.
 - `npm run check:encoding` valida encoding — roda antes de commitar.
 - Rotas em `apps/api/src/routes/`, middlewares em `apps/api/src/middleware/`,
   hierarquia de erros sob `AppError` em `apps/api/src/lib/errors.ts`.

@@ -106,6 +106,11 @@ export function JornadaDetalhe({
               </p>
             )}
           </div>
+
+          {/* As acoes ficam junto do progresso, nao no fim da pagina: quem le
+              "1 restante" quer agendar ali, e nao depois de rolar as sessoes,
+              o plano e os cuidados ate o rodape. */}
+          {plano.status !== 'CANCELLED' && <JornadaAcoes plano={plano} />}
         </header>
 
         <div className="px-5 sm:px-6 py-5 space-y-6">
@@ -202,7 +207,6 @@ export function JornadaDetalhe({
           )}
         </div>
 
-        {plano.status !== 'CANCELLED' && <JornadaAcoes plano={plano} />}
       </article>
     </div>
   )

@@ -358,10 +358,17 @@ nav[aria-label="Navegação principal"].md\:hidden {
   transition: transform 0.16s ease;
 }
 
-/* Na seção aberta o círculo troca de cor em vez de ganhar o realce dos outros:
-   ele já é escuro, e o realce o apagaria. */
+/* Na secao aberta o circulo NAO clareia.
+
+   Trocar o fundo para bronze punha um icone quase branco sobre um fundo
+   claro: o desenho sumia justamente quando a Jornada estava aberta, que e
+   quando ele mais precisa dizer onde a paciente esta. O estado ativo passa a
+   ser dito pelo anel em volta — que cresce e ganha a cor de acento — com o
+   contraste do icone intacto. */
 [aria-current="page"] .pat-circulo {
-  background: hsl(var(--bronze));
+  box-shadow:
+    0 0 0 2px hsl(var(--accent)),
+    0 6px 18px hsl(var(--espresso) / 0.32);
 }
 
 button:active .pat-circulo {

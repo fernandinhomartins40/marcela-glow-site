@@ -86,7 +86,7 @@ export function JornadaAcoes({ plano }: { plano: Plano }) {
   const podeEnviar = aberta === 'perguntar' ? texto.trim().length > 0 : true
 
   return (
-    <section className="border-t border-border px-5 sm:px-6 py-5">
+    <section className="mt-4">
       {feito && (
         <div className="mb-4">
           <Feedback tone="success">{feito}</Feedback>

@@ -181,7 +181,12 @@ function CartaoPlano({ plano, onAbrir }: { plano: Plano; onAbrir: (id: string) =
             'Ver plano e cuidados'
           )}
         </span>
-        <ChevronRight size={16} className="shrink-0 text-accent" aria-hidden="true" />
+        {/* O texto do atalho diz o que acontece ao tocar: num cartao que
+            inteiro e clicavel, uma seta sozinha nao promete nada. */}
+        <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-accent">
+          {concluido ? 'Ver' : 'Agendar'}
+          <ChevronRight size={15} aria-hidden="true" />
+        </span>
       </span>
     </button>
   )
