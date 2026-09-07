@@ -2147,7 +2147,17 @@ img, video, canvas { max-width: 100%; height: auto; }
      uma caixa de 30px e o nome saia cortado pela metade. */
   .event { padding: 7px 10px; font-size: 12px; min-height: 46px; }
   .event strong { font-size: 12px; }
-  .event span { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  /* Duas linhas, quebrando por palavra. `overflow-wrap` entra para nome longo
+     que nao cabe inteiro numa linha da caixa: sem ele a palavra estoura a
+     largura e some, em vez de continuar embaixo. */
+  .event span {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+  }
 
   /* A fila de solicitacoes cortava cartoes no topo e no fundo: 60vh de altura
      com rolagem propria dentro de uma pagina que ja rola.

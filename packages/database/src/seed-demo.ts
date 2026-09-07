@@ -500,11 +500,42 @@ async function main() {
     n += 1
   }
 
+  /* Nenhum horário recebe duas pacientes.
+   *
+   * O plano acima calcula a hora por `8 + (n % 9)`, e offsets diferentes caem
+   * na mesma hora com frequência — o `findFirst` abaixo só evitava repetir a
+   * *mesma* paciente, não duas pacientes distintas no mesmo minuto. O resultado
+   * era uma agenda de demonstração exibindo o erro que a clínica mais teme, e
+   * que a API recusa em todos os seus caminhos.
+   *
+   * A reserva é por dia+hora: encontrando o horário ocupado, empurra para a
+   * próxima hora livre dentro do expediente. */
+  /* Cada dia guarda os intervalos já tomados, em minutos.
+   *
+   * Reservar só a hora cheia não basta: um procedimento de 50 minutos com 20 de
+   * intervalo ocupa até 11h10, e a consulta das 12h — livre pela hora — ainda
+   * cruzaria a anterior. O conflito é de intervalo, não de hora, e é assim que
+   * a API o mede. */
+  const ocupadoPorDia = new Map<number, [number, number][]>()
+
   const agendamentos = []
   for (const a of agendaPlano) {
     const paciente = pacientes[a.pacienteIdx]
     const procedimento = procedimentos[a.procIdx]
-    const scheduledAt = dia(a.offset, a.hora)
+    const duracao = procedimento.durationMin + procedimento.bufferMin
+
+    const tomados: [number, number][] = ocupadoPorDia.get(a.offset) ?? []
+    const livre = (inicio: number) =>
+      tomados.every(([de_, ate]) => inicio >= ate || inicio + duracao <= de_)
+
+    let hora = a.hora
+    while (!livre(hora * 60) && hora < 18) hora += 1
+    // Dia cheio: descarta em vez de empilhar em cima de outra consulta.
+    if (!livre(hora * 60)) continue
+    tomados.push([hora * 60, hora * 60 + duracao])
+    ocupadoPorDia.set(a.offset, tomados)
+
+    const scheduledAt = dia(a.offset, hora)
     const endsAt = new Date(scheduledAt.getTime() + (procedimento.durationMin + procedimento.bufferMin) * 60000)
     const existente = await prisma.appointment.findFirst({
       where: { tenantId: tenant.id, patientId: paciente.id, scheduledAt },
