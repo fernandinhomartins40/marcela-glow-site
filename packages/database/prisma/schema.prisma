@@ -351,6 +351,10 @@ model Appointment {
   cancelReason  String?
   /// Marca quando a equipe disparou o aviso por WhatsApp
   notifiedAt    DateTime?
+  /// Quando a paciente chegou na clínica. É o que separa "tem hora marcada"
+  /// de "está na sala de espera agora": a recepção marca a chegada e a médica
+  /// vê quem já aguarda, sem precisar perguntar.
+  arrivedAt     DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

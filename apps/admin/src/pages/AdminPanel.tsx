@@ -1,6 +1,7 @@
 import React from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Schedule } from '../components/Schedule'
+import { Reception } from '../components/Reception'
 import { ScheduleSettings } from '../components/ScheduleSettings'
 import { Patients } from '../components/Patients'
 import { Cms, Leads, Procedures } from '../components/Catalog'
@@ -16,6 +17,7 @@ import { Finance } from '../components/Finance'
 
 export type AdminTab =
   | 'dashboard'
+  | 'reception'
   | 'encounter'
   | 'appointments'
   | 'patients'
@@ -29,6 +31,7 @@ export type AdminTab =
 
 export function AdminPanel({ tab, data, currentUserId }: { tab: AdminTab; data: any; currentUserId?: string }) {
   if (tab === 'dashboard') return <Dashboard data={data.dashboard} />
+  if (tab === 'reception') return <Reception />
   if (tab === 'patients') return <Patients />
   if (tab === 'appointments') return <Schedule appointments={data.appointments} />
   if (tab === 'encounter') return <Encounter />

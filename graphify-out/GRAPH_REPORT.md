@@ -1,7 +1,7 @@
-# Graph Report - marcela-glow-site  (2026-09-06)
+# Graph Report - marcela-glow-site  (2026-09-07)
 
 ## Corpus Check
-- 240 files · ~468,899 words
+- 240 files · ~469,025 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ca857da4`
+- Built from commit: `165cb1a6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -585,12 +585,7 @@ Cohesion: 0.67
 Nodes (3): Badge(), BadgeProps, badgeVariants
 
 ## Knowledge Gaps
-- **797 isolated node(s):** `bcrypt`, `{
-  AppointmentStatus, CatalogKind, ContentStatus, DocumentKind, Gender,
-  LeadStatus, MaritalStatus, MedicationControl, MessageSender,
-  NotificationChannel, PrescriptionStatus, PrismaClient, RecordType, UserRole,
-  BloodType,
-}`, `prisma`, `PROCEDIMENTOS`, `MEDICAMENTOS` (+792 more)
+- **797 isolated node(s):** `Onde o grafo NAO ajuda`, `Mapa da arquitetura`, `Divida conhecida`, `Convencoes`, `Manter este arquivo vivo` (+792 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 898 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **69 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -598,17 +593,12 @@ Nodes (3): Badge(), BadgeProps, badgeVariants
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `cn()` connect `cn` to `hooks/use-toast.ts`, `sidebar.tsx`, `utils.ts`, `pagination.tsx`, `web/src/lib/api.ts`, `command.tsx`, `drawer.tsx`, `alert.tsx`, `form.tsx`, `carousel.tsx`, `card.tsx`, `select.tsx`, `badge.tsx`, `chart.tsx`, `button.tsx`, `sheet.tsx`, `Appointment.tsx`, `breadcrumb.tsx`, `navigation-menu.tsx`?**
-  _High betweenness centrality (0.021) - this node is a cross-community bridge._
+  _High betweenness centrality (0.029) - this node is a cross-community bridge._
 - **Why does `errorMessage()` connect `errorMessage` to `PwaSettings.tsx`, `anexos.tsx`, `agenda.tsx`, `Encounter.tsx`, `TemplateForm.tsx`, `lib/ui.tsx`, `api`, `AdminApp.tsx`?**
-  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
 - **Why does `dependencies` connect `dependencies` to `@radix-ui/react-toast`, `@radix-ui/react-toggle`, `devDependencies`, `@radix-ui/react-toggle-group`, `@radix-ui/react-tooltip`, `react`, `react-dom`, `react-hook-form`, `react-resizable-panels`, `recharts`, `sonner`, `tailwind-merge`, `tailwindcss-animate`, `@tanstack/react-query`, `vaul`, `zod`, `@radix-ui/react-avatar`, `axios`, `class-variance-authority`, `clsx`, `cmdk`, `date-fns`, `embla-carousel-react`, `@hookform/resolvers`, `input-otp`, `lucide-react`, `next-themes`, `@radix-ui/react-accordion`, `@radix-ui/react-alert-dialog`, `@radix-ui/react-context-menu`, `@radix-ui/react-checkbox`, `@radix-ui/react-collapsible`, `@radix-ui/react-navigation-menu`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-hover-card`, `@radix-ui/react-label`, `@radix-ui/react-menubar`, `@radix-ui/react-select`, `@radix-ui/react-progress`, `@radix-ui/react-radio-group`, `@radix-ui/react-scroll-area`, `react-day-picker`, `@radix-ui/react-slider`, `@radix-ui/react-switch`, `@radix-ui/react-tabs`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
-- **What connects `bcrypt`, `{
-  AppointmentStatus, CatalogKind, ContentStatus, DocumentKind, Gender,
-  LeadStatus, MaritalStatus, MedicationControl, MessageSender,
-  NotificationChannel, PrescriptionStatus, PrismaClient, RecordType, UserRole,
-  BloodType,
-}`, `prisma` to the rest of the system?**
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **What connects `Onde o grafo NAO ajuda`, `Mapa da arquitetura`, `Divida conhecida` to the rest of the system?**
   _797 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `cn` be split into smaller, more focused modules?**
   _Cohesion score 0.061581920903954805 - nodes in this community are weakly interconnected._

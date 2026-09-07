@@ -18,6 +18,8 @@ export interface Appointment {
   createdAt: string
   notifiedAt: string | null
   confirmedAt: string | null
+  /** Quando a paciente chegou — o que separa "tem hora" de "esta na sala". */
+  arrivedAt?: string | null
   cancelReason: string | null
   source: string | null
   procedure: { id: string; title: string; durationMin?: number } | null

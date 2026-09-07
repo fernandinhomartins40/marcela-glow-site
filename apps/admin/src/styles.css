@@ -2189,3 +2189,43 @@ img, video, canvas { max-width: 100%; height: auto; }
      ficar como um traco solto ao lado do texto. */
   .data-counts .plano-barra { width: 100%; }
 }
+
+/* ── Recepcao ─────────────────────────────────────────────────────────────────
+   Tres faixas na ordem em que a secretaria usa o dia: quem esta na sala, quem
+   ainda vem hoje, quem precisa confirmar para amanha. */
+.reception-faixa + .reception-faixa { margin-top: 26px; }
+
+/* Rotulo discreto, nao titulo: a faixa organiza a lista, nao compete com ela.
+   Sem estilo proprio o <h2> herda o display do painel e vira texto grande e
+   escuro, com a contagem colada no fim da frase. */
+.reception-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--bronze);
+}
+
+.reception-contagem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--cream-deep);
+  color: var(--espresso);
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+@media (max-width: 720px) {
+  .reception-whats-acoes { width: 100%; }
+  .reception-whats-acoes a.primary { flex: 1; justify-content: center; }
+}

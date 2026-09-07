@@ -552,6 +552,45 @@ router.post('/:id/notified', authenticate, requireStaff, requirePermission('APPO
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POST /:id/arrival  (equipe) — a paciente chegou, ou desfaz a marcação
+// ─────────────────────────────────────────────────────────────────────────────
+
+const arrivalSchema = z.object({
+  /** `false` desfaz: a recepção clicou na linha errada, ou a paciente foi embora. */
+  arrived: z.boolean().optional().default(true),
+})
+
+router.post('/:id/arrival', authenticate, requireStaff, requirePermission('APPOINTMENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { arrived } = arrivalSchema.parse(req.body)
+    const existing = await prisma.appointment.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+      select: { id: true, status: true },
+    })
+    if (!existing) throw new NotFoundError('Agendamento')
+
+    /* Quem chega está, na prática, confirmado — está ali. Deixar como
+       "pendente" faria a consulta continuar na lista de quem a recepção ainda
+       precisa ligar, com a paciente sentada na sala de espera. */
+    const appointment = await prisma.appointment.update({
+      where: { id: existing.id },
+      data: {
+        arrivedAt: arrived ? new Date() : null,
+        ...(arrived && existing.status === 'PENDING'
+          ? { status: 'CONFIRMED' as const, confirmedAt: new Date(), confirmedById: req.user!.userId }
+          : {}),
+      },
+      include: APPOINTMENT_INCLUDE,
+    })
+
+    await audit(req, 'UPDATE', 'appointment', appointment.id, { arrived })
+    res.json(appointment)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GET /:id/whatsapp  (equipe) — regera o link sem alterar o agendamento
 // ─────────────────────────────────────────────────────────────────────────────
 
