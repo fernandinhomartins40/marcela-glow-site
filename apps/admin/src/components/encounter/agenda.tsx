@@ -1,6 +1,6 @@
 import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CalendarDays, ChevronRight, Plus, Stethoscope, UserRound } from 'lucide-react'
+import { CalendarDays, ChevronRight, Clock, Plus, Stethoscope, UserRound } from 'lucide-react'
 import {
   api,
   Chip,
@@ -43,6 +43,9 @@ export function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
   const debouncedSearch = useDebounced(search)
   const [creating, setCreating] = React.useState(false)
 
+  const hoje = dateKey(new Date())
+  const ehHoje = date === hoje
+
   const agenda = useQuery({
     queryKey: ['encounter-agenda', date],
     queryFn: async () =>
@@ -51,6 +54,12 @@ export function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
         /** Preenchido só quando o dia está vazio: o próximo compromisso na agenda. */
         next: { id: string; scheduledAt: string; name: string } | null
       },
+    /* Quem manda a paciente entrar é a recepção, de outro computador. Sem
+       recarregar sozinha, a médica só via a chegada ao trocar de tela — e a
+       paciente ficava esperando na sala com o painel dizendo que ela nem
+       tinha chegado. Só no dia de hoje: agenda de outro dia não muda sozinha. */
+    refetchInterval: ehHoje ? 15_000 : false,
+    refetchOnWindowFocus: true,
   })
 
   // Busca de paciente para quem chegou sem agendamento
@@ -66,6 +75,16 @@ export function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
     (entry) => entry.scheduledAt && clinicDateKey(entry.scheduledAt) === date,
   )
   const next = agenda.data?.next ?? null
+
+  /* A ordem do dia da médica não é o horário marcado — é quem está esperando.
+   *
+   * Uma lista só por hora mistura quem está sentada na sala com quem talvez nem
+   * venha, e a médica tem que adivinhar qual é qual. Estas faixas respondem "de
+   * quem é a vez" antes de responder "o que vem depois". */
+  const noConsultorio = entries.filter((e) => e.calledAt && !e.releasedAt)
+  const aguardando = entries.filter((e) => e.arrivedAt && !e.calledAt)
+  const aVir = entries.filter((e) => !e.arrivedAt && !e.releasedAt)
+  const encerrados = entries.filter((e) => e.releasedAt)
 
   const selected = new Date(`${date}T12:00:00`)
 
@@ -169,52 +188,33 @@ export function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
             </>
           }
         />
+      ) : ehHoje ? (
+        <>
+          {/* A ordem é a da sala de espera, não a do relógio: primeiro quem já
+              está no consultório, depois quem espera, e só então o que ainda
+              vem. Encerradas ficam por último, para consulta. */}
+          <FaixaDoDia
+            titulo="No consultório"
+            entradas={noConsultorio}
+            onOpen={onOpen}
+            destaque
+            vazio=""
+          />
+          <FaixaDoDia
+            titulo="Aguardando na recepção"
+            entradas={aguardando}
+            onOpen={onOpen}
+            aguardando
+            vazio=""
+          />
+          <FaixaDoDia titulo="Ainda não chegaram" entradas={aVir} onOpen={onOpen} vazio="" />
+          <FaixaDoDia titulo="Encerrados" entradas={encerrados} onOpen={onOpen} vazio="" />
+        </>
       ) : (
         <DataList>
-          {entries.map((entry) => {
-            const meta = statusMeta(entry.status as never)
-            const registered = entry._count.records + entry._count.prescriptions + entry._count.sessions
-            const noPatient = !entry.patient
-            return (
-              <DataRow
-                key={entry.id}
-                className="encounter-row"
-                leading={<span className="encounter-time">{clinicTime(entry.scheduledAt)}</span>}
-                title={entry.patient?.name ?? entry.name}
-                chips={
-                  <>
-                    <Chip tone={meta.tone}>{meta.label}</Chip>
-                    {registered > 0 && (
-                      <Chip tone="info">
-                        {registered} registro{registered > 1 ? 's' : ''}
-                      </Chip>
-                    )}
-                  </>
-                }
-                meta={
-                  <>
-                    <span>{entry.procedure?.title ?? 'Consulta de avaliação'}</span>
-                    {noPatient && <span className="warn-text">sem cadastro de paciente</span>}
-                  </>
-                }
-                actions={
-                  noPatient ? (
-                    <LinkPatientButton entry={entry} />
-                  ) : (
-                    <button
-                      className="primary encounter-open data-action-label"
-                      onClick={() => onOpen(entry.id)}
-                      title="Abrir atendimento"
-                    >
-                      <Stethoscope size={14} aria-hidden="true" />
-                      Atender
-                      <ChevronRight size={14} aria-hidden="true" />
-                    </button>
-                  )
-                }
-              />
-            )
-          })}
+          {entries.map((entry) => (
+            <LinhaAgenda key={entry.id} entry={entry} onOpen={onOpen} />
+          ))}
         </DataList>
       )}
 
@@ -237,6 +237,142 @@ export function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
  * ficha com os dados do próprio pedido, ou apontar para uma paciente que já
  * existe — caso comum de quem preencheu o site com outro e-mail.
  */
+/**
+ * Uma consulta na agenda do dia.
+ *
+ * O chip diz onde a paciente está, não só como a consulta foi marcada: "na
+ * sala" e "confirmada" são coisas diferentes, e antes a agenda mostrava as duas
+ * do mesmo jeito.
+ */
+function LinhaAgenda({
+  entry,
+  onOpen,
+  aguardando,
+  destaque,
+}: {
+  entry: AgendaEntry
+  onOpen: (id: string) => void
+  aguardando?: boolean
+  destaque?: boolean
+}) {
+  const client = useQueryClient()
+  const meta = statusMeta(entry.status as never)
+
+  /* Abrir o atendimento é chamar a paciente para dentro.
+   *
+   * A recepção marca a entrada quando manda a paciente ao consultório, mas a
+   * médica também chama direto — encaixe, atraso, a paciente que já estava na
+   * porta. Sem registrar aqui, a recepção continuaria vendo "na sala de espera"
+   * alguém que está sentada na frente da médica.
+   *
+   * Falhar aqui não pode impedir o atendimento: se a marcação não passar, a
+   * consulta abre do mesmo jeito e a recepção corrige na tela dela. */
+  const entrar = useMutation({
+    mutationFn: async () =>
+      api.post(`/appointments/${entry.id}/stage`, { stage: 'called', value: true }),
+    onSettled: () => {
+      client.invalidateQueries({ queryKey: ['encounter-agenda'] })
+      client.invalidateQueries({ queryKey: ['appointments'] })
+    },
+  })
+
+  function atender() {
+    if (!entry.calledAt && !entry.releasedAt) entrar.mutate()
+    onOpen(entry.id)
+  }
+  const registered = entry._count.records + entry._count.prescriptions + entry._count.sessions
+  const noPatient = !entry.patient
+
+  return (
+    <DataRow
+      className="encounter-row"
+      dimmed={Boolean(entry.releasedAt)}
+      leading={<span className="encounter-time">{clinicTime(entry.scheduledAt)}</span>}
+      title={entry.patient?.name ?? entry.name}
+      chips={
+        <>
+          {destaque ? (
+            <Chip tone="info">
+              <Stethoscope size={11} aria-hidden="true" />
+              Em atendimento
+            </Chip>
+          ) : aguardando ? (
+            <Chip tone="success">
+              <Clock size={11} aria-hidden="true" />
+              Chegou {clinicTime(entry.arrivedAt ?? null)}
+            </Chip>
+          ) : (
+            <Chip tone={meta.tone}>{meta.label}</Chip>
+          )}
+          {registered > 0 && (
+            <Chip tone="info">
+              {registered} registro{registered > 1 ? 's' : ''}
+            </Chip>
+          )}
+        </>
+      }
+      meta={
+        <>
+          <span>{entry.procedure?.title ?? 'Consulta de avaliação'}</span>
+          {noPatient && <span className="warn-text">sem cadastro de paciente</span>}
+        </>
+      }
+      actions={
+        noPatient ? (
+          <LinkPatientButton entry={entry} />
+        ) : (
+          <button
+            className="primary encounter-open data-action-label"
+            onClick={atender}
+            title="Abrir atendimento"
+          >
+            <Stethoscope size={14} aria-hidden="true" />
+            {entry.releasedAt ? 'Ver' : 'Atender'}
+            <ChevronRight size={14} aria-hidden="true" />
+          </button>
+        )
+      }
+    />
+  )
+}
+
+/** Uma etapa do dia. Some quando não há ninguém nela — faixa vazia é ruído. */
+function FaixaDoDia({
+  titulo,
+  entradas,
+  onOpen,
+  aguardando,
+  destaque,
+}: {
+  titulo: string
+  entradas: AgendaEntry[]
+  onOpen: (id: string) => void
+  aguardando?: boolean
+  destaque?: boolean
+  vazio?: string
+}) {
+  if (entradas.length === 0) return null
+  return (
+    <section className="agenda-faixa">
+      <h3 className="agenda-faixa-titulo">
+        {titulo}
+        <span className="agenda-faixa-contagem">{entradas.length}</span>
+      </h3>
+      <DataList>
+        {entradas.map((entry) => (
+          <LinhaAgenda
+            key={entry.id}
+            entry={entry}
+            onOpen={onOpen}
+            aguardando={aguardando}
+            destaque={destaque}
+          />
+        ))}
+      </DataList>
+    </section>
+  )
+}
+
 export function LinkPatientButton({ entry }: { entry: AgendaEntry }) {
   const [open, setOpen] = React.useState(false)
   return (

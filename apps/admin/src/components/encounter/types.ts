@@ -19,6 +19,12 @@ export interface AgendaEntry {
   phone: string | null
   procedure: { id: string; title: string } | null
   patient: { id: string; name: string; email: string; phone: string | null; birthDate: string | null } | null
+  /* O percurso da paciente pela clinica, marcado pela recepcao. E o que
+     diferencia quem esta sentada na sala de espera de quem ainda nem saiu de
+     casa — sem isso a agenda da medica lista as duas do mesmo jeito. */
+  arrivedAt?: string | null
+  calledAt?: string | null
+  releasedAt?: string | null
   _count: { records: number; prescriptions: number; sessions: number }
 }
 

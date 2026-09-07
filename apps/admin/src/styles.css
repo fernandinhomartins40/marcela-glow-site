@@ -2479,3 +2479,35 @@ main .reception-conflito .data-action-label {
   .reception-conflito > span { min-width: 100%; }
   .reception-conflito .data-action-label { flex: 1; justify-content: center; }
 }
+
+/* ── Faixas do dia na agenda da medica ────────────────────────────────────────
+   A ordem do dia nao e a do relogio: primeiro quem esta no consultorio, depois
+   quem espera. Faixa vazia nao aparece — so ruido entre o que importa. */
+.agenda-faixa + .agenda-faixa { margin-top: 20px; }
+
+.agenda-faixa-titulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 9px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--bronze);
+}
+
+.agenda-faixa-contagem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--cream-deep);
+  color: var(--espresso);
+  font-size: 11px;
+  letter-spacing: 0;
+}
