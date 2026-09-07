@@ -18,6 +18,7 @@ import landingRouter from './routes/landing'
 import templatesRouter from './routes/templates'
 import financeRouter from './routes/finance'
 import plansRouter from './routes/plans'
+import alertsRouter from './routes/alerts'
 import { AppError } from './lib/errors'
 
 const app = express()
@@ -131,6 +132,7 @@ app.use('/api/landing', landingRouter)
 app.use('/api/clinical/templates', templatesRouter)
 app.use('/api/finance', financeRouter)
 app.use('/api/plans', plansRouter)
+app.use('/api/alerts', alertsRouter)
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 404 fallback

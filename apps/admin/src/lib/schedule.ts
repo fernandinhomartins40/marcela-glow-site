@@ -20,6 +20,10 @@ export interface Appointment {
   confirmedAt: string | null
   /** Quando a paciente chegou — o que separa "tem hora" de "esta na sala". */
   arrivedAt?: string | null
+  /** Quando entrou no consultorio. */
+  calledAt?: string | null
+  /** Quando saiu — o gatilho da cobranca. */
+  releasedAt?: string | null
   cancelReason: string | null
   source: string | null
   procedure: { id: string; title: string; durationMin?: number } | null

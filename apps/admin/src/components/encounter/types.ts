@@ -42,6 +42,9 @@ export interface EncounterData {
     scheduledAt: string | null
     status: string
     message: string | null
+    /** O percurso da paciente pela clinica, para os avisos saberem o momento. */
+    calledAt?: string | null
+    releasedAt?: string | null
     procedure: { id: string; title: string } | null
   }
   patient: Patient

@@ -2315,3 +2315,95 @@ img, video, canvas { max-width: 100%; height: auto; }
   .caixa-numeros { grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); }
   .caixa-conferencia .primary { width: 100%; justify-content: center; }
 }
+
+/* ── Avisos entre consultorio e recepcao ──────────────────────────────────────
+   A barra so existe quando ha algo por ver: aviso que nunca some vira paisagem,
+   e quem olha para a tela o dia todo para de enxerga-lo. */
+.avisos { display: flex; flex-direction: column; gap: 8px; }
+
+.aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px 14px;
+  border: 1px solid var(--bronze);
+  border-radius: 10px;
+  background: var(--cream-deep);
+  animation: aviso-entra .28s ease;
+}
+
+@keyframes aviso-entra {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aviso { animation: none; }
+}
+
+.aviso-sino { flex: none; margin-top: 1px; color: var(--bronze); }
+.aviso-texto { flex: 1; min-width: 0; }
+.aviso-texto strong { display: block; font-size: 13.5px; color: var(--espresso); }
+.aviso-texto p { margin: 3px 0 0; font-size: 13px; color: var(--espresso); }
+.aviso-texto .hint { margin: 3px 0 0; font-size: 11px; }
+
+.aviso-visto,
+main .aviso-visto {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--bronze);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--espresso);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.aviso-visto:hover:not(:disabled) { background: var(--bronze); color: var(--cream); }
+
+.aviso-enviar { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+
+.aviso-form {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.aviso-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--cream-soft);
+  color: var(--espresso);
+  font-size: 13px;
+}
+
+/* No cabecalho do atendimento os tres botoes dividem a linha com o Encerrar. */
+.encounter-avisos { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.reception-topo-acoes { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* O botao de cobrar e um link para o Financeiro: precisa parecer botao. */
+a.reception-cobrar,
+main a.reception-cobrar {
+  text-decoration: none;
+  background: var(--espresso);
+  border-color: var(--espresso);
+  color: var(--cream-soft);
+}
+
+@media (max-width: 720px) {
+  .aviso { flex-wrap: wrap; }
+  .aviso-visto { width: 100%; justify-content: center; }
+  .encounter-avisos { width: 100%; }
+  .encounter-avisos > * { flex: 1; }
+  .reception-topo-acoes { width: 100%; }
+  .reception-topo-acoes > * { flex: 1; }
+}

@@ -972,6 +972,8 @@ export function usePermissoes() {
   const permissoes: string[] = query.data?.permissions ?? []
   return {
     carregando: query.isLoading,
+    usuarioId: query.data?.id as string | undefined,
+    nome: query.data?.name as string | undefined,
     permissoes,
     pode: (permissao: string) =>
       query.data?.role === 'ADMIN' || permissoes.includes(permissao),

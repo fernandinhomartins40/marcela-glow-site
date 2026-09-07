@@ -2,14 +2,16 @@ import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   BellRing,
-  CalendarPlus,
   Check,
   ChevronRight,
   Clock,
   DoorOpen,
+  HandCoins,
   MessageCircle,
   Phone,
   Plus,
+  Send,
+  Stethoscope,
   Undo2,
   UserRoundCheck,
   X,
@@ -20,9 +22,10 @@ import {
   ConfirmDialog,
   DataList,
   DataRow,
-  EmptyState,
   errorMessage,
+  formatMoney,
   RowAction,
+  usePermissoes,
 } from '../lib/ui'
 import {
   clinicDate,
@@ -34,23 +37,32 @@ import {
   type WhatsAppLink,
 } from '../lib/schedule'
 import { NewAppointment } from './NewAppointment'
+import { AvisosBarra, EnviarAviso } from './Avisos'
+import { useAvisos } from '../lib/avisos'
 
 /**
  * A tela da recepção.
  *
  * A secretária usava as mesmas telas da médica, que respondem a outra pergunta:
  * a Agenda mostra a semana inteira em grade, boa para planejar e ruim para o
- * balcão, onde a pergunta é sempre uma só — *quem está aqui agora, e quem eu
- * preciso ligar?*
+ * balcão, onde a pergunta é sempre uma só — *quem está aqui agora, e o que
+ * preciso fazer com ela?*
  *
- * As três faixas são o dia da recepção em ordem cronológica de uso: quem já
- * chegou e espera, quem tem hora hoje e ainda não apareceu, e quem vem amanhã e
- * precisa confirmar. Tudo que ela faz — marcar chegada, confirmar, avisar por
- * WhatsApp, encaixar — acontece sem sair daqui.
+ * As faixas seguem o percurso da paciente pela clínica, na ordem em que ele
+ * acontece: chega, espera, entra no consultório, sai, paga. Cada uma mostra só
+ * a ação daquele momento, e os avisos da médica chegam no topo.
  */
 
 interface Resposta {
   data: Appointment[]
+}
+
+interface Cobranca {
+  id: string
+  patientId: string | null
+  amountCents: number
+  status: string
+  description: string | null
 }
 
 /** Amanhã, no formato que a agenda usa como chave de dia. */
@@ -62,6 +74,8 @@ function amanha(): string {
 
 export function Reception() {
   const client = useQueryClient()
+  const { pode } = usePermissoes()
+  const avisos = useAvisos()
   const [encaixar, setEncaixar] = React.useState(false)
   const [whatsapp, setWhatsapp] = React.useState<WhatsAppLink | null>(null)
   const [cancelando, setCancelando] = React.useState<Appointment | null>(null)
@@ -70,35 +84,66 @@ export function Reception() {
   const consulta = useQuery({
     queryKey: ['appointments'],
     queryFn: async () => (await api.get('/appointments', { params: { limit: 200 } })).data as Resposta,
+    /* A agenda muda por fora — a médica chama a próxima, alguém liga para
+       desmarcar. No balcão a tela fica aberta o dia todo, então ela se
+       atualiza sozinha no mesmo ritmo dos avisos. */
+    refetchInterval: 15_000,
+  })
+
+  /* As cobranças em aberto dizem quem ainda deve. Só carrega se a pessoa opera
+     o caixa: sem a permissão a chamada daria 403 a cada 15 segundos. */
+  const podeCobrar = pode('FINANCE_OPERATE')
+  const financeiro = useQuery({
+    queryKey: ['finance-aberto'],
+    queryFn: async () => (await api.get('/finance')).data as { charges: Cobranca[] },
+    enabled: podeCobrar,
+    refetchInterval: 30_000,
   })
 
   const refresh = () => {
     client.invalidateQueries({ queryKey: ['appointments'] })
+    client.invalidateQueries({ queryKey: ['finance-aberto'] })
     client.invalidateQueries({ queryKey: ['admin'] })
   }
 
   const todas = consulta.data?.data ?? []
   const hoje = dateKey(new Date())
 
-  /* As três faixas se excluem: uma consulta aparece uma vez só, na etapa em que
-     ela realmente está. Cancelada não entra em nenhuma — não há o que fazer. */
+  /* As faixas se excluem: uma consulta aparece uma vez só, na etapa em que ela
+     realmente está. Cancelada não entra em nenhuma — não há o que fazer. */
   const doDia = todas.filter(
     (a) => a.scheduledAt && clinicDateKey(a.scheduledAt) === hoje && a.status !== 'CANCELLED',
   )
-  const naSala = doDia.filter((a) => a.arrivedAt && a.status !== 'COMPLETED')
-  const aguardando = doDia.filter((a) => !a.arrivedAt && a.status !== 'COMPLETED')
+  const emAtendimento = doDia.filter((a) => a.calledAt && !a.releasedAt)
+  const naSala = doDia.filter((a) => a.arrivedAt && !a.calledAt)
+  const aguardando = doDia.filter((a) => !a.arrivedAt)
+  const saindo = doDia.filter((a) => a.releasedAt)
   const paraConfirmar = todas.filter(
-    (a) =>
-      a.scheduledAt &&
-      clinicDateKey(a.scheduledAt) === amanha() &&
-      a.status === 'PENDING',
+    (a) => a.scheduledAt && clinicDateKey(a.scheduledAt) === amanha() && a.status === 'PENDING',
   )
+
+  /** O que a paciente ainda deve, se houver. */
+  function emAberto(a: Appointment): Cobranca | null {
+    if (!a.patient?.id) return null
+    return (
+      (financeiro.data?.charges ?? []).find(
+        (c) => c.patientId === a.patient!.id && c.status !== 'PAID' && c.status !== 'CANCELLED',
+      ) ?? null
+    )
+  }
 
   const chegada = useMutation({
     mutationFn: async ({ id, chegou }: { id: string; chegou: boolean }) =>
       (await api.post(`/appointments/${id}/arrival`, { arrived: chegou })).data,
     onSuccess: refresh,
     onError: (e) => setErro(errorMessage(e, 'Não foi possível registrar a chegada.')),
+  })
+
+  const etapa = useMutation({
+    mutationFn: async ({ id, stage, value }: { id: string; stage: 'called' | 'released'; value?: boolean }) =>
+      (await api.post(`/appointments/${id}/stage`, { stage, value: value ?? true })).data,
+    onSuccess: refresh,
+    onError: (e) => setErro(errorMessage(e, 'Não foi possível atualizar.')),
   })
 
   const confirmar = useMutation({
@@ -109,7 +154,6 @@ export function Reception() {
       },
     onSuccess: (data) => {
       refresh()
-      // O link vem pronto da API: confirmar e avisar são o mesmo gesto no balcão.
       if (data.whatsapp?.url) setWhatsapp(data.whatsapp)
     },
     onError: (e) => setErro(errorMessage(e, 'Não foi possível confirmar.')),
@@ -130,7 +174,7 @@ export function Reception() {
   })
 
   /** Abre a conversa e registra que a paciente foi avisada. */
-  function avisar(id: string, link: WhatsAppLink) {
+  function avisarWhats(id: string, link: WhatsAppLink) {
     if (!link.url) return
     window.open(link.url, '_blank', 'noopener')
     api.post(`/appointments/${id}/notified`).then(refresh).catch(() => undefined)
@@ -138,13 +182,31 @@ export function Reception() {
 
   async function lembrete(a: Appointment) {
     try {
-      const { data } = await api.get(`/appointments/${a.id}/whatsapp`, {
-        params: { kind: 'reminder' },
-      })
-      avisar(a.id, data as WhatsAppLink)
+      const { data } = await api.get(`/appointments/${a.id}/whatsapp`, { params: { kind: 'reminder' } })
+      avisarWhats(a.id, data as WhatsAppLink)
     } catch (e) {
       setErro(errorMessage(e, 'Não foi possível montar a mensagem.'))
     }
+  }
+
+  /** O botão de cobrar, quando há o que cobrar. */
+  function Cobrar({ consulta: a }: { consulta: Appointment }) {
+    if (!podeCobrar) return null
+    const conta = emAberto(a)
+    if (!conta) {
+      return a.patient?.id ? (
+        <Chip tone="success">
+          <Check size={11} aria-hidden="true" />
+          Sem pendência
+        </Chip>
+      ) : null
+    }
+    return (
+      <a className="data-action-label reception-cobrar" href="/finance">
+        <HandCoins size={14} aria-hidden="true" />
+        Receber {formatMoney(conta.amountCents)}
+      </a>
+    )
   }
 
   if (consulta.isLoading) return <p className="hint">Carregando o dia...</p>
@@ -153,16 +215,56 @@ export function Reception() {
     <div className="form-grid">
       {erro && <p className="error">{erro}</p>}
 
+      <AvisosBarra avisos={avisos} />
+
       <div className="toolbar">
         <span className="toolbar-title">
           {clinicDate(new Date().toISOString())} · {doDia.length}{' '}
           {doDia.length === 1 ? 'consulta' : 'consultas'}
         </span>
-        <button className="primary" onClick={() => setEncaixar(true)}>
-          <Plus size={14} aria-hidden="true" />
-          Encaixar consulta
-        </button>
+        <div className="reception-topo-acoes">
+          <EnviarAviso avisos={avisos} kind="NEED_DOCTOR" rotulo="Chamar a médica" />
+          <button className="primary" onClick={() => setEncaixar(true)}>
+            <Plus size={14} aria-hidden="true" />
+            Encaixar consulta
+          </button>
+        </div>
       </div>
+
+      <Faixa
+        icone={Stethoscope}
+        titulo="No consultório"
+        contagem={emAtendimento.length}
+        vazio="Nenhum atendimento em andamento."
+      >
+        {emAtendimento.map((a) => (
+          <DataRow
+            key={a.id}
+            title={a.name}
+            className="encounter-row"
+            leading={<span className="encounter-time">{clinicTime(a.scheduledAt)}</span>}
+            chips={
+              <>
+                <Chip tone="info">
+                  <Clock size={11} aria-hidden="true" />
+                  Entrou {clinicTime(a.calledAt ?? null)}
+                </Chip>
+                {a.procedure?.title && <Chip tone="neutral">{a.procedure.title}</Chip>}
+              </>
+            }
+            actions={
+              <>
+                <Cobrar consulta={a} />
+                <RowAction
+                  icon={Undo2}
+                  title="Voltar para a sala de espera"
+                  onClick={() => etapa.mutate({ id: a.id, stage: 'called', value: false })}
+                />
+              </>
+            }
+          />
+        ))}
+      </Faixa>
 
       <Faixa
         icone={DoorOpen}
@@ -186,11 +288,21 @@ export function Reception() {
               </>
             }
             actions={
-              <RowAction
-                icon={Undo2}
-                title="Desfazer chegada"
-                onClick={() => chegada.mutate({ id: a.id, chegou: false })}
-              />
+              <>
+                <Cobrar consulta={a} />
+                <button
+                  className="data-action-label"
+                  onClick={() => etapa.mutate({ id: a.id, stage: 'called' })}
+                >
+                  <Stethoscope size={14} aria-hidden="true" />
+                  Entrou
+                </button>
+                <RowAction
+                  icon={Undo2}
+                  title="Desfazer chegada"
+                  onClick={() => chegada.mutate({ id: a.id, chegou: false })}
+                />
+              </>
             }
           />
         ))}
@@ -231,6 +343,32 @@ export function Reception() {
           />
         ))}
       </Faixa>
+
+      {saindo.length > 0 && (
+        <Faixa
+          icone={HandCoins}
+          titulo="Saíram do consultório"
+          contagem={saindo.length}
+          vazio=""
+        >
+          {saindo.map((a) => (
+            <DataRow
+              key={a.id}
+              title={a.name}
+              className="encounter-row"
+              dimmed={!emAberto(a)}
+              leading={<span className="encounter-time">{clinicTime(a.scheduledAt)}</span>}
+              chips={
+                <>
+                  <Chip tone="neutral">Saiu {clinicTime(a.releasedAt ?? null)}</Chip>
+                  {a.procedure?.title && <Chip tone="neutral">{a.procedure.title}</Chip>}
+                </>
+              }
+              actions={<Cobrar consulta={a} />}
+            />
+          ))}
+        </Faixa>
+      )}
 
       <Faixa
         icone={BellRing}
@@ -344,7 +482,7 @@ function AvisoWhatsApp({ link, onClose }: { link: WhatsAppLink; onClose: () => v
       <div className="reception-whats-acoes">
         {link.url ? (
           <a className="primary" href={link.url} target="_blank" rel="noopener noreferrer">
-            <MessageCircle size={14} aria-hidden="true" />
+            <Send size={14} aria-hidden="true" />
             Abrir WhatsApp
             <ChevronRight size={14} aria-hidden="true" />
           </a>

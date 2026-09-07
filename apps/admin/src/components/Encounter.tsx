@@ -38,6 +38,8 @@ import { clinicDate, clinicTime, fromDateTimeLocalValue, statusMeta } from '../l
 import { DocumentForm, SignDocumentPrompt, type DocumentKind } from './Clinical'
 import { ClinicalAlerts } from './Patients'
 import { TodayAgenda } from './encounter/agenda'
+import { AvisosBarra, EnviarAviso } from './Avisos'
+import { useAvisos } from '../lib/avisos'
 import { RecordTimeline, RecordForm } from './encounter/prontuario'
 import { EncounterDocuments, EncounterSessions } from './encounter/anexos'
 import { RECORD_TYPES, recordTypeLabel, type EncounterData, type MedicalRecord } from './encounter/types'
@@ -58,6 +60,7 @@ export function Encounter() {
 
 function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onBack: () => void }) {
   const client = useQueryClient()
+  const avisos = useAvisos()
   const [tab, setTab] = React.useState<'record' | 'history' | 'documents' | 'procedures' | 'files'>('record')
   const [creating, setCreating] = React.useState(false)
   const [editing, setEditing] = React.useState<MedicalRecord | null>(null)
@@ -145,6 +148,34 @@ function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onB
           {appointment.procedure && <span> · {appointment.procedure.title}</span>}
         </div>
 
+        {/* Os recados que a médica dá dezenas de vezes por dia, sem sair do
+            atendimento nem abrir a porta do consultório.
+ 
+            Ficam visíveis mesmo com a consulta encerrada: encerrar o prontuário
+            e a paciente sair da sala são momentos diferentes, e chamar a
+            recepção não depende de nenhum dos dois. */}
+        <div className="encounter-avisos">
+          {!appointment.calledAt && (
+            <EnviarAviso
+              avisos={avisos}
+              kind="CALL_PATIENT"
+              rotulo="Chamar paciente"
+              appointmentId={appointmentId}
+              compacto
+            />
+          )}
+          <EnviarAviso avisos={avisos} kind="CALL_STAFF" rotulo="Chamar recepção" compacto />
+          {!appointment.releasedAt && (
+            <EnviarAviso
+              avisos={avisos}
+              kind="PATIENT_RELEASED"
+              rotulo="Paciente saiu"
+              appointmentId={appointmentId}
+              compacto
+            />
+          )}
+        </div>
+
         {appointment.status !== 'COMPLETED' && (
           <button className="primary" onClick={() => setCompleting(true)}>
             <CheckCircle2 size={14} />
@@ -152,6 +183,8 @@ function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onB
           </button>
         )}
       </div>
+
+      <AvisosBarra avisos={avisos} />
 
       {/* Alergias e gestação antes de qualquer prescrição */}
       <ClinicalAlerts patient={patient} />

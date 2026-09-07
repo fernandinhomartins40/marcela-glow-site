@@ -591,6 +591,64 @@ router.post('/:id/arrival', authenticate, requireStaff, requirePermission('APPOI
 })
 
 // ─────────────────────────────────────────────────────────────────────────────
+// POST /:id/stage  (equipe) — move a paciente pelo percurso da clínica
+//
+// Chegou → entrou no consultório → saiu. As três datas juntas dão o tempo real
+// de espera e de atendimento, e a saída é o que avisa a recepção de que há
+// cobrança a fazer.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const stageSchema = z.object({
+  stage: z.enum(['called', 'released']),
+  /** `false` desfaz: clicou na linha errada. */
+  value: z.boolean().optional().default(true),
+})
+
+router.post('/:id/stage', authenticate, requireStaff, requirePermission('APPOINTMENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { stage, value } = stageSchema.parse(req.body)
+    const existing = await prisma.appointment.findFirst({
+      where: { id: String(req.params.id), tenantId: req.user!.tenantId },
+      select: { id: true, status: true, arrivedAt: true },
+    })
+    if (!existing) throw new NotFoundError('Agendamento')
+
+    const agora = value ? new Date() : null
+
+    /* Entrar no consultório implica ter chegado. Sem isto, uma paciente
+       chamada direto — encaixe, atraso da recepção — sumiria da tela: some da
+       fila de espera por estar em atendimento, e some da lista de quem falta
+       chegar por já ter sido chamada. */
+    const dados =
+      stage === 'called'
+        ? {
+            calledAt: agora,
+            ...(value && !existing.arrivedAt ? { arrivedAt: agora } : {}),
+          }
+        : {
+            releasedAt: agora,
+            /* Atendimento encerrado é consulta realizada. Deixá-la
+               "confirmada" faria a agenda de amanhã ainda cobrar presença de
+               quem já foi atendida hoje. */
+            ...(value && existing.status !== 'CANCELLED'
+              ? { status: AppointmentStatus.COMPLETED }
+              : {}),
+          }
+
+    const appointment = await prisma.appointment.update({
+      where: { id: existing.id },
+      data: dados,
+      include: APPOINTMENT_INCLUDE,
+    })
+
+    await audit(req, 'UPDATE', 'appointment', appointment.id, { stage, value })
+    res.json(appointment)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GET /:id/whatsapp  (equipe) — regera o link sem alterar o agendamento
 // ─────────────────────────────────────────────────────────────────────────────
 

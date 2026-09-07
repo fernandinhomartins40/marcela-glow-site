@@ -238,6 +238,7 @@ model Tenant {
   receipts            Receipt[]
   treatmentPlans      TreatmentPlan[]
   cashSessions        CashSession[]
+  clinicAlerts        ClinicAlert[]
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -271,6 +272,8 @@ model User {
   @@unique([email, tenantId])
   cashClosed   CashSession[] @relation("CashClosedBy")
   cashApproved CashSession[] @relation("CashApprovedBy")
+  alertsCreated ClinicAlert[] @relation("AlertAuthor")
+  alertsSeen    ClinicAlert[] @relation("AlertSeenBy")
 }
 
 model UserPermission {
@@ -366,6 +369,12 @@ model Appointment {
   /// de "está na sala de espera agora": a recepção marca a chegada e a médica
   /// vê quem já aguarda, sem precisar perguntar.
   arrivedAt     DateTime?
+  /// Quando entrou no consultório. Junto com `arrivedAt` dá o tempo real de
+  /// espera — o número que a clínica precisa para saber se está atrasada.
+  calledAt      DateTime?
+  /// Quando saiu do consultório. É o gatilho da cobrança na saída: a recepção
+  /// só sabe que o atendimento acabou se alguém disser.
+  releasedAt    DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -382,6 +391,7 @@ model Appointment {
 
   @@index([tenantId, scheduledAt])
   @@index([tenantId, status])
+  alerts      ClinicAlert[]
 }
 
 /// Expediente semanal da clínica. Um registro por faixa de atendimento;
@@ -1255,4 +1265,56 @@ model CashSession {
   /// Um caixa por dia: o fechamento é do expediente, não do turno.
   @@unique([tenantId, date])
   @@index([tenantId, status])
+}
+
+/// O que um aviso entre consultório e recepção quer dizer.
+///
+/// Os quatro primeiros são os recados que se repetem dezenas de vezes por dia e
+/// merecem um toque só. `NOTE` é o resto — a pergunta que precisa de frase.
+enum ClinicAlertKind {
+  /// Médica → recepção: mande a paciente entrar.
+  CALL_PATIENT
+  /// Médica → recepção: venha ao consultório.
+  CALL_STAFF
+  /// Médica → recepção: a paciente saiu, pode cobrar.
+  PATIENT_RELEASED
+  /// Recepção → médica: preciso falar com você.
+  NEED_DOCTOR
+  /// Recado escrito, nos dois sentidos.
+  NOTE
+}
+
+/// Um aviso trocado entre o consultório e a recepção durante o expediente.
+///
+/// A médica não sai do atendimento para avisar que a próxima pode entrar, e a
+/// secretária não abre a porta do consultório para perguntar se dá para
+/// encaixar alguém. Antes isso acontecia por voz, campainha ou bilhete; aqui
+/// vira registro, com hora e autor.
+///
+/// Não é um chat: cada aviso nasce preso a um momento do dia — quase sempre a
+/// uma consulta — e morre quando quem recebeu o marca como visto. O que precisa
+/// de conversa longa continua sendo assunto de `Message`.
+model ClinicAlert {
+  id       String          @id @default(cuid())
+  tenantId String
+  kind     ClinicAlertKind
+  /// A consulta de que se fala. Opcional: "venha ao consultório" não é sobre
+  /// paciente nenhuma.
+  appointmentId String?
+  /// O texto, quando o aviso não cabe num botão.
+  body     String?
+
+  createdById String?
+  createdAt   DateTime @default(now())
+  /// Quando alguém do outro lado viu. Nulo é aviso ainda piscando na tela.
+  seenAt      DateTime?
+  seenById    String?
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  createdBy   User?        @relation("AlertAuthor", fields: [createdById], references: [id], onDelete: SetNull)
+  seenBy      User?        @relation("AlertSeenBy", fields: [seenById], references: [id], onDelete: SetNull)
+
+  /// A consulta de avisos pergunta sempre "o que ainda não foi visto hoje".
+  @@index([tenantId, seenAt, createdAt])
 }
