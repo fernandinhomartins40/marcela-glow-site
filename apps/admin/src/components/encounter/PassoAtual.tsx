@@ -1,8 +1,17 @@
 import { useMutation } from '@tanstack/react-query'
-import { Check, ChevronRight, FileSignature, LogOut, PenLine, Stethoscope } from 'lucide-react'
+import React from 'react'
+import {
+  Check,
+  ChevronRight,
+  FileSignature,
+  LogOut,
+  PenLine,
+  SkipForward,
+  Stethoscope,
+} from 'lucide-react'
 import { api } from '../../lib/ui'
 import type { useAvisos } from '../../lib/avisos'
-import { TRILHA, type Etapa } from './etapas'
+import { etapaPorId, TRILHA, type Etapa, type EtapaId } from './etapas'
 
 /**
  * O próximo passo do atendimento.
@@ -54,29 +63,52 @@ export function PassoAtual({
     },
   })
 
-  const Icone = ICONE[etapa.id]
+  /* A trilha sugere o passo; a médica decide. Escolhendo uma etapa, é ela que
+     manda até a próxima recarga — a sugestão volta quando o atendimento
+     realmente avança. */
+  const [escolhida, setEscolhida] = React.useState<EtapaId | null>(null)
+  const mostrada = escolhida ? etapaPorId(escolhida, etapa) : etapa
+
+  /* Se o atendimento avançou por conta própria — a evolução foi escrita, a
+     paciente entrou — a escolha manual perde o sentido e sai da frente. */
+  React.useEffect(() => {
+    setEscolhida(null)
+  }, [etapa.id])
+
+  const Icone = ICONE[mostrada.id]
 
   function agir() {
-    if (etapa.id === 'chamar') chamar.mutate()
-    else if (etapa.id === 'registrar') onEscrever()
-    else if (etapa.id === 'documentos') onDocumentos()
-    else if (etapa.id === 'encerrar') onEncerrar()
+    if (mostrada.id === 'chamar') chamar.mutate()
+    else if (mostrada.id === 'registrar') onEscrever()
+    else if (mostrada.id === 'documentos') onDocumentos()
+    else if (mostrada.id === 'encerrar') onEncerrar()
   }
 
   return (
-    <section className={`passo passo-${etapa.id}`}>
-      {/* A trilha responde "quanto falta" sem a médica ter que perguntar. */}
+    <section className={`passo passo-${mostrada.id}`}>
+      {/* Responde "quanto falta" e deixa ir a qualquer passo. Uma consulta de
+          retorno pode não ter evolução a escrever, e travar a médica ali só a
+          faria escrever qualquer coisa para destravar. */}
       <ol className="passo-trilha" aria-label="Etapas do atendimento">
         {TRILHA.map((item, i) => (
           <li
             key={item.id}
             className={
-              i < etapa.ordem ? 'feito' : i === etapa.ordem ? 'atual' : 'futuro'
+              i < etapa.ordem ? 'feito' : i === mostrada.ordem ? 'atual' : 'futuro'
             }
-            aria-current={i === etapa.ordem ? 'step' : undefined}
+            aria-current={i === mostrada.ordem ? 'step' : undefined}
           >
-            <span className="passo-bolinha">{i < etapa.ordem ? <Check size={11} /> : i + 1}</span>
-            {item.rotulo}
+            <button
+              type="button"
+              className="passo-etapa"
+              onClick={() => setEscolhida(item.id)}
+              title={`Ir para "${item.rotulo}"`}
+            >
+              <span className="passo-bolinha">
+                {i < etapa.ordem ? <Check size={11} /> : i + 1}
+              </span>
+              {item.rotulo}
+            </button>
           </li>
         ))}
       </ol>
@@ -87,13 +119,27 @@ export function PassoAtual({
         </span>
 
         <div className="passo-texto">
-          <strong>{etapa.titulo}</strong>
-          <span>{etapa.ajuda}</span>
+          <strong>{mostrada.titulo}</strong>
+          <span>{mostrada.ajuda}</span>
         </div>
 
-        {etapa.acao && (
+        {/* Pular vai direto ao passo seguinte da trilha. Existe porque a ordem
+            é a do caso comum, não uma regra: quem já sabe o que quer fazer não
+            deve ter que cumprir a etapa para chegar lá. */}
+        {mostrada.id !== 'encerrar' && mostrada.id !== 'encerrado' && (
+          <button
+            type="button"
+            className="passo-pular"
+            onClick={() => setEscolhida(TRILHA[Math.min(mostrada.ordem + 1, TRILHA.length - 1)].id)}
+          >
+            Pular
+            <SkipForward size={14} aria-hidden="true" />
+          </button>
+        )}
+
+        {mostrada.acao && (
           <button className="passo-acao" onClick={agir} disabled={chamar.isPending}>
-            {etapa.acao}
+            {mostrada.acao}
             <ChevronRight size={18} aria-hidden="true" />
           </button>
         )}

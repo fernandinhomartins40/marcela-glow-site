@@ -102,3 +102,46 @@ export function etapaAtual(data: EncounterData, pendencias?: Pendencias): Etapa 
     ordem: 3,
   }
 }
+
+/**
+ * Uma etapa pelo id, para quando a médica escolhe o passo em vez de seguir a
+ * sugestão.
+ *
+ * A trilha sugere o caminho; ela não manda. Retorno sem evolução a escrever,
+ * consulta que já foi conduzida no papel, paciente que desistiu no meio — todos
+ * são motivos legítimos de pular, e travar a médica no passo "certo" só a faria
+ * escrever qualquer coisa para destravar.
+ */
+export function etapaPorId(id: EtapaId, sugerida: Etapa): Etapa {
+  if (id === sugerida.id) return sugerida
+
+  const mapa: Record<Exclude<EtapaId, 'encerrado'>, Omit<Etapa, 'id'>> = {
+    chamar: {
+      titulo: 'Chamar a paciente',
+      ajuda: 'A recepção recebe o aviso e manda a paciente entrar.',
+      acao: 'Chamar a paciente',
+      ordem: 0,
+    },
+    registrar: {
+      titulo: 'Registrar a evolução',
+      ajuda: 'O que foi avaliado e conduzido nesta consulta.',
+      acao: 'Escrever a evolução',
+      ordem: 1,
+    },
+    documentos: {
+      titulo: 'Documentos',
+      ajuda: 'Receitas, pedidos de exame e orientações desta consulta.',
+      acao: 'Ver documentos',
+      ordem: 2,
+    },
+    encerrar: {
+      titulo: 'Encerrar o atendimento',
+      ajuda: 'A paciente é liberada e a recepção recebe o aviso de cobrança.',
+      acao: 'Encerrar e liberar',
+      ordem: 3,
+    },
+  }
+
+  if (id === 'encerrado') return sugerida
+  return { id, ...mapa[id] }
+}

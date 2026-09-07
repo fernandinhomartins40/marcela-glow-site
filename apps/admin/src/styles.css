@@ -2725,3 +2725,56 @@ main .passo-acao {
   .passo-trilha li { font-size: 11.5px; }
   .passo-acao { width: 100%; justify-content: center; }
 }
+
+/* ── Trilha navegavel ─────────────────────────────────────────────────────────
+   A trilha sugere o caminho; nao manda. Cada etapa e um botao, e "Pular" leva
+   ao passo seguinte: retorno sem evolucao a escrever, consulta ja conduzida no
+   papel, paciente que desistiu no meio — travar a medica no passo "certo" so a
+   faria escrever qualquer coisa para destravar. */
+.passo-etapa,
+main .passo-etapa {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: auto;
+  min-height: 0;
+  padding: 3px 6px;
+  margin: -3px -6px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  transition: background .14s ease;
+}
+
+.passo-etapa:hover { background: var(--cream-deep); }
+
+.passo-etapa:focus-visible {
+  outline: 2px solid var(--bronze);
+  outline-offset: 1px;
+}
+
+/* Discreto de proposito: e a saida, nao o caminho. */
+.passo-pular,
+main .passo-pular {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 46px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.passo-pular:hover { border-color: var(--bronze); color: var(--espresso); }
+
+@media (max-width: 720px) {
+  .passo-pular { flex: 1; justify-content: center; }
+}
