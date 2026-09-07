@@ -1,8 +1,11 @@
 import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import {
   BellRing,
+  CalendarDays,
   Check,
+  ChevronLeft,
   ChevronRight,
   Clock,
   DoorOpen,
@@ -65,17 +68,30 @@ interface Cobranca {
   description: string | null
 }
 
-/** Amanhã, no formato que a agenda usa como chave de dia. */
-function amanha(): string {
+/** A chave do dia daqui a `n` dias — 1 é amanhã. */
+function emDias(n: number): string {
   const d = new Date()
-  d.setDate(d.getDate() + 1)
+  d.setDate(d.getDate() + n)
   return dateKey(d)
+}
+
+/** "amanhã", "sábado, 12 de setembro" — como a secretária diria ao telefone. */
+function rotuloDoDia(n: number): string {
+  if (n === 1) return 'amanhã'
+  const d = new Date()
+  d.setDate(d.getDate() + n)
+  return d.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })
 }
 
 export function Reception() {
   const client = useQueryClient()
   const { pode } = usePermissoes()
   const avisos = useAvisos()
+  const navigate = useNavigate()
+  /* Quantos dias à frente a faixa de confirmação está olhando. A secretária
+     adianta o trabalho quando a agenda de amanhã já está resolvida — e antes
+     não tinha como: a faixa era fixa em "amanhã". */
+  const [diasAFrente, setDiasAFrente] = React.useState(1)
   const [encaixar, setEncaixar] = React.useState(false)
   const [whatsapp, setWhatsapp] = React.useState<WhatsAppLink | null>(null)
   const [cancelando, setCancelando] = React.useState<Appointment | null>(null)
@@ -118,9 +134,20 @@ export function Reception() {
   const naSala = doDia.filter((a) => a.arrivedAt && !a.calledAt)
   const aguardando = doDia.filter((a) => !a.arrivedAt)
   const saindo = doDia.filter((a) => a.releasedAt)
-  const paraConfirmar = todas.filter(
-    (a) => a.scheduledAt && clinicDateKey(a.scheduledAt) === amanha() && a.status === 'PENDING',
-  )
+  /* O dia inteiro, não só as pendentes.
+   *
+   * Mostrar só `PENDING` fazia a consulta sumir da tela assim que era
+   * confirmada: a secretária não tinha prova nenhuma de que o trabalho fora
+   * feito, e ao voltar à tela ligava de novo para quem já havia confirmado. */
+  const doDiaEscolhido = todas
+    .filter(
+      (a) =>
+        a.scheduledAt &&
+        clinicDateKey(a.scheduledAt) === emDias(diasAFrente) &&
+        a.status !== 'CANCELLED',
+    )
+    .sort((a, b) => (a.scheduledAt ?? '').localeCompare(b.scheduledAt ?? ''))
+  const pendentesDoDia = doDiaEscolhido.filter((a) => a.status === 'PENDING')
 
   /** O que a paciente ainda deve, se houver. */
   function emAberto(a: Appointment): Cobranca | null {
@@ -157,6 +184,15 @@ export function Reception() {
       if (data.whatsapp?.url) setWhatsapp(data.whatsapp)
     },
     onError: (e) => setErro(errorMessage(e, 'Não foi possível confirmar.')),
+  })
+
+  /* Desfazer a confirmação, para o caso comum de clicar na linha errada.
+     Volta ao pendente pelo PATCH que já existia — não precisa de rota nova. */
+  const desconfirmar = useMutation({
+    mutationFn: async (id: string) =>
+      (await api.patch(`/appointments/${id}`, { status: 'PENDING' })).data,
+    onSuccess: refresh,
+    onError: (e) => setErro(errorMessage(e, 'Não foi possível desfazer a confirmação.')),
   })
 
   const cancelar = useMutation({
@@ -224,6 +260,12 @@ export function Reception() {
         </span>
         <div className="reception-topo-acoes">
           <EnviarAviso avisos={avisos} kind="NEED_DOCTOR" rotulo="Chamar a médica" />
+          {/* A grade da semana continua sendo o lugar de remarcar e ver buracos
+              livres: daqui se chega lá em um clique, em vez de procurar no menu. */}
+          <button className="ghost" onClick={() => navigate('/appointments')}>
+            <CalendarDays size={14} aria-hidden="true" />
+            Abrir agenda
+          </button>
           <button className="primary" onClick={() => setEncaixar(true)}>
             <Plus size={14} aria-hidden="true" />
             Encaixar consulta
@@ -370,54 +412,116 @@ export function Reception() {
         </Faixa>
       )}
 
-      <Faixa
-        icone={BellRing}
-        titulo="Confirmar para amanhã"
-        contagem={paraConfirmar.length}
-        vazio="Nenhuma consulta de amanhã pendente de confirmação."
-      >
-        {paraConfirmar.map((a) => (
-          <DataRow
-            key={a.id}
-            title={a.name}
-            className="encounter-row"
-            leading={<span className="encounter-time">{clinicTime(a.scheduledAt)}</span>}
-            chips={
-              <>
-                {a.procedure?.title && <Chip tone="neutral">{a.procedure.title}</Chip>}
-                {a.notifiedAt && (
-                  <Chip tone="info">
-                    <Check size={11} aria-hidden="true" />
-                    Avisada
-                  </Chip>
-                )}
-              </>
-            }
-            meta={
-              a.phone ? (
-                <span className="inline-flex items-center gap-1">
-                  <Phone size={12} aria-hidden="true" />
-                  {a.phone}
-                </span>
-              ) : undefined
-            }
-            actions={
-              <>
-                <button
-                  className="data-action-label"
-                  disabled={confirmar.isPending}
-                  onClick={() => confirmar.mutate(a.id)}
-                >
-                  <Check size={14} aria-hidden="true" />
-                  Confirmar
-                </button>
-                <RowAction icon={MessageCircle} title="Lembrar por WhatsApp" onClick={() => lembrete(a)} />
-                <RowAction icon={X} title="Cancelar consulta" onClick={() => setCancelando(a)} />
-              </>
-            }
-          />
-        ))}
-      </Faixa>
+      <section className="reception-faixa">
+        <div className="reception-confirmar-topo">
+          <h2 className="reception-titulo">
+            <BellRing size={15} aria-hidden="true" />
+            Confirmar para {rotuloDoDia(diasAFrente)}
+            <span className="reception-contagem">{pendentesDoDia.length}</span>
+          </h2>
+          {/* Navegar o dia resolve o trabalho adiantado: com a agenda de amanhã
+              pronta, a secretária passa para depois de amanhã em vez de esperar
+              o dia virar. */}
+          <div className="reception-dias">
+            <button
+              className="ghost"
+              onClick={() => setDiasAFrente((d) => Math.max(1, d - 1))}
+              disabled={diasAFrente <= 1}
+              aria-label="Dia anterior"
+            >
+              <ChevronLeft size={15} aria-hidden="true" />
+            </button>
+            <span className="reception-dia-atual">{clinicDate(new Date(Date.now() + diasAFrente * 86400000).toISOString())}</span>
+            <button
+              className="ghost"
+              onClick={() => setDiasAFrente((d) => Math.min(30, d + 1))}
+              disabled={diasAFrente >= 30}
+              aria-label="Próximo dia"
+            >
+              <ChevronRight size={15} aria-hidden="true" />
+            </button>
+            <button
+              className="ghost reception-ver-agenda"
+              onClick={() => navigate(`/appointments?dia=${emDias(diasAFrente)}`)}
+            >
+              <CalendarDays size={14} aria-hidden="true" />
+              Ver na agenda
+            </button>
+          </div>
+        </div>
+
+        {doDiaEscolhido.length === 0 ? (
+          <p className="hint">Nenhuma consulta marcada para este dia.</p>
+        ) : (
+          <DataList>
+            {doDiaEscolhido.map((a) => {
+              const confirmada = a.status === 'CONFIRMED'
+              return (
+                <DataRow
+                  key={a.id}
+                  title={a.name}
+                  className="encounter-row"
+                  leading={<span className="encounter-time">{clinicTime(a.scheduledAt)}</span>}
+                  chips={
+                    <>
+                      {/* O estado fica visível: confirmada some da contagem mas
+                          continua na lista, senão a secretária não tem prova de
+                          que fez o trabalho — e liga de novo. */}
+                      <Chip tone={confirmada ? 'success' : 'warning'}>
+                        {confirmada ? (
+                          <>
+                            <Check size={11} aria-hidden="true" />
+                            Confirmada
+                          </>
+                        ) : (
+                          'A confirmar'
+                        )}
+                      </Chip>
+                      {a.procedure?.title && <Chip tone="neutral">{a.procedure.title}</Chip>}
+                      {a.notifiedAt && (
+                        <Chip tone="info">
+                          <MessageCircle size={11} aria-hidden="true" />
+                          Avisada
+                        </Chip>
+                      )}
+                    </>
+                  }
+                  meta={
+                    a.phone ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Phone size={12} aria-hidden="true" />
+                        {a.phone}
+                      </span>
+                    ) : undefined
+                  }
+                  actions={
+                    <>
+                      {confirmada ? (
+                        <RowAction
+                          icon={Undo2}
+                          title="Desfazer confirmação"
+                          onClick={() => desconfirmar.mutate(a.id)}
+                        />
+                      ) : (
+                        <button
+                          className="data-action-label"
+                          disabled={confirmar.isPending}
+                          onClick={() => confirmar.mutate(a.id)}
+                        >
+                          <Check size={14} aria-hidden="true" />
+                          Confirmar
+                        </button>
+                      )}
+                      <RowAction icon={MessageCircle} title="Lembrar por WhatsApp" onClick={() => lembrete(a)} />
+                      <RowAction icon={X} title="Cancelar consulta" onClick={() => setCancelando(a)} />
+                    </>
+                  }
+                />
+              )
+            })}
+          </DataList>
+        )}
+      </section>
 
       {encaixar && (
         <NewAppointment

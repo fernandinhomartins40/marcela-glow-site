@@ -1,4 +1,5 @@
 import React from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeft,
@@ -37,8 +38,23 @@ import {
 import { api, Chip, errorMessage } from '../lib/ui'
 
 export function Schedule({ appointments }: { appointments: Appointment[] }) {
-  const [anchor, setAnchor] = React.useState(new Date())
-  const [selectedDay, setSelectedDay] = React.useState<Date>(new Date())
+  /* `?dia=2026-09-12` abre a agenda no dia pedido.
+   *
+   * Quem chega aqui pela recepção está olhando um dia específico — o que está
+   * confirmando, o que quer remarcar. Sem isto o atalho jogava a pessoa na
+   * semana corrente e ela tinha que navegar de volta. */
+  const [searchParams] = useSearchParams()
+  const diaPedido = React.useMemo(() => {
+    const bruto = searchParams.get('dia')
+    if (!bruto) return null
+    const [ano, mes, dia] = bruto.split('-').map(Number)
+    if (!ano || !mes || !dia) return null
+    const d = new Date(ano, mes - 1, dia)
+    return Number.isNaN(d.getTime()) ? null : d
+  }, [searchParams])
+
+  const [anchor, setAnchor] = React.useState(diaPedido ?? new Date())
+  const [selectedDay, setSelectedDay] = React.useState<Date>(diaPedido ?? new Date())
   const [detail, setDetail] = React.useState<Appointment | null>(null)
   const [creating, setCreating] = React.useState(false)
 
