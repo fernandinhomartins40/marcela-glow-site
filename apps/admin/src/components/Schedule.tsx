@@ -327,7 +327,9 @@ function DayList({
   )
 }
 
-function AppointmentDrawer({
+/* Exportado para a Recepcao: e ali que a secretaria descobre o conflito, e
+   remarcar sem sair da tela e a saida que faltava. */
+export function AppointmentDrawer({
   appointment,
   onClose,
 }: {

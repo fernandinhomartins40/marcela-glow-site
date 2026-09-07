@@ -130,6 +130,8 @@ const BLOCKING_STATUSES = ['PENDING', 'CONFIRMED'] as const
 interface BusyInterval {
   start: Date
   end: Date
+  /** De quem é o horário — a recusa precisa dizer com quem o conflito é. */
+  quem?: string
 }
 
 /**
@@ -162,6 +164,7 @@ async function loadBusyIntervals(
       select: {
         scheduledAt: true,
         endsAt: true,
+        name: true,
         procedure: { select: { durationMin: true, bufferMin: true } },
       },
     }),
@@ -183,11 +186,11 @@ async function loadBusyIntervals(
     // O lookback traz consultas anteriores à janela; só interessam as que ainda
     // estavam em curso quando ela começa.
     if (end <= rangeStart) continue
-    busy.push({ start, end })
+    busy.push({ start, end, quem: appointment.name })
   }
 
   for (const block of blocks) {
-    busy.push({ start: block.startsAt, end: block.endsAt })
+    busy.push({ start: block.startsAt, end: block.endsAt, quem: 'um bloqueio na agenda' })
   }
 
   return busy
@@ -334,8 +337,18 @@ export async function checkSlotAvailable(params: {
   }
 
   const busy = await loadBusyIntervals(tenantId, startsAt, endsAt, ignoreAppointmentId)
-  if (busy.some((b) => overlaps(startsAt, endsAt, b.start, b.end))) {
-    return { ok: false, reason: 'Este horário acabou de ser ocupado. Escolha outro.' }
+  const conflito = busy.find((b) => overlaps(startsAt, endsAt, b.start, b.end))
+  if (conflito) {
+    /* Dizer com quem e a que horas: "acabou de ser ocupado" era falso na maior
+       parte dos casos — a agenda costuma já estar assim desde que a consulta
+       foi marcada — e não dava à recepção nada com que resolver o problema. */
+    const quando = utcToClinicTime(conflito.start)
+    return {
+      ok: false,
+      reason: conflito.quem
+        ? `Conflita com ${conflito.quem}, às ${quando}. Remarque um dos dois.`
+        : `Conflita com outro compromisso às ${quando}.`,
+    }
   }
 
   return { ok: true }

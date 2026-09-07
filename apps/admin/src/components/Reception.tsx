@@ -2,6 +2,7 @@ import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import {
+  AlertTriangle,
   BellRing,
   CalendarDays,
   Check,
@@ -40,6 +41,7 @@ import {
   type WhatsAppLink,
 } from '../lib/schedule'
 import { NewAppointment } from './NewAppointment'
+import { AppointmentDrawer } from './Schedule'
 import { AvisosBarra, EnviarAviso } from './Avisos'
 import { useAvisos } from '../lib/avisos'
 
@@ -95,7 +97,12 @@ export function Reception() {
   const [encaixar, setEncaixar] = React.useState(false)
   const [whatsapp, setWhatsapp] = React.useState<WhatsAppLink | null>(null)
   const [cancelando, setCancelando] = React.useState<Appointment | null>(null)
+  /* A consulta aberta para remarcar. Nasceu do conflito de horário: a recusa
+     dizia "escolha outro" e não dava onde escolher. */
+  const [remarcando, setRemarcando] = React.useState<Appointment | null>(null)
   const [erro, setErro] = React.useState('')
+  /** A consulta cuja confirmação foi recusada por conflito de horário. */
+  const [conflito, setConflito] = React.useState<Appointment | null>(null)
 
   const consulta = useQuery({
     queryKey: ['appointments'],
@@ -174,7 +181,7 @@ export function Reception() {
   })
 
   const confirmar = useMutation({
-    mutationFn: async (id: string) =>
+    mutationFn: async ({ id }: { id: string; consulta: Appointment }) =>
       (await api.post(`/appointments/${id}/confirm`, {})).data as {
         appointment: Appointment
         whatsapp: WhatsAppLink
@@ -183,7 +190,12 @@ export function Reception() {
       refresh()
       if (data.whatsapp?.url) setWhatsapp(data.whatsapp)
     },
-    onError: (e) => setErro(errorMessage(e, 'Não foi possível confirmar.')),
+    /* Conflito de horário não é erro da secretária — é a agenda pedindo uma
+       decisão. Guarda a consulta para o aviso poder oferecer o remarcar. */
+    onError: (e, variaveis) => {
+      setErro(errorMessage(e, 'Não foi possível confirmar.'))
+      setConflito(variaveis.consulta)
+    },
   })
 
   /* Desfazer a confirmação, para o caso comum de clicar na linha errada.
@@ -249,7 +261,37 @@ export function Reception() {
 
   return (
     <div className="form-grid">
-      {erro && <p className="error">{erro}</p>}
+      {erro && (
+        <div className="reception-conflito">
+          <AlertTriangle size={16} aria-hidden="true" />
+          <span>{erro}</span>
+          {/* A recusa dizia "escolha outro" sem dar onde escolher. Daqui a
+              secretária abre a consulta e move o horário sem sair da tela. */}
+          {conflito && (
+            <button
+              className="data-action-label"
+              onClick={() => {
+                setRemarcando(conflito)
+                setErro('')
+                setConflito(null)
+              }}
+            >
+              <CalendarDays size={14} aria-hidden="true" />
+              Remarcar
+            </button>
+          )}
+          <button
+            className="ghost"
+            onClick={() => {
+              setErro('')
+              setConflito(null)
+            }}
+            aria-label="Fechar aviso"
+          >
+            <X size={14} aria-hidden="true" />
+          </button>
+        </div>
+      )}
 
       <AvisosBarra avisos={avisos} />
 
@@ -461,6 +503,10 @@ export function Reception() {
                   key={a.id}
                   title={a.name}
                   className="encounter-row"
+                  /* Abrir a consulta é o caminho para tudo que a linha não
+                     cabe: mudar o horário, ver o pedido, vincular a paciente. */
+                  onOpen={() => setRemarcando(a)}
+                  openLabel={`Abrir consulta de ${a.name}`}
                   leading={<span className="encounter-time">{clinicTime(a.scheduledAt)}</span>}
                   chips={
                     <>
@@ -506,7 +552,7 @@ export function Reception() {
                         <button
                           className="data-action-label"
                           disabled={confirmar.isPending}
-                          onClick={() => confirmar.mutate(a.id)}
+                          onClick={() => confirmar.mutate({ id: a.id, consulta: a })}
                         >
                           <Check size={14} aria-hidden="true" />
                           Confirmar
@@ -529,6 +575,16 @@ export function Reception() {
           onCreated={() => {
             refresh()
             setEncaixar(false)
+          }}
+        />
+      )}
+
+      {remarcando && (
+        <AppointmentDrawer
+          appointment={remarcando}
+          onClose={() => {
+            setRemarcando(null)
+            refresh()
           }}
         />
       )}

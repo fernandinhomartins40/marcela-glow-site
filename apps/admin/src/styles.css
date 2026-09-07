@@ -2448,3 +2448,34 @@ main .reception-dias .ghost {
   .reception-dia-atual { flex: 1; }
   .reception-ver-agenda { margin-left: 0; }
 }
+
+/* ── Conflito de horario na recepcao ──────────────────────────────────────────
+   Nao e erro da secretaria: e a agenda pedindo uma decisao. Por isso o aviso
+   traz a saida junto, em vez de so a recusa. */
+.reception-conflito {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid #d8b28a;
+  border-radius: 10px;
+  background: #fdf6ec;
+  color: #8a5a22;
+  font-size: 13px;
+}
+
+.reception-conflito > svg { flex: none; }
+.reception-conflito > span { flex: 1; min-width: 180px; }
+
+.reception-conflito .data-action-label,
+main .reception-conflito .data-action-label {
+  background: var(--espresso);
+  border-color: var(--espresso);
+  color: var(--cream-soft);
+}
+
+@media (max-width: 720px) {
+  .reception-conflito > span { min-width: 100%; }
+  .reception-conflito .data-action-label { flex: 1; justify-content: center; }
+}
