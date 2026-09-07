@@ -156,6 +156,12 @@ export function Reception() {
     .sort((a, b) => (a.scheduledAt ?? '').localeCompare(b.scheduledAt ?? ''))
   const pendentesDoDia = doDiaEscolhido.filter((a) => a.status === 'PENDING')
 
+  /* A da vez no balcão: quem saiu do consultório e ainda deve — é a pessoa
+     parada na frente da secretária agora. Não havendo ninguém saindo, é quem
+     está esperando há mais tempo. */
+  const paraCobrar = saindo.filter((a) => emAberto(a))
+  const vez = paraCobrar[0] ?? naSala[0] ?? null
+
   /** O que a paciente ainda deve, se houver. */
   function emAberto(a: Appointment): Cobranca | null {
     if (!a.patient?.id) return null
@@ -252,7 +258,7 @@ export function Reception() {
     return (
       <a className="data-action-label reception-cobrar" href="/finance">
         <HandCoins size={14} aria-hidden="true" />
-        Receber {formatMoney(conta.amountCents)}
+        Receber
       </a>
     )
   }
@@ -294,6 +300,14 @@ export function Reception() {
       )}
 
       <AvisosBarra avisos={avisos} />
+
+      {vez && (
+        <VezNoBalcao
+          consulta={vez}
+          conta={emAberto(vez)}
+          onChegou={() => etapa.mutate({ id: vez.id, stage: 'called' })}
+        />
+      )}
 
       <div className="toolbar">
         <span className="toolbar-title">
@@ -603,6 +617,74 @@ export function Reception() {
         />
       )}
     </div>
+  )
+}
+
+/** Iniciais para o avatar. */
+function iniciais(nome: string): string {
+  const partes = nome.trim().split(/\s+/).filter(Boolean)
+  if (!partes.length) return '?'
+  return (partes[0][0] + (partes.length > 1 ? partes[partes.length - 1][0] : '')).toUpperCase()
+}
+
+/**
+ * Quem está no balcão agora.
+ *
+ * O balcão tem uma pergunta de cada vez: quem está na minha frente e o que faço
+ * com ela. Numa lista de linhas iguais isso se perde; aqui a resposta ocupa o
+ * topo, com o valor a receber legível de longe — é o que a secretária vai
+ * dizer em voz alta.
+ */
+function VezNoBalcao({
+  consulta,
+  conta,
+  onChegou,
+}: {
+  consulta: Appointment
+  conta: Cobranca | null
+  onChegou: () => void
+}) {
+  const saiu = Boolean(consulta.releasedAt)
+
+  return (
+    <section className={`vez ${saiu ? 'vez-cobrar' : ''}`}>
+      <span className="vez-marca">{saiu ? 'Saiu do consultório' : 'Na sala de espera'}</span>
+
+      <div className="vez-corpo">
+        <span className="vez-avatar" aria-hidden="true">
+          {iniciais(consulta.name)}
+        </span>
+
+        <div className="vez-quem">
+          <strong>{consulta.name}</strong>
+          <span className="vez-proc">{consulta.procedure?.title ?? 'Consulta'}</span>
+          <span className="vez-tempo">
+            <Clock size={13} aria-hidden="true" />
+            {clinicTime(consulta.scheduledAt)}
+            {consulta.arrivedAt && <> · chegou {clinicTime(consulta.arrivedAt)}</>}
+          </span>
+        </div>
+
+        {conta ? (
+          <a className="vez-acao" href="/finance">
+            <HandCoins size={18} aria-hidden="true" />
+            Receber {formatMoney(conta.amountCents)}
+            <ChevronRight size={18} aria-hidden="true" />
+          </a>
+        ) : saiu ? (
+          <span className="vez-quitado">
+            <Check size={16} aria-hidden="true" />
+            Sem pendência
+          </span>
+        ) : (
+          <button className="vez-acao" onClick={onChegou}>
+            <Stethoscope size={18} aria-hidden="true" />
+            Mandar entrar
+            <ChevronRight size={18} aria-hidden="true" />
+          </button>
+        )}
+      </div>
+    </section>
   )
 }
 

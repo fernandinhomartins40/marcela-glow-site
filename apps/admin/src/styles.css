@@ -2391,8 +2391,14 @@ main .aviso-visto {
 .reception-topo-acoes { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 
 /* O botao de cobrar e um link para o Financeiro: precisa parecer botao. */
+/* Link com cara de botao: `.data-action-label` so cuida do tamanho, e sem o
+   `inline-flex` o <a> fica `block` e o icone nao alinha com o texto. */
 a.reception-cobrar,
 main a.reception-cobrar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   text-decoration: none;
   background: var(--espresso);
   border-color: var(--espresso);
@@ -2510,4 +2516,112 @@ main .reception-conflito .data-action-label {
   color: var(--espresso);
   font-size: 11px;
   letter-spacing: 0;
+}
+
+/* ── A paciente da vez ────────────────────────────────────────────────────────
+   O cartao que abre as telas de recepcao e atendimento. As duas respondem a
+   mesma pergunta — quem esta na minha frente e o que faco com ela — e numa
+   lista de linhas iguais essa resposta se perde. Aqui ela ocupa o topo, com a
+   acao num alvo grande: quem usa isto esta de pe, atendendo alguem. */
+.vez {
+  position: relative;
+  padding: 18px 20px 20px;
+  border: 1px solid var(--bronze);
+  border-radius: 14px;
+  background: linear-gradient(180deg, var(--cream-soft), var(--cream));
+  box-shadow: 0 2px 10px rgba(60, 42, 28, .06);
+}
+
+.vez-marca {
+  display: inline-block;
+  margin-bottom: 12px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--bronze);
+}
+
+.vez-corpo { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+
+.vez-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 54px;
+  height: 54px;
+  border-radius: 999px;
+  background: var(--espresso);
+  color: var(--cream);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+
+.vez-quem { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 3px; }
+.vez-quem strong { font-size: 20px; line-height: 1.2; color: var(--espresso); }
+.vez-proc { font-size: 13.5px; color: var(--text-muted); }
+
+.vez-tempo {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A acao principal e um alvo grande de proposito: no balcao e no consultorio a
+   pessoa clica de pe, muitas vezes com a paciente esperando na frente. */
+.vez-acao,
+main .vez-acao {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  flex: none;
+  height: 52px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--espresso);
+  color: var(--cream);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform .12s ease, box-shadow .16s ease;
+}
+
+.vez-acao:hover { box-shadow: 0 4px 14px rgba(60, 42, 28, .22); }
+.vez-acao:active { transform: scale(.985); }
+
+/* Cobranca pendente muda a cara do cartao: e outra tarefa, com outra urgencia. */
+.vez-cobrar { border-color: #c9a227; background: linear-gradient(180deg, #fdf8ea, var(--cream)); }
+.vez-cobrar .vez-marca { color: #8a5a22; }
+
+.vez-quitado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  padding: 0 14px;
+  height: 40px;
+  border-radius: 999px;
+  background: #e4efe6;
+  color: #33613f;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.vez + .agenda-faixa,
+.vez + .reception-faixa,
+.vez + .toolbar { margin-top: 22px; }
+
+@media (max-width: 720px) {
+  .vez { padding: 16px; }
+  .vez-quem strong { font-size: 18px; }
+  /* No celular a acao ocupa a largura: alvo de toque, nao de mouse. */
+  .vez-acao { width: 100%; justify-content: center; }
+  .vez-quitado { width: 100%; justify-content: center; }
 }

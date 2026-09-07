@@ -673,10 +673,55 @@ router.post('/encounters/:appointmentId/complete', ...staffOnly, requirePermissi
       })
     }
 
+    /* Encerrar o atendimento é a paciente sair do consultório.
+     *
+     * Antes isto só gravava `COMPLETED`, e a saída dependia de a médica clicar
+     * um segundo botão. Quando ela esquecia — e esquecer é o normal, porque o
+     * atendimento acabou e a atenção já foi para a próxima — a paciente ficava
+     * "no consultório" na tela da recepção e ia embora sem que ninguém soubesse
+     * que havia o que cobrar. */
     const appointment = await prisma.appointment.update({
       where: { id: existing.id },
-      data: { status: 'COMPLETED' },
+      data: {
+        status: 'COMPLETED',
+        releasedAt: existing.releasedAt ?? new Date(),
+        // Quem foi atendida esteve na clínica, ainda que ninguém tenha marcado.
+        arrivedAt: existing.arrivedAt ?? existing.scheduledAt ?? new Date(),
+        calledAt: existing.calledAt ?? existing.scheduledAt ?? new Date(),
+      },
     })
+
+    /* O aviso à recepção fecha o ciclo: ela precisa saber que a paciente está
+       vindo para o balcão, e com o quê. Só avisa se a saída é nova — encerrar
+       de novo uma consulta já encerrada não repete o recado. */
+    if (!existing.releasedAt) {
+      const cobranca = await prisma.charge.findFirst({
+        where: {
+          tenantId,
+          patientId: existing.patientId ?? undefined,
+          status: { notIn: ['PAID', 'CANCELLED'] },
+        },
+        orderBy: { issuedAt: 'desc' },
+        select: { amountCents: true },
+      })
+
+      await prisma.clinicAlert.create({
+        data: {
+          tenantId,
+          kind: 'PATIENT_RELEASED',
+          appointmentId: existing.id,
+          /* O valor vai no recado para a recepção não ter que procurar: ela
+             recebe a paciente já sabendo quanto cobrar. */
+          body: cobranca
+            ? `Há ${(cobranca.amountCents / 100).toLocaleString('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              })} a receber.`
+            : null,
+          createdById: req.user!.userId,
+        },
+      })
+    }
 
     await audit(req, 'UPDATE', 'appointment', appointment.id, { action: 'complete', ...pending })
     res.json({ appointment, pending, lockedRecords: body.lockRecords ? pending.openRecords : 0 })

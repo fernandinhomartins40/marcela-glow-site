@@ -86,6 +86,11 @@ export function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
   const aVir = entries.filter((e) => !e.arrivedAt && !e.releasedAt)
   const encerrados = entries.filter((e) => e.releasedAt)
 
+  /* A da vez: quem está no consultório agora ou, na falta de alguém lá, a
+     primeira que chegou e espera. É a única pergunta que a médica faz ao abrir
+     esta tela. */
+  const vez = noConsultorio[0] ?? aguardando[0] ?? null
+
   const selected = new Date(`${date}T12:00:00`)
 
   return (
@@ -192,23 +197,27 @@ export function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
         <>
           {/* A ordem é a da sala de espera, não a do relógio: primeiro quem já
               está no consultório, depois quem espera, e só então o que ainda
-              vem. Encerradas ficam por último, para consulta. */}
+              vem. Encerradas ficam por último, para consulta.
+
+              A da vez ganha um cartão grande. Numa lista de linhas iguais a
+              médica precisa ler todas para achar de quem é a vez; aqui a
+              resposta ocupa o topo da tela. */}
+          {vez && <CartaoDaVez entry={vez} onOpen={onOpen} emAtendimento={noConsultorio.length > 0} />}
+
           <FaixaDoDia
             titulo="No consultório"
-            entradas={noConsultorio}
+            entradas={noConsultorio.filter((e) => e.id !== vez?.id)}
             onOpen={onOpen}
             destaque
-            vazio=""
           />
           <FaixaDoDia
             titulo="Aguardando na recepção"
-            entradas={aguardando}
+            entradas={aguardando.filter((e) => e.id !== vez?.id)}
             onOpen={onOpen}
             aguardando
-            vazio=""
           />
-          <FaixaDoDia titulo="Ainda não chegaram" entradas={aVir} onOpen={onOpen} vazio="" />
-          <FaixaDoDia titulo="Encerrados" entradas={encerrados} onOpen={onOpen} vazio="" />
+          <FaixaDoDia titulo="Ainda não chegaram" entradas={aVir} onOpen={onOpen} />
+          <FaixaDoDia titulo="Encerrados" entradas={encerrados} onOpen={onOpen} />
         </>
       ) : (
         <DataList>
@@ -237,6 +246,90 @@ export function TodayAgenda({ onOpen }: { onOpen: (id: string) => void }) {
  * ficha com os dados do próprio pedido, ou apontar para uma paciente que já
  * existe — caso comum de quem preencheu o site com outro e-mail.
  */
+/** Iniciais para o avatar — o rosto que a lista não tem. */
+function iniciais(nome: string): string {
+  const partes = nome.trim().split(/\s+/).filter(Boolean)
+  if (!partes.length) return '?'
+  return (partes[0][0] + (partes.length > 1 ? partes[partes.length - 1][0] : '')).toUpperCase()
+}
+
+/** Há quanto tempo espera, em palavras. */
+function esperaDesde(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  const minutos = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
+  if (minutos < 1) return 'agora mesmo'
+  if (minutos < 60) return `há ${minutos} min`
+  const horas = Math.floor(minutos / 60)
+  return `há ${horas}h${String(minutos % 60).padStart(2, '0')}`
+}
+
+/**
+ * A paciente da vez, em destaque.
+ *
+ * Numa lista de linhas iguais a médica precisa ler todas para achar de quem é a
+ * vez. Aqui a resposta ocupa o topo: quem está no consultório agora ou, na
+ * falta de alguém lá, quem chegou primeiro e espera.
+ */
+function CartaoDaVez({
+  entry,
+  onOpen,
+  emAtendimento,
+}: {
+  entry: AgendaEntry
+  onOpen: (id: string) => void
+  emAtendimento: boolean
+}) {
+  const client = useQueryClient()
+  const nome = entry.patient?.name ?? entry.name
+  const espera = esperaDesde(entry.arrivedAt)
+
+  const entrar = useMutation({
+    mutationFn: async () =>
+      api.post(`/appointments/${entry.id}/stage`, { stage: 'called', value: true }),
+    onSettled: () => {
+      client.invalidateQueries({ queryKey: ['encounter-agenda'] })
+      client.invalidateQueries({ queryKey: ['appointments'] })
+    },
+  })
+
+  function atender() {
+    if (!entry.calledAt) entrar.mutate()
+    onOpen(entry.id)
+  }
+
+  return (
+    <section className="vez">
+      <span className="vez-marca">{emAtendimento ? 'No consultório' : 'Próxima da fila'}</span>
+
+      <div className="vez-corpo">
+        <span className="vez-avatar" aria-hidden="true">
+          {iniciais(nome)}
+        </span>
+
+        <div className="vez-quem">
+          <strong>{nome}</strong>
+          <span className="vez-proc">{entry.procedure?.title ?? 'Consulta de avaliação'}</span>
+          <span className="vez-tempo">
+            <Clock size={13} aria-hidden="true" />
+            {clinicTime(entry.scheduledAt)}
+            {espera && <> · esperando {espera}</>}
+          </span>
+        </div>
+
+        {entry.patient ? (
+          <button className="vez-acao" onClick={atender}>
+            <Stethoscope size={18} aria-hidden="true" />
+            {emAtendimento ? 'Continuar atendimento' : 'Chamar e atender'}
+            <ChevronRight size={18} aria-hidden="true" />
+          </button>
+        ) : (
+          <LinkPatientButton entry={entry} />
+        )}
+      </div>
+    </section>
+  )
+}
+
 /**
  * Uma consulta na agenda do dia.
  *
