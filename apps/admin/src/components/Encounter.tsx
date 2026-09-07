@@ -40,6 +40,8 @@ import { ClinicalAlerts } from './Patients'
 import { TodayAgenda } from './encounter/agenda'
 import { AvisosBarra, EnviarAviso } from './Avisos'
 import { useAvisos } from '../lib/avisos'
+import { etapaAtual } from './encounter/etapas'
+import { PassoAtual } from './encounter/PassoAtual'
 import { RecordTimeline, RecordForm } from './encounter/prontuario'
 import { EncounterDocuments, EncounterSessions } from './encounter/anexos'
 import { RECORD_TYPES, recordTypeLabel, type EncounterData, type MedicalRecord } from './encounter/types'
@@ -77,7 +79,10 @@ function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onB
     client.invalidateQueries({ queryKey: ['admin'] })
   }
 
-  const [lockOnComplete, setLockOnComplete] = React.useState(false)
+  /* Ligados por padrão: quem encerra quer o atendimento fechado, não uma lista
+     de pendências para revisitar depois. Desmarcar é a exceção. */
+  const [lockOnComplete, setLockOnComplete] = React.useState(true)
+  const [sendOnComplete, setSendOnComplete] = React.useState(true)
 
   // O que ficou aberto nesta consulta, para avisar antes de encerrar
   const pending = useQuery({
@@ -89,12 +94,17 @@ function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onB
         unsentDocuments: number
         hasRecords: boolean
       },
-    enabled: completing,
+    /* Consultado sempre, não só ao encerrar: é o que diz se ainda há
+       documento por entregar, e essa é uma etapa do caminho. */
+    refetchInterval: 30_000,
   })
 
   const complete = useMutation({
     mutationFn: () =>
-      api.post(`/clinical/encounters/${appointmentId}/complete`, { lockRecords: lockOnComplete }),
+      api.post(`/clinical/encounters/${appointmentId}/complete`, {
+        lockRecords: lockOnComplete,
+        sendDocuments: sendOnComplete,
+      }),
     onSuccess: () => {
       setCompleting(false)
       refresh()
@@ -110,6 +120,9 @@ function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onB
   const age = patient.birthDate
     ? Math.floor((Date.now() - new Date(patient.birthDate).getTime()) / (365.25 * 86400000))
     : null
+
+  /* A etapa atual do atendimento: é ela que decide o que a tela oferece. */
+  const etapa = etapaAtual(data, pending.data)
 
   const tabs = [
     ['record', `Atendimento (${data.currentRecords.length})`],
@@ -148,41 +161,21 @@ function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onB
           {appointment.procedure && <span> · {appointment.procedure.title}</span>}
         </div>
 
-        {/* Os recados que a médica dá dezenas de vezes por dia, sem sair do
-            atendimento nem abrir a porta do consultório.
- 
-            Ficam visíveis mesmo com a consulta encerrada: encerrar o prontuário
-            e a paciente sair da sala são momentos diferentes, e chamar a
-            recepção não depende de nenhum dos dois. */}
-        <div className="encounter-avisos">
-          {!appointment.calledAt && (
-            <EnviarAviso
-              avisos={avisos}
-              kind="CALL_PATIENT"
-              rotulo="Chamar paciente"
-              appointmentId={appointmentId}
-              compacto
-            />
-          )}
-          <EnviarAviso avisos={avisos} kind="CALL_STAFF" rotulo="Chamar recepção" compacto />
-          {!appointment.releasedAt && (
-            <EnviarAviso
-              avisos={avisos}
-              kind="PATIENT_RELEASED"
-              rotulo="Paciente saiu"
-              appointmentId={appointmentId}
-              compacto
-            />
-          )}
-        </div>
-
-        {appointment.status !== 'COMPLETED' && (
-          <button className="primary" onClick={() => setCompleting(true)}>
-            <CheckCircle2 size={14} />
-            Encerrar
-          </button>
-        )}
+        {/* Chamar a recepção não é etapa do atendimento — é interrupção, e pode
+            acontecer a qualquer momento. Fica como ação discreta. */}
+        <EnviarAviso avisos={avisos} kind="CALL_STAFF" rotulo="Chamar recepção" compacto />
       </div>
+
+      {/* O passo a passo. A tela sempre soube em que ponto estava; agora diz. */}
+      <PassoAtual
+        etapa={etapa}
+        appointmentId={appointmentId}
+        onEscrever={() => setCreating(true)}
+        onDocumentos={() => setTab('documents')}
+        onEncerrar={() => setCompleting(true)}
+        onChamou={refresh}
+        avisos={avisos}
+      />
 
       <AvisosBarra avisos={avisos} />
 
@@ -318,10 +311,17 @@ function EncounterDetail({ appointmentId, onBack }: { appointmentId: string; onB
                   </p>
                 )}
                 {!!pending.data?.unsentDocuments && (
-                  <p className="warn-text">
-                    {pending.data.unsentDocuments} documento(s) assinado(s) mas não enviado(s) ao
-                    portal da paciente.
-                  </p>
+                  <label className="toolbar-check">
+                    <input
+                      type="checkbox"
+                      checked={sendOnComplete}
+                      onChange={(e) => setSendOnComplete(e.target.checked)}
+                    />
+                    <span>
+                      Enviar {pending.data.unsentDocuments} documento(s) assinado(s) ao portal da
+                      paciente
+                    </span>
+                  </label>
                 )}
 
                 {!!pending.data?.openRecords && (

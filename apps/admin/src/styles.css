@@ -2625,3 +2625,103 @@ main .vez-acao {
   .vez-acao { width: 100%; justify-content: center; }
   .vez-quitado { width: 100%; justify-content: center; }
 }
+
+/* ── O passo a passo do atendimento ───────────────────────────────────────────
+   Uma etapa por vez, uma acao. O cabecalho tinha quatro botoes de mesmo peso e
+   a medica decidia a cada momento qual era o certo — a tela sabia a resposta o
+   tempo todo e nao dizia. */
+.passo {
+  margin-top: 14px;
+  padding: 14px 18px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--cream-soft);
+}
+
+/* A trilha responde "quanto falta" sem precisar perguntar. */
+.passo-trilha {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 0 0 14px;
+  padding: 0;
+  list-style: none;
+  flex-wrap: wrap;
+}
+
+.passo-trilha li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.passo-bolinha {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--cream);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.passo-trilha .feito { color: var(--bronze); }
+.passo-trilha .feito .passo-bolinha { background: var(--bronze); border-color: var(--bronze); color: var(--cream); }
+.passo-trilha .atual { color: var(--espresso); font-weight: 600; }
+.passo-trilha .atual .passo-bolinha { background: var(--espresso); border-color: var(--espresso); color: var(--cream); }
+
+.passo-corpo { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+.passo-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  background: var(--cream-deep);
+  color: var(--espresso);
+}
+
+.passo-texto { flex: 1; min-width: 190px; display: flex; flex-direction: column; gap: 2px; }
+.passo-texto strong { font-size: 15.5px; color: var(--espresso); }
+.passo-texto span { font-size: 13px; color: var(--text-muted); }
+
+/* Alvo grande: a medica clica de pe, com a paciente na frente. */
+.passo-acao,
+main .passo-acao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  height: 46px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 11px;
+  background: var(--espresso);
+  color: var(--cream);
+  font-size: 14.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: transform .12s ease, box-shadow .16s ease;
+}
+
+.passo-acao:hover:not(:disabled) { box-shadow: 0 4px 13px rgba(60, 42, 28, .2); }
+.passo-acao:active { transform: scale(.985); }
+
+/* Encerrado nao pede acao nenhuma: so confirma que acabou. */
+.passo-encerrado { border-color: #b9d4bf; background: #f2f8f3; }
+.passo-encerrado .passo-icone { background: #e4efe6; color: #33613f; }
+
+@media (max-width: 720px) {
+  .passo { padding: 13px 14px 15px; }
+  .passo-trilha { gap: 12px; }
+  .passo-trilha li { font-size: 11.5px; }
+  .passo-acao { width: 100%; justify-content: center; }
+}

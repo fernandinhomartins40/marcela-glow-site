@@ -598,6 +598,12 @@ router.get('/encounters/:appointmentId', ...staffOnly, requirePermission('RECORD
         status: appointment.status,
         message: appointment.message,
         procedure: appointment.procedure,
+        /* O percurso da paciente: é o que diz à tela em que etapa o atendimento
+           está. Sem isto o passo a passo lia campos vazios e mostrava sempre o
+           primeiro passo, mesmo com a paciente já no consultório. */
+        arrivedAt: appointment.arrivedAt,
+        calledAt: appointment.calledAt,
+        releasedAt: appointment.releasedAt,
       },
       patient: appointment.patient,
       currentRecords: current,
@@ -643,6 +649,8 @@ async function pendingWork(tenantId: string, appointmentId: string) {
 const completeSchema = z.object({
   /** Fecha de uma vez os registros desta consulta, tornando-os definitivos */
   lockRecords: z.boolean().optional().default(false),
+  /** Entrega ao portal da paciente o que foi assinado e não enviado. */
+  sendDocuments: z.boolean().optional().default(false),
 })
 
 /**
@@ -680,6 +688,20 @@ router.post('/encounters/:appointmentId/complete', ...staffOnly, requirePermissi
      * atendimento acabou e a atenção já foi para a próxima — a paciente ficava
      * "no consultório" na tela da recepção e ia embora sem que ninguém soubesse
      * que havia o que cobrar. */
+    /* Documento assinado que nunca foi enviado é trabalho feito e não
+       entregue: a receita existe, está válida, e a paciente não a tem. Sai
+       junto do encerramento, no mesmo clique. */
+    if (body.sendDocuments && pending.unsentDocuments > 0) {
+      await prisma.prescription.updateMany({
+        where: { tenantId, appointmentId: existing.id, status: 'SIGNED', sentAt: null },
+        data: { sentAt: new Date() },
+      })
+      await audit(req, 'UPDATE', 'prescription', existing.id, {
+        action: 'send-on-complete',
+        count: pending.unsentDocuments,
+      })
+    }
+
     const appointment = await prisma.appointment.update({
       where: { id: existing.id },
       data: {
@@ -724,7 +746,12 @@ router.post('/encounters/:appointmentId/complete', ...staffOnly, requirePermissi
     }
 
     await audit(req, 'UPDATE', 'appointment', appointment.id, { action: 'complete', ...pending })
-    res.json({ appointment, pending, lockedRecords: body.lockRecords ? pending.openRecords : 0 })
+    res.json({
+      appointment,
+      pending,
+      lockedRecords: body.lockRecords ? pending.openRecords : 0,
+      sentDocuments: body.sendDocuments ? pending.unsentDocuments : 0,
+    })
   } catch (err) {
     next(err)
   }
