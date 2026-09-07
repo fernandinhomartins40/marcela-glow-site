@@ -2120,7 +2120,17 @@ img, video, canvas { max-width: 100%; height: auto; }
      primeiro dia comecava em 17px e a coluna do dia no corpo em 63px, com os
      dois desalinhados por toda a largura da faixa de horas. Mantida vazia, os
      dois se alinham sozinhos. */
-  .week-head { grid-template-columns: 46px repeat(6, minmax(0, 1fr)); }
+  /* O cabeçalho ocupa a largura inteira, sem reservar a faixa das horas.
+   *
+   * Ele tinha `46px + 6 colunas` enquanto o corpo tem `46px + 1`: o "SEG" caía
+   * sobre a coluna dos horários e cada dia seguinte ficava deslocado, deixando
+   * à esquerda um vazio que parecia defeito de espaçamento e era desalinhamento
+   * entre as duas grades. Aqui os seis dias dividem a tela toda — eles são o
+   * seletor do dia, não o topo das colunas, porque abaixo só existe uma. */
+  .week-head { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  /* O espaçador da coluna de horas sai: sem ele os seis dias começam na borda
+     esquerda, como o cartão da grade abaixo. */
+  .week-head > .hour-col { display: none; }
   .day-head { padding: 10px 2px; border-left: 0; border-right: 1px solid var(--border); }
   .day-head:last-child { border-right: 0; }
   /* O dia aberto precisa se distinguir de relance: e a unica coluna que a
