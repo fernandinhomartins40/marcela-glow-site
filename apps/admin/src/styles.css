@@ -1558,7 +1558,14 @@ body.page-lock { overflow: hidden; }
    Regras de contenção: qualquer conteúdo largo (tabela, nome extenso, URL sem
    espaço) passa a rolar dentro do próprio bloco em vez de empurrar a página.
    ───────────────────────────────────────────────────────────────────────── */
-html, body { max-width: 100%; overflow-x: hidden; }
+/* `clip` e não `hidden`: os dois contêm o conteúdo largo do mesmo jeito, mas
+   `overflow-x: hidden` obriga o navegador a computar `overflow-y: auto` — o
+   `visible` deixa de ser possível quando um dos eixos é `hidden`. Isso fazia do
+   `<body>` o elemento que rola, e o `position: sticky` da lateral passava a se
+   referir a ele em vez da janela: numa lista longa a barra escura subia junto
+   com a página e sumia, deixando o fundo à mostra. `clip` contém sem criar
+   contexto de rolagem, então a lateral volta a grudar na viewport. */
+html, body { max-width: 100%; overflow-x: clip; }
 /* A gaveta desliza; quem pede menos movimento recebe o corte seco. */
 @media (prefers-reduced-motion: reduce) {
   .app-nav { transition: none; }

@@ -158,3 +158,21 @@ describe('teste não entra no build de produção', () => {
     })
   }
 })
+
+describe('a lateral nao rola junto com a pagina', () => {
+  /* `position: sticky` gruda em relacao ao ancestral que rola — e quem define
+     esse ancestral pode ser uma regra distante. `overflow-x: hidden` no body
+     obriga o navegador a computar `overflow-y: auto` (o `visible` deixa de ser
+     possivel quando um eixo e `hidden`), fazendo do proprio body o container de
+     rolagem. A lateral passava a grudar nele, nao na janela: medido, numa lista
+     longa ela ia para -1943px e sumia, deixando o fundo a mostra.
+
+     `clip` contem a rolagem horizontal igual e nao cria contexto de rolagem. */
+  const css = readFileSync(join(raiz, 'apps/admin/src/styles.css'), 'utf8')
+
+  it('o body contem o eixo horizontal sem virar container de rolagem', () => {
+    const regra = css.match(/html,\s*body\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(regra).toMatch(/overflow-x:\s*clip/)
+    expect(regra).not.toMatch(/overflow-x:\s*hidden/)
+  })
+})
