@@ -4,6 +4,7 @@ import { prisma } from '@marcela/database'
 import { authenticate, requirePermission, requireStaff } from '../middleware/auth'
 import { AppError, NotFoundError } from '../lib/errors'
 import { audit } from '../lib/audit'
+import { avisarPaciente } from '../lib/push'
 
 /**
  * Planos de tratamento — a jornada da paciente.
@@ -111,6 +112,15 @@ router.post('/', ...staffOnly, requirePermission('RECORD_WRITE'), async (req: Re
         createdById: req.user!.userId,
       },
     })
+    /* O plano é a jornada da paciente: sem aviso, ela só descobriria que a
+       médica montou um tratamento se abrisse o portal por acaso. */
+    await avisarPaciente(tenantId, body.patientId, {
+      title: 'Seu plano de tratamento está pronto',
+      body: `${body.title} — ${body.totalSessions} ${
+        body.totalSessions === 1 ? 'sessão prevista' : 'sessões previstas'
+      }. Veja os cuidados na sua jornada.`,
+    })
+
     await audit(req, 'CREATE', 'treatmentPlan', plano.id, { patientId: body.patientId })
     res.status(201).json(plano)
   } catch (err) {

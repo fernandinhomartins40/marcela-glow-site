@@ -7,7 +7,7 @@ import { AppError, NotFoundError } from '../lib/errors'
 import { audit } from '../lib/audit'
 import { addDays, randomToken, sha256 } from '../lib/security'
 import { buildStorageKey, presignDownload, presignUpload, publicFileUrl, s3Bucket, storageConfigured } from '../lib/storage'
-import { sendPatientPush } from '../lib/push'
+import { avisarPaciente, sendPatientPush } from '../lib/push'
 import { rolePermissions } from '../lib/permissions'
 import { publicBaseUrl, sendMail } from '../lib/mailer'
 
@@ -802,6 +802,16 @@ router.post('/sessions', requirePermission('RECORD_WRITE'), async (req: Request,
         })
       }
     }
+
+    /* A paciente vê o procedimento na jornada, mas não sabia que ele chegou.
+       O aviso é o que transforma o registro em notícia — e é ele que a leva a
+       abrir o portal para ver a evolução e os cuidados. */
+    await avisarPaciente(req.user!.tenantId, patient.id, {
+      title: 'Procedimento registrado',
+      body: session.procedure?.title
+        ? `${session.procedure.title} foi registrado no seu histórico.`
+        : 'Um novo procedimento foi registrado no seu histórico.',
+    })
 
     await audit(req, 'CREATE', 'procedureSession', session.id, { patientId: patient.id })
     res.status(201).json(session)
