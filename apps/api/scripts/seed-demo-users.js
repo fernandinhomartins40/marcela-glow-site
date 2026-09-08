@@ -1,5 +1,5 @@
 const bcrypt = require("bcryptjs");
-const { PrismaClient, Permission, UserRole } = require("@prisma/client");
+const { PrismaClient, UserRole } = require("@prisma/client");
 
 const prisma = new PrismaClient();
 
@@ -52,29 +52,6 @@ async function main() {
       isActive: true,
     },
   });
-
-  const staffPermissions = [
-    Permission.DASHBOARD_READ,
-    Permission.PATIENT_READ,
-    Permission.PATIENT_WRITE,
-    Permission.RECORD_READ,
-    Permission.RECORD_WRITE,
-    Permission.APPOINTMENT_READ,
-    Permission.APPOINTMENT_WRITE,
-    Permission.LEAD_READ,
-    Permission.LEAD_WRITE,
-    Permission.PRESCRIPTION_READ,
-    Permission.CMS_READ,
-    Permission.SETTINGS_READ,
-  ];
-
-  for (const permission of staffPermissions) {
-    await prisma.userPermission.upsert({
-      where: { userId_permission: { userId: staff.id, permission } },
-      update: {},
-      create: { userId: staff.id, tenantId: tenant.id, permission },
-    });
-  }
 
   const patient = await prisma.patient.upsert({
     where: { email_tenantId: { email: "paciente@exemplo.com", tenantId: tenant.id } },

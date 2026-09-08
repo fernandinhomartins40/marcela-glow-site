@@ -44,7 +44,7 @@ const NAV_GROUPS = [
     label: 'Dia a dia',
     items: [
       ['dashboard', LayoutDashboard, 'Dashboard', 'Visão geral do movimento da clínica', 'DASHBOARD_READ'],
-      ['reception', ConciergeBell, 'Recepção', 'Chegadas, confirmações e encaixes do dia', 'APPOINTMENT_WRITE'],
+      ['reception', ConciergeBell, 'Recepção', 'Chegadas, confirmações e encaixes do dia', 'FINANCE_OPERATE'],
       ['encounter', Stethoscope, 'Atendimento', 'Atender a paciente e registrar o prontuário', 'RECORD_WRITE'],
       ['appointments', CalendarDays, 'Agenda', 'Consultas marcadas e horários livres', 'APPOINTMENT_READ'],
       ['finance', Wallet, 'Financeiro', 'Cobranças, pagamentos e recibos', 'FINANCE_OPERATE|FINANCE_MANAGE'],
@@ -55,7 +55,7 @@ const NAV_GROUPS = [
     items: [
       ['patients', Users, 'Pacientes', 'Cadastro e prontuário completo de cada paciente', 'PATIENT_READ'],
       ['documents', FileSignature, 'Documentos', 'Assinar e enviar receitas e pedidos de exame', 'PRESCRIPTION_READ'],
-      ['registry', Sparkles, 'Cadastros', 'Procedimentos, medicamentos, exames e modelos', 'SETTINGS_WRITE'],
+      ['registry', Sparkles, 'Cadastros', 'Procedimentos, medicamentos, exames e modelos', 'RECORD_WRITE'],
     ],
   },
   {

@@ -889,7 +889,7 @@ export const ROLE_LABELS: Record<string, string> = {
 export const ROLE_HINTS: Record<string, string> = {
   ADMIN: 'Acesso total, inclusive à gestão da equipe.',
   DOCTOR: 'Prontuário, prescrição e assinatura digital.',
-  STAFF: 'Agenda, leads e leitura das fichas.',
+  STAFF: 'Agenda, leads e cadastro — sem prontuário.',
   RECEPTION: 'Agenda, leads e cadastro de pacientes.',
   ASSISTANT: 'Leitura de fichas e anexos, sem editar.',
   CONTENT_EDITOR: 'Somente o conteúdo do site.',

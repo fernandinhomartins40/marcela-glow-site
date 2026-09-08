@@ -141,6 +141,42 @@ corrigiu e o que ficou pendente. Sem isso a proxima refaz o mesmo caminho.
 
 ### Registro
 
+**2026-09-07 — usuarios e niveis de acesso**
+
+40 verificacoes: para cada um dos sete papeis, o que ele precisa alcancar para
+fazer o trabalho e o que deve ser barrado. Passaram 39.
+
+Encontrado: a "Equipe" (STAFF) lia prontuario. O papel declara 6 permissoes e o
+token trazia 12 — os dois seeds gravavam `UserPermission` por cima do papel,
+entre elas `RECORD_READ` e `RECORD_WRITE`. Nada no codigo dizia isso: quem
+lesse `rolePermissions` veria o mapa certo e o sistema fazia outra coisa.
+
+Do mesmo tipo, achados junto: a dica na tela prometia ao STAFF "leitura das
+fichas" (o seed cumpria a promessa que o papel nao fazia); o menu "Cadastros"
+exigia `SETTINGS_WRITE` para abrir `/clinical/catalog`, que a API protege com
+`RECORD_WRITE` — a medica nao via a propria tela de procedimentos; e "Recepcao"
+exigia `APPOINTMENT_WRITE`, que a medica tambem tem, entao o balcao aparecia
+para quem nao trabalha nele.
+
+Corrigido: overrides removidos dos dois seeds, menu alinhado a permissao que a
+rota cobra, dica reescrita. Depois: 40/40.
+
+Travado: dez testes em `acessos.test.ts`.
+
+Confirmado sao: o middleware — `requireStaff` decide por `subjectType`, nao por
+lista de papeis, e `requirePermission`/`requireAnyPermission` separam "todas" de
+"qualquer uma" corretamente; a separacao entre operar e supervisionar o caixa;
+e `USER_MANAGE`/`AUDIT_READ` so na ADMIN.
+
+Aprendido: **papel e a fonte de verdade; override e excecao de pessoa.** Um seed
+que redefine um papel inteiro torna o mapa decorativo, e o vazamento fica
+invisivel a leitura do codigo. O teste que guarda isso e o que proibe
+`userPermission.create` em seed.
+
+Pendente: nao existe conta DOCTOR no seed — a medica usa ADMIN, o que esconde
+em producao qualquer defeito especifico do papel dela (ADMIN passa direto por
+`requirePermission`). Criar a conta e usa-la.
+
 **2026-09-08 — sincronia entre painel medico e portal da paciente**
 
 31 verificacoes: pedido de horario, confirmacao, cancelamento, mensagem,

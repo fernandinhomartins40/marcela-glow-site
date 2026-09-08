@@ -6,7 +6,6 @@ import {
   LeadStatus,
   MaritalStatus,
   NotificationChannel,
-  Permission,
   PrescriptionStatus,
   TreatmentPlanStatus,
   UserRole,
@@ -77,29 +76,6 @@ async function main() {
     },
   })
   console.log(`✅ Usuário equipe criado/encontrado: ${staffUser.name} (${staffUser.email})`)
-
-  const staffPermissions = [
-    Permission.DASHBOARD_READ,
-    Permission.PATIENT_READ,
-    Permission.PATIENT_WRITE,
-    Permission.RECORD_READ,
-    Permission.RECORD_WRITE,
-    Permission.APPOINTMENT_READ,
-    Permission.APPOINTMENT_WRITE,
-    Permission.LEAD_READ,
-    Permission.LEAD_WRITE,
-    Permission.PRESCRIPTION_READ,
-    Permission.CMS_READ,
-    Permission.SETTINGS_READ,
-  ]
-
-  for (const permission of staffPermissions) {
-    await prisma.userPermission.upsert({
-      where: { userId_permission: { userId: staffUser.id, permission } },
-      update: {},
-      create: { userId: staffUser.id, tenantId: tenant.id, permission },
-    })
-  }
 
   // ───────────────────────────────────────────────────────────────────────────
   // 3. Procedures
