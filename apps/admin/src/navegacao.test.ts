@@ -139,3 +139,22 @@ describe('a lateral acompanha a tela, não a altura da página', () => {
     expect(sair).toMatch(/margin-top:\s*auto/)
   })
 })
+
+describe('teste não entra no build de produção', () => {
+  /* Este arquivo derrubou um deploy. O build roda `tsc --noEmit -p
+     tsconfig.app.json`, que compilava `src` inteiro — testes junto —, e o
+     Dockerfile do admin instala só as dependências do próprio app: `vitest`
+     mora na raiz do monorepo e não existe lá dentro. O `compose build` morria
+     com "Cannot find module 'vitest'" e abortava antes de subir container
+     algum, deixando a versão anterior no ar.
+
+     Localmente passava: `turbo run build` resolve `vitest` pela raiz. Só o
+     container expunha a diferença. */
+  for (const app of ['admin', 'web', 'patient']) {
+    it(`${app} exclui testes do tsconfig do build`, () => {
+      const conf = readFileSync(join(raiz, `apps/${app}/tsconfig.app.json`), 'utf8')
+      expect(conf).toContain('src/**/*.test.ts')
+      expect(conf).toContain('src/**/*.test.tsx')
+    })
+  }
+})
