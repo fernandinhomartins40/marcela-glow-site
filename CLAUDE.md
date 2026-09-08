@@ -229,6 +229,35 @@ e supervisionar o caixa, e o fluxo chegada → consultorio → saida → cobranc
 Pendente: a tela para a medica montar o `fieldSchema` pela interface, e o
 relatorio de caixa por periodo.
 
+## Quando o deploy falha
+
+```sh
+node scripts/ver-deploy.mjs              # ultimas execucoes, com o run id
+node scripts/ver-deploy.mjs falhas       # so as que falharam
+node scripts/ver-deploy.mjs <run_id>     # passo que quebrou + linhas de erro
+node scripts/ver-deploy.mjs <run_id> --tudo   # log inteiro daquele passo
+```
+
+O token sai de `~/.git-credentials`, o mesmo que o `git push` usa — nao ha
+credencial a gerenciar. Se o helper do git mudar, defina `GITHUB_TOKEN`
+(escopos `repo` e `workflow`).
+
+**Nao investigue deploy por SSH na VPS.** `gh` nao esta instalado e o
+repositorio e privado (a API publica devolve 404), o que uma vez levou a deduzir
+a falha comparando data de imagem Docker com data de release — quatro conexoes
+para chegar ao que o log dizia numa linha.
+
+Duas armadilhas ao ler o resultado:
+
+- **O site responder 200 nao significa que a versao subiu.** O
+  `remote-deploy.sh` compila antes de derrubar o que esta no ar, entao um build
+  quebrado deixa a versao anterior servindo normalmente. Para saber o que esta
+  publicado, compare `readlink -f /opt/dramarcela/current` com o commit, ou
+  procure no bundle uma string que so exista na versao nova.
+- **O erro raramente esta na ultima linha.** Um build quebra no meio e o resto
+  do log e ruido de rollback; por isso o script filtra as linhas de erro em vez
+  de so dar `tail`.
+
 ## Convencoes
 
 - **Sempre conversar em portugues do Brasil (pt-BR) no chat**, em toda resposta
