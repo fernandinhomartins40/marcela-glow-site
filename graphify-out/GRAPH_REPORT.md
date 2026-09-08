@@ -1,16 +1,16 @@
 # Graph Report - marcela-glow-site  (2026-09-07)
 
 ## Corpus Check
-- 253 files · ~484,150 words
+- 254 files · ~484,977 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2145 nodes · 3951 edges · 188 communities (94 shown, 70 thin omitted)
+- 2150 nodes · 3959 edges · 189 communities (94 shown, 71 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 31 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `be952e4b`
+- Built from commit: `6e23bdf6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -25,7 +25,7 @@
 - Reception.tsx
 - utils.ts
 - RequestCare.tsx
-- scheduling.ts
+- finance.ts
 - admin.ts
 - routes/landing.ts
 - routes/clinical.ts
@@ -41,7 +41,7 @@
 - Encounter.tsx
 - button.tsx
 - web/src/lib/api.ts
-- middleware/auth.ts
+- database/src/index.ts
 - components/Dashboard.tsx
 - Index.tsx
 - fetch_instagram_professional_assets.py
@@ -79,7 +79,7 @@
 - api/package.json
 - source
 - sheet.tsx
-- api/src/index.ts
+- middleware/auth.ts
 - check-encoding.js
 - Appointment.tsx
 - table.tsx
@@ -179,6 +179,7 @@
 - errorMessage
 - Testimonials.tsx
 - "Charge"
+- sincronia.test.ts
 
 ## God Nodes (most connected - your core abstractions)
 1. `cn()` - 228 edges
@@ -190,7 +191,7 @@
 7. `clinicTime()` - 20 edges
 8. `prisma` - 20 edges
 9. `formatDateBR()` - 19 edges
-10. `SubmitButton()` - 19 edges
+10. `Modal()` - 19 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `"ClinicAlert"` --references--> `Appointment`  [EXTRACTED]
@@ -199,15 +200,15 @@
   packages/database/prisma/migrations/20260907000000_jornada/migration.sql → apps/patient/src/lib/api.ts
 - `NotificationsPanel()` --indirect_call--> `enablePushNotifications()`  [INFERRED]
   apps/patient/src/components/sections.tsx → apps/patient/src/lib/api.ts
-- `DrawerFooter()` --calls--> `cn()`  [EXTRACTED]
-  apps/web/src/components/ui/drawer.tsx → apps/web/src/lib/utils.ts
-- `DrawerHeader()` --calls--> `cn()`  [EXTRACTED]
-  apps/web/src/components/ui/drawer.tsx → apps/web/src/lib/utils.ts
+- `AlertDescription` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert.tsx → apps/web/src/lib/utils.ts
+- `AlertTitle` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert.tsx → apps/web/src/lib/utils.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (188 total, 70 thin omitted)
+## Communities (189 total, 71 thin omitted)
 
 ### Community 0 - "format.ts"
 Cohesion: 0.22
@@ -249,9 +250,9 @@ Nodes (20): Badge(), BadgeProps, badgeVariants, Checkbox, HoverCardContent, Inpu
 Cohesion: 0.23
 Nodes (10): Intent, formatDayLabel(), groupByPeriod(), PERIODS, SlotPicker(), EmptyState(), api, DayAvailability (+2 more)
 
-### Community 10 - "scheduling.ts"
-Cohesion: 0.16
-Nodes (22): addDaysISO(), BLOCKING_STATUSES, BusyInterval, checkSlotAvailable(), clinicTimeToUtc(), clinicWeekday(), ConflictCheck, DayAvailability (+14 more)
+### Community 10 - "finance.ts"
+Cohesion: 0.09
+Nodes (33): addDaysISO(), BLOCKING_STATUSES, BusyInterval, checkSlotAvailable(), clinicTimeToUtc(), clinicWeekday(), ConflictCheck, DayAvailability (+25 more)
 
 ### Community 11 - "admin.ts"
 Cohesion: 0.05
@@ -263,7 +264,7 @@ Nodes (35): aboutSchema, appointmentSchema, footerSchema, heroSchema, heroSlideS
 
 ### Community 13 - "routes/clinical.ts"
 Cohesion: 0.07
-Nodes (48): availableSignatureLevel(), checkCompliance(), ComplianceCheck, CONTROL_LABELS, DOCUMENT_LABELS, DocumentKind, formatItemLine(), highestControl() (+40 more)
+Nodes (47): availableSignatureLevel(), checkCompliance(), ComplianceCheck, CONTROL_LABELS, DOCUMENT_LABELS, DocumentKind, formatItemLine(), highestControl() (+39 more)
 
 ### Community 14 - "tasks"
 Cohesion: 0.07
@@ -275,7 +276,7 @@ Nodes (28): bcryptjs, dependencies, bcryptjs, @prisma/client, devDependencies, p
 
 ### Community 16 - "appointments.ts"
 Cohesion: 0.10
-Nodes (26): sendPatientPush(), CLINIC_TIMEZONE, AppointmentMessageInput, buildMessage(), buildWhatsAppLink(), firstName(), formatDateLong(), formatTime() (+18 more)
+Nodes (25): CLINIC_TIMEZONE, AppointmentMessageInput, buildMessage(), buildWhatsAppLink(), firstName(), formatDateLong(), formatTime(), MessageKind (+17 more)
 
 ### Community 17 - "lib/ui.tsx"
 Cohesion: 0.10
@@ -313,9 +314,9 @@ Nodes (21): AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialo
 Cohesion: 0.13
 Nodes (19): formatDay(), groupByPeriod(), PERIODS, SlotPicker(), api, AppointmentPayload, authApi, availabilityApi (+11 more)
 
-### Community 26 - "middleware/auth.ts"
-Cohesion: 0.11
-Nodes (23): ForbiddenError, UnauthorizedError, JwtPayload, verifyToken(), authenticate(), Express, Request, requireAnyPermission() (+15 more)
+### Community 26 - "database/src/index.ts"
+Cohesion: 0.19
+Nodes (11): audit(), avisarPaciente(), pushConfigured, sendPatientPush(), campoSchema, planSchema, router, staffOnly (+3 more)
 
 ### Community 27 - "components/Dashboard.tsx"
 Cohesion: 0.29
@@ -465,9 +466,9 @@ Nodes (8): posts, source, biography, category, followers, fullName, profileUrl, 
 Cohesion: 0.25
 Nodes (8): SheetContent, SheetContentProps, SheetDescription, SheetFooter(), SheetHeader(), SheetOverlay, SheetTitle, sheetVariants
 
-### Community 64 - "api/src/index.ts"
-Cohesion: 0.07
-Nodes (33): allowedOrigins, app, limiter, audit(), AppError, NotFoundError, pushConfigured, requireAdmin() (+25 more)
+### Community 64 - "middleware/auth.ts"
+Cohesion: 0.08
+Nodes (33): allowedOrigins, app, limiter, AppError, ForbiddenError, NotFoundError, UnauthorizedError, Express (+25 more)
 
 ### Community 65 - "check-encoding.js"
 Cohesion: 0.22
@@ -559,8 +560,8 @@ Cohesion: 0.25
 Nodes (7): SelectContent, SelectItem, SelectLabel, SelectScrollDownButton, SelectScrollUpButton, SelectSeparator, SelectTrigger
 
 ### Community 175 - "patient.ts"
-Cohesion: 0.10
-Nodes (28): signToken(), escapeHtml(), mailerConfigured, MailInput, port, publicBaseUrl(), renderHtml(), sendMail() (+20 more)
+Cohesion: 0.09
+Nodes (32): JwtPayload, signToken(), verifyToken(), escapeHtml(), mailerConfigured, MailInput, port, publicBaseUrl() (+24 more)
 
 ### Community 176 - "patient/src/pages/Login.tsx"
 Cohesion: 0.16
@@ -591,19 +592,19 @@ Cohesion: 0.33
 Nodes (5): FALLBACK, FALLBACK_TESTIMONIALS, Testimonials(), TestimonialsContent, testimonialsApi
 
 ## Knowledge Gaps
-- **823 isolated node(s):** `MEIOS`, `Escolha`, `Resposta`, `Cobranca`, `bcrypt` (+818 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 939 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **70 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **824 isolated node(s):** `pushConfigured`, `raiz`, `router`, `staffOnly`, `optionalDate` (+819 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 942 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **71 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `"ClinicAlert"` connect `"Tenant"` to `Reception.tsx`?**
-  _High betweenness centrality (0.035) - this node is a cross-community bridge._
 - **Why does `Appointment` connect `Reception.tsx` to `"Tenant"`?**
-  _High betweenness centrality (0.034) - this node is a cross-community bridge._
-- **What connects `MEIOS`, `Escolha`, `Resposta` to the rest of the system?**
-  _823 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _High betweenness centrality (0.026) - this node is a cross-community bridge._
+- **Why does `"ClinicAlert"` connect `"Tenant"` to `Reception.tsx`?**
+  _High betweenness centrality (0.026) - this node is a cross-community bridge._
+- **What connects `pushConfigured`, `raiz`, `router` to the rest of the system?**
+  _824 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `cn` be split into smaller, more focused modules?**
   _Cohesion score 0.060109289617486336 - nodes in this community are weakly interconnected._
 - **Should `devDependencies` be split into smaller, more focused modules?**

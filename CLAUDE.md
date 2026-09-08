@@ -101,6 +101,68 @@ Grafo: 1784 nos, 3157 arestas (commit `c0c48cd2`).
   `packages/database/src/seed.ts`. Os apps sao silos independentes (nao
   compartilham codigo), entao so vale unificar quando houver um segundo tenant.
 
+## Auditoria
+
+Pedido de auditoria — de um fluxo, de um painel ou do sistema inteiro — segue
+este caminho. Ele nasceu da auditoria dos dois paineis, que encontrou duas
+lacunas reais que a leitura do codigo nao tinha revelado.
+
+**1. Inventariar antes de julgar.** Listar as rotas, os eventos e quem consome
+cada um. `graphify affected` mostra o que depende de um simbolo; para o que
+atravessa HTTP, grep pela string da rota nos quatro apps.
+
+**2. Testar contra a API, nao ler o codigo.** Ler prova que a chamada existe;
+so a execucao prova que os dois lados se falam. O script sobe banco descartavel,
+seeds e servidor, faz login com cada papel e verifica, para cada acao de um
+lado, se o outro enxerga o resultado. Um caso por linha, com OK ou FALHA — e o
+formato que faz a lacuna saltar.
+
+```sh
+node scripts/auditar-sincronia.mjs   # exige API no ar e banco descartavel
+```
+
+Nao confie no grep para concluir ausencia. Na auditoria dos paineis um `grep`
+numa janela curta demais me fez afirmar que o cancelamento nao avisava a
+paciente; ele avisava, por uma funcao compartilhada. Verifique executando.
+
+**3. Corrigir a causa, nao o caso.** As duas lacunas eram do mesmo tipo:
+`notification.create` e `sendPatientPush` escritos aos pares, rota a rota, e
+bastava esquecer um. A correcao foi `avisarPaciente`, que junta o par — nao
+dois remendos.
+
+**4. Travar com teste, nao com relatorio.** Relatorio envelhece; teste falha.
+`apps/api/src/lib/sincronia.test.ts` guarda o contrato entre os paineis. Sao
+testes de codigo-fonte de proposito: protegem a ligacao — que alguem, ao
+acrescentar uma rota, nao esqueca o aviso —, nao o comportamento em execucao,
+que fica nos scripts de auditoria.
+
+**5. Documentar aqui.** Toda auditoria acrescenta abaixo o que encontrou, o que
+corrigiu e o que ficou pendente. Sem isso a proxima refaz o mesmo caminho.
+
+### Registro
+
+**2026-09-08 — sincronia entre painel medico e portal da paciente**
+
+31 verificacoes: pedido de horario, confirmacao, cancelamento, mensagem,
+procedimento, plano, fluxo do dia entre recepcao e consultorio, balcao ate o
+caixa, privacidade e permissoes. Passaram 29.
+
+Encontrado: procedimento registrado e plano de tratamento criado apareciam no
+portal sem avisar a paciente — ela so descobriria abrindo o app por acaso. Causa
+comum: o par notificacao+push escrito rota a rota.
+
+Corrigido: `avisarPaciente` em `apps/api/src/lib/push.ts` junta o par;
+`admin.ts` (sessoes) e `plans.ts` passam a usa-lo. Depois: 31/31.
+
+Travado: nove testes em `sincronia.test.ts`.
+
+Confirmado sao: privacidade da jornada (`internalNotes` nao vaza), isolamento
+entre pacientes, 403 da recepcao em prontuario e planos, separacao entre operar
+e supervisionar o caixa, e o fluxo chegada → consultorio → saida → cobranca.
+
+Pendente: a tela para a medica montar o `fieldSchema` pela interface, e o
+relatorio de caixa por periodo.
+
 ## Convencoes
 
 - **Sempre conversar em portugues do Brasil (pt-BR) no chat**, em toda resposta
