@@ -52,6 +52,10 @@ Ao terminar, verifique:
 - Estado vazio, carregando e erro continuam tratados em cada bloco extraido -
   e o que mais se perde numa extracao.
 
+Extrair componente nao garante que a tela funcione no aparelho: o codigo pode
+ficar limpo e o layout continuar quebrado em tela estreita. Depois de extrair,
+meca com `9-interface-que-funciona-na-tela-real.md`.
+
 ## Ao terminar
 
 1. Build e testes verdes. Relate o resultado real.

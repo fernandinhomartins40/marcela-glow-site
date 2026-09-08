@@ -9,10 +9,11 @@ paineis internos + API) que parecia incompleto e, auditado, estava completo -
 faltavam tres coisas pontuais. O kit existe para chegar a esse tipo de conclusao
 antes de reescrever o que ja funciona.
 
-Os prompts 6 a 8 vieram da fase seguinte do mesmo projeto, ja em producao:
-sao os que evitam os erros que aparecem **depois** que o codigo esta escrito -
-declarar pronto sem verificar, papel de usuario que alcanca o que nao devia, e
-deploy que falha sem que se saiba por que.
+Os prompts 6 a 9 vieram da fase seguinte do mesmo projeto, ja em producao: sao
+os que evitam os erros que aparecem **depois** que o codigo esta escrito -
+declarar pronto sem verificar, papel de usuario que alcanca o que nao devia,
+deploy que falha sem que se saiba por que, e tela cujo codigo esta certo e o
+resultado na mao do usuario nao.
 
 ## Ordem de uso
 
@@ -33,10 +34,15 @@ deploy que falha sem que se saiba por que.
 | 6 | `prompts/6-verificar-antes-de-entregar.md` | Confere se o "pronto" se sustenta | **Toda** mudanca, antes do commit |
 | 7 | `prompts/7-auditar-acessos.md` | Testa o que cada papel alcanca | Sistema com mais de um tipo de usuario |
 | 8 | `prompts/8-diagnosticar-deploy.md` | Acha a causa da falha pelo log | Deploy vermelho |
+| 9 | `prompts/9-interface-que-funciona-na-tela-real.md` | Layout, responsividade e app instalavel | Mexeu em tela |
 
 Os passos 1 a 3 sao sequenciais. Os demais se repetem conforme a necessidade.
 
-Os passos 6, 7 e 8 **nao dependem do passo 1** — nao usam o grafo e nao supoem
+O passo 5 e o 9 tratam de tela por angulos diferentes e se complementam: o 5
+reduz o **codigo** de uma tela grande sem mudar o que ela faz; o 9 verifica o
+**resultado** dela no aparelho. Depois de extrair componentes, meca com o 9.
+
+Os passos 6, 7, 8 e 9 **nao dependem do passo 1** — nao usam o grafo e nao supoem
 nenhuma linguagem ou stack. Da para adotar so eles num projeto que ja esta de
 pe. O 6 e o mais barato e o que mais evita retrabalho: use sempre.
 
@@ -68,11 +74,11 @@ Alem dos prompts, dois arquivos para copiar:
 - Python 3.10+ e `uv` disponiveis, para o indexador do passo 1.
 - Linguagem coberta por tree-sitter (o mainstream todo: TS/JS, Python, Go, Rust,
   Java, C#, PHP, Ruby, Kotlin, Swift...). Fora disso o grafo sai pobre e o passo
-  1 rende pouco - os passos 2 a 5 continuam validos.
+  1 rende pouco - os demais passos continuam validos.
 
 ## O principio por tras
 
-Duas ideias sustentam o kit:
+Tres ideias sustentam o kit:
 
 **1. Medir antes de concluir.** "Esta incompleto" e "esta complexo" sao
 sensacoes. Contar rotas, modelos e linhas por arquivo transforma isso em fato -
