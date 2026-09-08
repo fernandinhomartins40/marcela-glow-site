@@ -141,6 +141,35 @@ corrigiu e o que ficou pendente. Sem isso a proxima refaz o mesmo caminho.
 
 ### Registro
 
+**2026-09-08 — o build local nao e o build do deploy**
+
+Um teste novo em `apps/admin/src/` derrubou o deploy. O build roda
+`tsc --noEmit` sobre `src` inteiro, testes junto; o Dockerfile instala so as
+dependencias do proprio app e o `vitest` mora na raiz do monorepo. Dentro do
+container o tipo nao resolvia:
+
+    src/navegacao.test.ts(1,38): error TS2307: Cannot find module 'vitest'
+
+**Localmente passava** — `turbo run build` resolve o `vitest` pela raiz. Esse
+e o ponto cego: verificar o build nao e o mesmo que verificar o build **como o
+deploy o executa**. Quando um app e compilado em container com instalacao
+propria, o unico teste que vale e o do container.
+
+Corrigido excluindo `*.test.ts(x)` do `tsconfig.app.json` dos tres apps de
+front — todos tem o mesmo `include` e o mesmo Dockerfile, entao o primeiro
+teste colocado em `src/` repetiria a queda. Travado com tres testes.
+
+Duas coisas que atrapalharam o diagnostico, ambas resolvidas:
+
+- **O site respondia 200 em tudo e parecia intacto.** Estava: servindo a versao
+  anterior. O `remote-deploy.sh` compila antes de derrubar o que esta no ar, e
+  fez o certo. Para saber o que esta publicado, compare
+  `readlink -f /opt/dramarcela/current` com o commit, ou procure no bundle uma
+  string que so exista na versao nova.
+- **Nao havia como ler o log do CI**, e a falha acabou deduzida por SSH
+  comparando data de imagem Docker com data de release. Agora ha:
+  `scripts/ver-deploy.mjs` (ver "Quando o deploy falha").
+
 **2026-09-07 — navegacao do painel**
 
 A sidebar fora desenhada olhando para a ADMIN, que ve os doze itens. Medido
