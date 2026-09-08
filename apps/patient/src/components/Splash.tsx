@@ -51,12 +51,55 @@ export function useAbertura(ativo: boolean): boolean {
   return mostrando
 }
 
-export function Splash({ marca, sub }: { marca: string; sub: string }) {
+/**
+ * O ícone que a clínica enviou pelo painel, para a abertura mostrar a marca
+ * dela e não um monograma fixo.
+ *
+ * A abertura acontece antes do login, então a busca precisa ser pública — o
+ * manifesto é. Enquanto ele não chega (ou se falhar), fica o "MD": a animação
+ * dura menos de um segundo e não pode esperar por rede.
+ *
+ * O `maskable` fica de fora: ele tem margem para o recorte em círculo do
+ * Android e apareceria pequeno demais aqui.
+ */
+function useIconeDaClinica(app: 'admin' | 'patient'): string | null {
+  const [icone, setIcone] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    let vivo = true
+    fetch(`/api/landing/manifest/${app}.webmanifest`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((m: { icons?: { src?: string; sizes?: string; purpose?: string }[] } | null) => {
+        if (!vivo || !Array.isArray(m?.icons)) return
+        const uteis = m.icons.filter((i) => i?.src && !/maskable/.test(i.purpose ?? ''))
+        /* 192 antes de 512: é o menor que já tem qualidade para 74px na tela, e
+           o de 512 pode passar de meio megabyte — peso que atrasaria justamente
+           a tela que existe para não fazer esperar. */
+        const escolhido =
+          uteis.find((i) => i.sizes === '192x192') ??
+          uteis.find((i) => i.sizes === '180x180') ??
+          uteis[0]
+        if (escolhido?.src) setIcone(escolhido.src)
+      })
+      .catch(() => {
+        // Sem rede ou API fora: o monograma continua valendo.
+      })
+    return () => {
+      vivo = false
+    }
+  }, [app])
+
+  return icone
+}
+
+export function Splash({ marca, sub, app }: { marca: string; sub: string; app: 'admin' | 'patient' }) {
+  const icone = useIconeDaClinica(app)
+
   return (
     <div className="splash" role="status" aria-live="polite">
       <div className="splash-marca">
         <span className="splash-mono" aria-hidden="true">
-          MD
+          {icone ? <img src={icone} alt="" className="splash-icone" /> : 'MD'}
         </span>
         <strong>{marca}</strong>
         <em>{sub}</em>

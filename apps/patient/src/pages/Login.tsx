@@ -60,7 +60,7 @@ export function Login() {
     }
   }
 
-  if (abrindo) return <Splash marca="Minha Jornada" sub="Portal da paciente" />
+  if (abrindo) return <Splash marca="Minha Jornada" sub="Portal da paciente" app="patient" />
 
   return (
     <main className={`min-h-screen grid lg:grid-cols-2${comoApp ? ' is-app' : ''}`}>

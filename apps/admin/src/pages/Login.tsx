@@ -54,7 +54,7 @@ export function Login() {
     }
   }
 
-  if (abrindo) return <Splash marca="Marcela CRM" sub="Painel da clínica" />
+  if (abrindo) return <Splash marca="Marcela CRM" sub="Painel da clínica" app="admin" />
 
   return (
     <main className={`auth-shell${comoApp ? ' is-app' : ''}`}>
