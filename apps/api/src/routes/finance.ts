@@ -653,4 +653,248 @@ router.get('/cash/history', ...staffOnly, requirePermission('FINANCE_MANAGE'), a
   }
 })
 
+// ─────────────────────────────────────────────────────────────────────────────
+// O que cobrar no balcão
+//
+// A recepção só via "Receber" quando já existia cobrança lançada — e a cobrança
+// só nasce quando a médica registra o procedimento, depois do atendimento. A
+// paciente chegava, saía, e nunca havia o que cobrar.
+//
+// Esta rota responde a pergunta do balcão: das pacientes de hoje, quem deve, e
+// quanto. O valor vem do plano de tratamento (preço da sessão × quantas faltam)
+// mesmo antes de existir cobrança, para a secretária poder receber na chegada.
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/pending-today', ...staffOnly, requireAnyPermission('FINANCE_OPERATE', 'FINANCE_MANAGE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = req.user!.tenantId
+    const dia = diaDoCaixa(req.query.dia ? String(req.query.dia) : undefined)
+    const fim = new Date(dia)
+    fim.setUTCDate(fim.getUTCDate() + 1)
+
+    const consultas = await prisma.appointment.findMany({
+      where: {
+        tenantId,
+        scheduledAt: { gte: dia, lt: fim },
+        status: { notIn: ['CANCELLED'] },
+        patientId: { not: null },
+      },
+      select: {
+        id: true,
+        patientId: true,
+        procedureId: true,
+        procedure: { select: { title: true, priceCents: true } },
+      },
+    })
+
+    const pacientes = [...new Set(consultas.map((c) => c.patientId!))]
+    if (pacientes.length === 0) {
+      res.json({ dia: utcToClinicDate(dia), pendencias: [] })
+      return
+    }
+
+    const [planos, cobrancas] = await Promise.all([
+      prisma.treatmentPlan.findMany({
+        where: { tenantId, patientId: { in: pacientes }, status: { in: ['ACTIVE', 'PAUSED'] } },
+        include: {
+          _count: { select: { sessions: true } },
+          charges: {
+            where: { status: { notIn: ['CANCELLED'] } },
+            select: { id: true, status: true, coversPlan: true, amountCents: true },
+          },
+        },
+      }),
+      prisma.charge.findMany({
+        where: { tenantId, patientId: { in: pacientes }, status: { in: ['PENDING', 'PARTIAL'] } },
+        select: {
+          id: true,
+          patientId: true,
+          planId: true,
+          description: true,
+          amountCents: true,
+          discountCents: true,
+          status: true,
+          payments: { select: { amountCents: true } },
+        },
+      }),
+    ])
+
+    const pendencias = consultas.map((consulta) => {
+      /* A cobrança já lançada tem precedência: se a médica registrou o
+         procedimento, o valor dela é o que vale — inclui desconto e ajuste que
+         a tabela não sabe. */
+      const abertas = cobrancas.filter((c) => c.patientId === consulta.patientId)
+      const emAberto = abertas.map((c) => ({
+        id: c.id,
+        descricao: c.description,
+        restanteCents:
+          c.amountCents -
+          c.discountCents -
+          c.payments.reduce((soma, p) => soma + p.amountCents, 0),
+      }))
+
+      /* O plano do procedimento desta consulta: é o que permite oferecer
+         "pagar o pacote" antes de existir cobrança nenhuma. */
+      const plano = planos.find(
+        (p) => p.patientId === consulta.patientId && p.procedureId === consulta.procedureId,
+      )
+
+      const pacoteQuitado = plano?.charges.some((c) => c.coversPlan && c.status === 'PAID') ?? false
+      const precoSessao = plano?.sessionPriceCents ?? consulta.procedure?.priceCents ?? null
+      const restantes = plano ? Math.max(plano.totalSessions - plano._count.sessions, 0) : 0
+
+      return {
+        appointmentId: consulta.id,
+        patientId: consulta.patientId,
+        emAberto,
+        totalEmAbertoCents: emAberto.reduce((soma, c) => soma + Math.max(c.restanteCents, 0), 0),
+        plano: plano
+          ? {
+              id: plano.id,
+              titulo: plano.title,
+              feitas: plano._count.sessions,
+              total: plano.totalSessions,
+              restantes,
+              precoSessaoCents: precoSessao,
+              /* O pacote cobra o que falta, não o plano inteiro: quem já fez
+                 duas de cinco não deve pagar as duas de novo. */
+              precoPacoteCents: precoSessao ? precoSessao * Math.max(restantes, 1) : null,
+              quitado: pacoteQuitado,
+            }
+          : null,
+        precoAvulsoCents: precoSessao,
+      }
+    })
+
+    res.json({ dia: utcToClinicDate(dia), pendencias })
+  } catch (err) {
+    next(err)
+  }
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /receive — cobrar e receber no balcão, num gesto
+//
+// A secretária não deveria precisar lançar a cobrança e depois registrar o
+// pagamento: no balcão isso é uma coisa só, com a paciente esperando. A rota
+// cria a cobrança quando ela ainda não existe e registra o pagamento junto.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const receberSchema = z.object({
+  patientId: z.string().min(1),
+  /** Cobrança já lançada. Ausente, uma nova é criada. */
+  chargeId: z.string().optional(),
+  /** O plano sendo pago, quando a cobrança nasce aqui. */
+  planId: z.string().optional(),
+  /** `true` quita o pacote inteiro; `false` cobra só a sessão do dia. */
+  coversPlan: z.boolean().optional().default(false),
+  amountCents: z.number().int().min(1).max(100000000),
+  discountCents: z.number().int().min(0).max(100000000).optional().default(0),
+  method: z.enum(['PIX', 'CASH', 'DEBIT', 'CREDIT', 'TRANSFER', 'HEALTH_PLAN', 'OTHER']),
+  description: z.string().trim().max(200).optional(),
+  reference: z.string().trim().max(120).optional(),
+  notes: z.string().trim().max(500).optional(),
+})
+
+router.post('/receive', ...staffOnly, requirePermission('FINANCE_OPERATE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = receberSchema.parse(req.body)
+    const tenantId = req.user!.tenantId
+
+    const paciente = await prisma.patient.findFirst({
+      where: { id: body.patientId, tenantId },
+      select: { id: true, name: true },
+    })
+    if (!paciente) throw new NotFoundError('Paciente')
+
+    let charge = body.chargeId
+      ? await prisma.charge.findFirst({
+          where: { id: body.chargeId, tenantId },
+          include: { payments: true },
+        })
+      : null
+
+    if (body.chargeId && !charge) throw new NotFoundError('Cobranca')
+    if (charge?.status === 'CANCELLED') {
+      throw new AppError('Esta cobrança está cancelada.', 400, 'CHARGE_CANCELLED')
+    }
+
+    /* Cobrança nova: o balcão está recebendo antes de a médica registrar o
+       procedimento, que é o caso de quem paga na chegada. */
+    if (!charge) {
+      const plano = body.planId
+        ? await prisma.treatmentPlan.findFirst({
+            where: { id: body.planId, tenantId, patientId: paciente.id },
+            select: { id: true, title: true },
+          })
+        : null
+      if (body.planId && !plano) throw new NotFoundError('Plano de tratamento')
+
+      const descricao =
+        body.description?.trim() ||
+        (plano
+          ? body.coversPlan
+            ? `${plano.title} — pacote`
+            : `${plano.title} — sessão`
+          : 'Atendimento')
+
+      charge = await prisma.charge.create({
+        data: {
+          tenantId,
+          patientId: paciente.id,
+          planId: plano?.id,
+          coversPlan: body.coversPlan,
+          description: descricao,
+          amountCents: body.amountCents + body.discountCents,
+          discountCents: body.discountCents,
+          createdById: req.user!.userId,
+        },
+        include: { payments: true },
+      })
+      await audit(req, 'CREATE', 'charge', charge.id, { origem: 'balcao', coversPlan: body.coversPlan })
+    }
+
+    const jaPago = charge.payments.reduce((soma, pagamento) => soma + pagamento.amountCents, 0)
+    const devido = charge.amountCents - charge.discountCents
+    if (jaPago + body.amountCents > devido) {
+      throw new AppError(
+        `Esta cobrança tem ${((devido - jaPago) / 100).toLocaleString('pt-BR', {
+          style: 'currency',
+          currency: 'BRL',
+        })} em aberto.`,
+        400,
+        'PAYMENT_EXCEEDS',
+      )
+    }
+
+    await prisma.payment.create({
+      data: {
+        tenantId,
+        chargeId: charge.id,
+        amountCents: body.amountCents,
+        method: body.method,
+        reference: body.reference,
+        notes: body.notes,
+        createdById: req.user!.userId,
+      },
+    })
+
+    /* Pago por inteiro fecha a cobrança; parcial fica `PARTIAL` para o balcão
+       saber que ainda falta algo sem tratar como dívida nova. */
+    /* O status sai do helper que o resto do arquivo usa: duplicar a regra aqui
+       criaria dois lugares para corrigir quando ela mudar. */
+    const { status } = situacao(charge.amountCents, charge.discountCents, jaPago + body.amountCents)
+    const atualizada = await prisma.charge.update({
+      where: { id: charge.id },
+      data: { status },
+      include: { payments: { orderBy: { paidAt: 'asc' } } },
+    })
+
+    await audit(req, 'UPDATE', 'charge', charge.id, { pago: body.amountCents, status })
+    res.status(201).json(atualizada)
+  } catch (err) {
+    next(err)
+  }
+})
+
 export default router

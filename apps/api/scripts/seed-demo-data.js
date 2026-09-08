@@ -420,7 +420,16 @@ async function main() {
   const procedimentos = []
   for (const [i, p] of PROCEDIMENTOS.entries()) {
     const existente = await prisma.procedure.findFirst({ where: { tenantId: tenant.id, title: p.title } })
-    const dados = { ...p, displayOrder: i, tenantId: tenant.id, isActive: true }
+    /* O preco de tabela vem da mesma fonte que ja precifica as sessoes.
+       Sem ele o cadastro nasce sem valor, e a recepcao nao tem o que sugerir
+       ao cobrar no balcao — foi o que aconteceu. */
+    const dados = {
+      ...p,
+      priceCents: PRECO_SESSAO[p.title] ?? null,
+      displayOrder: i,
+      tenantId: tenant.id,
+      isActive: true,
+    }
     procedimentos.push(
       existente
         ? await prisma.procedure.update({ where: { id: existente.id }, data: dados })
@@ -925,6 +934,8 @@ async function main() {
       title: procedimento.title,
       status: dados.status,
       totalSessions: dados.total,
+      // O plano herda o preco de tabela; a medica ajusta caso a caso.
+      sessionPriceCents: PRECO_SESSAO[dados.procedimento] ?? null,
       intervalDays: dados.intervalo,
       details: dados.details,
       careBefore: dados.careBefore ?? null,

@@ -1,16 +1,16 @@
 # Graph Report - marcela-glow-site  (2026-09-07)
 
 ## Corpus Check
-- 250 files · ~480,994 words
+- 251 files · ~481,740 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2135 nodes · 3930 edges · 190 communities (99 shown, 69 thin omitted)
+- 2136 nodes · 3930 edges · 191 communities (99 shown, 69 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 31 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f649e263`
+- Built from commit: `7bb39fab`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -194,24 +194,24 @@
 7. `clinicTime()` - 20 edges
 8. `prisma` - 20 edges
 9. `formatDateBR()` - 19 edges
-10. `Modal()` - 18 edges
+10. `authenticate()` - 18 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `"ClinicAlert"` --references--> `Appointment`  [EXTRACTED]
-  packages/database/prisma/migrations/20260910000000_recepcao_consultorio/migration.sql → apps/admin/src/lib/schedule.ts
 - `"TreatmentPlan"` --references--> `Procedure`  [EXTRACTED]
   packages/database/prisma/migrations/20260907000000_jornada/migration.sql → apps/patient/src/lib/api.ts
+- `"ClinicAlert"` --references--> `Appointment`  [EXTRACTED]
+  packages/database/prisma/migrations/20260910000000_recepcao_consultorio/migration.sql → apps/admin/src/lib/schedule.ts
 - `NotificationsPanel()` --indirect_call--> `enablePushNotifications()`  [INFERRED]
   apps/patient/src/components/sections.tsx → apps/patient/src/lib/api.ts
-- `ContextMenuShortcut()` --calls--> `cn()`  [EXTRACTED]
-  apps/web/src/components/ui/context-menu.tsx → apps/web/src/lib/utils.ts
 - `AlertDescription` --calls--> `cn()`  [EXTRACTED]
+  apps/web/src/components/ui/alert.tsx → apps/web/src/lib/utils.ts
+- `AlertTitle` --calls--> `cn()`  [EXTRACTED]
   apps/web/src/components/ui/alert.tsx → apps/web/src/lib/utils.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (190 total, 69 thin omitted)
+## Communities (191 total, 69 thin omitted)
 
 ### Community 0 - "format.ts"
 Cohesion: 0.16
@@ -615,20 +615,20 @@ Cohesion: 0.33
 Nodes (4): LinhaAgenda(), AppointmentDrawer(), statusMeta(), toDateTimeLocalValue()
 
 ## Knowledge Gaps
-- **820 isolated node(s):** `CLINIC_TZ`, `AppointmentStatus`, `STATUS_META`, `MIN_LEAD_TIME_MIN`, `SLOT_STEP_MIN` (+815 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 932 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **820 isolated node(s):** `Tone`, `BusyInterval`, `ConflictCheck`, `DayAvailability`, `Slot` (+815 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 933 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **69 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Appointment` connect `Reception.tsx` to `schedule.ts`, `"Tenant"`?**
-  _High betweenness centrality (0.031) - this node is a cross-community bridge._
+  _High betweenness centrality (0.032) - this node is a cross-community bridge._
 - **Why does `"ClinicAlert"` connect `"Tenant"` to `Reception.tsx`?**
-  _High betweenness centrality (0.031) - this node is a cross-community bridge._
+  _High betweenness centrality (0.032) - this node is a cross-community bridge._
 - **Why does `"TreatmentPlan"` connect `"Tenant"` to `RequestCare.tsx`?**
-  _High betweenness centrality (0.030) - this node is a cross-community bridge._
-- **What connects `CLINIC_TZ`, `AppointmentStatus`, `STATUS_META` to the rest of the system?**
+  _High betweenness centrality (0.031) - this node is a cross-community bridge._
+- **What connects `Tone`, `BusyInterval`, `ConflictCheck` to the rest of the system?**
   _820 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `cn` be split into smaller, more focused modules?**
   _Cohesion score 0.06493506493506493 - nodes in this community are weakly interconnected._

@@ -763,6 +763,14 @@ model TreatmentPlan {
   /// Quantas sessões esta paciente precisa. Vem do procedimento como sugestão
   /// e a médica ajusta.
   totalSessions Int                 @default(1)
+  /// Quanto custa UMA sessao deste plano, em centavos. Vem do preco de tabela
+  /// do procedimento como sugestao e a medica ajusta — desconto, pacote e
+  /// convenio fazem a mesma tecnica sair por precos diferentes.
+  ///
+  /// O total do pacote e este valor vezes . Guardar so o valor
+  /// unitario evita os dois numeros discordarem quando a medica muda a
+  /// quantidade de sessoes no meio do tratamento.
+  sessionPriceCents Int?
   intervalDays  Int?
   /// Os valores dos campos que o procedimento declarou: `{ area: "terço
   /// médio", produto: "Radiesse 1,5ml" }`. É o que a paciente vê como
@@ -786,6 +794,7 @@ model TreatmentPlan {
 
   @@index([tenantId, status])
   @@index([patientId])
+  charges   Charge[]
 }
 
 /// O que foi cobrado por um procedimento realizado.
@@ -802,6 +811,14 @@ model Charge {
   /// A sessão que originou a cobrança. Opcional porque a clínica pode cobrar
   /// algo sem procedimento registrado — uma taxa, um produto vendido.
   sessionId     String?      @unique
+  /// O plano de tratamento que esta cobranca paga.
+  ///
+  /// Existe para responder "esta paciente ja pagou este tratamento?" sem varrer
+  /// sessao por sessao. Quando `coversPlan` e verdadeiro, uma cobranca so
+  /// quita o pacote inteiro e as sessoes seguintes nao pedem pagamento.
+  planId        String?
+  /// A cobranca paga o pacote inteiro, nao apenas a sessao do dia.
+  coversPlan    Boolean      @default(false)
   description   String
   amountCents   Int
   /// Desconto concedido, guardado à parte do valor: sem isso não há como
@@ -820,6 +837,7 @@ model Charge {
   tenant        Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   patient       Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
   session       ProcedureSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  plan          TreatmentPlan?    @relation(fields: [planId], references: [id], onDelete: SetNull)
   payments      Payment[]
   receipts      Receipt[]
 

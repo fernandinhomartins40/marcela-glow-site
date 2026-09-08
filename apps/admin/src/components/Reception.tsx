@@ -43,6 +43,7 @@ import {
 import { NewAppointment } from './NewAppointment'
 import { AppointmentDrawer } from './Schedule'
 import { AvisosBarra, EnviarAviso } from './Avisos'
+import { Receber, type Pendencia } from './Receber'
 import { useAvisos } from '../lib/avisos'
 
 /**
@@ -101,6 +102,8 @@ export function Reception() {
      dizia "escolha outro" e não dava onde escolher. */
   const [remarcando, setRemarcando] = React.useState<Appointment | null>(null)
   const [erro, setErro] = React.useState('')
+  /** A consulta cujo pagamento está sendo recebido no balcão. */
+  const [recebendo, setRecebendo] = React.useState<Appointment | null>(null)
   /** A consulta cuja confirmação foi recusada por conflito de horário. */
   const [conflito, setConflito] = React.useState<Appointment | null>(null)
 
@@ -116,16 +119,22 @@ export function Reception() {
   /* As cobranças em aberto dizem quem ainda deve. Só carrega se a pessoa opera
      o caixa: sem a permissão a chamada daria 403 a cada 15 segundos. */
   const podeCobrar = pode('FINANCE_OPERATE')
+  /* O que cobrar de cada paciente de hoje.
+   *
+   * Antes isto lia as cobranças do mês e só achava quem já tinha cobrança
+   * lançada — que nasce depois do atendimento. A rota nova responde com o valor
+   * vindo do plano, então a recepção pode receber na chegada. */
   const financeiro = useQuery({
-    queryKey: ['finance-aberto'],
-    queryFn: async () => (await api.get('/finance')).data as { charges: Cobranca[] },
+    queryKey: ['pendencias-hoje'],
+    queryFn: async () =>
+      (await api.get('/finance/pending-today')).data as { pendencias: Pendencia[] },
     enabled: podeCobrar,
     refetchInterval: 30_000,
   })
 
   const refresh = () => {
     client.invalidateQueries({ queryKey: ['appointments'] })
-    client.invalidateQueries({ queryKey: ['finance-aberto'] })
+    client.invalidateQueries({ queryKey: ['pendencias-hoje'] })
     client.invalidateQueries({ queryKey: ['admin'] })
   }
 
@@ -162,14 +171,16 @@ export function Reception() {
   const paraCobrar = saindo.filter((a) => emAberto(a))
   const vez = paraCobrar[0] ?? naSala[0] ?? null
 
-  /** O que a paciente ainda deve, se houver. */
-  function emAberto(a: Appointment): Cobranca | null {
-    if (!a.patient?.id) return null
-    return (
-      (financeiro.data?.charges ?? []).find(
-        (c) => c.patientId === a.patient!.id && c.status !== 'PAID' && c.status !== 'CANCELLED',
-      ) ?? null
-    )
+  /** O que há para cobrar nesta consulta — cobrança lançada ou valor do plano. */
+  function emAberto(a: Appointment): Pendencia | null {
+    const p = (financeiro.data?.pendencias ?? []).find((x) => x.appointmentId === a.id)
+    if (!p) return null
+    // Nada a cobrar: sem valor em aberto, sem plano com preço, e sem tabela.
+    const temAlgo =
+      p.totalEmAbertoCents > 0 ||
+      (p.plano && !p.plano.quitado && p.plano.precoSessaoCents) ||
+      (!p.plano && p.precoAvulsoCents)
+    return temAlgo ? p : null
   }
 
   const chegada = useMutation({
@@ -255,11 +266,17 @@ export function Reception() {
         </Chip>
       ) : null
     }
+    /* O valor no botão: a secretária diz em voz alta antes de a paciente
+       chegar ao balcão. */
+    const quanto =
+      conta.totalEmAbertoCents > 0
+        ? conta.totalEmAbertoCents
+        : conta.plano?.precoSessaoCents ?? conta.precoAvulsoCents ?? 0
     return (
-      <a className="data-action-label reception-cobrar" href="/finance">
+      <button className="data-action-label reception-cobrar" onClick={() => setRecebendo(a)}>
         <HandCoins size={14} aria-hidden="true" />
-        Receber
-      </a>
+        Receber {formatMoney(quanto)}
+      </button>
     )
   }
 
@@ -306,6 +323,7 @@ export function Reception() {
           consulta={vez}
           conta={emAberto(vez)}
           onChegou={() => etapa.mutate({ id: vez.id, stage: 'called' })}
+          onReceber={() => setRecebendo(vez)}
         />
       )}
 
@@ -374,7 +392,9 @@ export function Reception() {
           <DataRow
             key={a.id}
             title={a.name}
-            className="encounter-row"
+            /* Quem esta na sala e ainda deve fica marcado: e a paciente que a
+               secretaria precisa abordar antes de ela entrar no consultorio. */
+            className={emAberto(a) ? 'encounter-row linha-devendo' : 'encounter-row'}
             leading={<span className="encounter-time">{clinicTime(a.scheduledAt)}</span>}
             chips={
               <>
@@ -453,7 +473,7 @@ export function Reception() {
             <DataRow
               key={a.id}
               title={a.name}
-              className="encounter-row"
+              className={emAberto(a) ? 'encounter-row linha-devendo' : 'encounter-row'}
               dimmed={!emAberto(a)}
               leading={<span className="encounter-time">{clinicTime(a.scheduledAt)}</span>}
               chips={
@@ -603,6 +623,17 @@ export function Reception() {
         />
       )}
 
+      {recebendo && emAberto(recebendo) && (
+        <Receber
+          pendencia={emAberto(recebendo)!}
+          nome={recebendo.name}
+          onClose={() => {
+            setRecebendo(null)
+            refresh()
+          }}
+        />
+      )}
+
       {whatsapp && <AvisoWhatsApp link={whatsapp} onClose={() => setWhatsapp(null)} />}
 
       {cancelando && (
@@ -639,10 +670,12 @@ function VezNoBalcao({
   consulta,
   conta,
   onChegou,
+  onReceber,
 }: {
   consulta: Appointment
-  conta: Cobranca | null
+  conta: Pendencia | null
   onChegou: () => void
+  onReceber: () => void
 }) {
   const saiu = Boolean(consulta.releasedAt)
 
@@ -666,11 +699,16 @@ function VezNoBalcao({
         </div>
 
         {conta ? (
-          <a className="vez-acao" href="/finance">
+          <button className="vez-acao" onClick={onReceber}>
             <HandCoins size={18} aria-hidden="true" />
-            Receber {formatMoney(conta.amountCents)}
+            Receber{' '}
+            {formatMoney(
+              conta.totalEmAbertoCents > 0
+                ? conta.totalEmAbertoCents
+                : conta.plano?.precoSessaoCents ?? conta.precoAvulsoCents ?? 0,
+            )}
             <ChevronRight size={18} aria-hidden="true" />
-          </a>
+          </button>
         ) : saiu ? (
           <span className="vez-quitado">
             <Check size={16} aria-hidden="true" />
