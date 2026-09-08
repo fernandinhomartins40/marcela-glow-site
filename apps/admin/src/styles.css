@@ -52,7 +52,12 @@ button:disabled { cursor: not-allowed; opacity: .55; }
    mínimo automático do grid é o tamanho do conteúdo, e a coluna estoura. */
 /* `.app-nav` e não `aside`: o Modal também é um <aside>, e estas regras
    vazavam para dentro de todo formulário sobreposto. */
-.app-nav { background: var(--espresso); color: var(--cream-soft); padding: 18px 12px; display: flex; flex-direction: column; border-right: 1px solid rgba(156,130,104,.3); position: relative; }
+/* A lateral acompanha a tela, não a altura da página. Como célula de grid ela
+   esticava até o tamanho do `main`: numa lista longa a faixa escura chegava a
+   2640px numa janela de 720px, e o "Sair" descia junto, fora do alcance sem
+   rolar até o fim. `sticky` + `100vh` prendem a barra na primeira tela e
+   deixam só ela rolar quando a lista de itens não cabe. */
+.app-nav { background: var(--espresso); color: var(--cream-soft); padding: 18px 12px; display: flex; flex-direction: column; border-right: 1px solid rgba(156,130,104,.3); position: sticky; top: 0; height: 100vh; max-height: 100vh; overflow-y: auto; align-self: start; }
 .app-nav button { justify-content: flex-start; min-height: 38px; padding: 8px 11px; font-size: 13px; border-radius: 7px; background: transparent; color: rgba(255,250,242,.8); border: 1px solid transparent; position: relative; z-index: 1; gap: 10px; }
 .app-nav button:hover { background: rgba(255,250,242,.08); color: var(--cream-soft); transform: none; }
 .app-nav button svg { flex: none; opacity: .72; }
@@ -60,12 +65,17 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 /* O item ativo é uma pastilha clara: some do fundo escuro sem precisar de peso extra */
 .app-nav button.active { background: rgba(246,239,228,.94); color: var(--espresso); font-weight: 600; }
 
-/* Navegação agrupada por frequência de uso; rola sozinha se a lista crescer */
-.side-nav { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; margin: 2px -4px 0; padding: 0 4px; flex: 1; }
+/* Navegação agrupada por frequência de uso; rola sozinha se a lista crescer.
+   `flex: 1` faria a lista ocupar toda a altura mesmo com um item só — a
+   editora de conteúdo, que vê apenas "Site", ficava com 2473px de vazio até o
+   "Sair" no rodapé. `flex: 0 1 auto` deixa a lista com a altura do conteúdo e
+   ainda permite encolher para rolar quando ela é longa; o `margin-top: auto`
+   do "Sair" é o que continua prendendo o rodapé embaixo. */
+.side-nav { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; margin: 2px -4px 0; padding: 0 4px; flex: 0 1 auto; }
 .nav-group { display: flex; flex-direction: column; gap: 2px; }
 .nav-group-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,250,242,.36); padding: 0 11px 5px; }
 /* Sair fica colado no rodapé, separado do que é navegação */
-.nav-signout { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(246,239,228,.14); color: rgba(255,250,242,.62) !important; border-radius: 0 !important; }
+.nav-signout { margin-top: auto; padding-top: 12px; border-top: 1px solid rgba(246,239,228,.14); color: rgba(255,250,242,.62) !important; border-radius: 0 !important; }
 .nav-signout:hover { color: var(--cream-soft) !important; }
 /* Subtítulo da página: diz para que serve a tela sem exigir um clique */
 .page-hint { margin: 5px 0 0; font-size: 13px; color: var(--text-muted); max-width: 62ch; line-height: 1.5; }
@@ -1456,6 +1466,11 @@ body.page-lock { overflow: hidden; }
     transition: transform .22s ease;
     overflow-y: auto;
     box-shadow: 0 0 40px rgba(47,34,27,.3);
+    /* Anula o `sticky` do desktop: aqui a gaveta e `fixed` e o `inset` ja da
+       a altura da tela. */
+    height: auto;
+    max-height: none;
+    align-self: stretch;
   }
   .nav-open .app-nav { transform: translateX(0); }
 

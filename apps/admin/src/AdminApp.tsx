@@ -41,42 +41,41 @@ const queryClient = new QueryClient()
  */
 const NAV_GROUPS = [
   {
-    label: 'Dia a dia',
+    /* O dia da clinica em ordem cronologica: a paciente chega, e atendida,
+       paga. O Dashboard abre o grupo porque e a tela de "como estamos". */
+    label: 'O dia',
     items: [
       ['dashboard', LayoutDashboard, 'Dashboard', 'Visão geral do movimento da clínica', 'DASHBOARD_READ'],
+      ['appointments', CalendarDays, 'Agenda', 'Consultas marcadas e horários livres', 'APPOINTMENT_READ'],
       ['reception', ConciergeBell, 'Recepção', 'Chegadas, confirmações e encaixes do dia', 'FINANCE_OPERATE'],
       ['encounter', Stethoscope, 'Atendimento', 'Atender a paciente e registrar o prontuário', 'RECORD_WRITE'],
-      ['appointments', CalendarDays, 'Agenda', 'Consultas marcadas e horários livres', 'APPOINTMENT_READ'],
       ['finance', Wallet, 'Financeiro', 'Cobranças, pagamentos e recibos', 'FINANCE_OPERATE|FINANCE_MANAGE'],
     ],
   },
   {
-    label: 'Clínico',
+    /* O que se consulta sobre uma pessoa, fora da corrida do dia. */
+    label: 'Pacientes',
     items: [
       ['patients', Users, 'Pacientes', 'Cadastro e prontuário completo de cada paciente', 'PATIENT_READ'],
       ['documents', FileSignature, 'Documentos', 'Assinar e enviar receitas e pedidos de exame', 'PRESCRIPTION_READ'],
-      ['registry', Sparkles, 'Cadastros', 'Procedimentos, medicamentos, exames e modelos', 'RECORD_WRITE'],
-    ],
-  },
-  {
-    label: 'Divulgação',
-    items: [
       ['leads', MessageSquare, 'Leads', 'Contatos interessados vindos do site', 'LEAD_READ'],
-      ['cms', FileText, 'Site', 'Conteúdo da landing page e publicações', 'CMS_READ'],
     ],
   },
   {
-    label: 'Administração',
+    /* Cadastros saiu de "Clinico": e configuracao, nao atendimento. A medica
+       mexe nele uma vez por mes, nao com a paciente na sala. */
+    label: 'Configuração',
     items: [
-      ['security', UserRound, 'Equipe e acessos', 'Quem usa o painel e registro de auditoria', 'USER_MANAGE'],
+      ['registry', Sparkles, 'Cadastros', 'Procedimentos, medicamentos, exames e modelos', 'RECORD_WRITE'],
+      ['cms', FileText, 'Site', 'Conteúdo da landing page e publicações', 'CMS_READ'],
       ['settings', Settings, 'Ajustes', 'Horários de atendimento e certificado digital', 'SETTINGS_WRITE'],
+      ['security', UserRound, 'Equipe e acessos', 'Quem usa o painel e registro de auditoria', 'USER_MANAGE'],
     ],
   },
 ] as const satisfies readonly {
   label: string
   items: readonly (readonly [AdminTab, typeof LayoutDashboard, string, string, string])[]
 }[]
-
 const NAV_ITEMS = NAV_GROUPS.flatMap((group) => group.items.map((item) => ({ group: group.label, item })))
 const labelOf = (tab: AdminTab) => NAV_ITEMS.find(({ item }) => item[0] === tab)?.item[2] ?? ''
 const hintOf = (tab: AdminTab) => NAV_ITEMS.find(({ item }) => item[0] === tab)?.item[3] ?? ''
@@ -179,6 +178,8 @@ function Shell() {
       })).filter((grupo) => grupo.items.length > 0),
     [podeVer],
   )
+  /* Rotular exige que haja mais de um grupo E que algum deles agrupe de fato. */
+  const mostrarRotulos = gruposVisiveis.length > 1 && gruposVisiveis.some((g) => g.items.length > 1)
 
   React.useEffect(() => {
     if (requestedTab !== tab) navigate(`/${tab}`, { replace: true })
@@ -216,7 +217,11 @@ function Shell() {
         <nav className="side-nav">
           {gruposVisiveis.map((group) => (
             <div key={group.label} className="nav-group">
-              <span className="nav-group-label">{group.label}</span>
+              {/* O rotulo precisa cobrir mais de um item para pagar a
+                  altura que ocupa. A assistente ve dois itens em dois grupos:
+                  rotula-los da uma linha de cabecalho para cada linha de
+                  conteudo, e o rotulo nao separa nada que a pessoa confunda. */}
+              {mostrarRotulos && <span className="nav-group-label">{group.label}</span>}
               {group.items.map(([id, Icon, label, hint]) => (
                 <button key={id} className={tab === id ? 'active' : ''} onClick={() => go(id)} title={hint} aria-current={tab === id ? 'page' : undefined}>
                   <Icon size={17} />
@@ -238,7 +243,7 @@ function Shell() {
             <button className="nav-toggle" onClick={() => setNavOpen(true)} aria-label="Abrir navegação" aria-expanded={navOpen}>
               <Menu size={20} aria-hidden="true" />
             </button>
-            <span className="eyebrow">{groupOf(tab)}</span>
+            {mostrarRotulos && <span className="eyebrow">{groupOf(tab)}</span>}
             <h1>{labelOf(tab)}</h1>
             {hintOf(tab) && <p className="page-hint">{hintOf(tab)}</p>}
           </div>

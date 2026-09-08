@@ -141,6 +141,36 @@ corrigiu e o que ficou pendente. Sem isso a proxima refaz o mesmo caminho.
 
 ### Registro
 
+**2026-09-07 — navegacao do painel**
+
+A sidebar fora desenhada olhando para a ADMIN, que ve os doze itens. Medido
+papel a papel, o agrupamento se desfazia para os outros seis: **seis dos sete
+terminavam com "grupos de um"** — um cabecalho em caixa-alta ocupando mais
+altura que o item que anunciava. A editora de conteudo via "DIVULGACAO" sozinho
+sobre um unico botao "Site".
+
+Corrigido: quatro grupos viraram tres, em ordem de trabalho — **O dia**
+(cronologico: chega, e atendida, paga), **Pacientes**, **Configuracao**.
+"Cadastros" saiu de "Clinico": e configuracao mensal, nao atendimento com a
+paciente na sala. O rotulo agora so aparece quando ha mais de um grupo E algum
+deles agrupa de fato; o `eyebrow` do cabecalho segue a mesma regra, senao
+nomeia uma divisao que a pessoa nao ve.
+
+**Encontrado so pela medicao no navegador:** a `.app-nav` e celula de grid e
+esticava ate a altura do `main` — **2640px de faixa escura numa janela de
+720px**, com o "Sair" descendo junto para fora do alcance. Nenhum teste de
+estrutura pegaria isso; so `getBoundingClientRect` no navegador. Corrigido com
+`position: sticky` + `height: 100vh` + `align-self: start`, e a gaveta do
+celular anula os tres. Depois: 720px em 720px, "Sair" visivel sem rolar nos
+tres papeis medidos.
+
+Travado: dez testes em `apps/admin/src/navegacao.test.ts`.
+
+Aprendido: **menu se audita papel a papel, nao pela conta de admin.** A conta
+mais poderosa e a unica para quem o desenho sempre fecha — e a que menos
+revela. E layout se verifica medindo no navegador: a estrutura do menu estava
+certa o tempo todo enquanto a barra tinha quase quatro telas de altura.
+
 **2026-09-07 — usuarios e niveis de acesso**
 
 40 verificacoes: para cada um dos sete papeis, o que ele precisa alcancar para
