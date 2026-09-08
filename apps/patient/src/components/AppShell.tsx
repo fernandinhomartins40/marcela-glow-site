@@ -60,7 +60,10 @@ export function AppShell({
           </p>
         </div>
 
-        <nav className="flex-1 px-3 py-4" aria-label="Navegação principal">
+        {/* `min-h-0` é o que permite encolher: sem ele o `flex-1` respeita o
+            tamanho do conteúdo e a lista empurra o rodapé (conta e sair) para
+            fora da tela numa janela baixa, em vez de rolar. */}
+        <nav className="flex-1 min-h-0 overflow-y-auto barra-fina px-3 py-4" aria-label="Navegação principal">
           <ul className="space-y-1">
             {SECTIONS.map((section) => {
               const Icon = section.icon

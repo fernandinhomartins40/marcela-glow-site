@@ -72,6 +72,15 @@ button:disabled { cursor: not-allowed; opacity: .55; }
    ainda permite encolher para rolar quando ela é longa; o `margin-top: auto`
    do "Sair" é o que continua prendendo o rodapé embaixo. */
 .side-nav { display: flex; flex-direction: column; gap: 14px; overflow-y: auto; margin: 2px -4px 0; padding: 0 4px; flex: 0 1 auto; }
+/* A barra de rolagem padrão é clara e larga: sobre o fundo espresso ela vira
+   uma faixa cinza que não pertence ao painel. Aqui o trilho some no fundo e o
+   polegar é o próprio creme translúcido, que só ganha corpo ao passar o mouse.
+   `scrollbar-width` cobre Firefox; `::-webkit-scrollbar`, o resto. */
+.app-nav, .side-nav { scrollbar-width: thin; scrollbar-color: rgba(246,239,228,.28) transparent; }
+.app-nav::-webkit-scrollbar, .side-nav::-webkit-scrollbar { width: 6px; }
+.app-nav::-webkit-scrollbar-track, .side-nav::-webkit-scrollbar-track { background: transparent; }
+.app-nav::-webkit-scrollbar-thumb, .side-nav::-webkit-scrollbar-thumb { background: rgba(246,239,228,.22); border-radius: 999px; }
+.app-nav::-webkit-scrollbar-thumb:hover, .side-nav::-webkit-scrollbar-thumb:hover { background: rgba(246,239,228,.4); }
 .nav-group { display: flex; flex-direction: column; gap: 2px; }
 .nav-group-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: rgba(255,250,242,.36); padding: 0 11px 5px; }
 /* Sair fica colado no rodapé, separado do que é navegação */

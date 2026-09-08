@@ -111,6 +111,29 @@
 }
 
 @layer components {
+  /* A barra de rolagem padrão do sistema é larga e cinza — sobre o creme do
+     portal ela lê como faixa estranha, não como parte da tela. Esta fica fina,
+     com trilho invisível e polegar na cor da borda, ganhando corpo só ao
+     passar o mouse. `scrollbar-width` cobre Firefox; `::-webkit-scrollbar`, o
+     resto. */
+  .barra-fina {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .barra-fina::-webkit-scrollbar {
+    width: 6px;
+  }
+  .barra-fina::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .barra-fina::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 999px;
+  }
+  .barra-fina::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.5);
+  }
+
   .label-eyebrow {
     @apply text-[0.65rem] font-medium uppercase tracking-[0.25em] text-accent;
   }
