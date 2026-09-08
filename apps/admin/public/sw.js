@@ -18,18 +18,13 @@
  * - **O resto** tenta o cache e atualiza em segundo plano.
  */
 
-const VERSAO = 'v2'
+const VERSAO = 'v3'
 const CACHE = `marcela-admin-${VERSAO}`
 
-const ESSENCIAIS = [
-  self.registration.scope,
-  `${self.registration.scope}manifest.webmanifest`,
-  `${self.registration.scope}icon.svg`,
-  // O PNG de 192 e o que o navegador exige para oferecer a instalacao:
-  // sem ele em cache, um primeiro acesso offline nao teria como instalar.
-  `${self.registration.scope}icon-192.png`,
-  `${self.registration.scope}icon-512.png`,
-]
+/* So o proprio endereco de entrada: o HTML e o que garante a abertura sem
+   rede. O manifesto e os icones ficam de fora de proposito — a clinica os
+   troca pelo painel, e guardados aqui a versao antiga sobreviveria a edicao. */
+const ESSENCIAIS = [self.registration.scope]
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ESSENCIAIS)))
@@ -68,6 +63,22 @@ self.addEventListener('fetch', (event) => {
           return resposta
         })
         .catch(() => caches.match(request).then((c) => c || caches.match(self.registration.scope))),
+    )
+    return
+  }
+
+  /* O manifesto do build e os icones sao editaveis pelo painel: precisam vir
+     da rede para que uma troca feita pela clinica chegue. Sem rede, cai no
+     cache. (O manifesto da API ja escapa pelo `return` de /api acima.) */
+  if (/manifest.webmanifest$/.test(url.pathname) || /icon[-.]/.test(url.pathname)) {
+    event.respondWith(
+      fetch(request)
+        .then((resposta) => {
+          const copia = resposta.clone()
+          caches.open(CACHE).then((cache) => cache.put(request, copia))
+          return resposta
+        })
+        .catch(() => caches.match(request)),
     )
     return
   }
