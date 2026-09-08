@@ -62,10 +62,10 @@ o health check diga.
 raiz; `Dockerfile` que instala so o proprio app, nao. Sintoma classico:
 `Cannot find module 'X'` para algo que existe na sua maquina.
 
-Caso real: um arquivo de teste em `src/` entrou no `tsc` do build de producao e
-pediu `vitest`, que so existia na raiz. Correcao: excluir `*.test.*` do
-tsconfig do build — **em todos os apps com o mesmo padrao**, nao so no que
-quebrou.
+Caso medido: um arquivo de teste dentro da pasta de codigo-fonte entrou na
+compilacao de producao e exigiu a biblioteca de testes, instalada so na raiz do
+monorepo. Correcao: excluir os arquivos de teste da configuracao de build —
+**em todos os modulos com o mesmo padrao**, nao so no que quebrou.
 
 **2. Variavel de ambiente que so existe em dev.**
 
@@ -77,8 +77,8 @@ externo ao codigo.
 ## Ao corrigir
 
 Corrija **a causa e os irmaos dela**. Se a quebra veio de um padrao que se
-repete — mesmo `tsconfig`, mesmo `Dockerfile`, mesma configuracao em varios
-apps —, o proximo a esbarrar nele derruba o deploy de novo.
+repete — mesma configuracao de build, mesmo arquivo de container, mesma receita
+copiada entre modulos —, o proximo a esbarrar nele derruba o deploy de novo.
 
 Trave com teste onde couber, e confirme que o teste falha se o defeito voltar.
 

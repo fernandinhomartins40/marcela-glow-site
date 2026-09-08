@@ -4,8 +4,8 @@ Material para retomar projetos que ficaram grandes, complexos e inacabados —
 e para nao deixar os novos chegarem la. Copie a pasta `kit-auditoria/` para a
 raiz do outro projeto e execute os prompts na ordem.
 
-Foi extraido de um caso real: um monorepo de 24k linhas (site + painel medico +
-painel do paciente + API) que parecia incompleto e, auditado, estava completo -
+Foi extraido de um caso real: um monorepo de 24k linhas (site publico + dois
+paineis internos + API) que parecia incompleto e, auditado, estava completo -
 faltavam tres coisas pontuais. O kit existe para chegar a esse tipo de conclusao
 antes de reescrever o que ja funciona.
 
@@ -35,7 +35,10 @@ deploy que falha sem que se saiba por que.
 | 8 | `prompts/8-diagnosticar-deploy.md` | Acha a causa da falha pelo log | Deploy vermelho |
 
 Os passos 1 a 3 sao sequenciais. Os demais se repetem conforme a necessidade.
-O passo 6 e o mais barato de adotar e o que mais evita retrabalho: use sempre.
+
+Os passos 6, 7 e 8 **nao dependem do passo 1** — nao usam o grafo e nao supoem
+nenhuma linguagem ou stack. Da para adotar so eles num projeto que ja esta de
+pe. O 6 e o mais barato e o que mais evita retrabalho: use sempre.
 
 ## Como executar um prompt
 

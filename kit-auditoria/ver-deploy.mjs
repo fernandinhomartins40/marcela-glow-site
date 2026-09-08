@@ -3,10 +3,10 @@
  * Le os logs do GitHub Actions deste repositorio.
  *
  * Nasceu de um deploy que falhou sem que houvesse como ver o motivo: `gh` nao
- * esta instalado, o repositorio e privado (a API publica devolve 404) e a
- * investigacao acabou feita por SSH na VPS, comparando data de imagem Docker
- * com data de release para deduzir em que passo o job morreu. O log dizia a
- * mesma coisa em uma linha.
+ * estava instalado e o repositorio era privado (a API publica devolve 404).
+ * A investigacao acabou feita por SSH no servidor, comparando datas de artefato
+ * para deduzir em que passo o job morreu — o log dizia a mesma coisa em uma
+ * linha.
  *
  * O token sai de onde o `git push` ja o guarda (`~/.git-credentials`), entao
  * nao ha credencial nova para gerenciar. Se o helper do git mudar, defina

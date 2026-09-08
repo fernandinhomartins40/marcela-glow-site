@@ -10,13 +10,13 @@ Os passos 2 a 5 evitam concluir sem medir. Este evita o erro seguinte, que so
 aparece depois que o codigo esta escrito: **declarar pronto o que nao foi
 verificado do jeito certo**.
 
-Tres casos reais, todos de um mesmo projeto, todos com o build passando:
+Tres casos medidos, todos de um mesmo projeto, todos com o build passando:
 
 | O que foi verificado | O que estava quebrado |
 |---|---|
-| `rolePermissions` lido no codigo: 6 permissoes | O token trazia 12 — o seed gravava override por cima |
-| `turbo run build` local: sucesso | O build do container falhava: dependencia so existia na raiz |
-| Estrutura do menu: correta | A barra tinha 2640px de altura numa janela de 720px |
+| O mapa de papeis, lido no codigo: 6 permissoes | O token entregava 12 — havia excecao gravada por cima |
+| O build, rodado na maquina: sucesso | O build do container falhava: dependencia so existia na raiz |
+| A estrutura do menu: correta | A barra tinha 2640px de altura numa janela de 720px |
 
 Nenhum foi pego lendo codigo. Cada um exigiu executar a coisa certa.
 
