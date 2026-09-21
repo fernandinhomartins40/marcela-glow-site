@@ -1,8 +1,27 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Rotacao de log
+#
+# O driver json-file do Docker NAO rotaciona sozinho: sem isto o arquivo de log
+# cresce ate encher o disco — que e compartilhado com os outros projetos desta
+# VPS. A ancora abaixo e aplicada a todos os servicos; ao acrescentar um
+# servico novo, referencie `*log` nele tambem.
+# ──────────────────────────────────────────────────────────────────────────────
+x-log: &log
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   postgres:
     image: postgres:16-alpine
     container_name: marcela_postgres
     restart: unless-stopped
+    # Teto medido a partir dos vizinhos desta VPS: makucho-postgres usa 47 MiB
+    # com limite de 256M. 512M cobre o crescimento do banco com folga.
+    mem_limit: 512m
+    cpus: 1.0
+    logging: *log
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-marcela}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-marcela_secure_pass_2024}
@@ -21,6 +40,9 @@ services:
     image: minio/minio:latest
     container_name: marcela_minio
     restart: unless-stopped
+    mem_limit: 256m
+    cpus: 0.5
+    logging: *log
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-minio}
@@ -36,6 +58,10 @@ services:
   minio-init:
     image: minio/mc:latest
     container_name: marcela_minio_init
+    # Tarefa de inicializacao: roda o mc uma vez e sai.
+    mem_limit: 64m
+    cpus: 0.5
+    logging: *log
     networks:
       - internal
     depends_on:
@@ -57,6 +83,15 @@ services:
       dockerfile: apps/api/Dockerfile
     container_name: marcela_api
     restart: unless-stopped
+    # O maior teto do conjunto: alem do heap do V8, o RSS inclui o engine do
+    # Prisma (binario nativo), buffers e threads. Vizinho comparavel
+    # (makucho-api) usa 93 MiB em 192M, mas nao carrega Prisma.
+    #
+    # NODE_OPTIONS=--max-old-space-size limitaria so o heap do V8, nao o RSS —
+    # por isso o teto real do processo e declarado aqui, no container.
+    mem_limit: 512m
+    cpus: 1.0
+    logging: *log
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-marcela}:${POSTGRES_PASSWORD:-marcela_secure_pass_2024}@postgres:5432/${POSTGRES_DB:-marcela_glow}?schema=public
       JWT_SECRET: ${JWT_SECRET:-change-this-jwt-secret-in-production-32chars}
@@ -115,6 +150,11 @@ services:
         VITE_API_URL: ${VITE_API_URL:-/api}
     container_name: marcela_web
     restart: unless-stopped
+    # Os tres fronts sao nginx servindo arquivo estatico: os vizinhos
+    # equivalentes desta VPS ficam em ~5 MiB.
+    mem_limit: 64m
+    cpus: 0.5
+    logging: *log
     networks:
       - internal
     expose:
@@ -132,6 +172,9 @@ services:
         VITE_TENANT_SLUG: ${VITE_TENANT_SLUG:-marcela-duch}
     container_name: marcela_admin
     restart: unless-stopped
+    mem_limit: 64m
+    cpus: 0.5
+    logging: *log
     networks:
       - internal
     expose:
@@ -149,6 +192,9 @@ services:
         VITE_TENANT_SLUG: ${VITE_TENANT_SLUG:-marcela-duch}
     container_name: marcela_patient
     restart: unless-stopped
+    mem_limit: 64m
+    cpus: 0.5
+    logging: *log
     networks:
       - internal
     expose:
@@ -161,6 +207,9 @@ services:
     image: nginx:1.27-alpine
     container_name: marcela_nginx
     restart: unless-stopped
+    mem_limit: 64m
+    cpus: 0.5
+    logging: *log
     ports:
       - "${EXTERNAL_PORT:-3095}:80"
     volumes:

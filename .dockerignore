@@ -1,0 +1,61 @@
+# Contexto de build do Docker.
+#
+# Os quatro Dockerfiles usam `context: .` (a raiz do monorepo), entao tudo que
+# nao estiver excluido aqui e enviado ao daemon a cada build. Sem este arquivo
+# subiam junto `node_modules/`, `.git/` e `.kilo/worktrees/` — este ultimo com
+# uma copia inteira do repositorio.
+#
+# Isto tambem protege o build no CI: hoje o workflow filtra esses caminhos no
+# `tar` (deploy-production.yml:68-83), mas quando o build sair da VPS aquele
+# filtro deixa de existir e este arquivo passa a ser o unico.
+
+# Dependencias — reinstaladas dentro da imagem
+node_modules
+**/node_modules
+
+# Artefatos de build — recompilados dentro da imagem
+dist
+**/dist
+build
+**/build
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Cache de ferramenta
+.turbo
+**/.turbo
+.vite
+**/.vite
+coverage
+**/coverage
+
+# Controle de versao e worktrees
+.git
+.gitignore
+.gitattributes
+.kilo
+
+# Grafo de codigo — gerado pelo post-commit, nao entra na imagem
+graphify-out
+.graphifyignore
+
+# Documentacao e auditoria
+docs
+kit-auditoria
+*.md
+
+# Configuracao de editor e de agente
+.editorconfig
+.vscode
+.idea
+.claude
+.github
+
+# Ambiente — segredo nao entra em imagem
+.env
+.env.*
+!.env.example
+
+# Sistema operacional
+Thumbs.db
+.DS_Store
