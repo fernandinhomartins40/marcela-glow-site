@@ -24,7 +24,12 @@ services:
     logging: *log
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-marcela}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-marcela_secure_pass_2024}
+      # `:?` e nao `:-`: com valor padrao, um .env incompleto subia a aplicacao
+      # com senha publicada no repositorio. No caso do JWT_SECRET isso permite
+      # forjar token de administradora. Agora o compose se recusa a subir e diz
+      # qual variavel falta — falhar alto e melhor que servir com segredo
+      # conhecido.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
       POSTGRES_DB: ${POSTGRES_DB:-marcela_glow}
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -54,7 +59,7 @@ services:
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-minio}
-      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-minio-secret}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:?defina S3_SECRET_ACCESS_KEY no .env}
     volumes:
       - minio_data:/data
     networks:
@@ -104,7 +109,7 @@ services:
     entrypoint: >
       /bin/sh -c "
       set -e;
-      mc alias set local http://minio:9000 ${S3_ACCESS_KEY_ID:-minio} ${S3_SECRET_ACCESS_KEY:-minio-secret};
+      mc alias set local http://minio:9000 ${S3_ACCESS_KEY_ID:-minio} ${S3_SECRET_ACCESS_KEY:?defina S3_SECRET_ACCESS_KEY no .env};
       mc mb --ignore-existing local/${S3_BUCKET:-marcela-files};
       mc anonymous set download local/${S3_BUCKET:-marcela-files}/public;
       "
@@ -125,8 +130,8 @@ services:
     cpus: 1.0
     logging: *log
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-marcela}:${POSTGRES_PASSWORD:-marcela_secure_pass_2024}@postgres:5432/${POSTGRES_DB:-marcela_glow}?schema=public
-      JWT_SECRET: ${JWT_SECRET:-change-this-jwt-secret-in-production-32chars}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-marcela}:${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}@postgres:5432/${POSTGRES_DB:-marcela_glow}?schema=public
+      JWT_SECRET: ${JWT_SECRET:?defina JWT_SECRET no .env}
       NODE_ENV: ${NODE_ENV:-production}
       # Padrao 0: dado ficticio nao entra sozinho. Com `:-1`, cada deploy
       # recriava 16 pacientes e 34 agendamentos de mentira num site publico,
@@ -138,8 +143,8 @@ services:
       RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-1200}
       # nginx do host + nginx deste compose
       TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-2}
-      BOOTSTRAP_TOKEN: ${BOOTSTRAP_TOKEN:-change-this-bootstrap-token}
-      PRESCRIPTION_SIGNING_SECRET: ${PRESCRIPTION_SIGNING_SECRET:-change-this-prescription-signing-secret}
+      BOOTSTRAP_TOKEN: ${BOOTSTRAP_TOKEN:?defina BOOTSTRAP_TOKEN no .env}
+      PRESCRIPTION_SIGNING_SECRET: ${PRESCRIPTION_SIGNING_SECRET:?defina PRESCRIPTION_SIGNING_SECRET no .env}
       PRESCRIPTION_SIGNING_PRIVATE_KEY: ${PRESCRIPTION_SIGNING_PRIVATE_KEY:-}
       PRESCRIPTION_SIGNING_CERTIFICATE: ${PRESCRIPTION_SIGNING_CERTIFICATE:-}
       PUBLIC_APP_URL: ${PUBLIC_APP_URL:-http://localhost:3095}
@@ -147,7 +152,7 @@ services:
       S3_REGION: ${S3_REGION:-us-east-1}
       S3_BUCKET: ${S3_BUCKET:-marcela-files}
       S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-minio}
-      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-minio-secret}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:?defina S3_SECRET_ACCESS_KEY no .env}
       S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
       S3_PUBLIC_BASE_URL: ${S3_PUBLIC_BASE_URL:-http://localhost:3095/files}
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}

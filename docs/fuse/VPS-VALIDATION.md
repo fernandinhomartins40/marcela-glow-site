@@ -750,3 +750,143 @@ corpo do JSON.
 Vale como criterio proprio: alem de verificar se o endpoint responde e se o
 papel certo tem acesso, **olhar o que a resposta traz**. Campo sensivel sai
 por descuido de `include`, nao por decisao.
+
+---
+
+## F6 — Recuperacao e seguranca · `PARTIALLY_VALIDATED`
+
+Data: 2026-09-22. Ambiente: **a propria VPS**, com a aplicacao no ar.
+Achados: `VPS-06` `HIGH`, `VPS-09` e `VPS-10` `MEDIUM`, `VPS-12` `REFINEMENT`.
+
+### `VPS-06` — backup · `DONE`
+
+Antes: **nenhum backup**, nem nosso nem de vizinho. Medido: `crontab -l` de root
+vazio, `/etc/cron.d/` com apenas certbot, e2scrub_all e monarx-update, nenhum
+`pg_dump` agendado na maquina.
+
+Agora ha dois scripts, **versionados no repositorio** e instalados em
+`/opt/dramarcela/bin/`:
+
+| script | o que faz |
+|---|---|
+| `.github/scripts/backup.sh` | `pg_dump` + espelho do bucket, com retencao de 14 dias |
+| `.github/scripts/restaurar.sh` | `--conferir` (banco descartavel) e `--de-verdade` (producao) |
+
+Ficam no repositorio de proposito: o monitor de certificado que a memoria do
+projeto descrevia **nao existe mais** — a reinstalacao da VPS o levou. Script
+de operacao que mora so na maquina se perde na proxima reinstalacao.
+
+**O backup se recusa a gravar lixo.** Tres verificacoes antes de considerar
+feito: `gzip -t` (pega arquivo truncado por disco cheio), contagem de
+`CREATE TABLE` (pega dump vazio, que tambem "abre") e, no storage, contagem de
+objetos antes de empacotar.
+
+**Medido em execucao:**
+
+| verificacao | resultado |
+|---|---|
+| `pg_dump` | 20 KB, **37 tabelas** |
+| espelho do bucket com 2 objetos de teste | `public/` e `docs/` preservados; conteudo do arquivo extraido confere |
+| bucket vazio | diz "0 objetos; nada a copiar" em vez de gravar tar vazio |
+| retencao | remove so `banco-*` e `arquivos-*` por idade, nunca o diretorio |
+
+**Defeito encontrado e corrigido durante a fase:** a primeira versao empacotava
+dentro do container do MinIO, e **essa imagem nao tem `tar`** (`command -v tar`
+retorna 127). O backup do banco funcionava e o do storage falhava em silencio.
+So apareceu porque testei com o bucket **tendo objetos** — com o bucket vazio,
+como estava, o caminho quebrado nunca era alcancado. Agora o `mc mirror` roda
+no container e o `tar` no host.
+
+**A restauracao foi exercitada, nao suposta:**
+
+```
+[03:24:22] Criando banco descartavel restore_check_1790047462 ...
+[03:24:22] Restaurando banco-20260922-032406.sql.gz ...
+  tabelas no backup:    37
+  tabelas em producao:  37
+  pacientes no backup:  1
+  usuarios no backup:   5
+[03:24:24] OK: o backup restaura e traz dados. Banco de teste removido.
+```
+
+Producao intacta depois (37 tabelas, `/api/health` 200) e nenhum banco
+`restore_check%` deixado para tras. O modo `--conferir` falha se o backup nao
+trouxer usuario nenhum — sem conta de acesso, restaurar nao devolve o painel.
+
+**O cron foi provado executando**, nao so instalado. Agendado um teste para o
+minuto seguinte e observado o log que **ele** gerou:
+
+```
+[2026-09-22 03:27:01] Salvando o banco em .../banco-20260922-032701.sql.gz ...
+[2026-09-22 03:27:02] Banco salvo: 20K, 37 tabelas.
+```
+
+Agenda definitiva em `/etc/cron.d/dramarcela-backup`: backup as 03:30 todos os
+dias e **conferencia de restauracao aos domingos as 04:30**. Arquivo proprio,
+nao o crontab de root, para nao haver risco de sobrescrever agendamento de
+vizinho — os 3 crons de terceiros foram conferidos intactos depois.
+
+As 03:30 tambem evita o `certbot.timer` das 22:56, que revalida 9 dominios.
+
+### `VPS-09` — dados de demonstracao · `DONE`
+
+`SEED_DEMO_DATA` tinha padrao `1`: bastava a variavel nao estar no `.env` — e
+nao estava — para cada deploy recriar 16 pacientes e 34 agendamentos ficticios
+num site publico. Padrao agora e `0`.
+
+Os dados ja criados foram removidos com `pg_dump` antes (15 pacientes, 7
+prontuarios, 6 receitas, 38 sessoes, 34 agendamentos, 20 planos, 12 mensagens),
+preservando tenant, expediente, catalogo e **os logins do sistema**.
+
+A distincao que evitou quebrar o acesso: o filtro foi `@exemplo.com.br`, e
+`paciente@exemplo.com` — **sem o `.br`** — e o login do portal, criado pelo
+seed essencial. Um caractere separa limpar de trancar a paciente fora.
+
+**Confirmado depois de dois deploys:** os dados nao voltaram (1 paciente, 0
+agendamentos, 9 procedimentos preservados).
+
+### `VPS-10` — segredos com padrao inseguro · `DONE`
+
+Oito pontos do compose caiam em valor publicado no repositorio quando a
+variavel faltava. O pior era `JWT_SECRET:-change-this-jwt-secret-in-production-32chars`:
+com segredo conhecido, **qualquer pessoa forja token de administradora**.
+
+Trocados por `${VAR:?mensagem}` em 5 variaveis (8 ocorrencias):
+`POSTGRES_PASSWORD`, `JWT_SECRET`, `BOOTSTRAP_TOKEN`,
+`PRESCRIPTION_SIGNING_SECRET`, `S3_SECRET_ACCESS_KEY`.
+
+**Verificado que nao quebra nada:**
+
+| verificacao | resultado |
+|---|---|
+| as 5 existem no `.env` de producao | sim, com 64 chars cada (valores proprios) |
+| as 5 estao no `.env.example` | sim — quem clona copia o arquivo e funciona |
+| compose sem `.env` | recusa e **diz qual variavel falta** |
+| compose com `.env` completo | valido, base e base+prod |
+
+Falhar alto e melhor que servir com segredo conhecido.
+
+### `VPS-12` — SSH com senha de root · **decisao do responsavel**
+
+Fica como esta. O deploy autentica com o secret `VPS_PASSWORD`, que ja funciona,
+e o responsavel decidiu em 22/09/2026 **nao criar secret nova**. O workflow
+forca `PubkeyAuthentication=no`, entao migrar para chave exigiria mudar o
+workflow e adicionar `VPS_SSH_KEY`.
+
+Nao e pendencia tecnica em aberto, e escolha registrada. O que permanece
+valendo como recomendacao: **trocar a senha de root**, que foi digitada em
+texto no chat durante esta sessao, numa maquina que hospeda ~10 projetos de
+terceiros.
+
+### Limitacoes
+
+- **O backup nao sai da VPS.** Protege contra erro humano e defeito de
+  aplicacao, nao contra perda da maquina. Um destino externo (outra VPS,
+  bucket remoto) precisaria de credencial que nao existe hoje.
+- **O `--de-verdade` da restauracao nao foi exercitado** — ele substitui o
+  banco de producao. O `--conferir`, que e o que roda semanalmente, foi.
+- **Retencao de 14 dias nao foi observada ao longo do tempo:** a logica do
+  `find` foi lida e os nomes conferem, mas nenhum arquivo chegou a 14 dias
+  ainda.
+- Backup do storage testado com **2 objetos de 24 bytes**. Volume real da
+  clinica (fotos de celular) nao foi exercitado.

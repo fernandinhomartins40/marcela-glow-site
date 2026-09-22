@@ -5,8 +5,7 @@ Cada fase e aprovada e executada em separado, passando por
 `fuse-quality-gate`.
 
 Data: 2026-09-22. Estado: **F1, F2.1, F2.2 e F3 `VALIDATED`; F2
-`VALIDATED` (o site esta no ar); F4 `PARTIALLY_VALIDATED`; F5-F7 aguardando
-aprovacao**.
+`VALIDATED` (o site esta no ar); F4 e F6 `PARTIALLY_VALIDATED`; F5 e F7 em andamento**.
 
 O site voltou ao ar em 22/09: <https://www.dramarceladuch.com.br> serve a
 aplicacao, com certificado proprio. Ver `VPS-VALIDATION.md` e
@@ -218,7 +217,7 @@ e nenhum teste de estrutura pegou; so `getBoundingClientRect`. Medir em 360,
 
 ---
 
-## F6 · Recuperacao e seguranca
+## F6 · Recuperacao e seguranca · `PARTIALLY_VALIDATED`
 
 **Fecha:** `VPS-06` `HIGH`, `VPS-09`, `VPS-10` `MEDIUM`, `VPS-12` `REFINEMENT`.
 
@@ -232,7 +231,7 @@ ar (F2).
 | **Testar restauracao** | VPS | `VPS-06` |
 | `SEED_DEMO_DATA` padrao `0` | `docker-compose.yml` | `VPS-09` |
 | Segredos sem padrao inseguro (`${VAR:?}`) | `docker-compose.yml` | `VPS-10` |
-| Chave SSH e usuario nao-root | workflow + VPS | `VPS-12` |
+| ~~Chave SSH e usuario nao-root~~ | decisao do responsavel: segue com `VPS_PASSWORD` | `VPS-12` |
 
 **Backup nao verificado nao e backup** — a restauracao faz parte da tarefa,
 nao e opcional.
