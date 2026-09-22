@@ -122,7 +122,12 @@ function SettingsPage({ settings }: { settings: any }) {
   /* A aba pode vir na URL (`/settings?aba=certificate`): o aviso de validade
      legal, na tela de assinatura, precisa mandar a pessoa direto ao
      certificado — cair em Agenda e pedir que ela ache a sub-aba sozinha
-     desperdica o link. */
+     desperdica o link.
+
+     Este e o padrao para sub-aba de **rota**. Sub-aba dentro de modal (ficha da
+     paciente, atendimento, formulario) segue com `useState` de proposito: o
+     modal abre sobre a lista sem mudar a URL, entao guardar a aba nela faria
+     um F5 cair numa aba de item que nao esta mais aberto. */
   const [params, setParams] = useSearchParams()
   const abaPedida = params.get('aba')
   const area =

@@ -314,3 +314,136 @@ Os itens que exigem **medicao em navegador**, indisponivel neste ambiente:
 - `UX-16`: `safe-area-inset` no painel.
 - `UX-07`: sub-abas na URL.
 - `UX-12`: padrao unico de mensagem de sucesso.
+
+---
+
+## As 6 tarefas que faltavam · encerradas em 2026-09-22
+
+O responsavel perguntou se o plano estava todo implementado. A conferencia
+tarefa a tarefa mostrou **30 de 36 feitas** e 6 em aberto. Estas sao as 6, e em
+quatro delas a medicao mostrou que a tarefa, como escrita, partia de um
+diagnostico incompleto.
+
+### `VPS-00` — `default_server` que responda 444 · **fora de escopo**
+
+A tarefa nao se aplica como planejada. O vhost `digiurban`, de **outro
+projeto**, ja e catch-all: declara
+`server_name digiurban.com.br www.digiurban.com.br 72.60.10.108 _`, e o `_`
+casa qualquer Host desconhecido.
+
+`default_server` tem precedencia sobre `_`. Adiciona-lo **tiraria trafego do
+digiurban**, inclusive o acesso por IP que ele declara explicitamente — acao
+sobre configuracao de terceiro, que a regra da skill proibe e a autorizacao
+concedida nao cobre.
+
+Medido: Host desconhecido responde 301 em `:80` e `:443`, caindo no vhost do
+vizinho. **O site da clinica nao e afetado** — tem vhost proprio desde a F3.
+
+Fica aberto como decisao de quem administra a VPS, nao como pendencia tecnica
+deste projeto.
+
+### `UX-14` — consolidar os 10 breakpoints · `DONE` (documentado, nao unificado)
+
+Sao **11**, nao 10. Medidos um a um, e cada um existe por razao de **conteudo**,
+com comentario no CSS que a explica:
+
+| breakpoint | usos | por que existe |
+|---|---|---|
+| 1180px | 1 | a agenda de 3 colunas nao cabe mais |
+| 1150px | 1 | a tabela passa de 3 para 2 colunas |
+| 1080px | 1 | 3 cartoes de estatistica viram 2 |
+| 1024px | 1 | as abas do CMS encurtam |
+| 900px | 5 | layout de tablet |
+| 861/860px | 1+1 | fronteira da gaveta do menu — **par proposital**, `min-width: 861` e `max-width: 860` se complementam sem sobrepor |
+| 760px | 2 | a coluna da pagina estreita e o form empilha |
+| 720px | 10 | **o breakpoint estrutural de celular** |
+| 640px | 2 | telas de 390px: numeros lado a lado cortam |
+
+**Nao unificados de proposito.** Mudar `760px` para `720px` altera o layout numa
+faixa de 40px que so o navegador mostra, e o registro de 07/09/2026 no
+`CLAUDE.md` prova que layout aqui se verifica medindo. O que foi feito e o que
+impede o problema crescer: **a escala esta documentada no topo do
+`styles.css`**, com a instrucao de usar um dos valores existentes em vez de
+inventar o 12o.
+
+### `UX-15` — vocabulario unico de token · `DONE` (risco documentado)
+
+Encontrado algo mais concreto que "vocabulario inconsistente": **seis nomes
+existem nos dois apps com formatos incompativeis**.
+
+| token | `admin` | `web` / `patient` |
+|---|---|---|
+| `--background` | hex | tripla HSL |
+| `--border` | `#d8cab8` | `32 18% 82%` |
+| `--bronze` | `#9c8268` | `28 22% 55%` |
+| `--cream` | `#f6efe4` | `36 35% 96%` |
+| `--cream-deep` | `#e5d8c7` | `34 28% 88%` |
+| `--espresso` | `#2f221b` | `22 30% 14%` |
+
+A consequencia pratica: **copiar uma regra entre apps produz cor errada em
+silencio.** `color: var(--bronze)` funciona no painel e falha no site, onde o
+valor so vira cor dentro de `hsl()`. Os apps sao silos por importacao, entao o
+conflito **nunca aparece em tempo de build**.
+
+Nao unificados: exigiria escolher um formato e reescrever os tres apps de uma
+vez, com verificacao visual indisponivel aqui. O risco esta documentado nos
+**dois** arquivos, que e onde quem for copiar CSS vai ler.
+
+Confirmado que o bloco `.lp` do painel (previa da landing) redeclara esses
+nomes em HSL **no proprio escopo**, de proposito e ja comentado — nao e
+conflito.
+
+### `UX-07` — sub-abas na URL · `DONE` (convencao documentada)
+
+O `/settings` ja faz, e bem. Os outros 4 casos com `useState` local
+(`Encounter`, ficha da paciente, formulario, `TemplateForm`) sao abas **dentro
+de modal**, e ali o padrao nao se aplica: o modal abre sobre a lista sem mudar
+a URL, entao guardar a aba nela faria um F5 cair numa aba de um item que nao
+esta mais aberto.
+
+A distincao foi escrita junto ao codigo do `/settings`: sub-aba de **rota** vai
+na URL; sub-aba de **modal** fica no estado.
+
+### `UX-12` — padrao unico de sucesso · `DONE` (padrao existia, agora declarado)
+
+Medido: **65 mutacoes no painel e nenhum componente de aviso flutuante.** A
+primeira leitura foi "nao ha padrao". Havia — e e coerente:
+
+- cadastro/edicao: o modal fecha e a lista se atualiza;
+- acao no lugar: o proprio botao confirma (em `Avisos.tsx` passa a dizer
+  "Avisado" com um check);
+- acao que muda situacao: a tela mostra a nova (o "Aguardando conferencia da
+  Dra. Marcela" depois de fechar o caixa).
+
+**Toast seria pior aqui.** A clinica usa o painel o dia inteiro; um aviso
+flutuante por acao vira ruido que se aprende a ignorar — e aviso ignorado nao
+avisa. O `web` usa toast porque lá a pessoa faz **uma** acao e vai embora.
+
+Documentado em `lib/ui.tsx`, para que ninguem introduza um terceiro padrao.
+
+### `UX-04` — 52 valores fixos · `DONE` (medido: 1 candidato, e ele e intencional)
+
+Dos 52, filtrei os que podem estourar um celular de 360px (`width` ou
+`min-width` fixo >= 340px, fora de media query). Sobraram **2**, e so 1 e
+global:
+
+`.week-head, .week-body { min-width: 676px }` — a grade da semana. E
+**intencional**: a linha acima tem `.week-scroll { overflow-x: auto }`, o
+comentario explica que 104px e o piso para "17:05" e o primeiro nome
+conviverem na coluna, e o breakpoint de 760px zera o `min-width` no celular.
+Agenda semanal com rolagem horizontal e a solucao, nao o defeito.
+
+Os outros 50 sao altura, largura de coluna de tabela e `max-width` de texto
+(limite de leitura) — usos legitimos que a contagem bruta nao distinguia.
+
+**Isto confirma o que o proprio plano dizia:** "os 52 valores fixos sao
+candidatos, nao defeitos confirmados".
+
+### Regressao destas 6
+
+- typecheck do `admin` e do `web`: limpo.
+- build dos dois: passa.
+- os 6 tokens e regras da F4/F5 seguem no CSS publicado.
+- os comentarios novos **nao vao para o CSS publicado** (a minificacao os
+  remove): custo zero em bytes entregues.
+- 147 testes: passam.

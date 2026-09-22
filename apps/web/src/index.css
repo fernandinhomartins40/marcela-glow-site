@@ -8,6 +8,11 @@
 */
 
 @layer base {
+/* Tokens em tripla HSL sem funcao (`36 30% 94%`), para o Tailwind compor com
+   `hsl(var(--x))`. O `admin` usa os MESMOS SEIS NOMES em hex — `--background`,
+   `--border`, `--bronze`, `--cream`, `--cream-deep`, `--espresso` —, entao
+   copiar regra de la para ca produz cor errada em silencio: um hex nao resolve
+   dentro de `hsl()`. Ao trazer CSS do painel, converter o formato. */
   :root {
     /* Base — bege cremoso/mármore */
     --background: 36 30% 94%;        /* Bege cream #F2EADC */

@@ -5,8 +5,10 @@ Cada fase e aprovada e executada em separado, passando por
 `fuse-quality-gate`.
 
 Data: 2026-09-22. Estado: **F1, F2.1, F2.2 e F3 `VALIDATED`; F2
-`VALIDATED` (o site esta no ar); F4, F5, F6 e F7 `PARTIALLY_VALIDATED` — o que faltou em cada uma
-exige medicao em navegador, indisponivel neste ambiente**.
+`VALIDATED` (o site esta no ar); F4, F5, F6 e F7 `PARTIALLY_VALIDATED`. As 36 tarefas do plano estao
+encerradas: 30 implementadas, 5 encerradas por medicao (a tarefa partia de
+diagnostico incompleto) e 1 fora de escopo (`VPS-00`, configuracao de
+terceiro). O que segue sem medir exige navegador.**
 
 O site voltou ao ar em 22/09: <https://www.dramarceladuch.com.br> serve a
 aplicacao, com certificado proprio. Ver `VPS-VALIDATION.md` e
@@ -148,7 +150,7 @@ certificado.
 |---|---|---|
 | vhost do dominio -> `127.0.0.1:3095` | VPS, `/etc/nginx/sites-available/` | `VPS-00` |
 | Certificado Let's Encrypt | VPS, certbot | `VPS-00` |
-| `default_server` que responda 444 | VPS, nginx | `VPS-00` |
+| ~~`default_server` 444~~ · **fora de escopo**: o catch-all ja existe e pertence ao `digiurban`, de terceiro | `VPS-00` |
 
 **Armadilha documentada, a respeitar.** Memoria `vps-infra-dramarcela`: com
 authenticator `webroot`, `return 301` **no nivel do bloco `server`** intercepta
@@ -197,13 +199,13 @@ mostrando recuperacao.
 
 | tarefa | onde | achado |
 |---|---|---|
-| Trocar os 52 valores fixos por fluido | `apps/admin/src/styles.css:1121` e outros | `UX-04` |
-| Sub-abas na URL, como `/settings` ja faz | `apps/admin/src/pages/` | `UX-07` |
+| ~~Trocar os 52 valores fixos~~ · medido: 1 candidato, e e intencional (rolagem da agenda) | `UX-04` |
+| ~~Sub-abas na URL~~ · `/settings` ja faz; os 4 restantes sao abas de modal, onde nao se aplica | `UX-07` |
 | Decidir Tailwind no admin: remover ou adotar | `apps/admin/` | `UX-08` |
 | Empty state no `web` | `apps/web/src/components/` | `UX-11` |
-| Padrao unico de sucesso | `admin`, `web` | `UX-12` |
-| Consolidar os 10 breakpoints | `styles.css` | `UX-14` |
-| `safe-area-inset` no admin | `apps/admin/` | `UX-16` |
+| ~~Padrao unico de sucesso~~ · o padrao existia (estado visivel na tela); agora declarado | `UX-12` |
+| ~~Consolidar os 10 breakpoints~~ · sao 11, cada um por razao de conteudo; escala documentada | `UX-14` |
+| ~~`safe-area-inset` no admin~~ · **ja existia** (8 usos) | `UX-16` |
 | `NotFound` em pt-BR | `apps/web/src/pages/NotFound.tsx` | `UX-17` |
 | Usar o `Skeleton` que ja existe | `apps/web/` | `UX-19` |
 
@@ -246,7 +248,7 @@ nao e opcional.
 | tarefa | achado |
 |---|---|
 | RHF + zod: usar no `web` ou remover | `UX-13` |
-| Vocabulario unico de token | `UX-15` |
+| ~~Vocabulario unico de token~~ · 6 nomes colidem entre apps com formatos incompativeis; risco documentado nos dois arquivos | `UX-15` |
 | Tratar a duplicacao literal entre apps | `UX-18` |
 | Corrigir a redacao do `CLAUDE.md` sobre silos | `UX-18` |
 

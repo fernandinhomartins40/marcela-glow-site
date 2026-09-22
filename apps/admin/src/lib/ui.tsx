@@ -6,6 +6,26 @@ import { useDebounced } from './useDebounced'
 import { AlertTriangle, ArrowLeft, Download, Loader2, Paperclip, Search, Upload, UserRound, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
+/**
+ * Como o painel avisa que deu certo.
+ *
+ * Nao ha toast aqui, e isso e deliberado. Medido em 22/09/2026: 65 mutacoes,
+ * nenhum componente de aviso flutuante. O padrao e **mudanca de estado visivel
+ * na propria tela**:
+ *
+ *   - cadastro/edicao: o modal fecha e a lista se atualiza (`onSaved` +
+ *     `invalidateQueries`);
+ *   - acao no lugar: o proprio botao confirma — em `Avisos.tsx` ele passa a
+ *     dizer "Avisado" com um check;
+ *   - acao que muda situacao: a tela mostra a nova situacao, como o
+ *     "Aguardando conferencia da Dra. Marcela" depois de fechar o caixa.
+ *
+ * A clinica usa este painel o dia inteiro; um toast por acao viraria ruido que
+ * se aprende a ignorar — e aviso ignorado nao avisa. O `web` usa toast porque
+ * lá a pessoa faz **uma** acao (pedir avaliacao) e vai embora.
+ *
+ * Ao acrescentar mutacao, seguir o padrao da tela, nao introduzir um terceiro.
+ */
 export const TOKEN_KEY = 'admin_token'
 
 export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' })

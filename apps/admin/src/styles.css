@@ -1,4 +1,27 @@
 * { box-sizing: border-box; }
+/* ─────────────────────────────────────────────────────────────────────────────
+   Tokens do painel: hex, e por que isso importa
+ 
+   Seis nomes existem **nos dois** vocabularios com formatos incompativeis:
+   `--background`, `--border`, `--bronze`, `--cream`, `--cream-deep` e
+   `--espresso`. Aqui sao hex (`#9c8268`); no `web` e no `patient` sao triplas
+   HSL sem funcao (`28 22% 55%`), para o Tailwind compor com `hsl(var(--x))`.
+ 
+   A consequencia pratica: **copiar uma regra entre apps produz cor errada em
+   silencio.** `color: var(--bronze)` funciona aqui e falha no site, onde o
+   valor so vira cor dentro de `hsl()`. O inverso tambem: `hsl(var(--bronze))`
+   com um hex nao resolve.
+ 
+   Nao foram unificados de proposito. Unificar exige escolher um formato e
+   reescrever os tres apps de uma vez, com verificacao visual que este ambiente
+   nao tem — e os apps sao silos por importacao, entao o conflito nunca aparece
+   em tempo de build. O que resolve na pratica e saber: **ao trazer CSS de
+   outro app, converter o formato.**
+ 
+   Excecao legitima no arquivo: o bloco `.lp` (previa da landing) redeclara
+   esses nomes em HSL no proprio escopo, para reproduzir o site dentro do
+   painel. Esta comentado la.
+   ───────────────────────────────────────────────────────────────────────────── */
 :root {
   --cream: #f6efe4;
   --cream-soft: #fffaf2;
@@ -31,6 +54,33 @@
   /* Anel de foco: quem navega por teclado precisa ver onde esta. */
   --focus-ring: #5c4a3a;
 }
+/* ─────────────────────────────────────────────────────────────────────────────
+   Escala de breakpoints do painel
+ 
+   Sao 11 valores, e a auditoria de UX/UI leu isso como inconsistencia. Medido
+   um a um em 22/09/2026, cada um existe por uma razao de **conteudo**, nao por
+   descuido — e cada `@media` no arquivo tem o comentario que a explica:
+ 
+     1180px  a agenda de 3 colunas nao cabe mais
+     1150px  a tabela passa de 3 para 2 colunas
+     1080px  3 cartoes de estatistica viram 2
+     1024px  as abas do CMS encurtam
+      900px  (5 usos) layout de tablet
+   861/860px fronteira da gaveta do menu — o par e proposital:
+             `min-width: 861` e `max-width: 860` se complementam sem sobrepor
+      760px  a coluna da pagina fica estreita e o form empilha
+      720px  (10 usos) **o breakpoint estrutural de celular**
+      640px  telas de 390px: numeros lado a lado cortam
+ 
+   Consolidar nao foi feito de proposito: mudar `760px` para `720px`, por
+   exemplo, altera o layout numa faixa de 40px que **so o navegador mostra**, e
+   o registro de 07/09/2026 no CLAUDE.md e a prova de que layout aqui se
+   verifica medindo (a `.app-nav` tinha 2640px numa janela de 720px e nenhum
+   teste de estrutura pegou).
+ 
+   **Ao escrever regra nova, usar um destes valores.** Inventar um 12o e o que
+   transforma escala em bagunca; `720px` e `900px` cobrem quase tudo.
+   ───────────────────────────────────────────────────────────────────────────── */
 body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: var(--espresso); background: var(--marble); font-feature-settings: "ss01", "salt"; }
 button, input, select { font: inherit; }
 
