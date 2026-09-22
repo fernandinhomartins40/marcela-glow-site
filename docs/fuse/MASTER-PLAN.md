@@ -281,3 +281,53 @@ acao sobre containers de outros projetos.
 **Pendencia de seguranca:** a senha de root foi compartilhada em texto no chat
 durante esta sessao. Convem troca-la ao fim dos trabalhos — a maquina hospeda
 projetos de terceiros.
+
+---
+
+## Estado final desta rodada — 2026-09-22
+
+Verificado em producao no fecho:
+
+| verificacao | resultado |
+|---|---|
+| site, painel, portal, API | 200 nos quatro |
+| 404 em pt-BR no bundle publicado | presente |
+| segredos obrigatorios (`${VAR:?}`) | nao travaram o deploy (`JWT_SECRET` com 64 chars) |
+| backup agendado | 2 entradas no cron, 4 backups no disco |
+| consumo dos 7 containers | ~187 MiB de 15988 do host (1,2%) |
+| OOM / restart | nenhum |
+| hash de senha nas respostas | limpo |
+| dados de demonstracao | nao voltaram (1 paciente, o login do portal) |
+| certificado | valido ate 20/12/2026 |
+| os 8 vizinhos da VPS | respondendo como antes |
+
+### O que fica aberto, e por que
+
+**Exige navegador**, que nao existe neste ambiente — instalar Playwright seria
+mudanca grande no monorepo, a decidir separadamente:
+
+- Navegacao por teclado de ponta a ponta (ordem de foco, armadilha de foco no
+  modal). O anel existe e tem 7,04:1 de contraste; o percurso nao foi feito.
+- Captura real do `ErrorBoundary` pelo React em runtime.
+- `UX-04` (52 larguras fixas), `UX-14` (10 breakpoints), `UX-16`
+  (`safe-area-inset`). Sao **candidatos, nao defeitos confirmados** — o
+  registro de 07/09/2026 no `CLAUDE.md` mostra por que: a `.app-nav` tinha
+  2640px numa janela de 720px e nenhum teste de estrutura pegou.
+
+**Exige decisao ou acesso do responsavel:**
+
+- Trocar a senha de root, digitada em texto no chat, numa maquina com ~10
+  projetos de terceiros.
+- Destino de backup **fora da VPS**: o que existe protege contra erro humano e
+  defeito de aplicacao, nao contra perda da maquina.
+- `VPS-12` (chave SSH): decidido manter `VPS_PASSWORD`, sem secret nova.
+
+**Divida registrada, sem custo em runtime:**
+
+- 41 dos 48 componentes shadcn do `web` nao sao usados, e `react-hook-form` e
+  `zod` tem zero imports. Medido: o tree-shaking ja os elimina, nada disso
+  entra no bundle de 457 KB. E divida de manutencao, nao de desempenho.
+- `UX-07` (sub-abas na URL) e `UX-12` (padrao unico de sucesso) seguem abertos.
+- Nao existe monitor continuo de renovacao de certificado. O de 03/08/2026 foi
+  perdido na reinstalacao da VPS; se for refeito, versionar em
+  `.github/scripts/` como o `backup.sh`.
