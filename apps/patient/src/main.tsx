@@ -8,6 +8,7 @@ import { Login } from '@/pages/Login'
 import './styles.css'
 import { registrarModoAplicativo, marcarDocumentoComoAplicativo } from '@/lib/standalone'
 import { usarManifestoDaClinica } from '@/lib/manifesto'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,12 +50,16 @@ marcarDocumentoComoAplicativo()
    responde, sem impedir a instalacao se ela nao responder. */
 usarManifestoDaClinica('patient')
 
+/* O ErrorBoundary por fora do QueryClient e do roteador: assim ele alcanca
+   erro de render de qualquer tela, inclusive das que o roteador monta. */
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
+    <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter basename={routerBase}>
         <App />
       </BrowserRouter>
     </QueryClientProvider>
+    </ErrorBoundary>
   </React.StrictMode>,
 )

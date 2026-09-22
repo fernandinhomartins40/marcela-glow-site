@@ -722,11 +722,22 @@ hash.
 
 Suite completa depois: **113 testes em 11 arquivos**, typecheck limpo.
 
-### Limitacao
+### Provado em producao
 
-A correcao foi validada localmente e em runtime contra o banco de producao,
-mas **a imagem com o wrapper novo ainda nao subiu** no momento deste registro.
-A prova final e o login funcionando apos o deploy.
+Deploy `ok` no run 35679152878. Medido no site publico depois dele:
+
+| verificacao | resultado |
+|---|---|
+| login da medica | **HTTP 200**, token de 875 chars |
+| login da paciente | **HTTP 200** |
+| `/api/admin/patients` | **limpo** |
+| `/api/admin/users` | **limpo** |
+| `/api/patient/me` (token de admin e de paciente) | **limpo** |
+| resposta segue util | `name`, `email`, `phone`, `isActive`, `lastLoginAt`, `birthDate` presentes |
+| erros na API | 0 |
+
+O login era o risco real da mudanca: se o wrapper CommonJS da imagem nao
+exportasse `prismaAuth`, ninguem entraria. Entra.
 
 ### Licao
 

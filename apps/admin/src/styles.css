@@ -9,12 +9,56 @@
   --espresso-deep: #1f1713;
   --bronze: #9c8268;
   --bronze-soft: #c6b19c;
+  /* Bronze legivel. O --bronze acima e cor de DECORACAO: medido sobre os
+     quatro fundos do painel ele da 3,03:1 a 3,48:1, e texto precisa de 4,5:1
+     (WCAG 1.4.3). Este da 4,97:1 no pior caso e mantem a familia da paleta.
+     Use --bronze em filete, icone decorativo e fundo; --bronze-text em
+     qualquer coisa que se leia. */
+  --bronze-text: #75604c;
+  /* Texto sobre --cream-deep, que e o fundo das pilulas (inicial da paciente,
+     dia do mes, numero do item). Ali o --bronze-text da so 4,24:1 — o fundo
+     mais escuro come a margem —, entao a pilula precisa do proprio tom:
+     4,94:1. */
+  --bronze-text-deep: #6b5641;
   --border: #d8cab8;
+  /* Borda visivel. O --border acima da 1,41:1 sobre o creme: serve para
+     separar blocos, nao para delimitar controle. Componente de interface
+     precisa de 3:1 (WCAG 1.4.11), entao campo, botao e caixa de selecao usam
+     este. */
+  --border-strong: #8f7c68;
   --text-muted: rgba(47,34,27,.66);
   --shadow-soft: 0 18px 50px rgba(47,34,27,.10);
+  /* Anel de foco: quem navega por teclado precisa ver onde esta. */
+  --focus-ring: #5c4a3a;
 }
 body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: var(--espresso); background: var(--marble); font-feature-settings: "ss01", "salt"; }
 button, input, select { font: inherit; }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Foco visivel em tudo que recebe foco
+
+   Antes so `input` e `select` tinham indicador: quem navega por teclado — por
+   preferencia, por lesao no punho ou por leitor de tela — passava por botao,
+   link e aba sem nenhuma pista de onde estava. O navegador tem um anel padrao,
+   mas o `outline: 0` implicito de varios componentes o apagava.
+
+   `:focus-visible` e nao `:focus` para que o anel apareca no teclado e nao a
+   cada clique de mouse, que foi a razao de tanta gente desligar o padrao.
+
+   O `outline-offset` negativo do segundo bloco resolve fundo escuro: ali o
+   anel marrom desaparece, entao vale o creme.
+   ───────────────────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.app-nav :focus-visible,
+.auth-shell :focus-visible,
+button.primary:focus-visible,
+button.danger-solid:focus-visible {
+  outline-color: var(--cream-soft);
+}
 .auth-shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; position: relative; overflow: hidden; background: linear-gradient(135deg, #f7f1e8, #e8dccd); }
 .auth-bg { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: .36; filter: saturate(.85); }
 .auth-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(120deg, rgba(246,239,228,.94), rgba(246,239,228,.66) 48%, rgba(47,34,27,.9)); }
@@ -28,7 +72,7 @@ button, input, select { font: inherit; }
 .auth-portrait { position: relative; width: min(360px, 82%); aspect-ratio: 4 / 5; margin-top: 28px; overflow: hidden; align-self: flex-end; }
 .auth-portrait img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .auth-portrait::after { content: ""; position: absolute; inset: 12px; border: 1px solid rgba(246,239,228,.62); pointer-events: none; }
-.eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: 11px; color: var(--bronze); font-weight: 700; }
+.eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: 11px; color: var(--bronze-text); font-weight: 700; }
 .form { display: grid; gap: 14px; }
 label { display: grid; gap: 6px; font-size: 13px; font-weight: 700; }
 /* Checkbox e radio ficam de fora: `width: 100%` e o padding transformavam
@@ -128,7 +172,10 @@ main header .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .14em;
 .list p, .kanban p { border-top: 1px solid var(--border); margin: 0; padding: 10px 0; font-size: 13px; line-height: 1.5; color: rgba(47,34,27,.82); }
 .list p:first-of-type { border-top: 0; padding-top: 0; }
 .row-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.row-actions button { min-height: 30px; padding: 5px 10px; font-size: 12px; }
+/* 30px falhava o alvo minimo de toque (WCAG 2.5.8 pede 24px, e 44px e o que
+   se acerta com o dedo no celular, que e como a recepcao usa). O padding
+   cresce o alvo sem inflar o texto: a densidade da lista se mantem. */
+.row-actions button { min-height: 44px; padding: 10px 14px; font-size: 12px; }
 .inline-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 12px; }
 .table { display: grid; gap: 8px; }
 .table article { display: grid; grid-template-columns: 1.4fr 1fr auto; gap: 12px; align-items: center; padding: 12px 16px; }
@@ -213,7 +260,7 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .data-list svg, .toolbar svg, .drawer-footer svg, .confirm-actions svg, .lead-actions svg, .empty-state svg { flex-shrink: 0; }
 .data-main.static { cursor: default; }
 .data-main:hover:not(.static) strong { text-decoration: underline; text-underline-offset: 3px; }
-.data-avatar { width: 34px; height: 34px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--cream-deep); color: var(--bronze); }
+.data-avatar { width: 34px; height: 34px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--cream-deep); color: var(--bronze-text-deep); }
 .data-text { display: grid; gap: 3px; min-width: 0; }
 .data-text strong { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13.5px; font-weight: 600; }
 .data-meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-muted); }
@@ -248,7 +295,7 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 
 /* Pendencias */
 .painel-alertas { padding: 14px 16px 16px; background: var(--cream-soft); border: 1px solid var(--bronze); border-radius: 12px; }
-.painel-alertas h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--bronze); }
+.painel-alertas h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--bronze-text); }
 .painel-alertas-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(212px, 1fr)); gap: 9px; }
 .painel-pendencia, main .painel-pendencia { position: relative; display: grid; grid-template-columns: auto auto minmax(0, 1fr); grid-template-areas: "icone n titulo" "texto texto texto"; align-items: center; gap: 3px 9px; min-height: 0 !important; padding: 12px 34px 12px 13px !important; text-align: left; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 10px; color: var(--espresso); }
 .painel-pendencia:hover, main .painel-pendencia:hover { background: var(--cream-deep); border-color: var(--bronze); transform: none; }
@@ -303,7 +350,7 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 /* A proxima consulta, ou a que esta acontecendo: o relogio da recepcao */
 .painel-agora { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "tag tag" "nome acao" "quando acao"; align-items: center; gap: 2px 12px; margin-bottom: 13px; padding: 13px 14px; background: var(--cream-deep); border: 1px solid var(--border); border-radius: 10px; }
 .painel-agora.is-live { background: var(--espresso); border-color: var(--espresso); color: var(--marble-soft); }
-.painel-agora-tag { grid-area: tag; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 4px; font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--bronze); }
+.painel-agora-tag { grid-area: tag; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 4px; font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--bronze-text); }
 .painel-agora.is-live .painel-agora-tag { color: var(--bronze-soft); }
 .painel-agora > strong { grid-area: nome; font-size: 16px; font-weight: 600; }
 .painel-agora-quando { grid-area: quando; font-size: 12px; color: var(--text-muted); }
@@ -355,11 +402,11 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .painel-pessoas { display: flex; flex-wrap: wrap; gap: 7px; margin: 0; padding: 0; list-style: none; }
 .painel-pessoas button, main .painel-pessoas button { display: inline-flex; align-items: center; gap: 8px; min-height: 32px !important; padding: 5px 12px 5px 6px !important; font-size: 12.5px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 999px; color: var(--espresso); }
 .painel-pessoas button:hover, main .painel-pessoas button:hover { border-color: var(--bronze); background: var(--cream-deep); transform: none; }
-.painel-dia-mes { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; font-size: 10.5px; font-weight: 600; font-variant-numeric: tabular-nums; background: var(--cream-deep); border-radius: 50%; color: var(--bronze); }
+.painel-dia-mes { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; font-size: 10.5px; font-weight: 600; font-variant-numeric: tabular-nums; background: var(--cream-deep); border-radius: 50%; color: var(--bronze-text-deep); }
 .painel-pessoas button:hover .painel-dia-mes { background: var(--marble-soft); }
 
 .painel-vazio { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--text-muted); }
-.painel-link, main .painel-link { min-height: 0 !important; padding: 0 4px !important; font-size: inherit; background: none; border: 0; color: var(--bronze); text-decoration: underline; text-underline-offset: 2px; }
+.painel-link, main .painel-link { min-height: 0 !important; padding: 0 4px !important; font-size: inherit; background: none; border: 0; color: var(--bronze-text); text-decoration: underline; text-underline-offset: 2px; }
 .painel-link:hover, main .painel-link:hover { color: var(--espresso); transform: none; }
 
 /* ── Gerenciador do site ──────────────────────────────────────────────────── */
@@ -378,7 +425,7 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
    se editam aqui. Sem ele o editor da a entender que a pagina comeca no
    carrossel, e quem procura onde mudar o menu do topo gira pelas oito abas. */
 .cms-mapa { display: grid; gap: 8px; padding: 12px 14px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 10px; }
-.cms-mapa-titulo { margin: 0; font-size: 10.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--bronze); }
+.cms-mapa-titulo { margin: 0; font-size: 10.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--bronze-text); }
 .cms-mapa ol { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin: 0; padding: 0; list-style: none; counter-reset: none; }
 /* A seta entre os itens desenha a sequencia sem precisar de numero. */
 .cms-mapa li + li::before { content: "\203A"; margin-right: 5px; color: var(--bronze); opacity: .5; }
@@ -451,7 +498,7 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .cms-item-abrir, main .cms-item-abrir { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; min-height: 34px !important; padding: 6px 4px !important; text-align: left; justify-content: flex-start; background: transparent; border: 0; color: var(--espresso); }
 .cms-item-abrir:hover, main .cms-item-abrir:hover { background: transparent; transform: none; }
 .cms-item-abrir > svg { color: var(--bronze); }
-.cms-item-num { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; font-size: 10.5px; font-weight: 600; font-variant-numeric: tabular-nums; background: var(--cream-deep); border-radius: 50%; color: var(--bronze); }
+.cms-item-num { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; font-size: 10.5px; font-weight: 600; font-variant-numeric: tabular-nums; background: var(--cream-deep); border-radius: 50%; color: var(--bronze-text-deep); }
 .cms-item.is-open .cms-item-num { background: var(--espresso); color: var(--marble-soft); }
 .cms-item-nome { min-width: 0; font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cms-item.is-open .cms-item-nome { font-weight: 600; }
@@ -661,7 +708,7 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 
 /* O carrossel do hero: um slide abaixo do outro, cada um como aparece na tela */
 .lp-slides { display: grid; gap: 12px; }
-.lp-slide-tag { margin: 0 0 5px; font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+.lp-slide-tag { margin: 0 0 5px; font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze-text); }
 
 /* Cartao de tratamento / depoimento, como no site */
 .lp-card { padding: 4cqw; background: hsl(var(--cream)); border: 1px solid hsl(var(--accent) / .25); }
@@ -708,7 +755,7 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .perm-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .perm-group { display: block; min-width: 0; margin: 0; padding: 12px 13px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 9px; }
 .perm-group-body { display: grid; gap: 7px; }
-.perm-group legend { padding: 0 4px; font-size: 10.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+.perm-group legend { padding: 0 4px; font-size: 10.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze-text); }
 /* Um checkbox avulso num formulário, fora do quadro de permissões. */
 .check-row { display: flex; align-items: flex-start; gap: 8px; font-size: 12.5px; line-height: 1.45; cursor: pointer; }
 .check-row input { flex: none; margin-top: 2px; accent-color: var(--espresso); }
@@ -720,7 +767,7 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 /* O que o papel já concede fica marcado e travado: desmarcar não teria efeito,
    porque o papel devolveria a permissão na leitura seguinte. */
 .perm-item.by-role { color: var(--text-muted); cursor: default; }
-.perm-source { margin-left: auto; padding-left: 8px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--bronze); white-space: nowrap; }
+.perm-source { margin-left: auto; padding-left: 8px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--bronze-text); white-space: nowrap; }
 .form-row { display: grid; gap: 12px; }
 .field { display: grid; gap: 5px; align-content: start; }
 /* Campos lado a lado alinham pelo topo do controle. Sem isto, o campo que tem
@@ -766,7 +813,7 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 
 .confirm-backdrop { align-items: center; justify-content: center; }
 .confirm-box { width: min(400px, calc(100% - 32px)); margin: auto; padding: 22px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 12px; text-align: center; }
-.confirm-icon { width: 42px; height: 42px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--cream-deep); color: var(--bronze); }
+.confirm-icon { width: 42px; height: 42px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--cream-deep); color: var(--bronze-text-deep); }
 .confirm-icon.danger { background: #f6e3e3; color: #a33131; }
 .confirm-box h3 { margin: 0 0 6px; font-family: inherit; font-size: 16px; font-weight: 600; }
 .confirm-box p { margin: 0 0 18px; font-size: 13px; line-height: 1.55; color: var(--text-muted); }
@@ -934,7 +981,7 @@ main .data-actions button.encounter-open {
 .warn-text { color: #8a5a22; }
 
 /* Subtítulo que separa blocos dentro de um formulário longo */
-.form-section-title { margin: 6px 0 0; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+.form-section-title { margin: 6px 0 0; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze-text); }
 /* Na página o formulário é longo e o espaçamento uniforme da gaveta faz tudo
    parecer uma lista só. Um respiro e um filete antes de cada seção devolvem a
    hierarquia — a médica passa a ver blocos, não uma coluna contínua. */
@@ -975,7 +1022,7 @@ main .data-actions button.encounter-open {
 .timeline-head strong { font-size: 14px; font-weight: 600; }
 .timeline-date { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
 .timeline-field { display: grid; gap: 2px; margin: 0 0 9px; font-size: 13px; line-height: 1.55; }
-.timeline-field > span { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze); }
+.timeline-field > span { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--bronze-text); }
 .timeline-body { margin: 0 0 9px; font-size: 13px; line-height: 1.6; white-space: pre-line; overflow-wrap: anywhere; }
 .timeline-actions { display: flex; gap: 7px; margin-top: 12px; padding-top: 11px; border-top: 1px solid var(--border); }
 .timeline-actions button { display: inline-flex; align-items: center; gap: 5px; min-height: 30px; padding: 6px 11px; font-size: 12px; background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--espresso); }
@@ -1002,7 +1049,7 @@ main .data-actions button.encounter-open {
 .cert-steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--espresso); color: var(--cream-soft); font-size: 12px; font-weight: 600; }
 .cert-steps li > span { display: block; font-size: 13.5px; font-weight: 600; margin-bottom: 3px; }
 .cert-steps li p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--text-muted); }
-.cert-link { display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; font-size: 12.5px; color: var(--bronze); text-decoration: none; }
+.cert-link { display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; font-size: 12.5px; color: var(--bronze-text); text-decoration: none; }
 .cert-link:hover { text-decoration: underline; }
 
 .otp-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -2955,4 +3002,46 @@ main .receber-meio {
 @media (max-width: 720px) {
   .receber-opcao { flex-direction: column; align-items: flex-start; gap: 6px; }
   .receber-meio { flex: 1; justify-content: center; }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Tela de erro (ErrorBoundary)
+
+   Aparece quando um erro de render derruba a arvore. Antes disto, o mesmo caso
+   deixava a tela em branco: sem mensagem, sem botao, sem saida.
+   ───────────────────────────────────────────────────────────────────────────── */
+.erro-tela {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  padding: 32px 24px;
+  text-align: center;
+  background: var(--marble);
+  color: var(--espresso);
+}
+.erro-tela svg { color: #a33131; }
+.erro-tela h1 { margin: 0; font-size: 22px; font-weight: 600; }
+.erro-tela p { margin: 0; max-width: 42ch; line-height: 1.6; color: var(--text-muted); }
+.erro-acoes { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 6px; }
+/* `.ghost` so existia dentro de `.reception-dias`; o botao secundario daqui
+   precisa da versao propria. */
+.erro-acoes button.ghost {
+  background: transparent;
+  color: var(--espresso);
+  border: 1px solid var(--border-strong);
+}
+.erro-tela details { margin-top: 8px; max-width: 60ch; }
+.erro-tela summary { cursor: pointer; font-size: 13px; color: var(--bronze-text); min-height: 44px; display: inline-flex; align-items: center; }
+.erro-tela code {
+  display: block;
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: var(--cream-soft);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font-size: 12px;
+  text-align: left;
+  word-break: break-word;
 }
