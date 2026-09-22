@@ -3051,3 +3051,10 @@ main .receber-meio {
   text-align: left;
   word-break: break-word;
 }
+
+/* Alinha icone e texto numa linha de metadado (telefone da paciente na
+   recepcao). Antes isto usava `inline-flex items-center gap-1` do Tailwind,
+   que **nao existia no CSS**: o admin tinha 118 linhas de configuracao do
+   Tailwind e nenhuma diretiva `@tailwind`, entao nenhuma classe utilitaria era
+   gerada e o icone ficava desalinhado do numero. */
+.meta-com-icone { display: inline-flex; align-items: center; gap: 4px; }

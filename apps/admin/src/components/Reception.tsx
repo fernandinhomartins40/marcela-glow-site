@@ -568,7 +568,7 @@ export function Reception() {
                   }
                   meta={
                     a.phone ? (
-                      <span className="inline-flex items-center gap-1">
+                      <span className="meta-com-icone">
                         <Phone size={12} aria-hidden="true" />
                         {a.phone}
                       </span>
