@@ -4,7 +4,8 @@ Consolida `VPS-AUDIT.md` (13 achados) e `UX-UI-AUDIT.md` (19 achados).
 Cada fase e aprovada e executada em separado, passando por
 `fuse-quality-gate`.
 
-Data: 2026-09-21. Estado: **F1 `VALIDATED`; F2-F7 aguardando aprovacao**.
+Data: 2026-09-21. Estado: **F1 `VALIDATED`; F2 `PARTIALLY_VALIDATED`
+(bloqueada por faturamento do GitHub Actions); F3-F7 aguardando aprovacao**.
 
 ## Ordem e por que ela e esta
 
@@ -55,10 +56,12 @@ container foi morto e que nenhum encosta no teto.
 
 ---
 
-## F2 · Mover o build para o GitHub Actions
+## F2 · Mover o build para o GitHub Actions · `PARTIALLY_VALIDATED`
 
 **Fecha:** `VPS-01` `BLOCKER`, `VPS-04` `HIGH`, `VPS-07` `MEDIUM`,
-`VPS-11` `MEDIUM`.
+`VPS-11` `MEDIUM`. Implementada em 2026-09-21 e verificada localmente; o
+fluxo de registry depende do GitHub Actions, **bloqueado por faturamento**.
+Ver `VPS-VALIDATION.md`.
 
 **Por que.** E a causa que voce apontou, confirmada em
 `remote-deploy.sh:46`. Na mesma VPS, quem constroi no CI mantem imagens de

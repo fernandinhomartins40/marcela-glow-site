@@ -7,14 +7,14 @@ ARG VITE_API_URL=/api
 ENV VITE_API_URL=$VITE_API_URL
 
 # Copy root package files
-COPY package.json ./
+COPY package.json package-lock.json ./
 COPY turbo.json ./
 
 # Copy workspace package files
 COPY apps/web/package.json ./apps/web/package.json
 
 # Install dependencies
-RUN npm install --workspace=@marcela/web
+RUN npm ci --workspace=@marcela/web
 
 # Copy web source
 COPY apps/web/ ./apps/web/

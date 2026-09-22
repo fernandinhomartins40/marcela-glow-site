@@ -6,6 +6,13 @@ set -euo pipefail
 BASE="http://127.0.0.1:${DEPLOY_PORT}"
 COMPOSE_PROJECT="dramarcela"
 
+# Roda a partir do diretorio da release: o compose precisa achar os dois
+# arquivos (base + override de producao) para resolver os servicos. O script e
+# chamado por caminho absoluto, entao o cwd herdado seria /root.
+if [ -n "${APP_ROOT:-}" ] && [ -n "${RELEASE:-}" ] && [ -d "$APP_ROOT/releases/$RELEASE" ]; then
+  cd "$APP_ROOT/releases/$RELEASE"
+fi
+
 dump_diagnostics() {
   echo "--- containers ---" >&2
   docker compose -p "$COMPOSE_PROJECT" ps || true

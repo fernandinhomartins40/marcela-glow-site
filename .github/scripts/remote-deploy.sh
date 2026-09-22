@@ -26,25 +26,49 @@ if [ -L "$CURRENT_LINK" ]; then
   PREVIOUS_RELEASE_DIR="$(readlink -f "$CURRENT_LINK" || true)"
 fi
 
+# Guarda tambem QUAL IMAGEM a versao no ar usa.
+#
+# O .env e global e o workflow ja o reescreveu com a tag nova antes de chegar
+# aqui. Sem gravar a anterior, o rollback voltaria o diretorio mas subiria a
+# imagem que acabou de falhar — ou seja, nao seria rollback nenhum.
+PREVIOUS_IMAGE_TAG=""
+if [ -n "$PREVIOUS_RELEASE_DIR" ] && [ -f "$PREVIOUS_RELEASE_DIR/.image-tag" ]; then
+  PREVIOUS_IMAGE_TAG="$(cat "$PREVIOUS_RELEASE_DIR/.image-tag" 2>/dev/null || true)"
+fi
+
 ln -sfn "$ENV_FILE" "$RELEASE_DIR/.env"
+
+# Marca qual imagem esta release usa, para que o deploy seguinte saiba a que
+# voltar se precisar.
+grep '^IMAGE_TAG=' "$ENV_FILE" | cut -d= -f2- > "$RELEASE_DIR/.image-tag" || true
 
 cd "$RELEASE_DIR"
 
+# O override de producao troca `build:` por `image:` do GHCR — a VPS nao
+# compila nada. Os dois arquivos sao obrigatorios: sem o segundo o compose
+# tentaria compilar e nao acharia o codigo-fonte, que nao e mais enviado.
 compose() {
-  docker compose --env-file "$ENV_FILE" -p "$COMPOSE_PROJECT" "$@"
+  docker compose \
+    --env-file "$ENV_FILE" \
+    -f docker-compose.yml \
+    -f docker-compose.prod.yml \
+    -p "$COMPOSE_PROJECT" "$@"
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Build antes de derrubar o que esta no ar
+# Baixar antes de derrubar o que esta no ar
 #
-# `up --build` compila com os containers antigos ja parando: um erro de
-# compilacao deixava o site fora do ar ate alguem intervir. Compilando antes,
-# uma falha de build aborta o deploy sem tocar na versao em producao.
+# Mesma logica de antes, quando aqui se compilava: buscar tudo primeiro, para
+# que uma imagem faltando ou um registry fora do ar abortem o deploy sem tocar
+# na versao que esta servindo.
+#
+# A diferenca e que agora isto e download, nao compilacao — sem npm install,
+# sem tsc, sem Vite disputando CPU com os outros projetos do host.
 # ─────────────────────────────────────────────────────────────────────────────
 
-echo "Compilando as imagens da release $RELEASE..."
-if ! compose build; then
-  echo "Build falhou: a versao em producao segue intacta." >&2
+echo "Baixando as imagens da release $RELEASE..."
+if ! compose pull; then
+  echo "Falha ao baixar as imagens: a versao em producao segue intacta." >&2
   exit 1
 fi
 
@@ -76,7 +100,15 @@ rollback() {
   if [ -n "$PREVIOUS_RELEASE_DIR" ] && [ -d "$PREVIOUS_RELEASE_DIR" ] && [ "$PREVIOUS_RELEASE_DIR" != "$RELEASE_DIR" ]; then
     echo "Voltando para a release anterior: $PREVIOUS_RELEASE_DIR" >&2
     cd "$PREVIOUS_RELEASE_DIR"
-    if docker compose --env-file "$ENV_FILE" -p "$COMPOSE_PROJECT" up -d --build --remove-orphans; then
+    # Sem `--build`: a imagem da release anterior ja esta no disco da VPS, e
+    # e justamente ela que se quer de volta. Recompilar aqui seria lento e
+    # poderia produzir algo diferente do que estava no ar.
+    #
+    # IMAGE_TAG sobrescreve o valor do .env (que ja e o da versao que falhou).
+    if IMAGE_TAG="${PREVIOUS_IMAGE_TAG:-}" \
+       docker compose --env-file "$ENV_FILE" \
+         -f docker-compose.yml -f docker-compose.prod.yml \
+         -p "$COMPOSE_PROJECT" up -d --remove-orphans; then
       echo "Rollback concluido." >&2
     else
       echo "Rollback tambem falhou: intervencao manual necessaria." >&2
@@ -126,8 +158,15 @@ fi
 
 ln -sfn "$RELEASE_DIR" "$CURRENT_LINK"
 
-echo "Limpando imagens orfas..."
-docker image prune -f >/dev/null || true
+# Limpeza conservadora.
+#
+# `docker image prune -f` sem filtro apaga camadas penduradas de QUALQUER
+# projeto do host — e esta VPS e compartilhada com ~10 outros. O `until=168h`
+# limita a imagens com mais de uma semana, preservando as recentes de que o
+# rollback depende. Ainda e global, entao so remove o que ja estava orfao ha
+# dias, nunca algo que um vizinho acabou de construir.
+echo "Limpando camadas orfas com mais de 7 dias..."
+docker image prune -f --filter "until=168h" >/dev/null 2>&1 || true
 
 echo "Mantendo a release atual e as 4 anteriores mais recentes..."
 mkdir -p "$APP_ROOT/releases"

@@ -9,11 +9,11 @@ ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_TENANT_SLUG=$VITE_TENANT_SLUG
 ENV VITE_BASE_PATH=$VITE_BASE_PATH
 
-COPY package.json ./
+COPY package.json package-lock.json ./
 COPY turbo.json ./
 COPY apps/patient/package.json ./apps/patient/package.json
 
-RUN npm install --workspace=@marcela/patient
+RUN npm ci --workspace=@marcela/patient
 
 COPY apps/patient/ ./apps/patient/
 

@@ -1,0 +1,35 @@
+# Override de producao: usa imagem pronta do GHCR em vez de compilar.
+#
+# O `docker-compose.yml` continua servindo ao desenvolvimento local, onde
+# `build:` e o que se quer. Em producao a VPS nao compila nada — baixa a imagem
+# que o GitHub Actions ja construiu e publicou.
+#
+# Foi isto que derrubou a VPS antes: `compose build` rodava na propria maquina,
+# disputando CPU, RAM e disco com os outros projetos que dividem o host.
+#
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# IMAGE_PREFIX e IMAGE_TAG vem do .env que o workflow escreve na VPS. A tag e
+# imutavel (sha do commit + timestamp): para reverter, basta apontar o .env
+# para a tag anterior e subir de novo — a imagem antiga continua no registry.
+
+services:
+  api:
+    # `!reset` apaga a chave `build:` herdada do arquivo base. Sem isto o
+    # compose ainda aceitaria `--build` e voltaria a compilar aqui.
+    build: !reset null
+    image: ${IMAGE_PREFIX}-api:${IMAGE_TAG}
+
+  web:
+    build: !reset null
+    image: ${IMAGE_PREFIX}-web:${IMAGE_TAG}
+
+  admin:
+    build: !reset null
+    image: ${IMAGE_PREFIX}-admin:${IMAGE_TAG}
+
+  patient:
+    build: !reset null
+    image: ${IMAGE_PREFIX}-patient:${IMAGE_TAG}

@@ -22,8 +22,93 @@ env:
   SSH_OPTS: -o StrictHostKeyChecking=no -o PreferredAuthentications=password -o PubkeyAuthentication=no -o NumberOfPasswordPrompts=1 -o ConnectTimeout=20
 
 jobs:
+  # ───────────────────────────────────────────────────────────────────────────
+  # Job 0: calcular a tag uma vez
+  #
+  # Os dois jobs seguintes precisam da mesma string: o build a usa para marcar
+  # a imagem, o deploy para baixar exatamente aquela. Calculada em cada job,
+  # daria valores diferentes — o timestamp muda.
+  # ───────────────────────────────────────────────────────────────────────────
+  version:
+    name: Release version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      tag: ${{ steps.v.outputs.tag }}
+      prefix: ${{ steps.v.outputs.prefix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute version and image prefix
+        id: v
+        run: |
+          echo "tag=$(git rev-parse --short HEAD)-$(date +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
+          echo "prefix=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Job 1: compilar as imagens aqui e publicar no GHCR
+  #
+  # A VPS nao compila mais nada. Antes o deploy mandava o codigo-fonte e rodava
+  # `compose build` la, disputando CPU e disco com os ~10 projetos que dividem
+  # a maquina — foi o que a derrubou.
+  #
+  # As quatro imagens sao independentes: a matriz as compila em paralelo, cada
+  # uma no seu runner.
+  # ───────────────────────────────────────────────────────────────────────────
+  build:
+    name: Build ${{ matrix.app }}
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: true
+      matrix:
+        app: [api, web, admin, patient]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/${{ matrix.app }}/Dockerfile
+          push: true
+          platforms: linux/amd64
+          tags: |
+            ${{ needs.version.outputs.prefix }}-${{ matrix.app }}:${{ needs.version.outputs.tag }}
+            ${{ needs.version.outputs.prefix }}-${{ matrix.app }}:latest
+          build-args: |
+            VITE_API_URL=/api
+            VITE_TENANT_SLUG=marcela-duch
+          # Cache no proprio registry: a camada de dependencias so e refeita
+          # quando o package-lock muda.
+          cache-from: type=registry,ref=${{ needs.version.outputs.prefix }}-${{ matrix.app }}:buildcache
+          cache-to: type=registry,ref=${{ needs.version.outputs.prefix }}-${{ matrix.app }}:buildcache,mode=max
+
+  # ───────────────────────────────────────────────────────────────────────────
+  # Job 2: a VPS so baixa a imagem e sobe
+  # ───────────────────────────────────────────────────────────────────────────
   deploy:
     name: Deploy to VPS
+    needs: [version, build]
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -31,13 +116,17 @@ jobs:
       name: production
       url: https://www.dramarceladuch.com.br
 
+    permissions:
+      contents: read
+      packages: read
+
+    env:
+      RELEASE_VERSION: ${{ needs.version.outputs.tag }}
+      IMAGE_PREFIX: ${{ needs.version.outputs.prefix }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set release version
-        id: release
-        run: echo "version=$(git rev-parse --short HEAD)-$(date +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
 
       - name: Install sshpass
         run: sudo apt-get update && sudo apt-get install -y sshpass
@@ -56,33 +145,23 @@ jobs:
             exit 1
           fi
 
-      - name: Upload source to VPS
+      # Só os arquivos de runtime. O codigo-fonte nao vai mais: a VPS nao
+      # compila nada, entao nao precisa dele. Antes subia o monorepo inteiro
+      # a cada deploy.
+      - name: Upload runtime files to VPS
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
-          RELEASE_DIR="${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}"
+          RELEASE_DIR="${{ env.APP_ROOT }}/releases/${{ env.RELEASE_VERSION }}"
           sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
             "mkdir -p '$RELEASE_DIR'"
 
-          tar \
-            --exclude=.git \
-            --exclude=.claude \
-            --exclude=node_modules \
-            --exclude=.turbo \
-            --exclude=dist \
-            --exclude=apps/api/node_modules \
-            --exclude=apps/api/dist \
-            --exclude=apps/web/node_modules \
-            --exclude=apps/web/dist \
-            --exclude=apps/admin/node_modules \
-            --exclude=apps/admin/dist \
-            --exclude=apps/patient/node_modules \
-            --exclude=apps/patient/dist \
-            --exclude=packages/database/node_modules \
-            --exclude=packages/database/tsconfig.tsbuildinfo \
-            --exclude=apps/api/tsconfig.tsbuildinfo \
-            -czf - . | \
-            sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+          tar -czf - \
+            docker-compose.yml \
+            docker-compose.prod.yml \
+            nginx \
+            .github/scripts \
+            | sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
               "tar -xzf - -C '$RELEASE_DIR'"
 
       - name: Prepare VPS runtime
@@ -148,7 +227,7 @@ jobs:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
           sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "APP_ROOT='${{ env.APP_ROOT }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' bash -s" <<'ENDSSH'
+            "APP_ROOT='${{ env.APP_ROOT }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' IMAGE_PREFIX='${{ env.IMAGE_PREFIX }}' IMAGE_TAG='${{ env.RELEASE_VERSION }}' bash -s" <<'ENDSSH'
             set -euo pipefail
 
             ENV_FILE="$APP_ROOT/.env"
@@ -227,6 +306,10 @@ jobs:
 
             upsert_env "NODE_ENV" "production"
             upsert_env "PORT" "3001"
+            # Qual imagem do GHCR esta release usa. A tag e imutavel: para
+            # reverter, aponte IMAGE_TAG para a anterior e suba de novo.
+            upsert_env "IMAGE_PREFIX" "$IMAGE_PREFIX"
+            upsert_env "IMAGE_TAG" "$IMAGE_TAG"
             # O padrão de 100/15min é baixo para uso real: o painel carrega seis
             # endpoints por tela e a recepção fica o dia todo dentro dele.
             ensure_env "RATE_LIMIT_MAX" "1200"
@@ -252,12 +335,23 @@ jobs:
             chmod 600 "$ENV_FILE"
           ENDSSH
 
+      # O repositorio e privado, entao o GHCR exige login para baixar a imagem.
+      # O GITHUB_TOKEN do run serve e expira sozinho ao fim dele — nao fica
+      # credencial de longa duracao na VPS.
+      - name: Log in to GHCR on VPS
+        env:
+          SSHPASS: ${{ secrets.VPS_PASSWORD }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+            "docker login ghcr.io -u '${{ github.actor }}' --password-stdin"
+
       - name: Deploy on VPS
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
           sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "APP_ROOT='${{ env.APP_ROOT }}' RELEASE='${{ steps.release.outputs.version }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' bash '${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/.github/scripts/remote-deploy.sh'"
+            "APP_ROOT='${{ env.APP_ROOT }}' RELEASE='${{ env.RELEASE_VERSION }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' bash '${{ env.APP_ROOT }}/releases/${{ env.RELEASE_VERSION }}/.github/scripts/remote-deploy.sh'"
 
       - name: Configure Nginx (HTTP)
         env:
@@ -519,7 +613,7 @@ jobs:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
         run: |
           sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "APP_ROOT='${{ env.APP_ROOT }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' RELEASE='${{ steps.release.outputs.version }}' bash '${{ env.APP_ROOT }}/releases/${{ steps.release.outputs.version }}/.github/scripts/remote-health-check.sh'"
+            "APP_ROOT='${{ env.APP_ROOT }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' RELEASE='${{ env.RELEASE_VERSION }}' bash '${{ env.APP_ROOT }}/releases/${{ env.RELEASE_VERSION }}/.github/scripts/remote-health-check.sh'"
 
       # ───────────────────────────────────────────────────────────────────────
       # Verificação pelo domínio público
@@ -583,5 +677,5 @@ jobs:
 
       - name: Notify success
         run: |
-          echo "Deployment ${{ steps.release.outputs.version }} completed successfully"
+          echo "Deployment ${{ env.RELEASE_VERSION }} completed successfully"
           echo "URL: ${{ env.CANONICAL_URL }}"
