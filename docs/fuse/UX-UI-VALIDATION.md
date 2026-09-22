@@ -192,3 +192,125 @@ ausencia.
 - `UX-05` nos apps `web` e `patient`: o `patient` tem 7 `htmlFor` para 7
   inputs e o `web` tem 2 inputs com 20 `aria-label`, mas nenhum foi auditado
   caso a caso como o admin.
+
+---
+
+## F5 e F7 — Consistencia e divida estrutural · `PARTIALLY_VALIDATED`
+
+Data: 2026-09-22. Achados tratados: `UX-08`, `UX-17`, `UX-18` — e tres que a
+medicao mostrou nao valerem a mudanca proposta.
+
+### `UX-08` — Tailwind morto no painel · `DONE`
+
+O `admin` tinha `tailwind.config.ts` com 118 linhas (cores, breakpoints,
+animacoes, plugin `tailwindcss-animate`) e **nenhuma diretiva `@tailwind`** no
+CSS. Confirmado no CSS compilado: `.flex`, `.gap-2`, `.text-sm` e `.p-4` nao
+existem — nenhuma classe utilitaria era gerada.
+
+Das 36 ocorrencias que o grep apontava como "classe utilitaria" no JSX, **35
+sao classes proprias do projeto** (`form-grid`, `week-grid`, `duration-grid`,
+`hours-grid`). A unica Tailwind de verdade era `inline-flex items-center gap-1`
+no telefone da recepcao, e **nao estilizava nada**: o icone ficava desalinhado
+do numero. Virou `.meta-com-icone`.
+
+Removidos: `tailwind.config.ts`, `tailwindcss`, `tailwindcss-animate` e
+`components.json` — este era config do shadcn/ui, que o painel nao usa (0
+imports, nenhum `components/ui/`), apontando para **dois arquivos
+inexistentes**: o config que apaguei e um `src/index.css` que nunca existiu.
+
+**O que ficou, e por que:** o `postcss.config.js`, sem o plugin do Tailwind.
+Ele tambem carrega o `autoprefixer`, que tem efeito real. Conferido depois: os
+prefixos `-webkit-` seguem no CSS publicado.
+
+**Efeito colateral medido:** o build do painel caiu de **78s para 6,4s**. O
+Tailwind varria todo o `src/` para gerar CSS que ninguem usava.
+
+### `UX-17` — 404 em ingles · `DONE`
+
+Estava `"Oops! Page not found"` / `"Return to Home"`, com `bg-gray-100` e
+`text-blue-500` — cinza e azul num site todo creme e bronze. Quem chega ali e
+uma possivel paciente que errou o link.
+
+Agora em pt-BR, com a paleta da clinica, alvo de toque de 44px e dois caminhos:
+inicio e `/#contato` — ancora conferida em `Footer.tsx:80`, para o botao nao
+levar a lugar nenhum.
+
+Verificado no bundle publicado: os tres textos novos presentes, e
+`"Page not found"`, `"Return to Home"` e `bg-gray-100` ausentes.
+
+### `UX-18` — duplicacao entre apps · `DONE`, com correcao da auditoria
+
+A auditoria afirmava duplicacao literal entre apps. Medido por hash de
+conteudo em todos os `.ts`, `.tsx` e `.css` dos tres apps:
+
+| arquivos byte-identicos entre apps | 2 |
+|---|---|
+| `vite-env.d.ts` (39 bytes, nos tres) | boilerplate do Vite, nao duplicacao |
+| `lib/manifesto.ts` (2,7 KB, em `admin` e `patient`) | **duplicacao real, unica** |
+
+Um arquivo nao justifica `packages/ui`, que criaria justamente o acoplamento
+que o `CLAUDE.md` evita de proposito. O que foi feito: **corrigir a redacao do
+`CLAUDE.md`**, que dizia "nao compartilham codigo" — certo quanto a
+importacao, incompleto quanto a conteudo. Agora diz silo *por importacao*,
+nomeia o arquivo repetido e avisa para mexer nos dois.
+
+Junto, o `CLAUDE.md` ganhou duas convencoes que faltavam e que custaram tempo
+nesta sessao: que cada app estiliza de um jeito (e que o painel **nao** tem
+Tailwind), e que contraste no painel se mede, com os tokens de texto separados
+dos de decoracao.
+
+### Tres achados que a medicao mostrou nao valerem a mudanca
+
+Registrados porque "nao fiz" precisa de razao tanto quanto "fiz".
+
+**`UX-13` e parte do `UX-18` — remover `react-hook-form` e `zod` do `web`.**
+Eles tem **zero imports** no codigo do site, o que a auditoria apontou
+corretamente. Mas medi o efeito antes de remover:
+
+| verificacao | resultado |
+|---|---|
+| bundle do `web` | 457 KB |
+| `react-hook-form` dentro do bundle | **ausente** |
+| `useForm`, `zodResolver`, `ZodError` | **ausentes** |
+| componentes shadcn: total vs usados fora de `ui/` | **48 vs 7** |
+| os 41 nao usados, no bundle | ausentes |
+
+**O tree-shaking ja elimina tudo.** O custo em runtime e zero — nada disso
+chega ao navegador da paciente. Remover 41 arquivos e mudanca grande, com risco
+de quebrar import indireto (varios se importam entre si), para ganho nulo no
+que se entrega. Fica como divida de **manutencao** (o `npm ci` baixa o que nao
+se usa, e arquivo morto confunde quem le), nao de desempenho.
+
+**`UX-11` — empty state no agendamento.** O formulario **ja tem** fallback com
+8 procedimentos fixos quando a API nao responde, o que e melhor que um empty
+state: a paciente sempre consegue pedir avaliacao. E a rota responde 200 com o
+catalogo real, conferido em producao
+(`/api/procedures?tenantSlug=marcela-duch`).
+
+**`UX-19` — usar o `Skeleton`.** Mesmo motivo: o unico carregamento visivel do
+site e o do select de procedimentos, e ele nunca fica vazio por causa do
+fallback.
+
+### Regressao
+
+- typecheck do `web` e do `admin`: limpo.
+- build dos dois: passa.
+- **build Docker do `admin`**: passa. Era o teste que importava — remover
+  dependencia quebra no `npm ci` do container, nao no build local (registro de
+  08/09/2026 no `CLAUDE.md`).
+- os 5 tokens da F4 presentes no CSS **dentro da imagem** de producao.
+- `package-lock.json` atualizado com `--package-lock-only`.
+- 147 testes: passam.
+
+### O que fica aberto na F5
+
+Os itens que exigem **medicao em navegador**, indisponivel neste ambiente:
+
+- `UX-04`: os 52 valores fixos de largura. Sao candidatos, nao defeitos
+  confirmados — o registro de 07/09/2026 no `CLAUDE.md` e a prova de que
+  layout se verifica medindo (`.app-nav` tinha 2640px numa janela de 720px, e
+  nenhum teste de estrutura pegou).
+- `UX-14`: consolidar os 10 breakpoints.
+- `UX-16`: `safe-area-inset` no painel.
+- `UX-07`: sub-abas na URL.
+- `UX-12`: padrao unico de mensagem de sucesso.

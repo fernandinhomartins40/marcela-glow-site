@@ -5,7 +5,8 @@ Cada fase e aprovada e executada em separado, passando por
 `fuse-quality-gate`.
 
 Data: 2026-09-22. Estado: **F1, F2.1, F2.2 e F3 `VALIDATED`; F2
-`VALIDATED` (o site esta no ar); F4 e F6 `PARTIALLY_VALIDATED`; F5 e F7 em andamento**.
+`VALIDATED` (o site esta no ar); F4, F5, F6 e F7 `PARTIALLY_VALIDATED` — o que faltou em cada uma
+exige medicao em navegador, indisponivel neste ambiente**.
 
 O site voltou ao ar em 22/09: <https://www.dramarceladuch.com.br> serve a
 aplicacao, com certificado proprio. Ver `VPS-VALIDATION.md` e
@@ -189,7 +190,7 @@ mostrando recuperacao.
 
 ---
 
-## F5 · Consistencia de interface
+## F5 · Consistencia de interface · `PARTIALLY_VALIDATED`
 
 **Fecha:** `UX-04` `HIGH`, `UX-07` `HIGH`, `UX-08`, `UX-11`, `UX-12`,
 `UX-14`, `UX-16` `MEDIUM`, `UX-17`, `UX-19` `REFINEMENT`.
@@ -238,7 +239,7 @@ nao e opcional.
 
 ---
 
-## F7 · Divida estrutural
+## F7 · Divida estrutural · `PARTIALLY_VALIDATED`
 
 **Fecha:** `UX-13`, `UX-15` `MEDIUM`, `UX-18` `REFINEMENT`.
 

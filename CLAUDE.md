@@ -98,8 +98,28 @@ Grafo: 1784 nos, 3157 arestas (commit `c0c48cd2`).
 - O slug da clinica (`'marcela-duch'`) esta hardcoded em 5 arquivos:
   `apps/web/src/lib/api.ts`, `apps/admin/src/lib/ui.tsx`,
   `apps/patient/src/lib/api.ts`, `apps/api/src/routes/patient.ts` e
-  `packages/database/src/seed.ts`. Os apps sao silos independentes (nao
-  compartilham codigo), entao so vale unificar quando houver um segundo tenant.
+  `packages/database/src/seed.ts`. So vale unificar quando houver um segundo
+  tenant.
+
+  Os apps sao silos **por importacao**: nenhum importa de outro, e isso e
+  deliberado. Mas silo por importacao nao e silo por conteudo — medido em
+  22/09/2026, ha **um** arquivo byte-identico entre apps
+  (`lib/manifesto.ts`, 2,7 KB, em `admin` e `patient`); o `vite-env.d.ts`
+  repetido nos tres e boilerplate do Vite, nao duplicacao. Ao mexer no
+  manifesto, mexer nos dois.
+
+- **Cada app tem o seu proprio jeito de estilizar, e isso e proposital.** O
+  `web` e o `patient` usam Tailwind com tokens HSL; o `admin` usa CSS proprio
+  em `src/styles.css`, com tokens hex. O painel **nao tem Tailwind** desde
+  22/09/2026: tinha a configuracao, mas nenhuma diretiva `@tailwind`, entao
+  nenhuma classe utilitaria era gerada e a unica que o JSX usava nao
+  estilizava nada. Nao escrever classe utilitaria no `admin`.
+
+- **Contraste de cor se mede, nao se escolhe a olho.** No `admin`, `--bronze`
+  e `--border` sao cor de decoracao (3,17:1 e 1,41:1 — reprovam para texto);
+  para o que se le existem `--bronze-text`, `--bronze-text-deep` (para fundo
+  `--cream-deep`) e `--border-strong`. Os comentarios em `styles.css` trazem os
+  numeros medidos.
 
 ## Auditoria
 
