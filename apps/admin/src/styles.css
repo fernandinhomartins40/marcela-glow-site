@@ -1289,6 +1289,12 @@ body.page-lock { overflow: hidden; }
 .page-view-bar p { font-size: 13.5px; }
 .page-back { min-height: 38px; }
 .page-view-footer button { min-height: 40px; padding: 9px 18px; font-size: 13.5px; }
+/* Com `onSubmit`, o Modal envolve corpo e rodape num <form>, e o form passa a
+   ser o item flex de `.drawer.page-view`. Sem repetir a coluna aqui, o
+   `margin-top: auto` do rodape mediria contra o form em vez da tela e o rodape
+   subiria para debaixo do ultimo campo. */
+.page-view-form { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+
 .page-view-footer {
   position: sticky; bottom: 0; z-index: 5; margin-top: auto;
   background: var(--marble); border-top: 1px solid var(--border);

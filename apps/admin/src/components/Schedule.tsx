@@ -534,6 +534,7 @@ export function AppointmentDrawer({
             {showCancel && (
               <div className="cancel-box">
                 <input
+                  aria-label="Motivo do cancelamento (opcional)"
                   placeholder="Motivo (opcional)"
                   value={cancelReason}
                   onChange={(e) => setCancelReason(e.target.value)}

@@ -56,6 +56,7 @@ export function Modal({
   children,
   footer,
   wide,
+  onSubmit,
 }: {
   title: string
   subtitle?: string
@@ -63,6 +64,16 @@ export function Modal({
   children: React.ReactNode
   footer?: React.ReactNode
   wide?: boolean
+  /**
+   * Passando esta funcao, o corpo vira `<form>` e **Enter num campo envia** —
+   * o que qualquer pessoa espera de um formulario, e que antes exigia alcancar
+   * o botao com o mouse.
+   *
+   * E opcional porque os 23 rodapes que ja existem tem botao com `onClick`
+   * proprio, nao `type="submit"`: envolver todos de uma vez mudaria o
+   * comportamento de tela que ninguem revisou. Quem migra, migra com o botao.
+   */
+  onSubmit?: () => void
 }) {
   // Esc volta — atalho esperado ao sair de uma página aberta por cima
   React.useEffect(() => {
@@ -121,14 +132,35 @@ export function Modal({
           {subtitle && <p>{subtitle}</p>}
         </div>
       </header>
-      <div className="drawer-body page-view-body">{children}</div>
-      {/* O invólucro interno alinha as ações à mesma coluna do formulário: a
-          barra atravessa a tela, mas os botões terminam onde o último campo
-          termina. */}
-      {footer && (
-        <div className="drawer-footer page-view-footer">
-          <div className="page-view-actions">{footer}</div>
-        </div>
+      {/* Com `onSubmit`, corpo e rodapé ficam dentro de um <form> — é o que
+          liga o Enter ao botão de enviar. Sem ele, a estrutura é a de antes. */}
+      {onSubmit ? (
+        <form
+          className="page-view-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            onSubmit()
+          }}
+        >
+          <div className="drawer-body page-view-body">{children}</div>
+          {footer && (
+            <div className="drawer-footer page-view-footer">
+              <div className="page-view-actions">{footer}</div>
+            </div>
+          )}
+        </form>
+      ) : (
+        <>
+          <div className="drawer-body page-view-body">{children}</div>
+          {/* O invólucro interno alinha as ações à mesma coluna do formulário: a
+              barra atravessa a tela, mas os botões terminam onde o último campo
+              termina. */}
+          {footer && (
+            <div className="drawer-footer page-view-footer">
+              <div className="page-view-actions">{footer}</div>
+            </div>
+          )}
+        </>
       )}
     </div>,
     document.body,
@@ -171,14 +203,27 @@ export function SubmitButton({
   children,
   disabled,
   onClick,
+  type = 'button',
 }: {
   pending?: boolean
   children: React.ReactNode
   disabled?: boolean
   onClick?: () => void
+  /**
+   * `button` por padrao, e nao `submit`, de proposito.
+   *
+   * O HTML faz de todo botao sem `type` um `submit`. Dentro do `<form>` do
+   * Modal isso dispararia o `onClick` **e** o `onSubmit`, e a mutacao rodaria
+   * duas vezes — uma paciente cadastrada em duplicidade, ou dois lancamentos
+   * no caixa.
+   *
+   * Num Modal com `onSubmit`, use `type="submit"` e deixe o envio para o
+   * formulario, sem `onClick`.
+   */
+  type?: 'button' | 'submit'
 }) {
   return (
-    <button className="primary" onClick={onClick} disabled={pending || disabled}>
+    <button className="primary" type={type} onClick={onClick} disabled={pending || disabled}>
       {pending && <Loader2 size={14} className="spin" />}
       {children}
     </button>

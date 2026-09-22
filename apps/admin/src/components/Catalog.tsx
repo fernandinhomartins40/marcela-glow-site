@@ -176,10 +176,18 @@ function ProcedureForm({
       title={procedure ? 'Editar procedimento' : 'Novo procedimento'}
       subtitle="Aparece no site e define a duração na agenda"
       onClose={onClose}
+      /* Enter em qualquer campo cadastra, em vez de exigir o mouse no botao.
+         A validacao segue a mesma: sem `valid` a mutacao nao dispara nem pelo
+         Enter. */
+      onSubmit={() => { if (valid && !save.isPending) save.mutate() }}
       footer={
         <>
-          <button onClick={onClose}>Cancelar</button>
-          <SubmitButton pending={save.isPending} disabled={!valid} onClick={() => save.mutate()}>
+          {/* `type="button"` explicito: dentro do <form> um botao sem type
+              envia o formulario, e "Cancelar" cadastraria. */}
+          <button type="button" onClick={onClose}>Cancelar</button>
+          {/* Sem `onClick`: quem envia e o form, senao a mutacao rodaria duas
+              vezes e a paciente entraria em duplicidade. */}
+          <SubmitButton type="submit" pending={save.isPending} disabled={!valid}>
             {procedure ? 'Salvar' : 'Cadastrar'}
           </SubmitButton>
         </>
@@ -532,10 +540,11 @@ function LeadForm({ lead, onClose, onSaved }: { lead: Lead | null; onClose: () =
     <Modal
       title={lead ? 'Editar lead' : 'Novo lead'}
       onClose={onClose}
+      onSubmit={() => { if (form.name.trim().length >= 2 && !save.isPending) save.mutate() }}
       footer={
         <>
-          <button onClick={onClose}>Cancelar</button>
-          <SubmitButton pending={save.isPending} disabled={form.name.trim().length < 2} onClick={() => save.mutate()}>
+          <button type="button" onClick={onClose}>Cancelar</button>
+          <SubmitButton type="submit" pending={save.isPending} disabled={form.name.trim().length < 2}>
             {lead ? 'Salvar' : 'Cadastrar'}
           </SubmitButton>
         </>
@@ -732,10 +741,11 @@ function ContentForm({
       subtitle={content ? `/${content.slug}` : undefined}
       onClose={onClose}
       wide
+      onSubmit={() => { if (valid && !save.isPending) save.mutate() }}
       footer={
         <>
-          <button onClick={onClose}>Cancelar</button>
-          <SubmitButton pending={save.isPending} disabled={!valid} onClick={() => save.mutate()}>
+          <button type="button" onClick={onClose}>Cancelar</button>
+          <SubmitButton type="submit" pending={save.isPending} disabled={!valid}>
             Salvar
           </SubmitButton>
         </>

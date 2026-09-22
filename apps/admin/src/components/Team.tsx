@@ -270,7 +270,12 @@ function RoleSelect({
 }) {
   return (
     <>
-      <select value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled}>
+      <select
+        aria-label="Nivel de acesso"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+      >
         {Object.keys(ROLE_LABELS).map((role) => (
           <option key={role} value={role}>
             {ROLE_LABELS[role]}
@@ -416,7 +421,12 @@ function InviteForm({ catalog, onClose }: { catalog?: RoleCatalog; onClose: () =
             Envie este link para <strong>{email}</strong>. Ele vale por 7 dias e
             só pode ser usado uma vez.
           </p>
-          <input readOnly value={`${window.location.origin}/convite/${sent}`} onFocus={(e) => e.target.select()} />
+          <input
+            aria-label="Link do convite, para copiar"
+            readOnly
+            value={`${window.location.origin}/convite/${sent}`}
+            onFocus={(e) => e.target.select()}
+          />
           <p className="hint">
             <Mail size={13} aria-hidden="true" /> Em produção o link é enviado
             por e-mail automaticamente.

@@ -117,7 +117,11 @@ export function EnviarAviso({
             if (texto.trim()) mandar(texto.trim())
           }}
         >
+          {/* O placeholder desaparece ao digitar e nao e lido como rotulo por
+              leitor de tela; aqui o rotulo visual seria redundante ao lado do
+              botao, entao vale o aria-label. */}
           <input
+            aria-label="Escreva o aviso para a equipe"
             value={texto}
             onChange={(e) => setTexto(e.target.value)}
             placeholder="Ex.: a paciente quer remarcar para o dia 12."
