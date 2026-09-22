@@ -1,5 +1,5 @@
 import React from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AlertTriangle,
   Archive,
@@ -119,12 +119,23 @@ export function PatientDetail({ id, onClose, initialTab = 'timeline' }: { id: st
     onSuccess: async () => {
       setReply('')
       await client.invalidateQueries({ queryKey: ['patient', id] })
+      await client.invalidateQueries({ queryKey: ['patient-messages', id] })
     },
   })
 
   const query = useQuery({
     queryKey: ['patient', id],
     queryFn: async () => (await api.get(`/admin/patients/${id}`)).data,
+  })
+  const messageHistory = useInfiniteQuery<{
+    messages: Array<{ id: string; sender: string; body: string; createdAt: string }>
+    nextCursor: string | null
+  }>({
+    queryKey: ['patient-messages', id],
+    enabled: tab === 'messages',
+    initialPageParam: undefined as string | undefined,
+    queryFn: async ({ pageParam }) => (await api.get(`/admin/patients/${id}/messages`, { params: { cursor: pageParam } })).data,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   })
 
   const refresh = () => client.invalidateQueries({ queryKey: ['patient', id] })
@@ -362,11 +373,15 @@ export function PatientDetail({ id, onClose, initialTab = 'timeline' }: { id: st
         {tab === 'messages' && (
           <section aria-label="Conversa com a paciente">
             <p className="form-section-title">Conversa no portal</p>
-            {!p.messages?.length ? (
+            {messageHistory.isLoading ? (
+              <p className="hint">Carregando conversa...</p>
+            ) : messageHistory.isError ? (
+              <p className="error" role="alert">{errorMessage(messageHistory.error)}</p>
+            ) : !messageHistory.data?.pages[0]?.messages.length ? (
               <p className="hint">Ainda não há mensagens nesta conversa.</p>
             ) : (
               <div className="timeline" aria-live="polite">
-                {[...p.messages].reverse().map((message: { id: string; sender: string; body: string; createdAt: string }) => (
+                {messageHistory.data.pages.flatMap((page) => page.messages).reverse().map((message) => (
                   <article className="timeline-item" key={message.id}>
                     <div className="timeline-head">
                       <strong>{message.sender === 'PATIENT' ? 'Paciente' : 'Equipe'}</strong>
@@ -376,6 +391,11 @@ export function PatientDetail({ id, onClose, initialTab = 'timeline' }: { id: st
                   </article>
                 ))}
               </div>
+            )}
+            {messageHistory.hasNextPage && (
+              <button className="secondary" type="button" disabled={messageHistory.isFetchingNextPage} onClick={() => messageHistory.fetchNextPage()}>
+                {messageHistory.isFetchingNextPage ? 'Carregando...' : 'Ver mensagens anteriores'}
+              </button>
             )}
             {pode('PATIENT_WRITE') && (
               <form

@@ -12,6 +12,7 @@ import { rolePermissions } from '../lib/permissions'
 import { dashboardVisibility } from '../lib/dashboard-visibility'
 import { publicBaseUrl, sendMail } from '../lib/mailer'
 import { messageInputSchema } from '../lib/message-input'
+import { listMessageHistory, messageHistoryQuerySchema } from '../lib/message-history'
 
 const router = Router()
 const staffOnly = [authenticate, requireStaff]
@@ -570,6 +571,21 @@ router.get('/patients/:id', requirePermission('PATIENT_READ', 'RECORD_READ'), as
     if (!patient) throw new NotFoundError('Paciente')
     await audit(req, 'READ', 'patient', patient.id, { includesMedicalRecord: true })
     res.json(patient)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.get('/patients/:id/messages', requirePermission('PATIENT_READ', 'RECORD_READ'), async (req, res, next) => {
+  try {
+    const tenantId = req.user!.tenantId
+    const patientId = String(req.params.id)
+    const patient = await prisma.patient.findFirst({ where: { id: patientId, tenantId }, select: { id: true } })
+    if (!patient) throw new NotFoundError('Paciente')
+    const { cursor, limit } = messageHistoryQuerySchema.parse(req.query)
+    const history = await listMessageHistory(tenantId, patientId, cursor, limit)
+    await audit(req, 'READ', 'message', patientId)
+    res.json(history)
   } catch (err) {
     next(err)
   }

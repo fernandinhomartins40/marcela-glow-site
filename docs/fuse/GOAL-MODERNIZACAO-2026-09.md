@@ -151,4 +151,9 @@ Validar visualmente em navegador os breakpoints e estados reais do site, CRM e p
 ## Continuação — mensagens e preparação da prévia em produção
 
 - A API compartilha agora a mesma validação entre mensagem da paciente e resposta da equipe: trim, conteúdo obrigatório e máximo de 4.000 caracteres. O portal limita a digitação na intenção de mensagem e envia texto aparado. 71 testes da API e builds da API/portal passaram.
-- O usuário pediu commit/push para `main` para ver a diferença deployada. A publicação é uma prévia funcional parcial: os fundos/monogramas aprovados entram, mas retratos tratados seguem candidatos e nenhuma cobertura visual integral foi alegada. A próxima fatia de conversa é histórico paginado; dashboard e ficha ainda limitam respectivamente 10 e 20 mensagens.
+- O usuário pediu commit/push para `main` para ver a diferença deployada. A publicação é uma prévia funcional parcial: os fundos/monogramas aprovados entram, mas retratos tratados seguem candidatos e nenhuma cobertura visual integral foi alegada. O push `b2d27a0` passou pelos builds do CI, porém o deploy parou na verificação de acesso SSH à VPS; não há confirmação de publicação.
+
+## Continuação — histórico completo da conversa
+
+- A paciente e a equipe agora podem carregar páginas anteriores da conversa, sem transferir todo o histórico no dashboard ou na ficha. O cursor é conferido no mesmo tenant e paciente antes da consulta; a rota da equipe preserva a permissão de leitura e registra auditoria sem conteúdo clínico.
+- O envio invalida o histórico visível em cada interface. Builds da API, CRM e portal, 73 testes da API e checagem de encoding passaram. Ainda falta teste ponta a ponta autenticado em banco, avaliação de índice composto para volume e validação visual.

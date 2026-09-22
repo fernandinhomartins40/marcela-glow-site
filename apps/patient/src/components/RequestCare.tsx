@@ -44,6 +44,7 @@ export function RequestCare({ procedures, initialIntent = 'appointment' }: { pro
       setProcedureId('')
       setSlot(null)
       client.invalidateQueries({ queryKey: ['patient-dashboard'] })
+      client.invalidateQueries({ queryKey: ['patient-messages'] })
       client.invalidateQueries({ queryKey: ['availability'] })
     },
   })

@@ -15,6 +15,7 @@ import { presignDownload, storageConfigured } from '../lib/storage'
 import { checkSlotAvailable, resolveEndsAt } from '../lib/scheduling'
 import { publicBaseUrl, sendMail } from '../lib/mailer'
 import { messageInputSchema } from '../lib/message-input'
+import { listMessageHistory, messageHistoryQuerySchema } from '../lib/message-history'
 
 const router = Router()
 const TENANT_SLUG_DEFAULT = 'marcela-duch'
@@ -485,6 +486,15 @@ router.get('/appointments', async (req, res, next) => {
       orderBy: { createdAt: 'desc' },
     })
     res.json(appointments)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.get('/messages', async (req, res, next) => {
+  try {
+    const { cursor, limit } = messageHistoryQuerySchema.parse(req.query)
+    res.json(await listMessageHistory(req.user!.tenantId, req.user!.userId, cursor, limit))
   } catch (err) {
     next(err)
   }
