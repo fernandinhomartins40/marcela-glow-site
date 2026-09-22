@@ -37,7 +37,15 @@ services:
       retries: 5
 
   minio:
-    image: minio/minio:latest
+    # Quay, nao Docker Hub: a MinIO retirou minio/minio e minio/mc de la, e o
+    # Hub responde "pull access denied ... may require 'docker login'" tanto
+    # para repositorio sem permissao quanto para repositorio inexistente. A
+    # mensagem fez parecer falta de login; nenhum login resolveria.
+    #
+    # Tag de release em vez de :latest — o deploy so falhou quando a imagem
+    # sumiu debaixo dele, e com :latest a versao que sobe nao e a que foi
+    # testada. Este digest e o mesmo que :latest servia em 22/09/2026.
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
     container_name: marcela_minio
     restart: unless-stopped
     mem_limit: 256m
@@ -56,7 +64,8 @@ services:
       - "9001"
 
   minio-init:
-    image: minio/mc:latest
+    # Mesmo motivo do servico minio acima.
+    image: quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z
     container_name: marcela_minio_init
     # Tarefa de inicializacao: roda o mc uma vez e sai.
     mem_limit: 64m

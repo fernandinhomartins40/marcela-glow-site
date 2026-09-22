@@ -87,11 +87,12 @@ inteira do repositorio.
 
 ### Limitacoes desta validacao
 
-- **Testado com Postgres apenas.** A imagem `minio/minio:latest` exige
-  autenticacao no registry e nao pode ser baixada nesta maquina; `minio` e
-  `minio-init` tiveram o limite verificado na configuracao, **nao em
-  execucao**. A API e os tres fronts exigem build completo e tambem nao foram
-  exercitados sob limite.
+- **Testado com Postgres apenas.** `minio` e `minio-init` nao baixavam nesta
+  maquina e tiveram o limite verificado so na configuracao. **Corrigido na
+  F2.1**, que achou a causa real (as imagens sairam do Docker Hub, nao era
+  falta de login) e exercitou os dois em execucao. A API e os tres fronts
+  exigem build completo e tambem nao foram exercitados sob limite aqui — a API
+  foi coberta depois, na F2.
 - **Carga sintetica, nao de producao.** 100 mil linhas em 200 tabelas nao
   reproduzem o uso real da clinica.
 - **Ambiente local, nao a VPS.** O host de producao tem 4 vCPU contra 8 locais.
@@ -103,9 +104,14 @@ inteira do repositorio.
 
 ### Pendencia aberta por esta fase
 
-`minio/minio:latest` nao baixa sem `docker login`. Se isso valer tambem para a
-VPS, o deploy falha ao subir o MinIO. Fora do escopo da F1 — registrado para a
-F2, que trata do deploy.
+`minio/minio:latest` nao baixa nesta maquina. Se isso valer tambem para a VPS,
+o deploy falha ao subir o MinIO. Fora do escopo da F1 — registrado para a F2,
+que trata do deploy.
+
+> **Desfecho (F2.1):** valeu para a VPS, e o deploy falhou exatamente aqui. A
+> causa registrada acima — "exige `docker login`" — estava **errada**: era a
+> leitura literal da mensagem do Docker, e nenhum login resolveria. Ver a
+> secao da F2.1.
 
 ### Resultado
 
@@ -245,11 +251,130 @@ deploy e pico de recursos no host durante a operacao.
 - Nao ha comparacao de tamanho de imagem antes/depois.
 - O rollback foi corrigido por leitura e teste de precedencia do compose,
   **nao exercitado de ponta a ponta**.
-- `minio/minio:latest` segue exigindo `docker login` nesta maquina; se valer
-  para a VPS, o deploy falha ao subir o MinIO. Continua pendente.
+- `minio/minio:latest` nao baixa nesta maquina; se valer para a VPS, o deploy
+  falha ao subir o MinIO. Continua pendente. **Foi o que aconteceu** — tratado
+  na F2.1 abaixo.
 
 ### Resultado
 
 **`PARTIALLY_VALIDATED`.** O que podia ser verificado localmente foi, incluindo
 o caminho critico (migrations, seed, Prisma e health com a imagem enxuta). O
 fluxo de registry depende do GitHub Actions voltar a executar.
+
+---
+
+## F2.1 — MinIO fora do Docker Hub · `VALIDATED`
+
+Data: 2026-09-22. Ambiente: **a propria VPS** (72.60.10.108), que e onde o
+defeito aparecia.
+
+### O que aconteceu
+
+Com o faturamento do GitHub Actions resolvido, o deploy do commit `93311ed`
+rodou de ponta a ponta e parou no `compose pull`:
+
+```
+Image ghcr.io/...-web:93311ed-...      Pulling
+Image minio/minio:latest               Error pull access denied for minio/minio,
+                                       repository does not exist or may require 'docker login'
+Falha ao baixar as imagens: a versao em producao segue intacta.
+```
+
+As quatro imagens do GHCR autenticaram e comecaram a baixar. O pull abortou por
+causa de uma imagem de terceiro.
+
+**O comportamento de seguranca funcionou como projetado:** o `compose pull`
+vem antes do `compose up` justamente para que uma imagem faltando aborte o
+deploy sem tocar no que esta servindo. A mensagem final confirma.
+
+### Causa: nao era falta de login
+
+A F1 registrou esta pendencia como "exige `docker login`". Era a leitura
+literal da mensagem do Docker, e estava **errada**. Medido na VPS:
+
+| verificacao | resultado |
+|---|---|
+| `docker pull postgres:16-alpine` | **baixou** (mesmo Hub, mesma maquina, mesmo momento) |
+| `docker pull minio/minio:latest` | pull access denied |
+| `hub.docker.com/v2/repositories/minio/minio/` | `{"message":"object not found"}` |
+| `hub.docker.com/v2/repositories/minio/mc/` | `{"message":"object not found"}` |
+| manifesto de `latest` no registry do Hub | HTTP 400 |
+
+Postgres baixar no mesmo instante elimina rate limit e elimina rede. A API do
+Hub responde `object not found`: **os repositorios `minio/minio` e `minio/mc`
+nao existem mais la**. A MinIO os retirou do Docker Hub.
+
+O Docker Hub responde a mesma frase — *"repository does not exist or may
+require 'docker login'"* — para repositorio inexistente e para repositorio sem
+permissao. A frase oferece as duas hipoteses e a F1 registrou so a segunda,
+sem testar. Nenhum `docker login` teria resolvido.
+
+### Correcao
+
+| servico | antes | depois |
+|---|---|---|
+| `minio` | `minio/minio:latest` | `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z` |
+| `minio-init` | `minio/mc:latest` | `quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z` |
+
+Quay e o registry que a propria MinIO publica hoje; responde sem autenticacao.
+
+**Por que tag de release e nao `:latest`.** `latest` e mutavel: a versao que
+sobe em producao nao e necessariamente a que foi testada, e foi a imagem
+mudando debaixo do deploy que produziu esta falha. Os digests foram conferidos
+— as tags fixas apontam para exatamente o mesmo conteudo que `latest` servia
+em 22/09/2026, entao fixar **nao muda a versao**, so congela:
+
+```
+quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z  sha256:14cea493...8936e
+quay.io/minio/minio:latest                        sha256:14cea493...8936e
+quay.io/minio/mc:RELEASE.2025-08-13T08-35-41Z     sha256:a7fe349e...11727
+quay.io/minio/mc:latest                           sha256:a7fe349e...11727
+```
+
+Versoes reais, lidas dos binarios: MinIO `RELEASE.2025-09-07T16-13-09Z`
+(go1.24.6), mc `RELEASE.2025-08-13T08-35-41Z`.
+
+### Verificado em execucao, nao so na configuracao
+
+Os dois servicos foram exercitados na VPS sob os limites da F1, com os mesmos
+comandos do `minio-init`:
+
+| verificacao | resultado |
+|---|---|
+| `minio` sobe e se mantem | `status=running`, `OOMKilled=false`, `restarts=0` |
+| `mc alias set` | `Added 'local' successfully` |
+| `mc mb local/marcela-files` | `Bucket created successfully` |
+| `mc anonymous set download .../public` | aplicada; leitura confirma `download` |
+| segunda execucao (todo deploy repete) | idempotente, sem erro |
+
+Consumo sob o teto de 256M da F1: **64,88 MiB (25,3%)** ao subir, **71,32 MiB
+(27,9%)** apos as operacoes do `mc`. Sem OOM.
+
+Isto fecha uma limitacao declarada na F1: `minio` e `minio-init` tinham o
+limite verificado **so na configuracao**. Agora foi em execucao.
+
+### Regressao
+
+- `docker compose config --quiet`: valido.
+- `docker compose -f base -f prod config`: as duas imagens resolvem para o quay.
+- Nenhuma outra `image: ...:latest` restou nos composes.
+- `npm run check:encoding`: passou.
+- Ambiente de teste desmontado; nenhum container, volume ou imagem de terceiros
+  foi tocado.
+
+### Limitacoes
+
+- O deploy completo pelo workflow **ainda nao rodou** com esta correcao. O que
+  esta provado e que as imagens baixam e funcionam na VPS; o `compose pull` do
+  deploy real segue `NOT_MEASURED` ate o proximo push.
+- As imagens do GHCR autenticaram no deploy que falhou, mas nenhuma terminou de
+  baixar — o `compose pull` completo continua por confirmar.
+
+### Licao
+
+**Mensagem de erro que oferece duas hipoteses nao e diagnostico.** O Docker
+dizia "nao existe **ou** precisa de login"; registrei a segunda e a carreguei
+por duas fases. O teste que desfez o engano levou segundos: baixar outra imagem
+do mesmo registry na mesma maquina. Quando a mensagem lista causas
+alternativas, a que elimina uma delas e barata — e obrigatoria antes de
+registrar a outra como pendencia.

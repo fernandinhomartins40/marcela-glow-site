@@ -4,8 +4,9 @@ Consolida `VPS-AUDIT.md` (13 achados) e `UX-UI-AUDIT.md` (19 achados).
 Cada fase e aprovada e executada em separado, passando por
 `fuse-quality-gate`.
 
-Data: 2026-09-21. Estado: **F1 `VALIDATED`; F2 `PARTIALLY_VALIDATED`
-(bloqueada por faturamento do GitHub Actions); F3-F7 aguardando aprovacao**.
+Data: 2026-09-22. Estado: **F1 `VALIDATED`; F2 `PARTIALLY_VALIDATED`
+(faturamento resolvido; o deploy rodou e parou numa imagem de terceiro);
+F2.1 `VALIDATED`; F3-F7 aguardando aprovacao**.
 
 ## Ordem e por que ela e esta
 
@@ -59,9 +60,12 @@ container foi morto e que nenhum encosta no teto.
 ## F2 · Mover o build para o GitHub Actions · `PARTIALLY_VALIDATED`
 
 **Fecha:** `VPS-01` `BLOCKER`, `VPS-04` `HIGH`, `VPS-07` `MEDIUM`,
-`VPS-11` `MEDIUM`. Implementada em 2026-09-21 e verificada localmente; o
-fluxo de registry depende do GitHub Actions, **bloqueado por faturamento**.
-Ver `VPS-VALIDATION.md`.
+`VPS-11` `MEDIUM`. Implementada em 2026-09-21 e verificada localmente.
+
+O faturamento foi resolvido e o deploy rodou em 22/09: as quatro imagens do
+GHCR autenticaram e o `pull` abortou numa imagem de **terceiro**
+(`minio/minio`), nao no que a F2 mudou — tratado na **F2.1**. O `compose pull`
+completo segue `NOT_MEASURED` ate o proximo push. Ver `VPS-VALIDATION.md`.
 
 **Por que.** E a causa que voce apontou, confirmada em
 `remote-deploy.sh:46`. Na mesma VPS, quem constroi no CI mantem imagens de
@@ -88,6 +92,22 @@ operacao para confirmar ausencia de pico de build no host. Comparar tamanho da
 imagem antes/depois.
 
 **Rollback.** O workflow atual fica versionado; reverter e um commit.
+
+---
+
+## F2.1 · MinIO fora do Docker Hub · `VALIDATED`
+
+**Nao estava no plano.** Surgiu do primeiro deploy real da F2, que parou no
+`compose pull`.
+
+A MinIO retirou `minio/minio` e `minio/mc` do Docker Hub. A pendencia que a F1
+tinha registrado como "exige `docker login`" era leitura literal da mensagem do
+Docker — nenhum login resolveria. Corrigido apontando para `quay.io`, com tag
+de release no lugar de `:latest`, e verificado em execucao na propria VPS
+(bucket criado, politica aplicada, idempotente, 71 MiB de 256 MiB, sem OOM).
+
+Fecha tambem uma limitacao da F1: `minio` e `minio-init` so tinham o limite
+verificado na configuracao. Detalhes e medicoes em `VPS-VALIDATION.md`.
 
 ---
 
