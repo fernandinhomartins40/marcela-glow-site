@@ -1,7 +1,10 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
-import { prisma, UserRole } from '@marcela/database'
+// prismaAuth e o unico cliente que devolve `passwordHash`, e serve so ao
+// bcrypt.compare do login. O `prisma` comum omite o campo para que nenhuma
+// resposta o exponha por descuido.
+import { prisma, prismaAuth, UserRole } from '@marcela/database'
 import { signToken } from '../lib/jwt'
 import { authenticate } from '../middleware/auth'
 import { AppError, NotFoundError, UnauthorizedError } from '../lib/errors'
@@ -124,7 +127,7 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
     const tenant = await prisma.tenant.findUnique({ where: { slug: body.tenantSlug } })
     if (!tenant || !tenant.isActive) throw new UnauthorizedError('Credenciais invalidas')
 
-    const user = await prisma.user.findUnique({
+    const user = await prismaAuth.user.findUnique({
       where: { email_tenantId: { email: body.email, tenantId: tenant.id } },
       include: { permissions: true },
     })

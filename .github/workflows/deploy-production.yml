@@ -140,8 +140,35 @@ jobs:
             exit 1
           fi
 
-          if ! sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} "echo SSH password authentication OK"; then
-            echo "::error::SSH password authentication failed. Confirm that the GitHub secret VPS_PASSWORD contains the root password for ${{ env.VPS_HOST }} and that PasswordAuthentication/PermitRootLogin are enabled on the VPS." >&2
+          # Tres tentativas: ja houve runner que nao alcancou a porta 22 da VPS
+          # enquanto outros runners, no mesmo dia, conectavam sem problema (o
+          # log do sshd registrou as conexoes deles e nenhuma tentativa do que
+          # falhou). Como e intermitente e vem de fora da VPS, repetir resolve.
+          for tentativa in 1 2 3; do
+            if sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} "echo SSH password authentication OK"; then
+              ssh_ok=1
+              break
+            fi
+            echo "Tentativa $tentativa nao conectou; nova tentativa em 15s..." >&2
+            sleep 15
+          done
+
+          # A mensagem separa os dois casos porque antes afirmava senha errada
+          # mesmo quando o erro era "Connection timed out" — ou seja, quando o
+          # pacote nem chegou ao sshd e nada foi autenticado. A causa errada no
+          # log custa investigacao.
+          if [ "${ssh_ok:-0}" -ne 1 ]; then
+            # `nc` sem checagem seria pior que nada: se a imagem do runner nao
+            # o tivesse, o comando falharia e a mensagem culparia a rede mesmo
+            # quando a senha e que estivesse errada. Sem ele, nao se afirma
+            # causa nenhuma.
+            if ! command -v nc >/dev/null 2>&1; then
+              echo "::error::Nao foi possivel conectar por SSH em ${{ env.VPS_HOST }} apos 3 tentativas. Sem 'nc' no runner nao da para distinguir rede de autenticacao: leia a linha de erro do ssh acima ('Connection timed out' e rede; 'Permission denied' e senha)." >&2
+            elif nc -z -w 10 "${{ env.VPS_HOST }}" 22 2>/dev/null; then
+              echo "::error::A porta 22 de ${{ env.VPS_HOST }} responde, mas a autenticacao falhou. Confira o secret VPS_PASSWORD e PasswordAuthentication/PermitRootLogin na VPS." >&2
+            else
+              echo "::error::Nao foi possivel alcancar a porta 22 de ${{ env.VPS_HOST }} em 3 tentativas. Isto e rede, nao senha: verifique se a VPS esta no ar e se o firewall do provedor libera os IPs do GitHub Actions." >&2
+            fi
             exit 1
           fi
 

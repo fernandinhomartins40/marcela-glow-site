@@ -378,3 +378,255 @@ por duas fases. O teste que desfez o engano levou segundos: baixar outra imagem
 do mesmo registry na mesma maquina. Quando a mensagem lista causas
 alternativas, a que elimina uma delas e barata — e obrigatoria antes de
 registrar a outra como pendencia.
+
+---
+
+## F2.2 — Corrida de inicializacao do MinIO · `VALIDATED`
+
+Data: 2026-09-22. Ambiente: **a propria VPS**.
+
+### O que aconteceu
+
+Com o MinIO vindo do quay (F2.1), o deploy passou do `compose pull` pela
+primeira vez, construiu as 4 imagens, criou **todos** os containers — e morreu
+em:
+
+```
+Container marcela_minio_init  Error
+service "minio-init" didn't complete successfully: exit 1
+```
+
+Log do `minio-init`:
+
+```
+mc: <ERROR> Unable to initialize new alias from the provided credentials.
+Get "http://minio:9000/probe-.../?location=": dial tcp 172.28.0.3:9000:
+connect: connection refused.
+```
+
+Log do `minio`, no mesmo instante: `INFO: Formatting 1st pool, 1 set(s)`.
+
+### Causa
+
+`depends_on: - minio` (forma curta) espera o container **iniciar**, nao ficar
+pronto. O MinIO inicia em milissegundos mas so aceita conexao depois de
+formatar o pool. O `mc` corria contra essa formatacao.
+
+O defeito sempre esteve no compose; nenhum deploy anterior tinha chegado longe
+o suficiente para revela-lo.
+
+### Como o teste da F2.1 deixou isto passar
+
+Na F2.1 os mesmos comandos do `mc` passaram. O teste tinha um `sleep 12` antes
+de roda-los — **exatamente a espera que faltava no compose**. O teste
+reproduziu a espera em vez do defeito.
+
+A licao e especifica: ao testar um servico que o orquestrador inicia, a espera
+tem de vir do mesmo mecanismo que o orquestrador usa. Um `sleep` no teste
+substitui a dependencia que se quer verificar.
+
+### Correcao
+
+| onde | mudanca |
+|---|---|
+| `minio` | `healthcheck` com `mc ready local` (binario presente na imagem) |
+| `minio-init` | `depends_on: minio: condition: service_healthy` |
+| `minio-init` | `set -e` e remocao do `exit 0` |
+| `minio-init` | comentario `#` retirado de dentro do bloco YAML `>` |
+
+**O healthcheck distingue os dois estados** — medido com volume novo:
+
+| instante | `mc ready local` |
+|---|---|
+| 0s | `The cluster 'local' is unreachable: ... connection refused` |
+| 1s em diante | `The cluster 'local' is ready` |
+
+Nao e espera cega: o comando falha durante a formatacao e passa depois.
+
+### Dois defeitos vizinhos, achados ao ler o entrypoint
+
+1. **Falha silenciosa.** Os comandos eram separados por `;` e terminavam em
+   `exit 0`: cada um rodava mesmo com o anterior falhando, e o servico
+   reportaria **sucesso** de qualquer jeito. No deploy que falhou, o `mc mb`
+   tentou `localhost:9000` depois de o alias ja ter falhado. O exit 1 veio por
+   acaso, do ultimo comando. Sem bucket nao ha upload de imagem nem de
+   documento — isto precisa derrubar o deploy, nao passar calado.
+2. **Comentario que virava comando.** Em bloco YAML `>` as linhas com `#` sao
+   texto do comando, nao comentario. Movido para fora.
+
+### Verificacao
+
+Pelo proprio compose, na VPS, com volume novo e **sem espera artificial**:
+
+```
+minio-1 Starting -> Started -> Waiting -> Healthy
+minio-init-1 Starting -> Started
+Added `local` successfully.
+Bucket created successfully `local/marcela-files`.
+```
+
+Idempotente: `up -d --force-recreate minio-init` repete sem erro.
+
+### Armadilha do ambiente de teste, registrada
+
+Dois testes intermediarios deram `Access Key Id does not exist` e me levaram a
+uma hipotese errada (credencial residual no volume). A causa era outra:
+`docker-compose.yml` fixa `name: marcela_internal` para a rede e
+`container_name` para cada servico, entao **um teste na VPS reusa a rede do
+deploy real**, onde o nome `minio` resolve para o container do deploy — com
+outra senha. O teste so ficou valido depois de renomear rede, volume e
+container.
+
+Quem for testar este compose na VPS precisa isolar os tres, ou estara medindo
+o deploy em producao sem perceber.
+
+### Regressao
+
+- `docker compose config --quiet`: valido.
+- Demais `depends_on` auditados: `api`, `web`, `admin`, `patient` e `nginx` ja
+  usavam condicao adequada. `minio` era o unico na forma curta.
+- `npm run check:encoding`: passou.
+- Ambiente de teste desmontado (`down -v`), rede e volume proprios removidos;
+  nada de terceiros tocado.
+
+### Limitacoes
+
+- O deploy completo com esta correcao **ainda nao terminou** no momento deste
+  registro. O que esta provado e o comportamento do compose na VPS.
+- `api`, `web`, `admin`, `patient` e `nginx` ainda nao subiram em producao;
+  seus limites de memoria seguem `NOT_MEASURED` sob carga real.
+
+---
+
+## F2 (conclusao) e F3 — o site voltou ao ar · `VALIDATED`
+
+Data: 2026-09-22. Ambiente: **producao**, VPS 72.60.10.108.
+
+Deploy `ok` no run 35672665534 (commit `c1ea35c`) — o **primeiro bem-sucedido
+desde 08/09/2026**.
+
+### Uma quarta falha antes de passar: rede, nao senha
+
+O deploy do `c1ea35c` falhou no passo "Verify VPS password access", cuja
+mensagem manda conferir o secret `VPS_PASSWORD` e o `PasswordAuthentication`.
+A linha real do erro dizia outra coisa:
+
+```
+ssh: connect to host 72.60.10.108 port 22: Connection timed out
+```
+
+Timeout de conexao: nada foi autenticado porque o pacote nao chegou. Medido na
+VPS: `ufw` inativo, sem `fail2ban`, sem regras DROP/REJECT, sshd escutando em
+`0.0.0.0:22` — e o log do `sshd` **nao registra tentativa alguma** daquele
+runner.
+
+O que descartou bloqueio permanente: no mesmo periodo o log mostra conexoes
+**aceitas** de tres IPs Azure do GitHub Actions (`20.161.28.99`,
+`68.154.115.182`, `172.215.217.192`, com 7, 7 e 6 sessoes). Outros runners
+alcancaram a VPS sem problema. E intermitente e vem de fora da maquina.
+
+Resolvido com re-run do job, que reaproveitou as 4 imagens ja no GHCR.
+
+**Correcao levada ao workflow:** tres tentativas com 15s de intervalo e, na
+falha, uma mensagem que separa os casos — testa a porta 22 com `nc` e so
+culpa autenticacao se a porta abrir. Se o runner nao tiver `nc`, nao afirma
+causa nenhuma. Os quatro cenarios foram testados com stubs.
+
+### O deploy, medido em producao
+
+| verificacao | resultado |
+|---|---|
+| `GET /api/health` | `{"status":"ok","database":"ok"}` |
+| `/`, `/admin/`, `/paciente/` | 200, 200, 200 |
+| `minio-init` | `Exited (0)` — antes era `Exited (1)` |
+| bucket | `marcela-files` criado; `public/` com `download` |
+| `minio` recriado com healthcheck | sim (`config-hash` mudou, como previsto) |
+| `current` | `releases/c1ea35c-20260922003644` |
+
+### Os limites da F1, agora medidos sob a aplicacao real
+
+A F1 fechou com `api`, `web`, `admin`, `patient` e `nginx` como **estimativas**
+tiradas do consumo dos vizinhos. Medicao em producao:
+
+| container | uso | limite | % do teto |
+|---|---|---|---|
+| `nginx` | 4,40 MiB | 64 MiB | 6,9 |
+| `web` | 4,42 MiB | 64 MiB | 6,9 |
+| `admin` | 4,37 MiB | 64 MiB | 6,8 |
+| `patient` | 5,40 MiB | 64 MiB | 8,4 |
+| `api` | 32,20 MiB | 512 MiB | 6,3 |
+| `minio` | 71,25 MiB | 256 MiB | 27,8 |
+| `postgres` | 39,95 MiB | 512 MiB | 7,8 |
+
+**Total ~162 MiB de 15988 MiB do host — cerca de 1%.** `OOMKilled=false` e
+`RestartCount=0` nos 8 containers. O mais apertado e o MinIO, com folga de
+3,6x. Nenhum teto precisa de ajuste.
+
+Host depois de tudo: disco 27% (era 25% no baseline), carga 0,51.
+
+**Ressalva:** e consumo em repouso, logo apos subir. Uso real da clinica —
+varias usuarias, upload de imagem, relatorio — ainda nao foi exercido.
+
+### F3 — dominio publicado
+
+| verificacao | antes | depois |
+|---|---|---|
+| `https://www.dramarceladuch.com.br/` | site do velomail | **200, site da clinica** |
+| `<title>` | (velomail) | `Dra. Marcela Duch \| Medicina Estetica em Chapadao do Sul/MS` |
+| `/admin/`, `/paciente/`, `/api/health` | — | 200, 200, 200 |
+| certificado | ausente | Let's Encrypt, `CN=dramarceladuch.com.br` + `www`, ate **20/12/2026** |
+
+**A armadilha do `return 301` foi verificada, nao presumida.** Com um arquivo
+de teste em `/var/www/certbot/.well-known/acme-challenge/`:
+
+```
+challenge -> HTTP 200   (conteudo correto)
+raiz      -> HTTP 301 -> https://www.dramarceladuch.com.br/
+```
+
+O desafio passa e o resto redireciona — a renovacao automatica nao vai quebrar
+em silencio.
+
+Certbot chamado **so para este dominio** (`certonly --cert-name`), nunca
+`renew` global: sao 9 dominios na maquina com lock compartilhado.
+
+**Os vizinhos nao foram afetados.** Linha de base colhida antes da mudanca e
+conferida depois — os 8 devolvem exatamente os mesmos codigos (velomail 200,
+aprenderia 200, digiurban 307, ferraco 301, fusesite 200, m2center 301,
+makucho 200, studio.makucho 200).
+
+### Descoberta: a F3 ja estava automatizada
+
+O vhost que eu escrevi a mao foi **sobrescrito pelo proprio deploy**, que
+configura o nginx do host. A versao do repositorio e melhor que a minha:
+`client_max_body_size 50m` alinhado com o teto da API (a minha punha 25m),
+`acme-challenge` nos dois blocos e comentarios explicando a mesma armadilha.
+
+Ou seja, a F3 nunca foi trabalho manual pendente — faltava o deploy rodar. O
+`VPS-AUDIT.md` classificou `VPS-00` como configuracao ausente na VPS; a causa
+real era a mesma das outras: **o deploy nao executava desde 08/09**.
+
+### Estado dos achados de VPS
+
+| achado | estado |
+|---|---|
+| `VPS-00` dominio servindo outro site | **fechado** |
+| `VPS-01` build na VPS | **fechado** (build no CI, VPS so baixa) |
+| `VPS-02` sem limites | **fechado e medido em producao** |
+| `VPS-03` log sem rotacao | fechado |
+| `VPS-04` devDeps na imagem | fechado |
+| `VPS-05` sem `.dockerignore` | fechado |
+| `VPS-07` `npm install` | fechado |
+| `VPS-11` retencao de releases | fechado |
+| `VPS-06` backup | **aberto** (F6) |
+| `VPS-08` cache headers | aberto |
+| `VPS-09` `SEED_DEMO_DATA=1` | **aberto** — esta `1` em producao agora |
+| `VPS-10` segredos com padrao inseguro | aberto (F6) |
+| `VPS-12` SSH com senha de root | aberto (F6) |
+
+### O que continua sem medicao
+
+- Comportamento sob uso real da clinica.
+- Tempo total do deploy e pico de recursos do host durante a operacao.
+- Rollback de ponta a ponta: nao exercitado (e agora ha versao anterior no ar
+  para voltar, o que antes nao existia).

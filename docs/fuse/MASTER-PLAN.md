@@ -6,7 +6,7 @@ Cada fase e aprovada e executada em separado, passando por
 
 Data: 2026-09-22. Estado: **F1 `VALIDATED`; F2 `PARTIALLY_VALIDATED`
 (faturamento resolvido; o deploy rodou e parou numa imagem de terceiro);
-F2.1 `VALIDATED`; F3-F7 aguardando aprovacao**.
+F2.1 e F2.2 `VALIDATED`; F3-F7 aguardando aprovacao**.
 
 ## Ordem e por que ela e esta
 
@@ -108,6 +108,22 @@ de release no lugar de `:latest`, e verificado em execucao na propria VPS
 
 Fecha tambem uma limitacao da F1: `minio` e `minio-init` so tinham o limite
 verificado na configuracao. Detalhes e medicoes em `VPS-VALIDATION.md`.
+
+---
+
+## F2.2 · Corrida de inicializacao do MinIO · `VALIDATED`
+
+**Tambem nao estava no plano.** Surgiu do deploy seguinte a F2.1, que passou do
+`pull` e morreu no `minio-init`.
+
+`depends_on: - minio` esperava o container iniciar, nao ficar pronto: o `mc`
+corria contra a formatacao do pool e levava `connection refused`. Corrigido com
+healthcheck (`mc ready local`) e `condition: service_healthy`. Junto, dois
+defeitos vizinhos no entrypoint: os comandos passavam por cima de falhas
+(`;` + `exit 0`) e havia `#` dentro de bloco YAML `>`, que vira comando.
+
+O teste da F2.1 nao pegou isto porque tinha um `sleep 12` — a propria espera
+que faltava no compose. Detalhes em `VPS-VALIDATION.md`.
 
 ---
 

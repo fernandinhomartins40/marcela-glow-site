@@ -78,9 +78,11 @@ RUN rm -rf ./node_modules/@marcela/database && \
       '"use strict";' \
       'const prismaClient = require("@prisma/client");' \
       'const globalForPrisma = globalThis;' \
-      'const prisma = globalForPrisma.__marcelaPrisma || new prismaClient.PrismaClient({ log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"] });' \
-      'if (process.env.NODE_ENV !== "production") globalForPrisma.__marcelaPrisma = prisma;' \
-      'module.exports = { ...prismaClient, prisma };' \
+      'const base = globalForPrisma.__marcelaPrisma || new prismaClient.PrismaClient({ log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"] });' \
+      'if (process.env.NODE_ENV !== "production") globalForPrisma.__marcelaPrisma = base;' \
+      'const omitir = { passwordHash: { needs: {}, compute: () => undefined } };' \
+      'const prisma = base.$extends({ result: { user: omitir, patient: omitir } });' \
+      'module.exports = { ...prismaClient, prisma, prismaAuth: base };' \
       > ./node_modules/@marcela/database/index.js
 
 # Entrypoint script

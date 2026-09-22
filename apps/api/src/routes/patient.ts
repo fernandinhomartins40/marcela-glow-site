@@ -1,7 +1,9 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
-import { prisma } from '@marcela/database'
+// prismaAuth so nos dois pontos que precisam ler o hash (login e ativacao de
+// conta); o `prisma` comum omite o campo de toda consulta.
+import { prisma, prismaAuth } from '@marcela/database'
 import { signToken } from '../lib/jwt'
 import { authenticate, requirePatient } from '../middleware/auth'
 import { AppError, UnauthorizedError } from '../lib/errors'
@@ -96,7 +98,10 @@ router.post('/auth/register', async (req: Request, res: Response, next: NextFunc
     const tenant = await tenantBySlug(body.tenantSlug)
     const passwordHash = await bcrypt.hash(body.password, 12)
 
-    const existing = await prisma.patient.findUnique({
+    // prismaAuth porque a verificacao abaixo depende de LER o passwordHash: o
+    // cliente comum o devolve como undefined, e a conta ja ativada pareceria
+    // sem senha — abrindo justamente o furo que o comentario seguinte proibe.
+    const existing = await prismaAuth.patient.findUnique({
       where: { email_tenantId: { email: body.email, tenantId: tenant.id } },
     })
 
@@ -141,7 +146,7 @@ router.post('/auth/login', async (req, res, next) => {
   try {
     const body = loginSchema.parse(req.body)
     const tenant = await tenantBySlug(body.tenantSlug)
-    const patient = await prisma.patient.findUnique({
+    const patient = await prismaAuth.patient.findUnique({
       where: { email_tenantId: { email: body.email, tenantId: tenant.id } },
     })
 
