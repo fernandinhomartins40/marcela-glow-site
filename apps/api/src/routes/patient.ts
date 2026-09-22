@@ -129,6 +129,22 @@ router.post('/auth/register', async (req: Request, res: Response, next: NextFunc
           data: { name: body.name, email: body.email, phone: body.phone, passwordHash, tenantId: tenant.id },
         })
 
+    /* Uma solicitação da landing pode chegar antes da pessoa criar acesso ao
+       portal. Ao criar acesso com o mesmo e-mail, ligamos somente pedidos
+       ainda pendentes e sem paciente: assim a jornada
+       solicitada no site aparece no portal sem a recepção repetir trabalho.
+
+       Consultas já vinculadas, canceladas ou concluídas ficam intactas. */
+    await prisma.appointment.updateMany({
+      where: {
+        tenantId: tenant.id,
+        patientId: null,
+        status: 'PENDING',
+        email: { equals: patient.email, mode: 'insensitive' },
+      },
+      data: { patientId: patient.id },
+    })
+
     const token = await createPatientSession(req, patient)
     await prisma.patient.update({ where: { id: patient.id }, data: { lastLoginAt: new Date() } })
 

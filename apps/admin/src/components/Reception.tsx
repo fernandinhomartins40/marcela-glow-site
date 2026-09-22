@@ -164,6 +164,10 @@ export function Reception() {
     )
     .sort((a, b) => (a.scheduledAt ?? '').localeCompare(b.scheduledAt ?? ''))
   const pendentesDoDia = doDiaEscolhido.filter((a) => a.status === 'PENDING')
+  /* Pedido que chegou pelo site sem preferência de data não pertence a um dia
+     da agenda ainda. Deixá-lo só no contador do dashboard levava a recepção a
+     uma tela onde ele não aparecia e mantinha a paciente sem resposta. */
+  const semHorario = todas.filter((a) => a.status === 'PENDING' && !a.scheduledAt)
 
   /* A da vez no balcão: quem saiu do consultório e ainda deve — é a pessoa
      parada na frente da secretária agora. Não havendo ninguém saindo, é quem
@@ -346,6 +350,41 @@ export function Reception() {
           </button>
         </div>
       </div>
+
+      {semHorario.length > 0 && (
+        <Faixa
+          icone={CalendarDays}
+          titulo="Solicitações sem horário"
+          contagem={semHorario.length}
+          vazio=""
+        >
+          {semHorario.map((a) => (
+            <DataRow
+              key={a.id}
+              title={a.name}
+              className="encounter-row"
+              /* O drawer já valida disponibilidade e confirma: a faixa apenas
+                 dá visibilidade ao pedido que ainda não tem lugar na agenda. */
+              onOpen={() => setRemarcando(a)}
+              openLabel={`Definir horário para ${a.name}`}
+              leading={<CalendarDays size={16} aria-hidden="true" />}
+              chips={
+                <>
+                  <Chip tone="warning">Aguardando horário</Chip>
+                  {a.procedure?.title && <Chip tone="neutral">{a.procedure.title}</Chip>}
+                </>
+              }
+              meta={a.phone ? <span>{a.phone}</span> : <span>{a.email}</span>}
+              actions={
+                <button className="data-action-label" onClick={() => setRemarcando(a)}>
+                  <CalendarDays size={14} aria-hidden="true" />
+                  Definir horário
+                </button>
+              }
+            />
+          ))}
+        </Faixa>
+      )}
 
       <Faixa
         icone={Stethoscope}

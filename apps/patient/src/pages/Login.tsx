@@ -13,7 +13,12 @@ const demoPatient = {
 }
 
 export function Login() {
-  const [mode, setMode] = React.useState<'login' | 'register'>('login')
+  /* O site chega aqui depois de uma solicitação pública. Abrir já no cadastro
+     evita que uma nova paciente precise adivinhar que "Entrar" não é o seu
+     próximo passo. Nenhum dado pessoal segue pela URL. */
+  const [mode, setMode] = React.useState<'login' | 'register'>(() =>
+    new URLSearchParams(window.location.search).has('criar-acesso') ? 'register' : 'login',
+  )
   const [name, setName] = React.useState('')
   const [email, setEmail] = React.useState('')
   const [phone, setPhone] = React.useState('')
@@ -121,7 +126,7 @@ export function Login() {
           </h2>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             {isRegister
-              ? 'Preencha seus dados para acompanhar sua jornada de cuidado.'
+              ? 'Use o mesmo e-mail informado à clínica para acompanhar sua jornada de cuidado.'
               : 'Acesse para ver suas consultas, prescrições e orientações.'}
           </p>
 

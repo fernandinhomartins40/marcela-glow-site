@@ -81,7 +81,13 @@ export function Dashboard() {
             </div>
           )}
 
-          {section === 'inicio' && <HomePage data={data} onRequest={() => navigate('consultas')} />}
+          {section === 'inicio' && (
+            <HomePage
+              data={data}
+              onRequest={() => navigate('consultas')}
+              onNavigate={(nextSection) => navigate(nextSection)}
+            />
+          )}
           {section === 'consultas' && <AppointmentsPage data={data} />}
           {section === 'jornada' &&
             (planoId ? (

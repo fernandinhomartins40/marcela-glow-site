@@ -17,13 +17,13 @@ export function NextAppointment({
   if (!appointment) {
     return (
       <section className="panel panel-pad bg-[hsl(var(--espresso))] border-transparent">
-        <p className="label-eyebrow text-[hsl(var(--bronze-light))]">Próxima consulta</p>
+        <p className="label-eyebrow text-[hsl(var(--bronze-light))]">Seu próximo passo</p>
         <h2 className="mt-3 font-display text-2xl sm:text-3xl text-[hsl(var(--cream))]">
-          Nenhuma consulta agendada
+          Vamos encontrar o melhor horário para você
         </h2>
         <p className="mt-2 text-sm text-[hsl(var(--cream))]/60 leading-relaxed max-w-md">
-          Quando quiser, solicite um horário e a equipe entrará em contato para
-          confirmar a data.
+          Solicite uma avaliação quando estiver pronta. A equipe confirma a melhor
+          data com você antes de qualquer reserva.
         </p>
         <button
           onClick={onRequest}
@@ -44,7 +44,7 @@ export function NextAppointment({
   return (
     <section className="panel panel-pad bg-[hsl(var(--espresso))] border-transparent">
       <div className="flex flex-wrap items-center gap-3">
-        <p className="label-eyebrow text-[hsl(var(--bronze-light))]">Próxima consulta</p>
+        <p className="label-eyebrow text-[hsl(var(--bronze-light))]">Seu próximo passo</p>
         <StatusChip label={status.label} tone={status.tone} />
       </div>
 
@@ -73,6 +73,12 @@ export function NextAppointment({
       {appointment.message && (
         <p className="mt-4 pt-4 border-t border-[hsl(var(--cream))]/15 text-sm text-[hsl(var(--cream))]/60 leading-relaxed">
           {appointment.message}
+        </p>
+      )}
+
+      {appointment.status === 'PENDING' && (
+        <p className="mt-5 border-l-2 border-[hsl(var(--bronze-light))] pl-3 text-xs leading-relaxed text-[hsl(var(--cream))]/60">
+          Ainda não é uma reserva confirmada. A equipe está conferindo a agenda e vai avisar você assim que finalizar.
         </p>
       )}
     </section>

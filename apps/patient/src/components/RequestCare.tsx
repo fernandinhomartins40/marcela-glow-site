@@ -71,7 +71,7 @@ export function RequestCare({ procedures }: { procedures: Procedure[] }) {
         >
           {(
             [
-              { id: 'appointment' as Intent, label: 'Agendar horário' },
+              { id: 'appointment' as Intent, label: 'Solicitar horário' },
               { id: 'message' as Intent, label: 'Enviar mensagem' },
             ]
           ).map((option) => (
@@ -96,7 +96,7 @@ export function RequestCare({ procedures }: { procedures: Procedure[] }) {
         </div>
 
         {!isMessage && (
-          <div>
+          <div aria-describedby="appointment-request-help">
             <label htmlFor="procedure" className="block text-sm font-medium text-foreground mb-1.5">
               Procedimento de interesse
             </label>
@@ -113,6 +113,9 @@ export function RequestCare({ procedures }: { procedures: Procedure[] }) {
                 </option>
               ))}
             </select>
+            <p id="appointment-request-help" className="mt-2 text-xs leading-relaxed text-muted-foreground">
+              Este é um pedido de horário. A equipe confere a agenda e confirma com você antes da reserva.
+            </p>
           </div>
         )}
 

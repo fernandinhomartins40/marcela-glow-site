@@ -116,14 +116,14 @@ export function Dashboard({ data }: { data: DashboardData }) {
               icone={CalendarClock}
               titulo="a confirmar"
               texto="Horário marcado que ninguém confirmou com a paciente."
-              acao={() => navigate('/appointments')}
+              acao={() => navigate('/reception')}
             />
             <Pendencia
               n={pendencias.semHorario}
               icone={ClipboardList}
               titulo="sem horário"
               texto="Pedido que chegou pelo site e ainda não foi encaixado."
-              acao={() => navigate('/appointments')}
+              acao={() => navigate('/reception')}
             />
             <Pendencia
               n={pendencias.receitasParaAssinar}

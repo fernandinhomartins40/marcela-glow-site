@@ -110,7 +110,7 @@ const Header = () => {
               className="xl:h-12 xl:px-7 xl:text-sm"
               onClick={() => scrollToSection("agendamento")}
             >
-              Agendar
+              Solicitar avaliação
             </Button>
             <Button
               asChild
@@ -153,7 +153,7 @@ const Header = () => {
               className="w-full mt-4"
               onClick={() => scrollToSection("agendamento")}
             >
-              Agendar Consulta
+              Solicitar avaliação
             </Button>
             <Button
               asChild

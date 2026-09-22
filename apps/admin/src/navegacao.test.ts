@@ -17,6 +17,8 @@ import { join } from 'node:path'
 
 const raiz = join(__dirname, '..', '..', '..')
 const fonte = readFileSync(join(raiz, 'apps/admin/src/AdminApp.tsx'), 'utf8')
+const dashboard = readFileSync(join(raiz, 'apps/admin/src/components/Dashboard.tsx'), 'utf8')
+const reception = readFileSync(join(raiz, 'apps/admin/src/components/Reception.tsx'), 'utf8')
 
 /** Os grupos como o menu os declara, com a permissão de cada item. */
 function grupos(): { label: string; items: [string, string][] }[] {
@@ -106,6 +108,31 @@ describe('os grupos refletem o trabalho', () => {
   it('cada item aparece uma vez só', () => {
     const ids = grupos().flatMap((g) => g.items.map(([id]) => id))
     expect(new Set(ids).size).toBe(ids.length)
+  })
+})
+
+describe('o dashboard entrega cada pendência na tela que a resolve', () => {
+  it('envia confirmação para a recepção, não para a agenda genérica', () => {
+    const confirmar = dashboard.slice(
+      dashboard.indexOf('n={pendencias.aConfirmar}'),
+      dashboard.indexOf('n={pendencias.semHorario}'),
+    )
+    expect(confirmar).toContain("acao={() => navigate('/reception')}")
+  })
+
+  it('envia pedido sem horário para a recepção, onde ele é encaixado', () => {
+    const semHorario = dashboard.slice(
+      dashboard.indexOf('n={pendencias.semHorario}'),
+      dashboard.indexOf('n={pendencias.receitasParaAssinar}'),
+    )
+    expect(semHorario).toContain("acao={() => navigate('/reception')}")
+  })
+
+  it('deixa pedidos sem horário visíveis para a recepção definir a agenda', () => {
+    expect(reception).toContain("const semHorario = todas.filter((a) => a.status === 'PENDING' && !a.scheduledAt)")
+    expect(reception).toContain('Solicitações sem horário')
+    expect(reception).toContain('onOpen={() => setRemarcando(a)}')
+    expect(reception).toContain('Definir horário')
   })
 })
 

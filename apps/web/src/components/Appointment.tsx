@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CheckCircle2, ClipboardCheck, Clock3, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -72,6 +73,7 @@ const Appointment = () => {
     message: "",
   });
   const [slot, setSlot] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState<{ name: string; slot: string | null } | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -87,6 +89,7 @@ const Appointment = () => {
   const mutation = useMutation({
     mutationFn: appointmentsApi.create,
     onSuccess: () => {
+      setSubmitted({ name: formData.name, slot });
       toast.success(
         slot
           ? "Horário solicitado! Entraremos em contato para confirmar."
@@ -121,6 +124,12 @@ const Appointment = () => {
 
   const fieldClass =
     "bg-transparent border-0 border-b border-[hsl(var(--cream))]/25 rounded-none px-0 h-12 text-[hsl(var(--cream))] placeholder:text-[hsl(var(--cream))]/45 focus-visible:ring-0 focus-visible:border-[hsl(var(--bronze))] transition-colors duration-500";
+
+  const startAnotherRequest = () => {
+    setSubmitted(null);
+    setFormData({ name: "", email: "", phone: "", procedure: "", message: "" });
+    setSlot(null);
+  };
 
   if (!isVisible) return null;
 
@@ -179,69 +188,156 @@ const Appointment = () => {
 
           {/* Formulário */}
           <div className="lg:col-span-7 min-w-0 animate-fade-in">
+            {submitted ? (
+              <section
+                className="border border-[hsl(var(--cream))]/20 bg-[hsl(var(--cream))]/[0.04] p-6 sm:p-8 md:p-12"
+                aria-live="polite"
+              >
+                <CheckCircle2 className="h-8 w-8 text-[hsl(var(--bronze-light))]" aria-hidden="true" />
+                <p className="label-eyebrow mt-6">Solicitação recebida</p>
+                <h3 className="mt-3 font-display text-3xl text-[hsl(var(--cream))] sm:text-4xl">
+                  Obrigada, {submitted.name.split(" ")[0]}.
+                </h3>
+                <p className="mt-4 max-w-lg text-base font-light leading-relaxed text-[hsl(var(--cream))]/75">
+                  {submitted.slot
+                    ? `Registramos sua preferência para ${formatChosenSlot(submitted.slot)}.`
+                    : "Registramos seu pedido de avaliação."}{" "}
+                  A equipe vai conferir a agenda e falar com você para confirmar.
+                </p>
+                <ol className="mt-8 grid gap-3 sm:grid-cols-3">
+                  {[
+                    [ClipboardCheck, "Pedido recebido", "Sua solicitação já chegou à equipe."],
+                    [Clock3, "Confirmação", "Você recebe a confirmação pelo canal combinado."],
+                    [UserRound, "Acompanhamento", "Se tiver acesso, acompanhe também pela Área da Paciente."],
+                  ].map(([Icon, title, description]) => {
+                    const StepIcon = Icon as typeof CheckCircle2;
+                    return (
+                      <li key={title as string} className="border border-[hsl(var(--cream))]/12 p-4">
+                        <StepIcon className="h-4 w-4 text-[hsl(var(--bronze-light))]" aria-hidden="true" />
+                        <strong className="mt-4 block text-sm font-medium text-[hsl(var(--cream))]">{title as string}</strong>
+                        <span className="mt-1.5 block text-xs leading-relaxed text-[hsl(var(--cream))]/55">{description as string}</span>
+                      </li>
+                    );
+                  })}
+                </ol>
+                <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4">
+                  <a href="/paciente/?criar-acesso=1" className="inline-flex min-h-11 items-center border border-[hsl(var(--cream))]/30 px-4 text-sm text-[hsl(var(--cream))] transition-colors hover:border-[hsl(var(--cream))] hover:bg-[hsl(var(--cream))] hover:text-[hsl(var(--espresso))]">
+                    Criar acesso e acompanhar pedido
+                  </a>
+                  <button type="button" onClick={startAnotherRequest} className="text-sm text-[hsl(var(--cream))]/65 underline underline-offset-4 hover:text-[hsl(var(--cream))]">
+                    Fazer outra solicitação
+                  </button>
+                </div>
+              </section>
+            ) : (
             <form
               onSubmit={handleSubmit}
               className="border border-[hsl(var(--cream))]/15 p-6 sm:p-8 md:p-12"
             >
               <p className="label-eyebrow mb-8">Solicitação de avaliação</p>
 
-              <div className="space-y-7 md:space-y-8">
-                <Input
-                  type="text"
-                  placeholder="Nome completo *"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className={fieldClass}
-                  required
-                />
+              <ol className="grid gap-3 border-y border-[hsl(var(--cream))]/10 py-5 sm:grid-cols-3">
+                <li className="flex gap-3">
+                  <span className="font-display text-2xl leading-none text-[hsl(var(--bronze-light))]">01</span>
+                  <span>
+                    <strong className="block text-sm font-medium text-[hsl(var(--cream))]">Seus dados</strong>
+                    <span className="mt-1 block text-xs leading-relaxed text-[hsl(var(--cream))]/50">Para a equipe entrar em contato.</span>
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="font-display text-2xl leading-none text-[hsl(var(--bronze-light))]">02</span>
+                  <span>
+                    <strong className="block text-sm font-medium text-[hsl(var(--cream))]">Sua preferência</strong>
+                    <span className="mt-1 block text-xs leading-relaxed text-[hsl(var(--cream))]/50">Procedimento e horário, se desejar.</span>
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="font-display text-2xl leading-none text-[hsl(var(--bronze-light))]">03</span>
+                  <span>
+                    <strong className="block text-sm font-medium text-[hsl(var(--cream))]">Confirmação</strong>
+                    <span className="mt-1 block text-xs leading-relaxed text-[hsl(var(--cream))]/50">A reserva só é confirmada pela equipe.</span>
+                  </span>
+                </li>
+              </ol>
 
-                <div className="grid md:grid-cols-2 gap-7 md:gap-8">
+              <div className="mt-8 space-y-7 md:space-y-8">
+                <div>
+                  <label htmlFor="appointment-name" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/70">
+                    Nome completo <span className="text-[hsl(var(--bronze-light))]">*</span>
+                  </label>
                   <Input
-                    type="email"
-                    placeholder="E-mail *"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className={fieldClass}
-                    required
-                  />
-                  <Input
-                    type="tel"
-                    placeholder="Telefone / WhatsApp *"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    id="appointment-name"
+                    type="text"
+                    placeholder="Como prefere ser chamada"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className={fieldClass}
                     required
                   />
                 </div>
 
-                <Select
-                  value={formData.procedure}
-                  onValueChange={(value) => setFormData({ ...formData, procedure: value })}
-                >
-                  <SelectTrigger className={fieldClass}>
-                    <SelectValue placeholder="Procedimento de interesse" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {procedures.length > 0
-                      ? procedures.map((p) => (
-                          <SelectItem key={p.id} value={p.title}>
-                            {p.title}
-                          </SelectItem>
-                        ))
-                      : (
-                          <>
-                            <SelectItem value="Gerenciamento de Envelhecimento">Gerenciamento de Envelhecimento</SelectItem>
-                            <SelectItem value="Botox Full Face">Botox Full Face</SelectItem>
-                            <SelectItem value="Botox para Hiper-hidrose">Botox para Hiper-hidrose</SelectItem>
-                            <SelectItem value="Peptídeos e Regeneração Celular">Peptídeos e Regeneração Celular</SelectItem>
-                            <SelectItem value="Harmonização Facial">Harmonização Facial</SelectItem>
-                            <SelectItem value="Bioestimuladores de Colágeno">Bioestimuladores de Colágeno</SelectItem>
-                            <SelectItem value="T-Sculptor e Protocolos Corporais">T-Sculptor e Protocolos Corporais</SelectItem>
-                            <SelectItem value="Skinbooster e Peelings">Skinbooster e Peelings</SelectItem>
-                          </>
-                        )}
-                  </SelectContent>
-                </Select>
+                <div className="grid md:grid-cols-2 gap-7 md:gap-8">
+                  <div>
+                    <label htmlFor="appointment-email" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/70">
+                      E-mail <span className="text-[hsl(var(--bronze-light))]">*</span>
+                    </label>
+                    <Input
+                      id="appointment-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      className={fieldClass}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="appointment-phone" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/70">
+                      Telefone ou WhatsApp <span className="text-[hsl(var(--bronze-light))]">*</span>
+                    </label>
+                    <Input
+                      id="appointment-phone"
+                      type="tel"
+                      placeholder="(67) 90000-0000"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className={fieldClass}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-xs tracking-wide text-[hsl(var(--cream))]/70">Procedimento de interesse <span className="text-[hsl(var(--cream))]/45">(opcional)</span></p>
+                  <Select
+                    value={formData.procedure}
+                    onValueChange={(value) => setFormData({ ...formData, procedure: value })}
+                  >
+                    <SelectTrigger className={fieldClass} aria-label="Procedimento de interesse">
+                      <SelectValue placeholder="Quero conversar sobre..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {procedures.length > 0
+                        ? procedures.map((p) => (
+                            <SelectItem key={p.id} value={p.title}>
+                              {p.title}
+                            </SelectItem>
+                          ))
+                        : (
+                            <>
+                              <SelectItem value="Gerenciamento de Envelhecimento">Gerenciamento de Envelhecimento</SelectItem>
+                              <SelectItem value="Botox Full Face">Botox Full Face</SelectItem>
+                              <SelectItem value="Botox para Hiper-hidrose">Botox para Hiper-hidrose</SelectItem>
+                              <SelectItem value="Peptídeos e Regeneração Celular">Peptídeos e Regeneração Celular</SelectItem>
+                              <SelectItem value="Harmonização Facial">Harmonização Facial</SelectItem>
+                              <SelectItem value="Bioestimuladores de Colágeno">Bioestimuladores de Colágeno</SelectItem>
+                              <SelectItem value="T-Sculptor e Protocolos Corporais">T-Sculptor e Protocolos Corporais</SelectItem>
+                              <SelectItem value="Skinbooster e Peelings">Skinbooster e Peelings</SelectItem>
+                            </>
+                          )}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 <div>
                   <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
@@ -283,12 +379,18 @@ const Appointment = () => {
                   )}
                 </div>
 
-                <Textarea
-                  placeholder="Mensagem (opcional)"
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  className={`${fieldClass} scrollbar-on-dark h-auto min-h-[110px] py-3 resize-none`}
-                />
+                <div>
+                  <label htmlFor="appointment-message" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/70">
+                    Algo que a equipe deve saber <span className="text-[hsl(var(--cream))]/45">(opcional)</span>
+                  </label>
+                  <Textarea
+                    id="appointment-message"
+                    placeholder="Preferência de dia, horário ou uma dúvida"
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    className={`${fieldClass} scrollbar-on-dark h-auto min-h-[110px] py-3 resize-none`}
+                  />
+                </div>
 
                 <p className="text-xs leading-relaxed text-[hsl(var(--cream))]/50 font-light">
                   * Campos obrigatórios. Ao enviar este formulário, você concorda com
@@ -306,6 +408,7 @@ const Appointment = () => {
                 </Button>
               </div>
             </form>
+            )}
           </div>
         </div>
       </div>
