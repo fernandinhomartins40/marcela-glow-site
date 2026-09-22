@@ -1,7 +1,7 @@
-import draEditorial from '../../assets/dra-marcela-editorial.jpg'
-import draPortrait from '../../assets/dra-marcela-portrait.jpg'
-import marble from '../../assets/marble-texture.jpg'
-import logoMD from '../../assets/logo-md.png'
+import draEditorial from '../../assets/dra-marcela-editorial-limpa-v1.png'
+import draPortrait from '../../assets/dra-marcela-portrait-limpa-v1.png'
+import marble from '../../assets/hero-regeneracao-desktop-v1.png'
+import logoMD from '../../assets/brand/md-monogram-white.webp'
 
 /**
  * As fotos que o site traz no build.

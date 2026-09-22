@@ -19,6 +19,8 @@ const raiz = join(__dirname, '..', '..', '..')
 const fonte = readFileSync(join(raiz, 'apps/admin/src/AdminApp.tsx'), 'utf8')
 const dashboard = readFileSync(join(raiz, 'apps/admin/src/components/Dashboard.tsx'), 'utf8')
 const reception = readFileSync(join(raiz, 'apps/admin/src/components/Reception.tsx'), 'utf8')
+const errorBoundary = readFileSync(join(raiz, 'apps/admin/src/components/ErrorBoundary.tsx'), 'utf8')
+const adminPanel = readFileSync(join(raiz, 'apps/admin/src/pages/AdminPanel.tsx'), 'utf8')
 
 /** Os grupos como o menu os declara, com a permissão de cada item. */
 function grupos(): { label: string; items: [string, string][] }[] {
@@ -81,6 +83,33 @@ describe('a sidebar serve todos os papéis, não só a administradora', () => {
   })
 })
 
+describe('erro em uma seção não desmonta o menu', () => {
+  it('isola o conteúdo e reinicia a proteção quando a pessoa troca de seção', () => {
+    expect(fonte).toContain('<ErrorBoundary key={tab} area>')
+    expect(fonte).toContain('<AdminPanel tab={tab}')
+    expect(errorBoundary).toContain('if (this.props.area)')
+    expect(errorBoundary).toContain('Tentar novamente')
+  })
+})
+
+describe('sub-abas preservam contexto na URL', () => {
+  it('Cadastros, Site, Equipe e Ajustes usam a query aba e painel associado', () => {
+    for (const pagina of ['RegistryPage', 'SitePage', 'SecurityPage', 'SettingsPage']) {
+      const inicio = adminPanel.indexOf(`function ${pagina}(`)
+      expect(inicio, pagina).toBeGreaterThan(-1)
+      const proxima = adminPanel.indexOf('\nfunction ', inicio + 1)
+      const fontePagina = adminPanel.slice(inicio, proxima < 0 ? undefined : proxima)
+      expect(fontePagina, pagina).toContain('useSearchParams()')
+      expect(fontePagina, pagina).toContain("params.get('aba')")
+      expect(fontePagina, pagina).toContain('role="tabpanel"')
+      expect(fontePagina, pagina).toContain('aria-labelledby=')
+      expect(fontePagina, pagina).toContain('onKeyDown={navegarAbas}')
+      expect(fontePagina, pagina).toContain('tabIndex={area ===')
+      expect(fontePagina, pagina).not.toContain('replace: true')
+    }
+  })
+})
+
 describe('os grupos refletem o trabalho', () => {
   it('o dia está em ordem cronológica', () => {
     /* Chega, é atendida, paga. A ordem do menu é a ordem dos fatos. */
@@ -112,20 +141,22 @@ describe('os grupos refletem o trabalho', () => {
 })
 
 describe('o dashboard entrega cada pendência na tela que a resolve', () => {
-  it('envia confirmação para a recepção, não para a agenda genérica', () => {
+  it('envia confirmação para a recepção quando o perfil opera o balcão; caso contrário, para a agenda', () => {
     const confirmar = dashboard.slice(
       dashboard.indexOf('n={pendencias.aConfirmar}'),
       dashboard.indexOf('n={pendencias.semHorario}'),
     )
-    expect(confirmar).toContain("acao={() => navigate('/reception')}")
+    expect(dashboard).toContain("const destinoConfirmacao = pode('FINANCE_OPERATE') ? '/reception' : '/appointments'")
+    expect(confirmar).toContain('acao={() => navigate(destinoConfirmacao)}')
   })
 
-  it('envia pedido sem horário para a recepção, onde ele é encaixado', () => {
+  it('envia pedido sem horário para uma tela permitida ao perfil', () => {
     const semHorario = dashboard.slice(
       dashboard.indexOf('n={pendencias.semHorario}'),
       dashboard.indexOf('n={pendencias.receitasParaAssinar}'),
     )
-    expect(semHorario).toContain("acao={() => navigate('/reception')}")
+    expect(semHorario).toContain('acao={() => navigate(destinoConfirmacao)}')
+    expect(dashboard).toContain("{pode('APPOINTMENT_WRITE') && <Pendencia")
   })
 
   it('deixa pedidos sem horário visíveis para a recepção definir a agenda', () => {

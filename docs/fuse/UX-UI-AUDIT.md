@@ -55,6 +55,8 @@ esteja pronto e nao consumido.
 
 ## `UX-01` · `BLOCKER` · Nenhum app tem `ErrorBoundary`
 
+**Revalidação em 22/09/2026.** Este achado descreve o estado do inventário original, não o código atual. Web, admin e patient possuem `ErrorBoundary` na raiz. O CRM também envolve `AdminPanel` por seção, com recuperação local e remount ao trocar de aba, mantendo menu e cabeçalho quando uma tela falha. Build e teste estrutural passaram; o erro forçado em navegador continua pendente, portanto o critério de aceite abaixo ainda não está totalmente validado.
+
 **Evidencia.** Zero ocorrencias de `ErrorBoundary` ou `componentDidCatch` nos
 tres apps (inventario, secao 5).
 
@@ -202,6 +204,8 @@ do navegador e semantica de formulario para tecnologia assistiva.
 ---
 
 ## `UX-07` · `HIGH` · Sub-abas perdem estado ao recarregar
+
+**Revalidação em 22/09/2026.** As quatro páginas com sub-abas (`registry`, `cms`, `security`, `settings`) agora derivam a seleção de `?aba=...`, preservam outros parâmetros e criam entrada no histórico para o botão Voltar. Abas têm painel associado e navegação por setas/Home/End. Build e teste estrutural passaram; reload, histórico e teclado ainda precisam de execução no navegador. A contagem antiga “11 de 12” abaixo não corresponde às quatro páginas atuais e permanece apenas como registro histórico.
 
 **Evidencia.** 12 secoes com 12 sub-abas no `admin`; so `/settings` guarda a
 sub-aba na URL (`AdminPanel.tsx:126-131`). **11 de 12** voltam ao padrao no

@@ -14,6 +14,7 @@ import { getVapidPublicKey } from '../lib/push'
 import { presignDownload, storageConfigured } from '../lib/storage'
 import { checkSlotAvailable, resolveEndsAt } from '../lib/scheduling'
 import { publicBaseUrl, sendMail } from '../lib/mailer'
+import { messageInputSchema } from '../lib/message-input'
 
 const router = Router()
 const TENANT_SLUG_DEFAULT = 'marcela-duch'
@@ -36,10 +37,6 @@ const appointmentSchema = z.object({
   procedureId: z.string().optional(),
   scheduledAt: z.string().datetime({ offset: true }).optional(),
   message: z.string().optional(),
-})
-
-const messageSchema = z.object({
-  body: z.string().min(1),
 })
 
 const resetRequestSchema = z.object({
@@ -495,7 +492,7 @@ router.get('/appointments', async (req, res, next) => {
 
 router.post('/messages', async (req, res, next) => {
   try {
-    const body = messageSchema.parse(req.body)
+    const body = messageInputSchema.parse(req.body)
     const message = await prisma.message.create({
       data: { body: body.body, sender: 'PATIENT', patientId: req.user!.userId, tenantId: req.user!.tenantId },
     })

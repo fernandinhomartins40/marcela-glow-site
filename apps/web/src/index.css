@@ -15,46 +15,46 @@
    dentro de `hsl()`. Ao trazer CSS do painel, converter o formato. */
   :root {
     /* Base — bege cremoso/mármore */
-    --background: 36 30% 94%;        /* Bege cream #F2EADC */
-    --foreground: 24 25% 18%;        /* Marrom chocolate escuro #3B2B22 */
+    --background: 30 29% 96%;        /* Off-white oficial #F8F3EE */
+    --foreground: 20 8% 15%;         /* Grafite oficial #272321 */
 
-    --card: 36 30% 96%;
-    --card-foreground: 24 25% 18%;
+    --card: 30 29% 98%;
+    --card-foreground: 20 8% 15%;
 
-    --popover: 36 30% 96%;
-    --popover-foreground: 24 25% 18%;
+    --popover: 30 29% 98%;
+    --popover-foreground: 20 8% 15%;
 
     /* Primário — marrom chocolate (cor da roupa nas fotos) */
-    --primary: 24 25% 20%;           /* #3F2D23 */
-    --primary-foreground: 36 30% 96%;
+    --primary: 17 39% 25%;           /* Marrom profundo oficial #3E281F */
+    --primary-foreground: 30 29% 96%;
 
     /* Secundário — bege areia médio */
-    --secondary: 32 28% 85%;         /* #E5D8C7 */
-    --secondary-foreground: 24 25% 20%;
+    --secondary: 25 39% 86%;         /* Nude claro oficial #E9D8C9 */
+    --secondary-foreground: 17 39% 25%;
 
-    --muted: 33 22% 90%;
-    --muted-foreground: 24 15% 40%;  /* Marrom médio sóbrio */
+    --muted: 25 39% 92%;
+    --muted-foreground: 17 28% 33%;  /* Marrom médio sóbrio */
 
     /* Acento — bronze sutil terroso (não dourado brilhante) */
-    --accent: 28 22% 55%;            /* #9C8268 */
-    --accent-foreground: 36 30% 96%;
+    --accent: 25 31% 67%;            /* Nude oficial #C7A98D */
+    --accent-foreground: 17 39% 25%;
 
     --destructive: 0 60% 45%;
-    --destructive-foreground: 36 30% 96%;
+    --destructive-foreground: 30 29% 96%;
 
-    --border: 32 18% 82%;
-    --input: 32 18% 88%;
-    --ring: 28 22% 55%;
+    --border: 25 28% 83%;
+    --input: 25 31% 91%;
+    --ring: 17 39% 25%;
 
     --radius: 0.25rem;
 
     /* Tons editoriais adicionais */
-    --cream: 36 35% 96%;             /* Quase branco quente */
-    --cream-deep: 34 28% 88%;        /* Bege profundo */
-    --espresso: 22 30% 14%;          /* Marrom muito escuro, quase preto */
-    --bronze: 28 22% 55%;            /* Bronze terroso */
-    --bronze-light: 32 25% 75%;      /* Bronze claro */
-    --marble-vein: 36 25% 80%;       /* Veio do mármore */
+    --cream: 30 29% 96%;             /* Off-white oficial */
+    --cream-deep: 25 39% 86%;        /* Nude claro oficial */
+    --espresso: 17 39% 25%;          /* Marrom profundo oficial */
+    --bronze: 17 39% 35%;            /* Marrom institucional #5B3828 */
+    --bronze-light: 25 31% 67%;      /* Nude oficial */
+    --marble-vein: 25 28% 83%;       /* Veio do mármore */
 
     /* Gradientes
 
@@ -103,6 +103,42 @@
     --border: 24 15% 22%;
     --input: 24 15% 22%;
     --ring: 28 22% 55%;
+  }
+}
+
+/* Hero editorial: fundo e retrato são arquivos aprovados separados. O retrato
+   conserva os pixels da foto limpa; a máscara só dissolve a borda do arquivo
+   sobre o mármore, sem alterar rosto ou proporções. */
+@layer components {
+  .hero-editorial { isolation: isolate; }
+  .hero-editorial-background { position: absolute; inset: 0; z-index: 0; }
+  .hero-editorial-background img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
+  .hero-editorial-photo { position: absolute; z-index: 1; inset-block: 0; right: 0; width: min(56vw, 900px); -webkit-mask-image: linear-gradient(to right, transparent, black 24%); mask-image: linear-gradient(to right, transparent, black 24%); }
+  .hero-editorial-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 28%; }
+  .hero-editorial-shade { position: absolute; z-index: 2; inset: 0; pointer-events: none; background: linear-gradient(90deg, hsl(var(--cream) / .7), hsl(var(--cream) / .38) 40%, transparent 68%); }
+  .hero-editorial-inner { position: relative; z-index: 3; display: flex; align-items: center; min-height: 100svh; padding-top: clamp(7rem, 14svh, 11rem); padding-bottom: clamp(6rem, 12svh, 9rem); }
+  .hero-editorial-copy { width: min(53%, 660px); }
+  .hero-editorial-copy h1 { margin-top: clamp(1.2rem, 3.2svh, 2.5rem); font-size: clamp(4.15rem, min(6.8vw, 13svh), 7rem); line-height: .88; letter-spacing: -.025em; }
+  .hero-editorial-lead { max-width: 34rem; margin-top: clamp(1.4rem, 3svh, 2.25rem); font-size: clamp(1rem, 1.35vw, 1.3rem); line-height: 1.48; color: hsl(var(--foreground) / .83); }
+  .hero-editorial-actions { display: flex; flex-wrap: wrap; gap: .85rem; margin-top: clamp(1.6rem, 3.6svh, 2.5rem); }
+  .hero-editorial-signature { margin-top: clamp(1.5rem, 4svh, 3rem); font-size: .7rem; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: hsl(var(--espresso) / .8); }
+  .hero-editorial-watermark { position: absolute; z-index: 3; right: clamp(2rem, 5vw, 6rem); bottom: 5rem; font-size: .7rem; letter-spacing: .38em; text-transform: uppercase; color: hsl(var(--espresso) / .72); }
+  @media (max-width: 767px) {
+    .hero-editorial-inner { align-items: flex-start; min-height: max(100svh, 690px); padding-top: clamp(9rem, 19svh, 12rem); padding-bottom: 6rem; }
+    .hero-editorial-photo { right: -7vw; width: 78vw; -webkit-mask-image: linear-gradient(to right, transparent, black 31%); mask-image: linear-gradient(to right, transparent, black 31%); }
+    .hero-editorial-photo img { object-position: 54% 18%; }
+    .hero-editorial-shade { background: linear-gradient(90deg, hsl(var(--cream) / .92), hsl(var(--cream) / .68) 43%, transparent 74%); }
+    .hero-editorial-copy { width: min(68vw, 340px); }
+    .hero-editorial-copy h1 { margin-top: 1.15rem; font-size: clamp(2.45rem, 10.5vw, 4.15rem); line-height: .9; }
+    .hero-editorial-lead { max-width: 23ch; margin-top: 1.5rem; font-size: clamp(.91rem, 3.6vw, 1.1rem); line-height: 1.42; }
+    .hero-editorial-actions { display: grid; justify-items: start; gap: .45rem; margin-top: 1.7rem; }
+    .hero-editorial-actions > button { min-height: 44px; max-width: min(64vw, 240px); padding-inline: .9rem; font-size: .8rem; letter-spacing: .02em; white-space: normal; text-align: left; }
+    .hero-editorial-signature { max-width: 24ch; margin-top: 1.6rem; font-size: .55rem; line-height: 1.6; letter-spacing: .16em; }
+    .hero-editorial-watermark { display: none; }
+  }
+  @media (max-width: 359px) {
+    .hero-editorial-copy { width: 70vw; }
+    .hero-editorial-photo { right: -12vw; width: 82vw; }
   }
 }
 

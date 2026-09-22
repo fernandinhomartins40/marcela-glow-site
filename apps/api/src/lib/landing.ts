@@ -330,7 +330,7 @@ export const LANDING_DEFAULTS: { [K in LandingSectionId]: z.input<(typeof LANDIN
     titleBottom: 'sobre você.',
     lead: 'Escolha o melhor horário e conte o que procura. A equipe confirma em seguida.',
     disclaimer:
-      'O horário fica reservado como solicitação até a equipe confirmar — você recebe o aviso por WhatsApp e na Área da Paciente.',
+      'Este é um pedido de horário, não uma reserva confirmada. A equipe confere a agenda e entra em contato com você.',
     whatsapp: null,
   },
   FOOTER: {

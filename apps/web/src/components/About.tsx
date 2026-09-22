@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useImage, useSection } from "@/hooks/useLanding";
-import draMarcela from "@/assets/dra-marcela-portrait.jpg";
+import draMarcela from "@/assets/candidatas/dra-marcela-portrait-limpa-v1.png";
 
 interface AboutContent {
   eyebrow: string;

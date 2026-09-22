@@ -232,7 +232,7 @@ const SlotPicker = ({
 
           <p className="border-t border-[hsl(var(--cream))]/10 pt-4 text-xs font-light leading-relaxed text-[hsl(var(--cream))]/45">
             {disclaimer ??
-              "O horário fica reservado como solicitação até a equipe confirmar — você recebe o aviso por WhatsApp e na Área da Paciente."}
+              "Este é um pedido de horário, não uma reserva confirmada. A equipe confere a agenda e entra em contato com você."}
           </p>
         </div>
       )}

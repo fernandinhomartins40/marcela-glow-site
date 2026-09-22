@@ -9,6 +9,7 @@ import {
   FileText,
   HeartPulse,
   Mail,
+  MessageCircle,
   Paperclip,
   Pencil,
   Phone,
@@ -41,6 +42,7 @@ import {
   toDateInput,
   Toolbar,
   type Tone,
+  usePermissoes,
 } from '../../lib/ui'
 import { PlanosPanel } from './planos'
 import { useDebounced } from '../../lib/useDebounced'
@@ -106,9 +108,19 @@ export function ClinicalAlerts({ patient }: { patient: Partial<Patient> }) {
  * Prontuário da paciente: tudo que a clínica registrou, em ordem.
  * Só leitura — registro novo nasce em Atendimento, sempre vinculado à consulta.
  */
-export function PatientDetail({ id, onClose }: { id: string; onClose: () => void }) {
+export function PatientDetail({ id, onClose, initialTab = 'timeline' }: { id: string; onClose: () => void; initialTab?: 'timeline' | 'messages' }) {
   const client = useQueryClient()
-  const [tab, setTab] = React.useState<'timeline' | 'documents' | 'procedures' | 'files'>('timeline')
+  const { pode } = usePermissoes()
+  const [tab, setTab] = React.useState<'timeline' | 'documents' | 'procedures' | 'files' | 'messages'>(initialTab)
+  const [reply, setReply] = React.useState('')
+
+  const sendReply = useMutation({
+    mutationFn: async (body: string) => api.post(`/admin/patients/${id}/messages`, { body }),
+    onSuccess: async () => {
+      setReply('')
+      await client.invalidateQueries({ queryKey: ['patient', id] })
+    },
+  })
 
   const query = useQuery({
     queryKey: ['patient', id],
@@ -143,6 +155,7 @@ export function PatientDetail({ id, onClose }: { id: string; onClose: () => void
     ['documents', `Documentos (${p.prescriptions?.length ?? 0})`],
     ['procedures', 'Jornada'],
     ['files', `Arquivos (${p.attachments?.length ?? 0})`],
+    ['messages', `Mensagens (${p.messages?.length ?? 0})`],
   ] as const
 
   const address = [
@@ -345,6 +358,51 @@ export function PatientDetail({ id, onClose }: { id: string; onClose: () => void
           ))}
 
         {tab === 'files' && <AttachmentsPanel patientId={id} attachments={p.attachments ?? []} onChanged={refresh} />}
+
+        {tab === 'messages' && (
+          <section aria-label="Conversa com a paciente">
+            <p className="form-section-title">Conversa no portal</p>
+            {!p.messages?.length ? (
+              <p className="hint">Ainda não há mensagens nesta conversa.</p>
+            ) : (
+              <div className="timeline" aria-live="polite">
+                {[...p.messages].reverse().map((message: { id: string; sender: string; body: string; createdAt: string }) => (
+                  <article className="timeline-item" key={message.id}>
+                    <div className="timeline-head">
+                      <strong>{message.sender === 'PATIENT' ? 'Paciente' : 'Equipe'}</strong>
+                      <span className="timeline-date">{formatDateBR(message.createdAt)}</span>
+                    </div>
+                    <p className="timeline-body" style={{ whiteSpace: 'pre-wrap' }}>{message.body}</p>
+                  </article>
+                ))}
+              </div>
+            )}
+            {pode('PATIENT_WRITE') && (
+              <form
+                className="form-grid"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  if (reply.trim() && !sendReply.isPending) sendReply.mutate(reply.trim())
+                }}
+              >
+                <label htmlFor="patient-reply">Responder à paciente</label>
+                <textarea
+                  id="patient-reply"
+                  value={reply}
+                  onChange={(event) => setReply(event.target.value)}
+                  rows={4}
+                  maxLength={4000}
+                  placeholder="Escreva uma orientação ou resposta para o portal da paciente"
+                />
+                {sendReply.isError && <p className="error" role="alert">{errorMessage(sendReply.error)}</p>}
+                <button className="primary" type="submit" disabled={!reply.trim() || sendReply.isPending}>
+                  <MessageCircle size={15} aria-hidden="true" />
+                  {sendReply.isPending ? 'Enviando...' : 'Enviar resposta'}
+                </button>
+              </form>
+            )}
+          </section>
+        )}
       </div>
     </Modal>
   )

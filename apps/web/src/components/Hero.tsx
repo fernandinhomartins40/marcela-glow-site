@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useImage, useLanding, useSection } from "@/hooks/useLanding";
-import draEditorial from "@/assets/dra-marcela-editorial.jpg";
-import draPortrait from "@/assets/dra-marcela-portrait.jpg";
-import marble from "@/assets/marble-texture.jpg";
+import draEditorial from "@/assets/candidatas/dra-marcela-editorial-limpa-v1.png";
+import draPortrait from "@/assets/candidatas/dra-marcela-portrait-limpa-v1.png";
+import marble from "@/assets/generated/hero-regeneracao-desktop-v1.png";
+import marbleMobile from "@/assets/generated/hero-regeneracao-mobile-v1.png";
 
 /* As imagens que vêm no build. Cada slide usa a sua enquanto o painel não
    enviar outra — o site nunca abre com espaço vazio no lugar da foto. */
@@ -28,8 +29,8 @@ const FALLBACK: HeroContent = {
   slides: [
     {
       eyebrow: "Medicina estética & saúde da pele",
-      titleTop: "Beleza",
-      titleBottom: "com estratégia",
+      titleTop: "Beleza com",
+      titleBottom: "estratégia",
       subtitle: "Tratamentos personalizados para preservar identidade, melhorar qualidade de pele e acompanhar cada fase com naturalidade.",
       watermark: "PELE",
     },
@@ -62,11 +63,12 @@ const Hero = () => {
   const slides = content.slides.length ? content.slides : FALLBACK.slides;
 
   useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 7000);
     return () => clearInterval(timer);
-  }, []);
+  }, [slides.length]);
 
   const nextSlide = () => setCurrentSlide((p) => (p + 1) % slides.length);
   const prevSlide = () => setCurrentSlide((p) => (p - 1 + slides.length) % slides.length);
@@ -81,103 +83,61 @@ const Hero = () => {
   const index = Math.min(currentSlide, slides.length - 1);
   const slide = slides[index];
   const image = landing?.images?.[`hero.${index}`];
+  const portrait = image?.url ?? FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
+  const showPortrait = index % FALLBACK_IMAGES.length !== 2 || Boolean(image?.url);
 
   if (!isVisible) return null;
 
   return (
     <section
       id="home"
-      className="relative min-h-[100svh] w-full overflow-hidden bg-marble"
+      className="hero-editorial relative min-h-[100svh] w-full overflow-hidden bg-marble"
     >
-      {/* A textura do marmore sobre o gradiente da paleta.
+      {/* O asset aprovado permanece visível em sua cor original. O CMS pode
+          substituir o fundo e cada retrato sem alterar a composição HTML. */}
+      {fundo.src === marble ? (
+        <picture className="hero-editorial-background" aria-hidden="true">
+          <source media="(max-width: 767px)" srcSet={marbleMobile} />
+          <img src={marble} alt="" />
+        </picture>
+      ) : (
+        <div
+          className="hero-editorial-background bg-cover bg-center"
+          style={{ backgroundImage: `url(${fundo.src})` }}
+        />
+      )}
+      {showPortrait && (
+        <div className="hero-editorial-photo" key={`img-${index}`}>
+          <img
+            src={portrait}
+            alt={image?.alt ?? "Dra. Marcela Duch"}
+            loading="eager"
+            fetchPriority={index === 0 ? "high" : "auto"}
+          />
+        </div>
+      )}
+      <div className="hero-editorial-shade" aria-hidden="true" />
 
-          `mix-blend-multiply` no lugar de opacidade: a foto e um bege claro e,
-          apenas transparente, ela lavava a cor de baixo — trocar a marca para
-          verde deixava o fundo bege de novo, porque a foto cobria o gradiente.
-          Multiplicando, ela vira sombra e veio sobre qualquer cor, que e o que
-          uma textura deve fazer. */}
-      <div
-        className="absolute inset-0 bg-cover bg-center opacity-40 mix-blend-multiply"
-        style={{ backgroundImage: `url(${fundo.src})` }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-background/40 via-transparent to-background/60" />
-
-      {/* Watermark — ancorado no canto inferior esquerdo, atrás do conteúdo */}
-      <div className="absolute bottom-0 left-0 hidden pointer-events-none overflow-hidden lg:block">
-        <span
-          key={`wm-${index}`}
-          className="block text-watermark font-display text-[11vw] leading-[0.7] whitespace-nowrap animate-fade-in select-none translate-y-[24%] -translate-x-[3%] opacity-45"
-        >
-          {slide.watermark}
-        </span>
-      </div>
-
-      {/* Conteúdo principal */}
-      <div className="relative container mx-auto px-5 sm:px-6 lg:px-10 min-h-[100svh] flex items-center pt-[max(5rem,9svh)] pb-[max(3.5rem,7svh)] lg:pt-[max(6rem,12svh)] lg:pb-[max(5rem,10svh)]">
-        <div className="grid lg:grid-cols-12 gap-[min(1.5rem,2.6svh)] md:gap-8 w-full items-center">
-          {/* Texto à esquerda */}
-          <div className="lg:col-span-7 z-10 order-2 lg:order-1">
-            <div key={`txt-${index}`} className="animate-slide-up">
-              <p className="label-eyebrow mb-[min(1rem,1.8svh)] md:mb-6 lg:mb-[min(1.5rem,2.6svh)]">{slide.eyebrow}</p>
-              <h1 className="font-display type-hero text-primary text-balance">
-                <span className="block">{slide.titleTop}</span>
-                <span className="block italic font-light">{slide.titleBottom}</span>
-              </h1>
-              <p className="font-editorial-italic type-lead text-foreground/70 mt-[min(1.5rem,2.6svh)] md:mt-7 lg:text-[clamp(1.05rem,min(1.7vw,2.4svh),1.4rem)] lg:mt-[min(1.75rem,3svh)] max-w-lg">
-                {slide.subtitle}
-              </p>
-              <div className="grid sm:flex sm:flex-row gap-3 sm:gap-4 mt-[min(2rem,3.6svh)] md:mt-10 lg:mt-[min(2.5rem,4.5svh)] [&>button]:lg:whitespace-nowrap [&>button]:lg:px-6 [&>button]:lg:tracking-[0.14em] [&>button]:min-[1200px]:px-10 [&>button]:min-[1200px]:tracking-[0.2em]">
-                <Button
-                  variant="cta"
-                  size="lg"
-                  onClick={() => scrollToSection("agendamento")}
-                >
-                  {content.primaryCta}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => scrollToSection("procedimentos")}
-                >
-                  {content.secondaryCta}
-                </Button>
-              </div>
-            </div>
+      <div className="hero-editorial-inner container mx-auto px-5 sm:px-6 lg:px-10">
+        <div key={`txt-${index}`} className="hero-editorial-copy animate-slide-up">
+          <p className="label-eyebrow">{slide.eyebrow}</p>
+          <h1 className="font-display text-primary text-balance">
+            <span className="block">{slide.titleTop}</span>
+            <span className="block italic font-light">{slide.titleBottom}</span>
+          </h1>
+          <p className="hero-editorial-lead">{slide.subtitle}</p>
+          <div className="hero-editorial-actions">
+            <Button variant="cta" size="lg" onClick={() => scrollToSection("agendamento")}>
+              {content.primaryCta}
+            </Button>
+            <Button variant="outline" size="lg" onClick={() => scrollToSection("procedimentos")}>
+              {content.secondaryCta}
+            </Button>
           </div>
-
-          {/* Imagem à direita */}
-          <div className="lg:col-span-5 z-10 order-1 lg:order-2">
-            {/* No celular a largura mandava menos que a altura: `min(72vw, 26svh)`
-                num aparelho de 393×873 dava 26svh ≈ 227px, ou 58% da largura, com
-                o resto virando margem vazia dos lados. A foto e o rosto da
-                clinica e aparecia como uma miniatura.
-
-                Agora ela ocupa a largura da coluna ate um teto em `svh`, calibrado
-                para os dois botoes ainda caberem na primeira dobra: com 42svh a foto
-                ficava linda e o segundo botao saia da tela.
-
-                Num iPhone SE (667px de altura) o segundo botao ainda fica ~30px
-                abaixo da dobra. Encolher mais resolveria a conta e devolveria a
-                foto ao tamanho de miniatura que motivou este ajuste — entao ali
-                a pagina rola um dedo, que e o comportamento normal de um site
-                no celular. */}
-            <div
-              key={`img-${index}`}
-              className="relative aspect-[4/5] w-full max-w-[min(80vw,34svh)] min-[420px]:max-w-[min(20rem,36svh)] sm:max-w-[min(24rem,42svh)] md:max-w-[min(28rem,46svh)] lg:w-auto lg:max-w-none lg:h-full lg:max-h-[68svh] mx-auto animate-reveal"
-            >
-              <img
-                src={image?.url ?? FALLBACK_IMAGES[index % FALLBACK_IMAGES.length]}
-                alt={image?.alt ?? `${slide.titleTop} ${slide.titleBottom}`}
-                className="absolute inset-0 w-full h-full object-cover"
-                loading="eager"
-                fetchPriority="high"
-              />
-              {/* Borda dupla editorial */}
-              <div className="absolute inset-3 border border-cream/40 pointer-events-none" />
-            </div>
-          </div>
+          <p className="hero-editorial-signature">Saúde · equilíbrio · resultados reais</p>
         </div>
       </div>
+      <span className="hero-editorial-watermark" aria-hidden="true">{slide.watermark}</span>
 
       {/* Setas */}
       <button
@@ -196,18 +156,19 @@ const Hero = () => {
       </button>
 
       {/* Indicador de slides */}
-      <div className="absolute bottom-5 md:bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-3 z-20">
+      <div className="absolute bottom-3 md:bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1 z-20" role="group" aria-label="Slides em destaque">
         {slides.map((_, i) => (
           <button
             key={i}
             onClick={() => setCurrentSlide(i)}
-            className={`h-px transition-all duration-500 ${
-              i === index ? "w-12 bg-primary" : "w-6 bg-primary/30"
-            }`}
+            className="flex h-11 w-11 items-center justify-center"
             aria-label={`Slide ${i + 1}`}
-          />
+            aria-current={i === index ? "true" : undefined}
+          >
+            <span className={`block h-px transition-all duration-500 ${i === index ? "w-9 bg-primary" : "w-5 bg-primary/40"}`} />
+          </button>
         ))}
-        <span className="ml-3 text-[0.75rem] sm:text-[0.65rem] tracking-[0.3em] uppercase text-muted-foreground whitespace-nowrap">
+        <span className="ml-1 text-[0.65rem] tracking-[0.2em] uppercase text-muted-foreground whitespace-nowrap">
           {String(index + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
         </span>
       </div>

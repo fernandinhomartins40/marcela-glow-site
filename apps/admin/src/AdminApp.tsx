@@ -22,7 +22,9 @@ import { api, errorMessage, ROLE_LABELS, TOKEN_KEY } from './lib/ui'
 import { Login } from './pages/Login'
 import { AdminPanel, type AdminTab } from './pages/AdminPanel'
 import { AppBar } from './components/AppBar'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { useAplicativoInstalado } from './lib/standalone'
+import monogram from './assets/brand/md-monogram-white.webp'
 import './styles.css'
 
 const queryClient = new QueryClient()
@@ -161,7 +163,7 @@ function Shell() {
   /* O menu mostra so o que a pessoa pode abrir. Enquanto `me` nao chegou
      nao se mostra nada: piscar itens que somem em seguida e pior do que
      esperar meio segundo. */
-  const permissoes: string[] = me.data?.permissions ?? []
+  const permissoes = React.useMemo<string[]>(() => me.data?.permissions ?? [], [me.data?.permissions])
   const data = useAdminData(permissoes)
   /* `A|B` significa "basta uma": o Financeiro serve a secretaria, que opera,
      e a medica, que supervisiona — e nenhuma das duas tem a permissao da
@@ -207,8 +209,11 @@ function Shell() {
       <button className="nav-scrim" hidden={!navOpen} onClick={() => setNavOpen(false)} aria-label="Fechar navegação" tabIndex={-1} />
       <aside className="app-nav">
         <div className="brand">
-          <Sparkles size={22} aria-hidden="true" />
-          <strong>Marcela CRM</strong>
+          <img className="brand-mark" src={monogram} alt="Monograma Dra. Marcela Duch" width={32} height={32} />
+          <span className="brand-copy">
+            <strong>Dra. Marcela</strong>
+            <small>Clínica</small>
+          </span>
           <button className="nav-close" onClick={() => setNavOpen(false)} aria-label="Fechar navegação">
             <X size={18} aria-hidden="true" />
           </button>
@@ -244,8 +249,8 @@ function Shell() {
               <Menu size={20} aria-hidden="true" />
             </button>
             {mostrarRotulos && <span className="eyebrow">{groupOf(tab)}</span>}
-            <h1>{labelOf(tab)}</h1>
-            {hintOf(tab) && <p className="page-hint">{hintOf(tab)}</p>}
+            <h1>{tab === 'dashboard' ? 'Seu dia, com clareza' : labelOf(tab)}</h1>
+            <p className="page-hint">{tab === 'dashboard' ? 'Acompanhe os atendimentos, organize a equipe e mantenha tudo em movimento.' : hintOf(tab)}</p>
           </div>
           {me.data && (
             <div className="who" title={me.data.email}>
@@ -263,7 +268,11 @@ function Shell() {
             {errorMessage(data.error, 'Não foi possível carregar os dados. Verifique a conexão e tente novamente.')}
           </p>
         )}
-        {data.data && <AdminPanel tab={tab} data={data.data} currentUserId={me.data?.id} />}
+        {data.data && (
+          <ErrorBoundary key={tab} area>
+            <AdminPanel tab={tab} data={data.data} currentUserId={me.data?.id} permissions={permissoes} />
+          </ErrorBoundary>
+        )}
       </main>
 
       {comoApp && (

@@ -23,36 +23,36 @@
    painel. Esta comentado la.
    ───────────────────────────────────────────────────────────────────────────── */
 :root {
-  --cream: #f6efe4;
-  --cream-soft: #fffaf2;
-  --cream-deep: #e5d8c7;
-  --marble: #f2eadc;
-  --marble-soft: #fbf6ee;
-  --espresso: #2f221b;
-  --espresso-deep: #1f1713;
-  --bronze: #9c8268;
-  --bronze-soft: #c6b19c;
+  --cream: #f8f3ee;
+  --cream-soft: #fffdfa;
+  --cream-deep: #e9d8c9;
+  --marble: #f8f3ee;
+  --marble-soft: #fffdfa;
+  --espresso: #3e281f;
+  --espresso-deep: #272321;
+  --bronze: #5b3828;
+  --bronze-soft: #c7a98d;
   /* Bronze legivel. O --bronze acima e cor de DECORACAO: medido sobre os
      quatro fundos do painel ele da 3,03:1 a 3,48:1, e texto precisa de 4,5:1
      (WCAG 1.4.3). Este da 4,97:1 no pior caso e mantem a familia da paleta.
      Use --bronze em filete, icone decorativo e fundo; --bronze-text em
      qualquer coisa que se leia. */
-  --bronze-text: #75604c;
+  --bronze-text: #5b3828;
   /* Texto sobre --cream-deep, que e o fundo das pilulas (inicial da paciente,
      dia do mes, numero do item). Ali o --bronze-text da so 4,24:1 — o fundo
      mais escuro come a margem —, entao a pilula precisa do proprio tom:
      4,94:1. */
-  --bronze-text-deep: #6b5641;
-  --border: #d8cab8;
+  --bronze-text-deep: #3e281f;
+  --border: #dfcbb9;
   /* Borda visivel. O --border acima da 1,41:1 sobre o creme: serve para
      separar blocos, nao para delimitar controle. Componente de interface
      precisa de 3:1 (WCAG 1.4.11), entao campo, botao e caixa de selecao usam
      este. */
-  --border-strong: #8f7c68;
-  --text-muted: rgba(47,34,27,.66);
-  --shadow-soft: 0 18px 50px rgba(47,34,27,.10);
+  --border-strong: #8d6e5b;
+  --text-muted: rgba(62,40,31,.68);
+  --shadow-soft: 0 18px 50px rgba(62,40,31,.10);
   /* Anel de foco: quem navega por teclado precisa ver onde esta. */
-  --focus-ring: #5c4a3a;
+  --focus-ring: #5b3828;
 }
 /* ─────────────────────────────────────────────────────────────────────────────
    Escala de breakpoints do painel
@@ -183,9 +183,12 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 /* Subtítulo da página: diz para que serve a tela sem exigir um clique */
 .page-hint { margin: 5px 0 0; font-size: 13px; color: var(--text-muted); max-width: 62ch; line-height: 1.5; }
 .nav-toggle, .nav-close, .nav-scrim { display: none; }
-.brand { display: flex; align-items: center; gap: 9px; padding: 6px 10px 16px; margin-bottom: 6px; border-bottom: 1px solid rgba(246,239,228,.14); position: relative; z-index: 1; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 6px 10px 16px; margin-bottom: 6px; border-bottom: 1px solid rgba(248,243,238,.16); position: relative; z-index: 1; }
 /* A marca permanece na sidebar — é o único lugar do painel onde ela cabe */
 .brand strong { font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; font-size: 18px; font-weight: 500; letter-spacing: .02em; }
+.brand-mark { width: 32px; height: 32px; object-fit: contain; flex: none; }
+.brand-copy { display: grid; gap: 1px; min-width: 0; }
+.brand small { font-size: 9px; letter-spacing: .2em; text-transform: uppercase; color: rgba(248,243,238,.62); }
 /* Área de trabalho: sem watermark decorativo — é uma ferramenta, não uma vitrine */
 /* `min-width: 0` impede que uma tabela larga empurre a coluna do grid e
    crie scroll na página toda em vez de rolar dentro do próprio bloco. */
@@ -279,6 +282,11 @@ main header .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .14em;
 .settings { color: rgba(47,34,27,.78); white-space: pre-wrap; font-size: 12px; line-height: 1.6; }
 
 /* ── Listas de dados, formulários e diálogos ─────────────────────────────── */
+.message-inbox { margin-bottom: 18px; padding: 17px; border: 1px solid var(--border); border-radius: 9px; background: var(--cream-soft); }
+.message-inbox-head { margin-bottom: 12px; }
+.message-inbox-head h2 { display: flex; align-items: center; gap: 9px; margin: 0; font-size: 15px; font-weight: 600; color: var(--espresso); }
+.message-inbox .data-row { background: #fff; }
+.message-inbox .hint, .message-inbox .error { margin: 4px 0; }
 .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
 .toolbar > .primary:last-child { margin-left: auto; }
 .toolbar-title { font-size: 13px; color: var(--text-muted); }
@@ -2149,10 +2157,11 @@ img, video, canvas { max-width: 100%; height: auto; }
   font-family: 'Playfair Display', Georgia, serif;
   font-size: 23px;
   letter-spacing: .06em;
-  background: var(--espresso);
+  background: var(--cream-soft);
   border-radius: 16px;
-  color: var(--cream-soft);
+  border: 1px solid rgba(91, 56, 40, .18);
 }
+.auth-mono img { width: 40px; height: 40px; object-fit: contain; }
 /* Alvos maiores: no celular o dedo erra um campo de 42px. */
 /* 16px nao e estetica: abaixo disso o iOS aplica zoom ao focar o campo e a
    tela salta. A regra global de input tem dois :not() e vence uma classe
@@ -3079,6 +3088,8 @@ main .receber-meio {
 }
 .erro-tela svg { color: #a33131; }
 .erro-tela h1 { margin: 0; font-size: 22px; font-weight: 600; }
+.erro-tela h2 { margin: 0; font-size: 20px; font-weight: 600; }
+.erro-area { min-height: min(60vh, 480px); border: 1px solid var(--border-strong); border-radius: 12px; background: var(--cream-soft); }
 .erro-tela p { margin: 0; max-width: 42ch; line-height: 1.6; color: var(--text-muted); }
 .erro-acoes { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 6px; }
 /* `.ghost` so existia dentro de `.reception-dias`; o botao secundario daqui

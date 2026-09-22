@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, UserRound, X } from "lucide-react";
 import { useImage } from "@/hooks/useLanding";
-import logoMD from "@/assets/logo-md.png";
+import logoMD from "@/assets/brand/md-monogram-brown.webp";
 
 const Header = () => {
   /* A logo do topo e a mesma do rodape: trocar no painel precisa mudar os
@@ -11,6 +11,7 @@ const Header = () => {
   const logo = useImage("footer.logo", logoMD, "MD - Dra. Marcela Duch");
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mobileMenuButton = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,6 +20,18 @@ const Header = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsMobileMenuOpen(false);
+        mobileMenuButton.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [isMobileMenuOpen]);
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -43,7 +56,7 @@ const Header = () => {
          inteiro por baixo. Mas o menu aberto herda esse fundo: os links ficavam
          sobre a foto e o texto do hero, ilegiveis. Com o menu aberto o fundo
          entra, mesmo sem rolagem. */
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isMobileMenuOpen ? "max-h-[100svh] overflow-y-auto" : ""} ${
         isScrolled || isMobileMenuOpen
           ? "bg-background/95 backdrop-blur-md border-b border-border"
           : "bg-transparent"
@@ -127,17 +140,19 @@ const Header = () => {
 
           {/* Mobile menu button */}
           <button
+            ref={mobileMenuButton}
             className="lg:hidden -mr-2 p-3 shrink-0"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Menu"
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-site-navigation"
           >
             {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
 
         {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <nav className="lg:hidden mt-6 pb-6 space-y-1 animate-fade-in border-t border-border pt-6">
+        <nav id="mobile-site-navigation" hidden={!isMobileMenuOpen} className="lg:hidden mt-6 pb-6 space-y-1 animate-fade-in border-t border-border pt-6">
             {links.map((link) => (
               <button
                 key={link.id}
@@ -166,8 +181,7 @@ const Header = () => {
                 Área da Paciente
               </a>
             </Button>
-          </nav>
-        )}
+        </nav>
       </div>
     </header>
   );

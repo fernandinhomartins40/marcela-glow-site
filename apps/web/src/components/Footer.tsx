@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { newsletterApi, getErrorMessage } from "@/lib/api";
 import { useImage, useSection } from "@/hooks/useLanding";
-import logoMD from "@/assets/logo-md.png";
+import logoMD from "@/assets/brand/md-monogram-white.webp";
 
 interface FooterContent {
   tagline: string;

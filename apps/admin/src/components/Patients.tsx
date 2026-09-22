@@ -1,6 +1,6 @@
 import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertTriangle, Archive, ArchiveRestore, CalendarDays, FileText, HeartPulse, Mail, Pencil, Phone, Plus, Search, UserRound } from 'lucide-react'
+import { AlertTriangle, Archive, ArchiveRestore, CalendarDays, FileText, HeartPulse, Mail, MessageCircle, Pencil, Phone, Plus, Search, UserRound } from 'lucide-react'
 import {
   api,
   Chip,
@@ -39,6 +39,7 @@ export function Patients() {
   const [showArchived, setShowArchived] = React.useState(false)
   const [editing, setEditing] = React.useState<Patient | 'new' | null>(null)
   const [detailId, setDetailId] = React.useState<string | null>(null)
+  const [detailTab, setDetailTab] = React.useState<'timeline' | 'messages'>('timeline')
   const [archiving, setArchiving] = React.useState<Patient | null>(null)
 
   const query = useQuery({
@@ -54,6 +55,21 @@ export function Patients() {
       ).data as Patient[],
   })
 
+  const inbox = useQuery({
+    queryKey: ['message-inbox'],
+    refetchInterval: 30_000,
+    queryFn: async () => (await api.get('/admin/message-inbox')).data as {
+      patientId: string
+      patientName: string
+      lastAt: string
+    }[],
+  })
+
+  const openDetail = (id: string, tab: 'timeline' | 'messages' = 'timeline') => {
+    setDetailTab(tab)
+    setDetailId(id)
+  }
+
   const archive = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) =>
       api.patch(`/admin/patients/${id}/archive`, { isActive }),
@@ -68,6 +84,29 @@ export function Patients() {
 
   return (
     <>
+      <section className="message-inbox" aria-labelledby="message-inbox-title">
+        <div className="message-inbox-head">
+          <h2 id="message-inbox-title"><MessageCircle size={17} aria-hidden="true" /> Mensagens aguardando resposta</h2>
+        </div>
+        {inbox.isLoading ? <p className="hint">Carregando conversas...</p> : inbox.isError ? (
+          <p className="error" role="alert">Não foi possível carregar as mensagens. <button type="button" onClick={() => inbox.refetch()}>Tentar novamente</button></p>
+        ) : !inbox.data?.length ? (
+          <p className="hint">Nenhuma conversa aguardando resposta.</p>
+        ) : (
+          <DataList>
+            {inbox.data.map((item) => (
+              <DataRow
+                key={item.patientId}
+                icon={MessageCircle}
+                title={item.patientName}
+                meta={<span>Última mensagem em {formatDateBR(item.lastAt)}</span>}
+                onOpen={() => openDetail(item.patientId, 'messages')}
+                openLabel={`Abrir conversa com ${item.patientName}`}
+              />
+            ))}
+          </DataList>
+        )}
+      </section>
       <Toolbar>
         <SearchBox
           value={search}
@@ -110,7 +149,7 @@ export function Patients() {
               key={patient.id}
               icon={UserRound}
               dimmed={!patient.isActive}
-              onOpen={() => setDetailId(patient.id)}
+              onOpen={() => openDetail(patient.id)}
               openLabel={`Abrir prontuário de ${patient.name}`}
               title={patient.socialName || patient.name}
               chips={
@@ -168,7 +207,7 @@ export function Patients() {
                   {/* Único botão da linha com rótulo visível — RowAction é só ícone */}
                   <button
                     className="primary data-action-label"
-                    onClick={() => setDetailId(patient.id)}
+                    onClick={() => openDetail(patient.id)}
                     aria-label={`Abrir prontuário de ${patient.name}`}
                     title="Abrir prontuário"
                   >
@@ -200,7 +239,7 @@ export function Patients() {
         />
       )}
 
-      {detailId && <PatientDetail id={detailId} onClose={() => setDetailId(null)} />}
+      {detailId && <PatientDetail key={detailId} id={detailId} initialTab={detailTab} onClose={() => { setDetailId(null); client.invalidateQueries({ queryKey: ['message-inbox'] }) }} />}
 
       {archiving && (
         <ConfirmDialog

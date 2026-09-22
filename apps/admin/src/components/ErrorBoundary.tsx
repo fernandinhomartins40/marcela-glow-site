@@ -16,7 +16,7 @@ import { AlertTriangle, RefreshCw } from 'lucide-react'
  * recarregar so repetir o erro.
  */
 
-type Props = { children: React.ReactNode }
+type Props = { children: React.ReactNode; area?: boolean }
 type State = { erro: Error | null }
 
 export class ErrorBoundary extends React.Component<Props, State> {
@@ -36,6 +36,26 @@ export class ErrorBoundary extends React.Component<Props, State> {
   render() {
     const { erro } = this.state
     if (!erro) return this.props.children
+
+    if (this.props.area) {
+      return (
+        <section role="alert" className="erro-tela erro-area">
+          <AlertTriangle size={32} aria-hidden="true" />
+          <h2>Não foi possível abrir esta seção</h2>
+          <p>Você pode tentar novamente ou escolher outra área no menu. Informações já salvas permanecem disponíveis.</p>
+          <div className="erro-acoes">
+            <button type="button" onClick={() => this.setState({ erro: null })}>
+              <RefreshCw size={16} aria-hidden="true" />
+              Tentar novamente
+            </button>
+          </div>
+          <details>
+            <summary>Detalhes técnicos</summary>
+            <code>{erro.message}</code>
+          </details>
+        </section>
+      )
+    }
 
     return (
       <div role="alert" className="erro-tela">

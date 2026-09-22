@@ -12,9 +12,9 @@ type Intent = 'appointment' | 'message'
  * mandar uma mensagem. Antes eram dois botões sobre o mesmo campo, sem
  * indicação de qual faria o quê.
  */
-export function RequestCare({ procedures }: { procedures: Procedure[] }) {
+export function RequestCare({ procedures, initialIntent = 'appointment' }: { procedures: Procedure[]; initialIntent?: Intent }) {
   const client = useQueryClient()
-  const [intent, setIntent] = React.useState<Intent>('appointment')
+  const [intent, setIntent] = React.useState<Intent>(initialIntent)
   const [procedureId, setProcedureId] = React.useState('')
   const [slot, setSlot] = React.useState<string | null>(null)
   const [message, setMessage] = React.useState('')
@@ -29,7 +29,7 @@ export function RequestCare({ procedures }: { procedures: Procedure[] }) {
           message: message || undefined,
         })
       } else {
-        await api.post('/patient/messages', { body: message })
+        await api.post('/patient/messages', { body: message.trim() })
       }
     },
     onSuccess: () => {
@@ -50,6 +50,7 @@ export function RequestCare({ procedures }: { procedures: Procedure[] }) {
 
   function submit(event: React.FormEvent) {
     event.preventDefault()
+    if (mutation.isPending) return
     setFeedback('')
     mutation.mutate()
   }
@@ -145,6 +146,7 @@ export function RequestCare({ procedures }: { procedures: Procedure[] }) {
                 : 'Conte se há alguma preferência de dia, horário ou algo que devemos saber.'
             }
             required={isMessage}
+            maxLength={isMessage ? 4000 : undefined}
           />
         </div>
 

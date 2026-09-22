@@ -3,7 +3,7 @@ import { CalendarDays, FileText, Home, LogOut, MessageCircle, Sparkles, type Luc
 import { logout } from '@/lib/api'
 import { firstName, initials } from '@/lib/format'
 import { cn } from './ui'
-import logoMD from '@/assets/logo-md.png'
+import logoMD from '@/assets/brand/md-monogram-brown.webp'
 import { useAplicativoInstalado } from '@/lib/standalone'
 
 export type SectionId = 'inicio' | 'consultas' | 'jornada' | 'prescricoes' | 'mensagens'
@@ -52,12 +52,13 @@ export function AppShell({
         <div className="px-6 py-6 border-b border-border">
           {/* Sem `whitespace-nowrap`: a sidebar encolhe em tablet e o nome
               precisa poder quebrar em duas linhas em vez de vazar a coluna. */}
-          <p className="font-display text-[0.95rem] tracking-[0.14em] uppercase text-primary leading-tight">
-            Dra. Marcela Duch
-          </p>
-          <p className="mt-1 text-[0.6rem] tracking-[0.25em] uppercase text-muted-foreground">
-            Portal da paciente
-          </p>
+          <div className="flex items-center gap-3">
+            <img src={logoMD} alt="Monograma Dra. Marcela Duch" className="h-10 w-10 object-contain shrink-0" width={40} height={40} />
+            <div>
+              <p className="font-display text-[0.95rem] tracking-[0.14em] uppercase text-primary leading-tight">Dra. Marcela Duch</p>
+              <p className="mt-1 text-[0.6rem] tracking-[0.25em] uppercase text-muted-foreground">Portal da paciente</p>
+            </div>
+          </div>
         </div>
 
         {/* `min-h-0` é o que permite encolher: sem ele o `flex-1` respeita o

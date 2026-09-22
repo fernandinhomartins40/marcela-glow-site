@@ -1,4 +1,4 @@
-import { CalendarDays, CalendarPlus, Clock, type LucideIcon } from 'lucide-react'
+import { CalendarDays, CalendarPlus, ChevronRight, Clock, type LucideIcon } from 'lucide-react'
 import type { Appointment } from '@/lib/api'
 import { appointmentStatus, formatFriendlyDateTime, formatRelative } from '@/lib/format'
 import { StatusChip } from './ui'
@@ -10,9 +10,11 @@ import { StatusChip } from './ui'
 export function NextAppointment({
   appointment,
   onRequest,
+  onDetails,
 }: {
   appointment: Appointment | null
   onRequest: () => void
+  onDetails?: () => void
 }) {
   if (!appointment) {
     return (
@@ -42,44 +44,49 @@ export function NextAppointment({
   const title = appointment.procedure?.title ?? 'Consulta de avaliação'
 
   return (
-    <section className="panel panel-pad bg-[hsl(var(--espresso))] border-transparent">
+    <section className="panel panel-pad bg-white">
       <div className="flex flex-wrap items-center gap-3">
-        <p className="label-eyebrow text-[hsl(var(--bronze-light))]">Seu próximo passo</p>
+        <p className="label-eyebrow">Sua próxima consulta</p>
         <StatusChip label={status.label} tone={status.tone} />
       </div>
 
-      <h2 className="mt-3 font-display text-2xl sm:text-3xl text-[hsl(var(--cream))]">{title}</h2>
+      <h2 className="mt-3 font-display text-2xl sm:text-3xl text-primary">{title}</h2>
 
       {when ? (
-        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-[hsl(var(--cream))]/85">
+        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-foreground">
           <span className="inline-flex items-center gap-2 text-[0.95rem]">
-            <CalendarDays size={16} className="text-[hsl(var(--bronze-light))]" aria-hidden="true" />
+            <CalendarDays size={16} className="text-accent" aria-hidden="true" />
             {when}
           </span>
           {relative && (
-            <span className="inline-flex items-center gap-2 text-sm text-[hsl(var(--cream))]/55">
-              <Clock size={15} className="text-[hsl(var(--bronze-light))]" aria-hidden="true" />
+            <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock size={15} className="text-accent" aria-hidden="true" />
               {relative}
             </span>
           )}
         </div>
       ) : (
-        <p className="mt-4 text-sm text-[hsl(var(--cream))]/60 leading-relaxed max-w-md">
+        <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-md">
           Sua solicitação foi recebida. A equipe entrará em contato para confirmar
           a melhor data e horário.
         </p>
       )}
 
       {appointment.message && (
-        <p className="mt-4 pt-4 border-t border-[hsl(var(--cream))]/15 text-sm text-[hsl(var(--cream))]/60 leading-relaxed">
+        <p className="mt-4 pt-4 border-t text-sm text-muted-foreground leading-relaxed">
           {appointment.message}
         </p>
       )}
 
       {appointment.status === 'PENDING' && (
-        <p className="mt-5 border-l-2 border-[hsl(var(--bronze-light))] pl-3 text-xs leading-relaxed text-[hsl(var(--cream))]/60">
+        <p className="mt-5 border-l-2 border-accent pl-3 text-xs leading-relaxed text-muted-foreground">
           Ainda não é uma reserva confirmada. A equipe está conferindo a agenda e vai avisar você assim que finalizar.
         </p>
+      )}
+      {onDetails && (
+        <button type="button" onClick={onDetails} className="btn mt-6 w-full justify-center bg-[hsl(var(--espresso))] text-[hsl(var(--cream))] hover:opacity-90">
+          Ver detalhes <ChevronRight size={17} aria-hidden="true" />
+        </button>
       )}
     </section>
   )

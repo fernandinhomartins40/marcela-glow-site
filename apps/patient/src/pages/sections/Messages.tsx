@@ -5,7 +5,7 @@ import { MessagesList } from '@/components/sections'
 export function MessagesPage({ data }: { data: DashboardData }) {
   return (
     <div className="space-y-6">
-      <RequestCare procedures={data.procedures} />
+      <RequestCare procedures={data.procedures} initialIntent="message" />
       <MessagesList messages={data.messages} />
     </div>
   )

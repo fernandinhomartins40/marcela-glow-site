@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "file": "dra-marcela-editorial-limpa-v1.png",
+      "format": "png",
+      "bytes": 1908727,
+      "responsive_variant": "shared",
+      "purpose": "Candidata de retrato real limpo para hero e blocos editoriais; aprovar identidade antes de uso.",
+      "component": "apps/web/src/components/Hero.tsx",
+      "rendered_width": "até 34svh no hero e 100% em blocos editoriais",
+      "object_fit": "cover",
+      "object_position": "50% 42%",
+      "srcset_sizes": "(max-width: 767px) 80vw, 34svh",
+      "fallback": "apps/web/src/assets/dra-marcela-editorial.jpg",
+      "alt": "Dra. Marcela Duch",
+      "width": 1109,
+      "height": 1419,
+      "aspect_ratio": 0.7815
+    },
+    {
+      "file": "dra-marcela-portrait-limpa-v1.png",
+      "format": "png",
+      "bytes": 1951745,
+      "responsive_variant": "shared",
+      "purpose": "Candidata de retrato real limpo para seção sobre a médica; aprovar identidade antes de uso.",
+      "component": "apps/web/src/components/About.tsx",
+      "rendered_width": "min(100%, 34rem)",
+      "object_fit": "cover",
+      "object_position": "50% 34%",
+      "srcset_sizes": "(max-width: 767px) 100vw, 34rem",
+      "fallback": "apps/web/src/assets/dra-marcela-portrait.jpg",
+      "alt": "Dra. Marcela Duch",
+      "width": 1108,
+      "height": 1419,
+      "aspect_ratio": 0.7808
+    }
+  ]
+}

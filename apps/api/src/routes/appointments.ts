@@ -14,6 +14,7 @@ import {
 } from '../lib/scheduling'
 import { buildWhatsAppLink, stripWhatsAppMarkup, type MessageKind } from '../lib/whatsapp'
 import { sendMail } from '../lib/mailer'
+import { publicAppointmentReceipt } from '../lib/public-appointment-receipt'
 
 const router = Router()
 
@@ -245,7 +246,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       })
     }
 
-    res.status(201).json(appointment)
+    res.status(201).json(publicAppointmentReceipt(appointment))
   } catch (err) {
     next(err)
   }

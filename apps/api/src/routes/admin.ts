@@ -9,7 +9,9 @@ import { addDays, randomToken, sha256 } from '../lib/security'
 import { buildStorageKey, presignDownload, presignUpload, publicFileUrl, s3Bucket, storageConfigured } from '../lib/storage'
 import { avisarPaciente, sendPatientPush } from '../lib/push'
 import { rolePermissions } from '../lib/permissions'
+import { dashboardVisibility } from '../lib/dashboard-visibility'
 import { publicBaseUrl, sendMail } from '../lib/mailer'
+import { messageInputSchema } from '../lib/message-input'
 
 const router = Router()
 const staffOnly = [authenticate, requireStaff]
@@ -238,6 +240,10 @@ router.use(...staffOnly)
 router.get('/dashboard', requirePermission('DASHBOARD_READ'), async (req: Request, res: Response, next: NextFunction) => {
   try {
     const tenantId = req.user!.tenantId
+    /* DASHBOARD_READ permite abrir a central do dia, mas não concede acesso
+       implícito a caixa, documentos ou leads. Filtrar na resposta da API é
+       necessário: esconder cartões apenas no frontend não protege os dados. */
+    const visibilidade = dashboardVisibility(req.user!)
     const agora = new Date()
 
     const inicioDoDia = new Date(agora)
@@ -386,30 +392,30 @@ router.get('/dashboard', requirePermission('DASHBOARD_READ'), async (req: Reques
     const taxaCancelamento = totalJulgado ? Math.round((cancelamentos30 / totalJulgado) * 100) : 0
 
     res.json({
-      hoje: hoje.map(comInicioEFim),
-      proximos: proximos.map(comInicioEFim),
+      hoje: visibilidade.agendamentos ? hoje.map(comInicioEFim) : [],
+      proximos: visibilidade.agendamentos ? proximos.map(comInicioEFim) : [],
       pendencias: {
-        aConfirmar,
-        semHorario,
-        receitasParaAssinar,
-        leadsParados,
+        aConfirmar: visibilidade.confirmarAgendamentos ? aConfirmar : 0,
+        semHorario: visibilidade.confirmarAgendamentos ? semHorario : 0,
+        receitasParaAssinar: visibilidade.assinarReceitas ? receitasParaAssinar : 0,
+        leadsParados: visibilidade.gerirLeads ? leadsParados : 0,
       },
-      mes: {
+      mes: visibilidade.financeiro ? {
         receitaCents: receitaMes,
         receitaMesPassadoCents: receitaMesPassado,
         atendimentos: atendimentosMes,
         pacientesNovos: pacientesNovosMes,
         ticketMedioCents: atendimentosMes ? Math.round(receitaMes / atendimentosMes) : 0,
-      },
-      saude: {
+      } : null,
+      saude: visibilidade.agendamentos ? {
         taxaCancelamento,
         cancelados30: cancelamentos30,
         concluidos30: concluidos30,
-      },
-      aniversariantes,
-      funil: Object.fromEntries(
+      } : null,
+      aniversariantes: visibilidade.lerPacientes ? aniversariantes : [],
+      funil: visibilidade.lerLeads ? Object.fromEntries(
         leadsPorEtapa.map((linha: { status: string; _count: number }) => [linha.status, linha._count]),
-      ),
+      ) : {},
     })
   } catch (err) {
     next(err)
@@ -520,6 +526,30 @@ router.post('/patients', requirePermission('PATIENT_WRITE'), async (req, res, ne
   }
 })
 
+// Uma conversa precisa de ação quando a última mensagem é da paciente.
+// O resumo não inclui o texto, que deve ser lido apenas dentro da ficha.
+router.get('/message-inbox', requirePermission('PATIENT_READ'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const tenantId = req.user!.tenantId
+    const rows = await prisma.$queryRaw<{ patientId: string; patientName: string; lastAt: Date }[]>`
+      SELECT latest."patientId", p."name" AS "patientName", latest."createdAt" AS "lastAt"
+      FROM (
+        SELECT DISTINCT ON (m."patientId") m."patientId", m."sender", m."createdAt"
+        FROM "Message" m
+        WHERE m."tenantId" = ${tenantId}
+        ORDER BY m."patientId", m."createdAt" DESC, m."id" DESC
+      ) latest
+      JOIN "Patient" p ON p."id" = latest."patientId" AND p."tenantId" = ${tenantId}
+      WHERE latest."sender" = 'PATIENT'
+      ORDER BY latest."createdAt" DESC
+      LIMIT 30
+    `
+    res.json(rows)
+  } catch (err) {
+    next(err)
+  }
+})
+
 router.get('/patients/:id', requirePermission('PATIENT_READ', 'RECORD_READ'), async (req, res, next) => {
   try {
     const patient = await prisma.patient.findFirst({
@@ -540,6 +570,33 @@ router.get('/patients/:id', requirePermission('PATIENT_READ', 'RECORD_READ'), as
     if (!patient) throw new NotFoundError('Paciente')
     await audit(req, 'READ', 'patient', patient.id, { includesMedicalRecord: true })
     res.json(patient)
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.post('/patients/:id/messages', requirePermission('PATIENT_WRITE'), async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const body = messageInputSchema.parse(req.body)
+    const tenantId = req.user!.tenantId
+    const patientId = String(req.params.id)
+    const patient = await prisma.patient.findFirst({
+      where: { id: patientId, tenantId },
+      select: { id: true },
+    })
+    if (!patient) throw new NotFoundError('Paciente')
+
+    const message = await prisma.message.create({
+      data: { body: body.body, sender: 'STAFF', patientId, tenantId },
+    })
+    await audit(req, 'CREATE', 'message', message.id, { patientId })
+    // A resposta já foi gravada: falha no aviso não pode induzir novo envio e duplicar a conversa.
+    await avisarPaciente(tenantId, patientId, {
+      title: 'Nova resposta da equipe',
+      body: 'A equipe respondeu sua mensagem. Abra o portal para ler.',
+      url: '/paciente/mensagens',
+    }).catch(() => undefined)
+    res.status(201).json(message)
   } catch (err) {
     next(err)
   }

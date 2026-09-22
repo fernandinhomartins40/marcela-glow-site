@@ -104,6 +104,12 @@ export interface AppointmentPayload {
   scheduledAt?: string
 }
 
+export interface PublicAppointmentReceipt {
+  id: string
+  status: 'PENDING'
+  scheduledAt: string | null
+}
+
 export interface Slot {
   startsAt: string
   endsAt: string
@@ -126,8 +132,8 @@ export const availabilityApi = {
 }
 
 export const appointmentsApi = {
-  create: async (payload: AppointmentPayload): Promise<Appointment> => {
-    const { data } = await api.post<Appointment>('/appointments', {
+  create: async (payload: AppointmentPayload): Promise<PublicAppointmentReceipt> => {
+    const { data } = await api.post<PublicAppointmentReceipt>('/appointments', {
       ...payload,
       tenantSlug: TENANT_SLUG,
     })

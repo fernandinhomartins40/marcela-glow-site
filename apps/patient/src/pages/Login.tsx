@@ -3,6 +3,8 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { api, getErrorMessage, TOKEN_KEY, tenantSlug } from '@/lib/api'
 import { Feedback } from '@/components/ui'
 import marbleTexture from '@/assets/marble-texture.jpg'
+import monogramBrown from '@/assets/brand/md-monogram-brown.webp'
+import monogramWhite from '@/assets/brand/md-monogram-white.webp'
 import { Splash, useAbertura } from '@/components/Splash'
 import { useAplicativoInstalado } from '@/lib/standalone'
 
@@ -76,13 +78,16 @@ export function Login() {
           style={{ backgroundImage: `url(${marbleTexture})` }}
           aria-hidden="true"
         />
-        <div className="relative">
+        <div className="relative flex items-center gap-4">
+          <img src={monogramWhite} alt="Monograma Dra. Marcela Duch" className="h-12 w-12 object-contain" width={48} height={48} />
+          <div>
           <p className="font-display text-lg tracking-[0.25em] uppercase text-[hsl(var(--cream))]">
             Dra. Marcela Duch
           </p>
           <p className="mt-1.5 text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))]">
             Médica · CRM/MS 5691
           </p>
+          </div>
         </div>
 
         <div className="relative">
@@ -110,7 +115,7 @@ export function Login() {
           <div className="lg:hidden mb-8 text-center">
             {comoApp && (
               <span className="auth-mono mx-auto" aria-hidden="true">
-                MD
+                <img src={monogramBrown} alt="" className="h-10 w-10 object-contain" width={40} height={40} />
               </span>
             )}
             <p className="font-display text-base tracking-[0.2em] uppercase text-primary">

@@ -271,7 +271,7 @@ export function MessagesList({ messages }: { messages: Message[] }) {
   return (
     <Panel title="Canal direto" icon={MessageCircle}>
       <div className="panel-pad space-y-3">
-        {messages.map((message) => {
+        {[...messages].reverse().map((message) => {
           const isPatient = message.sender === 'PATIENT'
           return (
             <div

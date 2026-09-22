@@ -29,8 +29,8 @@ export type AdminTab =
   | 'security'
   | 'settings'
 
-export function AdminPanel({ tab, data, currentUserId }: { tab: AdminTab; data: any; currentUserId?: string }) {
-  if (tab === 'dashboard') return <Dashboard data={data.dashboard} />
+export function AdminPanel({ tab, data, currentUserId, permissions }: { tab: AdminTab; data: any; currentUserId?: string; permissions: string[] }) {
+  if (tab === 'dashboard') return <Dashboard data={data.dashboard} permissions={permissions} />
   if (tab === 'reception') return <Reception />
   if (tab === 'patients') return <Patients />
   if (tab === 'appointments') return <Schedule appointments={data.appointments} />
@@ -44,9 +44,35 @@ export function AdminPanel({ tab, data, currentUserId }: { tab: AdminTab; data: 
   return <SettingsPage settings={data.settings} />
 }
 
+/** Uma parada de Tab por conjunto; setas, Home e End movem foco e seleção. */
+function navegarAbas(event: React.KeyboardEvent<HTMLDivElement>) {
+  const teclas = ['ArrowLeft', 'ArrowRight', 'Home', 'End']
+  if (!teclas.includes(event.key)) return
+  const abas = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'))
+  if (!abas.length) return
+  const atual = abas.findIndex((aba) => aba === document.activeElement)
+  if (atual < 0) return
+  event.preventDefault()
+  const proxima = event.key === 'Home' ? 0
+    : event.key === 'End' ? abas.length - 1
+    : (atual + (event.key === 'ArrowRight' ? 1 : -1) + abas.length) % abas.length
+  abas[proxima].focus()
+  abas[proxima].click()
+}
+
 
 function RegistryPage() {
-  const [area, setArea] = React.useState<'procedures' | 'medications' | 'exams' | 'guidance' | 'doctemplates'>('procedures')
+  const [params, setParams] = useSearchParams()
+  const areasValidas = ['procedures', 'medications', 'exams', 'guidance', 'doctemplates'] as const
+  type RegistryArea = typeof areasValidas[number]
+  const pedida = params.get('aba')
+  const area: RegistryArea = areasValidas.includes(pedida as RegistryArea) ? pedida as RegistryArea : 'procedures'
+  const setArea = (proxima: RegistryArea) => setParams((atual) => {
+    const novos = new URLSearchParams(atual)
+    if (proxima === 'procedures') novos.delete('aba')
+    else novos.set('aba', proxima)
+    return novos
+  })
   const areas = [
     ['procedures', 'Procedimentos da clínica'],
     ['medications', 'Medicamentos'],
@@ -57,59 +83,75 @@ function RegistryPage() {
 
   return (
     <>
-      <div className="area-tabs" role="tablist">
+      <div className="area-tabs" role="tablist" aria-label="Cadastros clínicos" onKeyDown={navegarAbas}>
         {areas.map(([id, label]) => (
-          <button key={id} role="tab" aria-selected={area === id} className={area === id ? 'active' : ''} onClick={() => setArea(id)}>
+          <button key={id} id={`aba-${id}`} type="button" role="tab" tabIndex={area === id ? 0 : -1} aria-selected={area === id} aria-controls={`painel-${id}`} className={area === id ? 'active' : ''} onClick={() => setArea(id)}>
             {label}
           </button>
         ))}
       </div>
-      {area === 'procedures' && <Procedures />}
-      {area === 'medications' && <ClinicalCatalog only="MEDICATION" />}
-      {area === 'exams' && <ClinicalCatalog only="EXAM" />}
-      {area === 'guidance' && <ClinicalCatalog only={['GUIDANCE', 'RECORD_TEMPLATE']} />}
-      {area === 'doctemplates' && <DocumentTemplates />}
+      <div id={`painel-${area}`} role="tabpanel" aria-labelledby={`aba-${area}`}>
+        {area === 'procedures' && <Procedures />}
+        {area === 'medications' && <ClinicalCatalog only="MEDICATION" />}
+        {area === 'exams' && <ClinicalCatalog only="EXAM" />}
+        {area === 'guidance' && <ClinicalCatalog only={['GUIDANCE', 'RECORD_TEMPLATE']} />}
+        {area === 'doctemplates' && <DocumentTemplates />}
+      </div>
     </>
   )
 }
 
 function SitePage({ cms }: { cms: any }) {
-  const [area, setArea] = React.useState<'landing' | 'publicacoes'>('landing')
+  const [params, setParams] = useSearchParams()
+  const area = params.get('aba') === 'publicacoes' ? 'publicacoes' : 'landing'
+  const setArea = (proxima: 'landing' | 'publicacoes') => setParams((atual) => {
+    const novos = new URLSearchParams(atual)
+    if (proxima === 'landing') novos.delete('aba')
+    else novos.set('aba', proxima)
+    return novos
+  })
   return (
     <div className="grid" style={{ gap: 14 }}>
-      <div className="area-tabs" role="tablist" aria-label="Conteúdo do site">
-        <button role="tab" aria-selected={area === 'landing'} aria-controls="painel-landing" className={area === 'landing' ? 'active' : ''} onClick={() => setArea('landing')}>
+      <div className="area-tabs" role="tablist" aria-label="Conteúdo do site" onKeyDown={navegarAbas}>
+        <button id="aba-landing" type="button" role="tab" tabIndex={area === 'landing' ? 0 : -1} aria-selected={area === 'landing'} aria-controls="painel-landing" className={area === 'landing' ? 'active' : ''} onClick={() => setArea('landing')}>
           Landing page
         </button>
-        <button role="tab" aria-selected={area === 'publicacoes'} aria-controls="painel-publicacoes" className={area === 'publicacoes' ? 'active' : ''} onClick={() => setArea('publicacoes')}>
+        <button id="aba-publicacoes" type="button" role="tab" tabIndex={area === 'publicacoes' ? 0 : -1} aria-selected={area === 'publicacoes'} aria-controls="painel-publicacoes" className={area === 'publicacoes' ? 'active' : ''} onClick={() => setArea('publicacoes')}>
           Páginas e publicações
         </button>
       </div>
       {area === 'landing' ? (
-        <div id="painel-landing" role="tabpanel"><Landing /></div>
+        <div id="painel-landing" role="tabpanel" aria-labelledby="aba-landing"><Landing /></div>
       ) : (
-        <div id="painel-publicacoes" role="tabpanel"><Cms cms={cms} /></div>
+        <div id="painel-publicacoes" role="tabpanel" aria-labelledby="aba-publicacoes"><Cms cms={cms} /></div>
       )}
     </div>
   )
 }
 
 function SecurityPage({ data, currentUserId }: { data: any; currentUserId?: string }) {
-  const [area, setArea] = React.useState<'equipe' | 'auditoria'>('equipe')
+  const [params, setParams] = useSearchParams()
+  const area = params.get('aba') === 'auditoria' ? 'auditoria' : 'equipe'
+  const setArea = (proxima: 'equipe' | 'auditoria') => setParams((atual) => {
+    const novos = new URLSearchParams(atual)
+    if (proxima === 'equipe') novos.delete('aba')
+    else novos.set('aba', proxima)
+    return novos
+  })
   return (
     <div className="grid" style={{ gap: 14 }}>
-      <div className="area-tabs" role="tablist" aria-label="Equipe e acessos">
-        <button role="tab" aria-selected={area === 'equipe'} aria-controls="painel-equipe" className={area === 'equipe' ? 'active' : ''} onClick={() => setArea('equipe')}>
+      <div className="area-tabs" role="tablist" aria-label="Equipe e acessos" onKeyDown={navegarAbas}>
+        <button id="aba-equipe" type="button" role="tab" tabIndex={area === 'equipe' ? 0 : -1} aria-selected={area === 'equipe'} aria-controls="painel-equipe" className={area === 'equipe' ? 'active' : ''} onClick={() => setArea('equipe')}>
           Equipe e permissões
         </button>
-        <button role="tab" aria-selected={area === 'auditoria'} aria-controls="painel-auditoria" className={area === 'auditoria' ? 'active' : ''} onClick={() => setArea('auditoria')}>
+        <button id="aba-auditoria" type="button" role="tab" tabIndex={area === 'auditoria' ? 0 : -1} aria-selected={area === 'auditoria'} aria-controls="painel-auditoria" className={area === 'auditoria' ? 'active' : ''} onClick={() => setArea('auditoria')}>
           Auditoria LGPD
         </button>
       </div>
       {area === 'equipe' ? (
-        <div id="painel-equipe" role="tabpanel"><Team currentUserId={currentUserId} /></div>
+        <div id="painel-equipe" role="tabpanel" aria-labelledby="aba-equipe"><Team currentUserId={currentUserId} /></div>
       ) : (
-        <div id="painel-auditoria" role="tabpanel">
+        <div id="painel-auditoria" role="tabpanel" aria-labelledby="aba-auditoria">
           <List title="Registro de acessos" items={data.audit} pick={(entry: any) => `${entry.action} ${entry.resource} - ${entry.user?.name ?? entry.patient?.name ?? 'sistema'}`} />
         </div>
       )}
@@ -133,14 +175,20 @@ function SettingsPage({ settings }: { settings: any }) {
   const area =
     abaPedida === 'certificate' || abaPedida === 'apps' ? abaPedida : 'schedule'
   const setArea = (proxima: 'schedule' | 'certificate' | 'apps') =>
-    setParams(proxima === 'schedule' ? {} : { aba: proxima }, { replace: true })
+    setParams((atual) => {
+      const novos = new URLSearchParams(atual)
+      if (proxima === 'schedule') novos.delete('aba')
+      else novos.set('aba', proxima)
+      return novos
+    })
   return (
     <div className="grid" style={{ gap: 14 }}>
-      <div className="area-tabs" role="tablist">
-        <button role="tab" aria-selected={area === 'schedule'} className={area === 'schedule' ? 'active' : ''} onClick={() => setArea('schedule')}>Agenda</button>
-        <button role="tab" aria-selected={area === 'certificate'} className={area === 'certificate' ? 'active' : ''} onClick={() => setArea('certificate')}>Certificado digital</button>
-        <button role="tab" aria-selected={area === 'apps'} className={area === 'apps' ? 'active' : ''} onClick={() => setArea('apps')}>Aplicativos</button>
+      <div className="area-tabs" role="tablist" aria-label="Ajustes da clínica" onKeyDown={navegarAbas}>
+        <button id="aba-schedule" type="button" role="tab" tabIndex={area === 'schedule' ? 0 : -1} aria-selected={area === 'schedule'} aria-controls="painel-schedule" className={area === 'schedule' ? 'active' : ''} onClick={() => setArea('schedule')}>Agenda</button>
+        <button id="aba-certificate" type="button" role="tab" tabIndex={area === 'certificate' ? 0 : -1} aria-selected={area === 'certificate'} aria-controls="painel-certificate" className={area === 'certificate' ? 'active' : ''} onClick={() => setArea('certificate')}>Certificado digital</button>
+        <button id="aba-apps" type="button" role="tab" tabIndex={area === 'apps' ? 0 : -1} aria-selected={area === 'apps'} aria-controls="painel-apps" className={area === 'apps' ? 'active' : ''} onClick={() => setArea('apps')}>Aplicativos</button>
       </div>
+      <div id={`painel-${area}`} role="tabpanel" aria-labelledby={`aba-${area}`}>
       {area === 'apps' ? (
         <PwaSettings />
       ) : area === 'certificate' ? (
@@ -158,6 +206,7 @@ function SettingsPage({ settings }: { settings: any }) {
           </section>
         </>
       )}
+      </div>
     </div>
   )
 }

@@ -1,7 +1,8 @@
 import React from 'react'
 import { api, errorMessage, tenantSlug, TOKEN_KEY } from '../lib/ui'
-import draPortrait from '../assets/dra-marcela-portrait.jpg'
-import marbleTexture from '../assets/marble-texture.jpg'
+import draPortrait from '../assets/dra-marcela-portrait-limpa-v1.png'
+import marbleTexture from '../assets/hero-regeneracao-desktop-v1.png'
+import monogramBrown from '../assets/brand/md-monogram-brown.webp'
 import { Splash, useAbertura } from '../components/Splash'
 import { useAplicativoInstalado } from '../lib/standalone'
 
@@ -76,7 +77,7 @@ export function Login() {
           <div>
             {comoApp && (
               <span className="auth-mono" aria-hidden="true">
-                MD
+                <img src={monogramBrown} alt="" width={40} height={40} />
               </span>
             )}
             <span className="eyebrow">Acesso da equipe</span>

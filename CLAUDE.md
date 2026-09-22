@@ -161,6 +161,23 @@ corrigiu e o que ficou pendente. Sem isso a proxima refaz o mesmo caminho.
 
 ### Registro
 
+**2026-09-22 — dashboard respeita permissões de cada domínio**
+
+Na modernização da central operacional, a rota `/api/admin/dashboard` exigia
+`DASHBOARD_READ`, mas devolvia receita e ticket médio também ao perfil STAFF.
+O painel ainda oferecia atalhos para Recepção, Documentos e Atendimento a
+perfis que não podiam abrir essas áreas. Corrigido na resposta da API com
+`dashboardVisibility`: caixa, agenda, pendências clínicas, leads e aniversários
+só são enviados conforme a permissão do domínio. No CRM, cartões e atalhos
+respeitam as mesmas capacidades e a confirmação segue para Agenda quando o
+perfil não opera a Recepção. Quatro testes novos cobrem os papéis e a projeção
+dos campos sensíveis; os testes de navegação foram atualizados para os destinos
+por perfil. Build de API/CRM, 68 testes de API e 23 do CRM passaram.
+
+Pendente: validar visualmente e executar a jornada por papel em navegador com
+backend e banco descartável; a ferramenta de navegador não estava disponível
+nesta sessão. Um build verde não prova essa interação.
+
 **2026-09-22 — o hash de senha saia nas respostas da API**
 
 Encontrado sem procurar, ao conferir se o painel funcionava depois de uma
@@ -348,6 +365,8 @@ Duas armadilhas ao ler o resultado:
   de so dar `tail`.
 
 ## Convencoes
+
+- O POST público de `/appointments` devolve apenas comprovante (`id`, `status`, `scheduledAt`). O objeto com `patient`, contatos e campos operacionais é exclusivo de rotas autenticadas; preservar essa separação ao evoluir o agendamento.
 
 - **Sempre conversar em portugues do Brasil (pt-BR) no chat**, em toda resposta
   e em qualquer contexto — inclusive apos compactacao da conversa, ao retomar

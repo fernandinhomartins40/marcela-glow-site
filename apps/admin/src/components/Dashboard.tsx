@@ -64,8 +64,8 @@ export interface DashboardData {
     atendimentos: number
     pacientesNovos: number
     ticketMedioCents: number
-  }
-  saude: { taxaCancelamento: number; cancelados30: number; concluidos30: number }
+  } | null
+  saude: { taxaCancelamento: number; cancelados30: number; concluidos30: number } | null
   aniversariantes: { id: string; name: string; birthDate: string }[]
   funil: Record<string, number>
 }
@@ -81,15 +81,16 @@ const diaCurto = (iso: string | null) =>
     ? new Date(iso).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' })
     : ''
 
-export function Dashboard({ data }: { data: DashboardData }) {
+export function Dashboard({ data, permissions }: { data: DashboardData; permissions: string[] }) {
   const navigate = useNavigate()
   const { pendencias, mes, saude, hoje, proximos, aniversariantes } = data
+  const pode = (permissao: string) => permissions.includes(permissao)
+  const destinoConfirmacao = pode('FINANCE_OPERATE') ? '/reception' : '/appointments'
 
   const totalPendente =
-    pendencias.aConfirmar +
-    pendencias.semHorario +
-    pendencias.receitasParaAssinar +
-    pendencias.leadsParados
+    (pode('APPOINTMENT_WRITE') ? pendencias.aConfirmar + pendencias.semHorario : 0) +
+    (pode('PRESCRIPTION_SIGN') ? pendencias.receitasParaAssinar : 0) +
+    (pode('LEAD_WRITE') ? pendencias.leadsParados : 0)
 
   /* A próxima consulta ainda por vir hoje — o relógio da recepção. Uma consulta
      que já começou continua sendo "a de agora" até terminar. */
@@ -111,40 +112,40 @@ export function Dashboard({ data }: { data: DashboardData }) {
             Precisa de você
           </h2>
           <div className="painel-alertas-grade">
-            <Pendencia
+            {pode('APPOINTMENT_WRITE') && <Pendencia
               n={pendencias.aConfirmar}
               icone={CalendarClock}
               titulo="a confirmar"
               texto="Horário marcado que ninguém confirmou com a paciente."
-              acao={() => navigate('/reception')}
-            />
-            <Pendencia
+              acao={() => navigate(destinoConfirmacao)}
+            />}
+            {pode('APPOINTMENT_WRITE') && <Pendencia
               n={pendencias.semHorario}
               icone={ClipboardList}
               titulo="sem horário"
               texto="Pedido que chegou pelo site e ainda não foi encaixado."
-              acao={() => navigate('/reception')}
-            />
-            <Pendencia
+              acao={() => navigate(destinoConfirmacao)}
+            />}
+            {pode('PRESCRIPTION_SIGN') && <Pendencia
               n={pendencias.receitasParaAssinar}
               icone={FileSignature}
               titulo="por assinar"
               texto="Documento escrito e não assinado — a paciente não pode usar."
               acao={() => navigate('/documents')}
-            />
-            <Pendencia
+            />}
+            {pode('LEAD_WRITE') && <Pendencia
               n={pendencias.leadsParados}
               icone={Snowflake}
               titulo="contatos parados"
               texto="Sem movimento há mais de 30 dias no funil."
               acao={() => navigate('/leads')}
-            />
+            />}
           </div>
         </section>
       )}
 
       <div className="painel-corpo">
-        <section className="painel-card painel-dia">
+        {pode('APPOINTMENT_READ') && <section className="painel-card painel-dia">
           <header>
             <div>
               <h2>
@@ -158,14 +159,14 @@ export function Dashboard({ data }: { data: DashboardData }) {
               </p>
             </div>
             <div className="painel-acoes">
-              <button type="button" onClick={() => navigate('/appointments')}>
+              {pode('APPOINTMENT_WRITE') && <button type="button" onClick={() => navigate('/appointments')}>
                 <Plus size={14} aria-hidden="true" />
                 Novo agendamento
-              </button>
-              <button type="button" onClick={() => navigate('/patients')}>
+              </button>}
+              {pode('PATIENT_WRITE') && <button type="button" onClick={() => navigate('/patients')}>
                 <UserPlus size={14} aria-hidden="true" />
                 Nova paciente
-              </button>
+              </button>}
             </div>
           </header>
 
@@ -183,8 +184,8 @@ export function Dashboard({ data }: { data: DashboardData }) {
                 {' · '}
                 {(emAndamento ?? proximaHoje)!.procedure?.title ?? 'Consulta'}
               </span>
-              <button type="button" onClick={() => navigate('/encounter')}>
-                Abrir atendimento
+              <button type="button" onClick={() => navigate(pode('RECORD_WRITE') ? '/encounter' : '/appointments')}>
+                {pode('RECORD_WRITE') ? 'Abrir atendimento' : 'Ver na agenda'}
                 <ArrowRight size={13} aria-hidden="true" />
               </button>
             </div>
@@ -225,9 +226,9 @@ export function Dashboard({ data }: { data: DashboardData }) {
               })}
             </ol>
           )}
-        </section>
+        </section>}
 
-        <section className="painel-card">
+        {mes && <section className="painel-card">
           <header>
             <div>
               <h2>O mês</h2>
@@ -240,9 +241,9 @@ export function Dashboard({ data }: { data: DashboardData }) {
             <Numero rotulo="Ticket médio" valor={dinheiro(mes.ticketMedioCents)} />
             <Numero rotulo="Pacientes novas" valor={String(mes.pacientesNovos)} />
           </div>
-        </section>
+        </section>}
 
-        <section className="painel-card">
+        {pode('APPOINTMENT_READ') && <section className="painel-card">
           <header>
             <div>
               <h2>Próximos sete dias</h2>
@@ -273,9 +274,9 @@ export function Dashboard({ data }: { data: DashboardData }) {
               ))}
             </ol>
           )}
-        </section>
+        </section>}
 
-        <section className="painel-card">
+        {saude && <section className="painel-card">
           <header>
             <div>
               <h2>Faltas e cancelamentos</h2>
@@ -295,9 +296,9 @@ export function Dashboard({ data }: { data: DashboardData }) {
               </p>
             </>
           )}
-        </section>
+        </section>}
 
-        <section className="painel-card">
+        {pode('PATIENT_READ') && <section className="painel-card">
           <header>
             <div>
               <h2>
@@ -323,7 +324,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
               ))}
             </ul>
           )}
-        </section>
+        </section>}
       </div>
     </div>
   )

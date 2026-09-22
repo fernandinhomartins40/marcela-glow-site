@@ -25,7 +25,7 @@ const FALLBACK: AppointmentContent = {
   titleBottom: "avaliação.",
   lead: "Entenda qual protocolo faz sentido para o seu momento.",
   disclaimer:
-    "O horário fica reservado como solicitação até a equipe confirmar — você recebe o aviso por WhatsApp e na Área da Paciente.",
+    "Este é um pedido de horário, não uma reserva confirmada. A equipe confere a agenda e entra em contato com você.",
   whatsapp: null,
 };
 
@@ -77,7 +77,7 @@ const Appointment = () => {
 
   const queryClient = useQueryClient();
 
-  const { data: procedures = [] } = useQuery({
+  const { data: procedures = [], isPending: proceduresPending, isError: proceduresError } = useQuery({
     queryKey: ["procedures"],
     queryFn: proceduresApi.list,
     staleTime: 5 * 60 * 1000,
@@ -106,6 +106,8 @@ const Appointment = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (mutation.isPending) return;
 
     if (!formData.name || !formData.email || !formData.phone) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
@@ -207,7 +209,7 @@ const Appointment = () => {
                 <ol className="mt-8 grid gap-3 sm:grid-cols-3">
                   {[
                     [ClipboardCheck, "Pedido recebido", "Sua solicitação já chegou à equipe."],
-                    [Clock3, "Confirmação", "Você recebe a confirmação pelo canal combinado."],
+                    [Clock3, "Confirmação", "A equipe confere a agenda e entra em contato."],
                     [UserRound, "Acompanhamento", "Se tiver acesso, acompanhe também pela Área da Paciente."],
                   ].map(([Icon, title, description]) => {
                     const StepIcon = Icon as typeof CheckCircle2;
@@ -309,7 +311,13 @@ const Appointment = () => {
 
                 <div>
                   <p className="mb-2 text-xs tracking-wide text-[hsl(var(--cream))]/70">Procedimento de interesse <span className="text-[hsl(var(--cream))]/45">(opcional)</span></p>
-                  <Select
+                  {proceduresPending || proceduresError || procedures.length === 0 ? (
+                    <p className="border-b border-[hsl(var(--cream))]/25 py-3 text-sm text-[hsl(var(--cream))]/65" role="status">
+                      {proceduresPending
+                        ? "Carregando procedimentos…"
+                        : "A lista de procedimentos não está disponível agora. Descreva seu interesse no campo abaixo; você ainda pode pedir uma avaliação."}
+                    </p>
+                  ) : <Select
                     value={formData.procedure}
                     onValueChange={(value) => setFormData({ ...formData, procedure: value })}
                   >
@@ -317,26 +325,13 @@ const Appointment = () => {
                       <SelectValue placeholder="Quero conversar sobre..." />
                     </SelectTrigger>
                     <SelectContent>
-                      {procedures.length > 0
-                        ? procedures.map((p) => (
-                            <SelectItem key={p.id} value={p.title}>
-                              {p.title}
-                            </SelectItem>
-                          ))
-                        : (
-                            <>
-                              <SelectItem value="Gerenciamento de Envelhecimento">Gerenciamento de Envelhecimento</SelectItem>
-                              <SelectItem value="Botox Full Face">Botox Full Face</SelectItem>
-                              <SelectItem value="Botox para Hiper-hidrose">Botox para Hiper-hidrose</SelectItem>
-                              <SelectItem value="Peptídeos e Regeneração Celular">Peptídeos e Regeneração Celular</SelectItem>
-                              <SelectItem value="Harmonização Facial">Harmonização Facial</SelectItem>
-                              <SelectItem value="Bioestimuladores de Colágeno">Bioestimuladores de Colágeno</SelectItem>
-                              <SelectItem value="T-Sculptor e Protocolos Corporais">T-Sculptor e Protocolos Corporais</SelectItem>
-                              <SelectItem value="Skinbooster e Peelings">Skinbooster e Peelings</SelectItem>
-                            </>
-                          )}
+                      {procedures.map((p) => (
+                        <SelectItem key={p.id} value={p.title}>
+                          {p.title}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
-                  </Select>
+                  </Select>}
                 </div>
 
                 <div>
@@ -393,8 +388,7 @@ const Appointment = () => {
                 </div>
 
                 <p className="text-xs leading-relaxed text-[hsl(var(--cream))]/50 font-light">
-                  * Campos obrigatórios. Ao enviar este formulário, você concorda com
-                  nossa política de privacidade.
+                  * Campos obrigatórios. Usaremos seus dados para responder a este pedido de avaliação.
                 </p>
 
                 <Button
