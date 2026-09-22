@@ -62,6 +62,15 @@ services:
     expose:
       - "9000"
       - "9001"
+    # Sem isto o minio-init corre contra a formatacao do pool: o container
+    # "inicia" em milissegundos, mas o servidor so aceita conexao depois de
+    # formatar o volume, e o `mc` recebia connection refused.
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
 
   minio-init:
     # Mesmo motivo do servico minio acima.
@@ -74,16 +83,30 @@ services:
     networks:
       - internal
     depends_on:
-      - minio
+      minio:
+        # `- minio` apenas esperava o container INICIAR. O servidor so aceita
+        # conexao depois de formatar o pool, e o `mc` levava connection
+        # refused; o deploy caia em "minio-init didn't complete successfully".
+        condition: service_healthy
+    # Os comandos eram separados por `;` e terminavam em `exit 0`: cada um
+    # rodava mesmo com o anterior falhando, e o servico reportava sucesso de
+    # qualquer jeito. Agora `set -e` para no primeiro erro e o codigo de saida
+    # e o real — sem bucket nao ha upload de imagem nem de documento, entao
+    # isto tem de derrubar o deploy em vez de passar calado.
+    #
+    # Nada de `#` aqui dentro: em bloco YAML `>` a linha vira comando, nao
+    # comentario.
+    #
+    # Sobre o `mc anonymous set download`: so o prefixo public/ abre sem
+    # assinatura, que e onde ficam logo e imagem de site — precisam carregar
+    # direto num documento impresso ou na landing. O resto do bucket guarda
+    # prontuario e continua exigindo link assinado.
     entrypoint: >
       /bin/sh -c "
+      set -e;
       mc alias set local http://minio:9000 ${S3_ACCESS_KEY_ID:-minio} ${S3_SECRET_ACCESS_KEY:-minio-secret};
       mc mb --ignore-existing local/${S3_BUCKET:-marcela-files};
-      # Só o prefixo public/ abre sem assinatura: é onde ficam logo e imagem de
-      # site, que precisam carregar direto num documento impresso ou na landing.
-      # O resto do bucket guarda prontuário e continua exigindo link assinado.
       mc anonymous set download local/${S3_BUCKET:-marcela-files}/public;
-      exit 0;
       "
 
   api:
