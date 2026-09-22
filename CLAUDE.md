@@ -141,6 +141,46 @@ corrigiu e o que ficou pendente. Sem isso a proxima refaz o mesmo caminho.
 
 ### Registro
 
+**2026-09-22 — o hash de senha saia nas respostas da API**
+
+Encontrado sem procurar, ao conferir se o painel funcionava depois de uma
+limpeza de dados: `/api/admin/patients` devolvia `passwordHash`. Medido
+endpoint a endpoint, eram quatro — a listagem de pacientes, o detalhe,
+`/api/patient/me` e **`/api/admin/users`, que entregava o hash bcrypt de toda
+a equipe a qualquer pessoa logada no painel**, recepcao inclusive.
+
+A causa nao era rota distraida: **`include` sem `select` traz a tabela
+inteira**, e `res.json(registro)` a devolve. Sao 32 usos de `prisma.patient.*`
+so nas rotas, entao corrigir os quatro casos deixaria o quinto nascer igual. O
+campo passou a sair na saida do cliente Prisma (`$extends` em
+`packages/database/src/index.ts`): consulta existente e futura ficam seguras
+por padrao, e escrita nao e afetada.
+
+O login precisa do hash para o `bcrypt.compare`, e para isso existe
+**`prismaAuth`** — tres pontos, e so eles: login da equipe, login da paciente
+e ativacao de conta no portal.
+
+**A excecao que quase virou defeito maior.** A ativacao decide por
+`existing?.passwordHash` se a conta ja tem senha. Com o cliente comum o campo
+vira `undefined`, a conta ativada pareceria nova e a senha seria sobrescrita
+por quem soubesse apenas o e-mail — exatamente o que o comentario daquele
+trecho proibe. Ler o trecho antes de trocar o cliente foi o que evitou trocar
+um vazamento por uma tomada de conta.
+
+O wrapper CommonJS do `apps/api/Dockerfile` foi junto, pelo motivo do registro
+de 08/09 abaixo: e ele que roda em producao, e sem a extensao ali `prismaAuth`
+seria `undefined` e nenhum login funcionaria.
+
+Travado com 11 testes em `apps/api/src/lib/segredos.test.ts`, **verificados
+falhando**: exportar o cliente cru como `prisma` quebra 2; trocar `prismaAuth`
+por `prisma` no login quebra 1.
+
+Aprendido, e vale como criterio de auditoria: **olhar o que a resposta carrega,
+nao so se ela responde.** As auditorias de acessos e de sincronia testaram quem
+pode fazer o que e se os dois lados se falam — nenhuma olhou o corpo do JSON.
+Campo sensivel vaza por descuido de `include`, nao por decisao, e por isso nao
+aparece lendo a rota com atencao ao que ela *quis* devolver.
+
 **2026-09-08 — o build local nao e o build do deploy**
 
 Um teste novo em `apps/admin/src/` derrubou o deploy. O build roda

@@ -630,3 +630,112 @@ real era a mesma das outras: **o deploy nao executava desde 08/09**.
 - Tempo total do deploy e pico de recursos do host durante a operacao.
 - Rollback de ponta a ponta: nao exercitado (e agora ha versao anterior no ar
   para voltar, o que antes nao existia).
+
+---
+
+## Extra — hash de senha nas respostas da API · `VALIDATED`
+
+Data: 2026-09-22. Ambiente: **producao**.
+
+**Nao estava em nenhuma auditoria.** Apareceu ao conferir se o painel
+continuava funcionando depois da limpeza dos dados de demonstracao: a resposta
+de `/api/admin/patients` trazia `passwordHash`.
+
+### Medido endpoint a endpoint, com token real
+
+| endpoint | resultado |
+|---|---|
+| `/api/admin/patients` | **vazava** |
+| `/api/admin/patients/:id` | **vazava** |
+| `/api/admin/users` | **vazava** — hash de toda a equipe |
+| `/api/patient/me` | **vazava** |
+| `/api/admin/dashboard` | ok |
+| `/api/patient/profile` | ok |
+
+O mais grave e `/api/admin/users`: qualquer pessoa logada no painel — inclusive
+a recepcao — recebia o hash bcrypt de todas as contas, a medica incluida.
+
+### Causa e por que a correcao nao foi rota a rota
+
+`include` sem `select` traz a tabela inteira, e `res.json(registro)` a devolve.
+Sao 32 usos de `prisma.patient.*` so nas rotas; corrigir os quatro casos
+medidos deixaria o quinto nascer igual.
+
+O campo passou a sair na **saida do cliente Prisma**, com `$extends`
+(`packages/database/src/index.ts`). Consulta existente e futura ficam seguras
+por padrao; escrita nao e afetada.
+
+`omit` global seria mais direto, mas exige Prisma 6 ou a preview feature
+`omitApi` — o projeto esta no `@prisma/client@5.22.0`, e habilitar preview +
+regenerar cliente no caminho critico de um deploy que acabou de estabilizar
+nao se justificava. `$extends` resolve na versao instalada.
+
+### A excecao, e o defeito que ela quase causou
+
+O login precisa do hash; para isso existe `prismaAuth`. Tres pontos: login da
+equipe (`auth.ts`), login da paciente e **ativacao de conta** (`patient.ts`).
+
+A ativacao decide por `existing?.passwordHash` se a conta ja tem senha. Com o
+cliente comum o campo seria `undefined`, a conta ativada pareceria nova e a
+senha seria sobrescrita por quem soubesse apenas o e-mail — o furo que o
+comentario daquele trecho proibe explicitamente. **A correcao teria criado uma
+falha pior que a original** se eu nao tivesse lido o trecho antes de trocar o
+cliente.
+
+### O wrapper da imagem, que e o que roda em producao
+
+O Dockerfile reescreve `@marcela/database` como CommonJS dentro da imagem.
+Sem a mesma extensao ali, `prismaAuth` seria `undefined` e **nenhum login
+funcionaria** — a repeticao exata da armadilha registrada em 08/09/2026 no
+`CLAUDE.md`: o build local nao e o build do deploy.
+
+### Verificacao em runtime, no container de producao
+
+10 casos, todos OK:
+
+| caso | resultado |
+|---|---|
+| `prisma.patient` com `include` | hash `undefined` e ausente do JSON |
+| `prisma.user` com `include` | hash `undefined` e ausente do JSON |
+| `prismaAuth.user` | hash legivel, prefixo `$2` (bcrypt) |
+| `prismaAuth.patient` | hash legivel |
+| `bcrypt.compare` do login da medica | confere |
+| deteccao de conta ativada via `prismaAuth` | funciona |
+| a mesma deteccao via `prisma` comum | **nao funcionaria** (por isso a excecao) |
+| escrita (`update`/`create`) | segue disponivel |
+
+### Travado com teste
+
+`apps/api/src/lib/segredos.test.ts`, 11 casos, no padrao de `sincronia.test.ts`
+(teste de codigo-fonte, para proteger a ligacao). Inclui uma regra que permite
+`res.json(patient)` onde o registro vem do cliente comum e o proibe entre um
+`prismaAuth.*.findUnique` e o `res.json` seguinte, que e onde o objeto tem o
+hash.
+
+**Os testes foram verificados falhando**, nao so passando:
+
+| defeito injetado | resultado |
+|---|---|
+| exportar o cliente cru como `prisma` | 2 testes falham |
+| trocar `prismaAuth` por `prisma` no login da paciente | 1 teste falha |
+| restaurado | 11 passam |
+
+Suite completa depois: **113 testes em 11 arquivos**, typecheck limpo.
+
+### Limitacao
+
+A correcao foi validada localmente e em runtime contra o banco de producao,
+mas **a imagem com o wrapper novo ainda nao subiu** no momento deste registro.
+A prova final e o login funcionando apos o deploy.
+
+### Licao
+
+O vazamento existia desde antes desta sessao e nenhuma auditoria o pegou: a
+de UX/UI olhou interface, a de VPS olhou infraestrutura, e a de acessos e
+sincronia testou **quem pode fazer o que**, nao **o que a resposta carrega**.
+Apareceu porque, apos uma mudanca de dados, fui conferir a tela e olhei o
+corpo do JSON.
+
+Vale como criterio proprio: alem de verificar se o endpoint responde e se o
+papel certo tem acesso, **olhar o que a resposta traz**. Campo sensivel sai
+por descuido de `include`, nao por decisao.
