@@ -4,9 +4,13 @@ Consolida `VPS-AUDIT.md` (13 achados) e `UX-UI-AUDIT.md` (19 achados).
 Cada fase e aprovada e executada em separado, passando por
 `fuse-quality-gate`.
 
-Data: 2026-09-22. Estado: **F1 `VALIDATED`; F2 `PARTIALLY_VALIDATED`
-(faturamento resolvido; o deploy rodou e parou numa imagem de terceiro);
-F2.1 e F2.2 `VALIDATED`; F3-F7 aguardando aprovacao**.
+Data: 2026-09-22. Estado: **F1, F2.1, F2.2 e F3 `VALIDATED`; F2
+`VALIDATED` (o site esta no ar); F4 `PARTIALLY_VALIDATED`; F5-F7 aguardando
+aprovacao**.
+
+O site voltou ao ar em 22/09: <https://www.dramarceladuch.com.br> serve a
+aplicacao, com certificado proprio. Ver `VPS-VALIDATION.md` e
+`UX-UI-VALIDATION.md`.
 
 ## Ordem e por que ela e esta
 
@@ -57,7 +61,7 @@ container foi morto e que nenhum encosta no teto.
 
 ---
 
-## F2 · Mover o build para o GitHub Actions · `PARTIALLY_VALIDATED`
+## F2 · Mover o build para o GitHub Actions · `VALIDATED`
 
 **Fecha:** `VPS-01` `BLOCKER`, `VPS-04` `HIGH`, `VPS-07` `MEDIUM`,
 `VPS-11` `MEDIUM`. Implementada em 2026-09-21 e verificada localmente.
@@ -127,9 +131,15 @@ que faltava no compose. Detalhes em `VPS-VALIDATION.md`.
 
 ---
 
-## F3 · Publicar o dominio
+## F3 · Publicar o dominio · `VALIDATED`
 
-**Fecha:** `VPS-00` `BLOCKER`.
+**Fecha:** `VPS-00` `BLOCKER`. Concluida em 22/09/2026.
+
+**Descoberta:** o vhost e o TLS **ja estavam automatizados no deploy** — o
+workflow configura o nginx do host. Nao era trabalho manual pendente; faltava o
+deploy rodar. O certificado foi emitido so para este dominio, os 8 vizinhos
+seguem respondendo igual, e a armadilha do `return 301` foi verificada em
+execucao (challenge 200, raiz 301). Detalhes em `VPS-VALIDATION.md`.
 
 **Por que.** Hoje `dramarceladuch.com.br` entrega o site do velomail ou erro de
 certificado.
@@ -156,7 +166,7 @@ certificado proprio; os 8 vhosts vizinhos seguem respondendo.
 
 ---
 
-## F4 · Acessibilidade e bloqueios de uso
+## F4 · Acessibilidade e bloqueios de uso · `PARTIALLY_VALIDATED`
 
 **Fecha:** `UX-01` `BLOCKER`, `UX-02` `BLOCKER`, `UX-03` `HIGH`,
 `UX-05` `HIGH`, `UX-06` `HIGH`, `UX-09`, `UX-10` `MEDIUM`.
