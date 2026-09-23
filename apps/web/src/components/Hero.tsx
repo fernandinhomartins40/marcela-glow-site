@@ -82,6 +82,11 @@ const Hero = () => {
      sem isto o índice antigo apontaria para fora da lista. */
   const index = Math.min(currentSlide, slides.length - 1);
   const slide = slides[index];
+  // O CMS legado guarda o mesmo título aprovado com a quebra após "Beleza".
+  // Recompõe somente essa variação literal, sem sobrescrever outro texto editado.
+  const approvedFirstSlideWrap = index === 0
+    && slide.titleTop.trim() === "Beleza"
+    && slide.titleBottom.trim() === "com estratégia";
   const image = landing?.images?.[`hero.${index}`];
   const portrait = image?.url ?? FALLBACK_IMAGES[index % FALLBACK_IMAGES.length];
   const showPortrait = index % FALLBACK_IMAGES.length !== 2 || Boolean(image?.url);
@@ -122,8 +127,8 @@ const Hero = () => {
         <div key={`txt-${index}`} className="hero-editorial-copy animate-slide-up">
           <p className="label-eyebrow">{slide.eyebrow}</p>
           <h1 className="font-display text-primary text-balance">
-            <span className="block">{slide.titleTop}</span>
-            <span className="block italic font-light">{slide.titleBottom}</span>
+            <span className="block">{approvedFirstSlideWrap ? "Beleza com" : slide.titleTop}</span>
+            <span className="block italic font-light">{approvedFirstSlideWrap ? "estratégia" : slide.titleBottom}</span>
           </h1>
           <p className="hero-editorial-lead">{slide.subtitle}</p>
           <div className="hero-editorial-actions">
