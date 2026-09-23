@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useSection } from "@/hooks/useLanding";
-import marble from "@/assets/generated/marble-editorial-desktop-v1.png";
+import marble from "@/assets/approved/landing-philosophy-marble-v2.png";
+import botanical from "@/assets/approved/landing-quote-botanical-v2.png";
 
 interface AboutContent {
   eyebrow: string;
@@ -51,6 +52,8 @@ const About = () => {
           </div>
         </div>
         <aside className="relative flex min-h-[34rem] items-center justify-center overflow-hidden bg-[hsl(var(--cream))] px-7 py-16 text-center sm:px-12 md:py-24">
+          <img src={botanical} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-bottom opacity-95" />
+          <div className="absolute inset-0 bg-background/20" aria-hidden="true" />
           <span className="absolute right-[-3rem] top-[-2rem] font-display text-[15rem] leading-none text-accent/10 select-none" aria-hidden="true">“</span>
           <div className="relative max-w-md">
             <p className="font-editorial-italic text-3xl leading-snug text-primary sm:text-4xl">“Estética de verdade é quando você se reconhece — e se sente bem.”</p>

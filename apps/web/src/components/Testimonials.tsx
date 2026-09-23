@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { testimonialsApi } from "@/lib/api";
 import { useSection } from "@/hooks/useLanding";
+import background from "@/assets/approved/landing-testimonials-marble-v2.png";
 
 interface TestimonialsContent {
   eyebrow: string;
@@ -57,6 +58,8 @@ const Testimonials = () => {
       id="depoimentos"
       className="relative section-y bg-[hsl(var(--cream-deep))] border-y border-border overflow-hidden"
     >
+      <img src={background} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-55" />
+      <div className="absolute inset-0 bg-background/35" aria-hidden="true" />
       {/* Watermark */}
       <span className="absolute top-4 left-1/2 hidden -translate-x-1/2 text-watermark text-[10vw] leading-none font-display pointer-events-none select-none whitespace-nowrap lg:block">
         pacientes

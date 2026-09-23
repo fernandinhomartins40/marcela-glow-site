@@ -1,0 +1,15 @@
+{
+  "version": "2026-09-23",
+  "origin": "ImageGen assets created from the user-approved landing-page direction",
+  "assets": [
+    { "file": "landing-hero-marble-desktop-v2.png", "component": "Hero", "role": "desktop background behind the real approved portrait", "dimensions": "1672x941", "fit": "cover", "focalPoint": "right", "loading": "eager" },
+    { "file": "landing-hero-marble-mobile-v2.png", "component": "Hero", "role": "mobile background behind the real approved portrait", "dimensions": "941x1672", "fit": "cover", "focalPoint": "right", "loading": "eager" },
+    { "file": "landing-philosophy-marble-v2.png", "component": "About", "role": "philosophy panel background", "dimensions": "1122x1402", "fit": "cover", "focalPoint": "left", "loading": "lazy" },
+    { "file": "landing-quote-botanical-v2.png", "component": "About", "role": "quote panel botanical background", "dimensions": "1122x1402", "fit": "cover", "focalPoint": "bottom right", "loading": "lazy" },
+    { "file": "treatment-face-v2.png", "component": "CareAreas", "role": "Face treatment card", "dimensions": "1448x1086", "fit": "cover", "focalPoint": "left", "loading": "lazy" },
+    { "file": "treatment-skin-v2.png", "component": "CareAreas", "role": "Pele treatment card", "dimensions": "1448x1086", "fit": "cover", "focalPoint": "center", "loading": "lazy" },
+    { "file": "treatment-neck-v2.png", "component": "CareAreas", "role": "Pescoço treatment card", "dimensions": "1448x1086", "fit": "cover", "focalPoint": "center", "loading": "lazy" },
+    { "file": "treatment-body-v2.png", "component": "CareAreas", "role": "Corpo treatment card", "dimensions": "1448x1086", "fit": "cover", "focalPoint": "center", "loading": "lazy" },
+    { "file": "landing-testimonials-marble-v2.png", "component": "Testimonials", "role": "testimonials background", "dimensions": "1672x941", "fit": "cover", "focalPoint": "center", "loading": "lazy" }
+  ]
+}

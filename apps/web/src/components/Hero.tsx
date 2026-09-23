@@ -4,8 +4,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useImage, useLanding, useSection } from "@/hooks/useLanding";
 import draEditorial from "@/assets/candidatas/dra-marcela-editorial-limpa-v1.png";
 import draPortrait from "@/assets/candidatas/dra-marcela-portrait-limpa-v1.png";
-import marble from "@/assets/generated/hero-regeneracao-desktop-v1.png";
-import marbleMobile from "@/assets/generated/hero-regeneracao-mobile-v1.png";
+import marble from "@/assets/approved/landing-hero-marble-desktop-v2.png";
+import marbleMobile from "@/assets/approved/landing-hero-marble-mobile-v2.png";
 
 /* As imagens que vêm no build. Cada slide usa a sua enquanto o painel não
    enviar outra — o site nunca abre com espaço vazio no lugar da foto. */
