@@ -157,3 +157,8 @@ Validar visualmente em navegador os breakpoints e estados reais do site, CRM e p
 
 - A paciente e a equipe agora podem carregar páginas anteriores da conversa, sem transferir todo o histórico no dashboard ou na ficha. O cursor é conferido no mesmo tenant e paciente antes da consulta; a rota da equipe preserva a permissão de leitura e registra auditoria sem conteúdo clínico.
 - O envio invalida o histórico visível em cada interface. Builds da API, CRM e portal, 73 testes da API e checagem de encoding passaram. Ainda falta teste ponta a ponta autenticado em banco, avaliação de índice composto para volume e validação visual.
+
+## Continuação — inspeção executada do hero publicado
+
+- O workflow do commit `175b798` concluiu com sucesso, incluindo deploy e verificação pública de HTTPS. A landing publicada foi capturada em navegador. O primeiro método headless impôs largura útil maior que 390 px e cortou o menu; a captura posterior com viewport emulado confirmou que o menu existe. Não se trata de defeito do menu.
+- A captura fiel em 390 px mostrou o título sobre o rosto. O CSS local separa a área de leitura da foto, preserva o retrato e mantém os CTAs; capturas do build local em 320, 390 e 768 px foram inspecionadas. A API local não estava ligada nessas capturas, portanto o conteúdo veio do fallback do build, não do CMS publicado. O build da landing passou. Esta evidência cobre somente o estado inicial do hero nesses viewports, não os demais slides, o menu aberto, zoom, interação ou a página completa; W02 ainda não recebe `V` integral.

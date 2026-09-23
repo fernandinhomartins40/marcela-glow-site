@@ -141,7 +141,7 @@ const Header = () => {
           {/* Mobile menu button */}
           <button
             ref={mobileMenuButton}
-            className="lg:hidden -mr-2 p-3 shrink-0"
+            className="lg:hidden -mr-2 p-3 shrink-0 text-primary"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Menu"
             aria-expanded={isMobileMenuOpen}

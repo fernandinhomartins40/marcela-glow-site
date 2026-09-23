@@ -125,11 +125,12 @@
   .hero-editorial-watermark { position: absolute; z-index: 3; right: clamp(2rem, 5vw, 6rem); bottom: 5rem; font-size: .7rem; letter-spacing: .38em; text-transform: uppercase; color: hsl(var(--espresso) / .72); }
   @media (max-width: 767px) {
     .hero-editorial-inner { align-items: flex-start; min-height: max(100svh, 690px); padding-top: clamp(9rem, 19svh, 12rem); padding-bottom: 6rem; }
-    .hero-editorial-photo { right: -7vw; width: 78vw; -webkit-mask-image: linear-gradient(to right, transparent, black 31%); mask-image: linear-gradient(to right, transparent, black 31%); }
+    .hero-editorial-photo { right: -8vw; width: 78vw; -webkit-mask-image: linear-gradient(to right, transparent 25%, black 55%); mask-image: linear-gradient(to right, transparent 25%, black 55%); }
     .hero-editorial-photo img { object-position: 54% 18%; }
     .hero-editorial-shade { background: linear-gradient(90deg, hsl(var(--cream) / .92), hsl(var(--cream) / .68) 43%, transparent 74%); }
-    .hero-editorial-copy { width: min(68vw, 340px); }
-    .hero-editorial-copy h1 { margin-top: 1.15rem; font-size: clamp(2.45rem, 10.5vw, 4.15rem); line-height: .9; }
+    .hero-editorial-copy { width: min(78vw, 340px); }
+    .hero-editorial-copy .label-eyebrow { max-width: 22ch; }
+    .hero-editorial-copy h1 { margin-top: 1.15rem; font-size: clamp(2.2rem, 10vw, 4.15rem); line-height: .94; }
     .hero-editorial-lead { max-width: 23ch; margin-top: 1.5rem; font-size: clamp(.91rem, 3.6vw, 1.1rem); line-height: 1.42; }
     .hero-editorial-actions { display: grid; justify-items: start; gap: .45rem; margin-top: 1.7rem; }
     .hero-editorial-actions > button { min-height: 44px; max-width: min(64vw, 240px); padding-inline: .9rem; font-size: .8rem; letter-spacing: .02em; white-space: normal; text-align: left; }
@@ -137,8 +138,8 @@
     .hero-editorial-watermark { display: none; }
   }
   @media (max-width: 359px) {
-    .hero-editorial-copy { width: 70vw; }
-    .hero-editorial-photo { right: -12vw; width: 82vw; }
+    .hero-editorial-copy { width: 78vw; }
+    .hero-editorial-photo { right: -16vw; width: 82vw; }
   }
 }
 
