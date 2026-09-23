@@ -283,11 +283,13 @@ router.get('/dashboard', requirePermission('DASHBOARD_READ'), async (req: Reques
       aniversariantes,
       leadsPorEtapa,
     ] = await Promise.all([
-      // A agenda de hoje, na ordem em que as pacientes chegam.
+      /* A agenda de hoje, na ordem em que as pacientes chegam. Inclui a
+         consulta concluida: e ela que abre a etapa de cobranca, e sumir da
+         fila no momento em que acaba deixava a saida sem ninguem olhando. */
       prisma.appointment.findMany({
         where: {
           tenantId,
-          status: { in: ['PENDING', 'CONFIRMED'] },
+          status: { in: ['PENDING', 'CONFIRMED', 'COMPLETED'] },
           scheduledAt: { gte: inicioDoDia, lt: fimDoDia },
         },
         include: {
@@ -384,6 +386,50 @@ router.get('/dashboard', requirePermission('DASHBOARD_READ'), async (req: Reques
       }),
     ])
 
+    /* Onde cada consulta de hoje esta no fluxo chegada -> consulta -> saida.
+       As faixas se excluem, como na Recepcao: uma consulta conta uma vez so. */
+    const saiu = (c: (typeof hoje)[number]) => Boolean(c.releasedAt) || c.status === 'COMPLETED'
+    const fluxo = {
+      aChegar: hoje.filter((c) => !c.arrivedAt && !saiu(c)).length,
+      naEspera: hoje.filter((c) => c.arrivedAt && !c.calledAt && !saiu(c)).length,
+      emConsulta: hoje.filter((c) => c.calledAt && !saiu(c)).length,
+      finalizadas: hoje.filter(saiu).length,
+    }
+
+    /* Cobranca em aberto de quem ja saiu hoje. So para quem opera ou
+       supervisiona o caixa: o valor nao sai, mas saber que a paciente deve
+       tambem e informacao financeira. */
+    const pacientesQueSairam = [...new Set(hoje.filter(saiu).map((c) => c.patientId).filter((id): id is string => Boolean(id)))]
+    const devedoras = visibilidade.financeiro && pacientesQueSairam.length
+      ? new Set(
+          (await prisma.charge.findMany({
+            where: { tenantId, patientId: { in: pacientesQueSairam }, status: { in: ['PENDING', 'PARTIAL'] } },
+            select: { patientId: true },
+          })).map((c) => c.patientId),
+        )
+      : new Set<string>()
+
+    /* A fila leva so o que a central do dia mostra. `include` sem `select`
+       traria contato, mensagem e notas da consulta para qualquer perfil com
+       leitura de agenda (registro de 22/09: olhar o que a resposta carrega). */
+    const enxuto = (c: (typeof hoje)[number]) =>
+      comInicioEFim({
+        id: c.id,
+        name: c.name,
+        scheduledAt: c.scheduledAt,
+        endsAt: c.endsAt,
+        status: c.status,
+        arrivedAt: c.arrivedAt,
+        calledAt: c.calledAt,
+        releasedAt: c.releasedAt,
+        patient: c.patient,
+        procedure: c.procedure,
+      })
+    const naFila = (c: (typeof hoje)[number]) => ({
+      ...enxuto(c),
+      cobrancaAberta: visibilidade.financeiro ? Boolean(c.patientId && devedoras.has(c.patientId)) : undefined,
+    })
+
     const receitaMes = faturamentoMes._sum.amountCents ?? 0
     const receitaMesPassado = faturamentoMesPassado._sum.amountCents ?? 0
 
@@ -393,8 +439,14 @@ router.get('/dashboard', requirePermission('DASHBOARD_READ'), async (req: Reques
     const taxaCancelamento = totalJulgado ? Math.round((cancelamentos30 / totalJulgado) * 100) : 0
 
     res.json({
-      hoje: visibilidade.agendamentos ? hoje.map(comInicioEFim) : [],
-      proximos: visibilidade.agendamentos ? proximos.map(comInicioEFim) : [],
+      hoje: visibilidade.agendamentos ? hoje.map(naFila) : [],
+      fluxo: visibilidade.agendamentos ? {
+        ...fluxo,
+        cobrancasAbertas: visibilidade.financeiro
+          ? hoje.filter((c) => saiu(c) && c.patientId && devedoras.has(c.patientId)).length
+          : null,
+      } : null,
+      proximos: visibilidade.agendamentos ? proximos.map(enxuto) : [],
       pendencias: {
         aConfirmar: visibilidade.confirmarAgendamentos ? aConfirmar : 0,
         semHorario: visibilidade.confirmarAgendamentos ? semHorario : 0,

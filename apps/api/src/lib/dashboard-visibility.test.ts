@@ -52,4 +52,27 @@ describe('visibilidade da central do dia', () => {
     expect(rota).toContain('receitasParaAssinar: visibilidade.assinarReceitas ?')
     expect(rota).toContain('aniversariantes: visibilidade.lerPacientes ?')
   })
+
+  it('mantém a consulta concluída na fila do dia, para a etapa de cobrança', () => {
+    const rota = readFileSync(resolve(__dirname, '../routes/admin.ts'), 'utf8')
+    expect(rota).toContain("status: { in: ['PENDING', 'CONFIRMED', 'COMPLETED'] }")
+    expect(rota).toContain('fluxo: visibilidade.agendamentos ?')
+  })
+
+  it('só informa cobrança em aberto a quem opera ou supervisiona o caixa', () => {
+    const rota = readFileSync(resolve(__dirname, '../routes/admin.ts'), 'utf8')
+    expect(rota).toContain('cobrancasAbertas: visibilidade.financeiro')
+    expect(rota).toContain('cobrancaAberta: visibilidade.financeiro ?')
+    expect(rota).toContain('const devedoras = visibilidade.financeiro &&')
+  })
+
+  it('não devolve a consulta inteira na fila: contato e notas ficam de fora', () => {
+    const rota = readFileSync(resolve(__dirname, '../routes/admin.ts'), 'utf8')
+    expect(rota).not.toContain('hoje.map(comInicioEFim)')
+    expect(rota).not.toContain('proximos.map(comInicioEFim)')
+    const enxuto = rota.slice(rota.indexOf('const enxuto'), rota.indexOf('const naFila'))
+    for (const campo of ['email', 'phone', 'message', 'notes']) {
+      expect(enxuto).not.toContain(`${campo}:`)
+    }
+  })
 })

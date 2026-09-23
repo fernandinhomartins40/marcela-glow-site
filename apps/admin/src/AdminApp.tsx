@@ -1,28 +1,13 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import {
-  CalendarDays,
-  ConciergeBell,
-  FileSignature,
-  FileText,
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  MessageSquare,
-  Settings,
-  Sparkles,
-  Stethoscope,
-  UserRound,
-  Users,
-  Wallet,
-  X,
-} from 'lucide-react'
+import { Bell, CalendarDays, ConciergeBell, FileSignature, FileText, LayoutDashboard, LogOut, Menu, MessageSquare, Search, Settings, Sparkles, Stethoscope, UserRound, Users, Wallet, X } from 'lucide-react'
 import { api, errorMessage, ROLE_LABELS, TOKEN_KEY } from './lib/ui'
 import { Login } from './pages/Login'
 import { AdminPanel, type AdminTab } from './pages/AdminPanel'
 import { AppBar } from './components/AppBar'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { useAvisos } from './lib/avisos'
 import { useAplicativoInstalado } from './lib/standalone'
 import monogram from './assets/brand/md-monogram-white.webp'
 import './styles.css'
@@ -47,7 +32,7 @@ const NAV_GROUPS = [
        paga. O Dashboard abre o grupo porque e a tela de "como estamos". */
     label: 'O dia',
     items: [
-      ['dashboard', LayoutDashboard, 'Dashboard', 'Visão geral do movimento da clínica', 'DASHBOARD_READ'],
+      ['dashboard', LayoutDashboard, 'Hoje', 'O fluxo do dia, as filas e o que precisa de atenção', 'DASHBOARD_READ'],
       ['appointments', CalendarDays, 'Agenda', 'Consultas marcadas e horários livres', 'APPOINTMENT_READ'],
       ['reception', ConciergeBell, 'Recepção', 'Chegadas, confirmações e encaixes do dia', 'FINANCE_OPERATE'],
       ['encounter', Stethoscope, 'Atendimento', 'Atender a paciente e registrar o prontuário', 'RECORD_WRITE'],
@@ -135,6 +120,34 @@ function initials(fullName?: string) {
   return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase()
 }
 
+/** "Quarta-feira, 24 de setembro de 2026" — a data abre a central do dia. */
+function dataPorExtenso(data = new Date()) {
+  const texto = data.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  return texto.charAt(0).toUpperCase() + texto.slice(1)
+}
+
+/**
+ * O sino da barra superior: avisos entre consultório e recepção ainda não
+ * vistos. Só é montado para quem lê a agenda — `/alerts` exige
+ * APPOINTMENT_READ, e montar para todos daria um 403 a cada 30s na conta da
+ * editora de conteúdo. Leva à tela onde o aviso se resolve.
+ */
+function SinoAvisos({ onOpen }: { onOpen: () => void }) {
+  const avisos = useAvisos(30_000)
+  const n = avisos.naoVistos.length
+  return (
+    <button
+      type="button"
+      className="topbar-sino"
+      onClick={onOpen}
+      aria-label={n ? `${n} aviso${n > 1 ? 's' : ''} não visto${n > 1 ? 's' : ''}` : 'Avisos'}
+    >
+      <Bell size={18} aria-hidden="true" />
+      {n > 0 && <span className="topbar-sino-ponto" aria-hidden="true" />}
+    </button>
+  )
+}
+
 function Shell() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -198,6 +211,18 @@ function Shell() {
     if (atual && !permitida) navigate(`/${primeiraPermitida}`, { replace: true })
   }, [me.data, navigate, permissoes, primeiraPermitida, tab])
 
+  const [busca, setBusca] = React.useState('')
+  const buscar = (event: React.FormEvent) => {
+    event.preventDefault()
+    const termo = busca.trim()
+    if (!termo) return
+    navigate(`/patients?busca=${encodeURIComponent(termo)}`)
+    setBusca('')
+  }
+  /* O aviso se resolve onde ele nasce: no consultório para quem atende, no
+     balcão para quem recebe. */
+  const destinoAvisos: AdminTab = podeVer('RECORD_WRITE') ? 'encounter' : podeVer('FINANCE_OPERATE') ? 'reception' : 'appointments'
+
   function go(next: AdminTab) {
     navigate(`/${next}`)
     setNavOpen(false)
@@ -240,18 +265,27 @@ function Shell() {
         <button className="nav-signout" onClick={() => { localStorage.removeItem(TOKEN_KEY); window.location.reload() }}>
           <LogOut size={17} />Sair
         </button>
+        <p className="nav-lema">Cuidado<br />em cada encontro.</p>
       </aside>
 
       <main>
-        <header>
-          <div>
-            <button className="nav-toggle" onClick={() => setNavOpen(true)} aria-label="Abrir navegação" aria-expanded={navOpen}>
-              <Menu size={20} aria-hidden="true" />
-            </button>
-            {mostrarRotulos && <span className="eyebrow">{groupOf(tab)}</span>}
-            <h1>{tab === 'dashboard' ? 'Seu dia, com clareza' : labelOf(tab)}</h1>
-            <p className="page-hint">{tab === 'dashboard' ? 'Acompanhe os atendimentos, organize a equipe e mantenha tudo em movimento.' : hintOf(tab)}</p>
-          </div>
+        <div className="topbar">
+          <button className="nav-toggle" onClick={() => setNavOpen(true)} aria-label="Abrir navegação" aria-expanded={navOpen}>
+            <Menu size={20} aria-hidden="true" />
+          </button>
+          {podeVer('PATIENT_READ') && (
+            <form className="topbar-busca" role="search" onSubmit={buscar}>
+              <Search size={16} aria-hidden="true" />
+              <input
+                type="search"
+                value={busca}
+                onChange={(event) => setBusca(event.target.value)}
+                placeholder="Buscar paciente"
+                aria-label="Buscar paciente"
+              />
+            </form>
+          )}
+          {podeVer('APPOINTMENT_READ') && <SinoAvisos onOpen={() => go(destinoAvisos)} />}
           {me.data && (
             <div className="who" title={me.data.email}>
               <span className="who-avatar">{initials(me.data.name)}</span>
@@ -261,6 +295,16 @@ function Shell() {
               </span>
             </div>
           )}
+        </div>
+        <header data-tab={tab}>
+          <div>
+            {/* No "Hoje" a data abre a página, como no mockup; nas demais,
+                o grupo do menu — e só quando há grupos que a pessoa vê. */}
+            {tab === 'dashboard' && !mostrarRotulos && <span className="eyebrow eyebrow-data">{dataPorExtenso()}</span>}
+            {mostrarRotulos && <span className="eyebrow">{tab === 'dashboard' ? dataPorExtenso() : groupOf(tab)}</span>}
+            <h1>{tab === 'dashboard' ? 'Seu dia, com clareza' : labelOf(tab)}</h1>
+            <p className="page-hint">{tab === 'dashboard' ? 'Acompanhe os atendimentos, organize a equipe e mantenha tudo em movimento.' : hintOf(tab)}</p>
+          </div>
         </header>
         {data.isLoading && <p>Carregando dados reais do backend...</p>}
         {data.isError && (

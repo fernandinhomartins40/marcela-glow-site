@@ -344,98 +344,167 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 
 .form-grid { display: grid; gap: 14px; }
 
-/* ── Painel de controle ───────────────────────────────────────────────────── */
-/* A ordem visual segue a ordem em que a clinica pensa: o que esta travado, o
-   dia, o mes, a semana. O bloco de pendencias e o unico que some quando o
-   trabalho e feito — por isso ele fica no topo e tem a cor mais forte. */
-.painel { display: grid; gap: 14px; min-width: 0; }
+/* ── Painel de controle ("Hoje") ─────────────────────────────────────────── */
+/* O desenho segue o mockup aprovado em 23/09/2026: faixa de confirmacao no
+   topo, coluna principal com fluxo e filas, lateral com o que vem pela frente
+   e o que precisa de atencao. Abaixo de 1180px a lateral desce para o fim —
+   e o mesmo ponto em que a agenda de 3 colunas deixa de caber. */
+.painel { display: grid; gap: 16px; min-width: 0; }
 .painel svg { flex: none; }
 
-/* Pendencias */
-.painel-alertas { padding: 14px 16px 16px; background: var(--cream-soft); border: 1px solid var(--bronze); border-radius: 12px; }
-.painel-alertas h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--bronze-text); }
-.painel-alertas-grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(212px, 1fr)); gap: 9px; }
-.painel-pendencia, main .painel-pendencia { position: relative; display: grid; grid-template-columns: auto auto minmax(0, 1fr); grid-template-areas: "icone n titulo" "texto texto texto"; align-items: center; gap: 3px 9px; min-height: 0 !important; padding: 12px 34px 12px 13px !important; text-align: left; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 10px; color: var(--espresso); }
-.painel-pendencia:hover, main .painel-pendencia:hover { background: var(--cream-deep); border-color: var(--bronze); transform: none; }
-/* `> svg` pegava a seta tambem, e o grid-area a jogava para a primeira
-   coluna por cima do position:absolute — a seta ficava sobre o icone. */
-.painel-pendencia > svg:not(.painel-pendencia-seta) { grid-area: icone; color: var(--bronze); }
-.painel-pendencia-n { grid-area: n; font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1; }
-.painel-pendencia-titulo { grid-area: titulo; font-size: 13px; font-weight: 600; }
-.painel-pendencia-texto { grid-area: texto; font-size: 11.5px; line-height: 1.45; color: var(--text-muted); }
-.painel-pendencia-seta { position: absolute; top: 15px; right: 12px; color: var(--bronze); opacity: .55; }
-.painel-pendencia:hover .painel-pendencia-seta { opacity: 1; }
+.painel-grade { display: grid; grid-template-columns: minmax(0, 1fr) clamp(270px, 24vw, 340px); gap: 16px; align-items: start; }
+.painel-principal, .painel-lateral { display: grid; gap: 16px; min-width: 0; align-content: start; }
+/* Cartoes curtos lado a lado; `dense` sobe cada um para a primeira lacuna, e
+   o vazio se espalha em vez de virar um bloco branco no pe de uma coluna. */
+.painel-dupla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: dense; gap: 16px; align-items: start; }
 
-/* O dia ocupa mais largura que a coluna de numeros: e onde se olha primeiro */
-/* Uma grade so para todos os cartoes.
+/* Faixa de confirmacao: a unica coisa do topo que some quando o trabalho e feito */
+.painel-faixa { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 14px 16px; background: #fbf1e4; border: 1px solid #ecd3b0; border-radius: 12px; }
+.painel-faixa-icone { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 50%; background: #c9731f; color: #fff; }
+.painel-faixa strong { display: block; font-size: 15px; font-weight: 600; color: #7a4510; }
+.painel-faixa p { margin: 2px 0 0; font-size: 12.5px; color: var(--text-muted); }
+.painel-faixa button, main .painel-faixa button { min-height: 38px !important; padding: 8px 16px !important; background: var(--cream-soft); border: 1px solid var(--border-strong); color: var(--espresso); font-weight: 500; }
+.painel-faixa button:hover, main .painel-faixa button:hover { background: var(--cream-deep); transform: none; }
 
-   Antes eram duas grades de duas colunas, uma sob a outra, e uma delas ainda
-   agrupava dois cartoes numa coluna propria. O vazio se acumulava no pe do
-   lado mais curto: num dia de sete consultas, 179px na primeira grade e 270px
-   na segunda — o buraco ao lado dos aniversariantes.
-
-   Com `grid-auto-flow: dense` cada cartao sobe para a primeira lacuna onde
-   couber, entao a diferenca de altura se espalha em vez de virar um bloco
-   branco no fim. `align-items: start` continua: esticar o cartao ate a altura
-   do vizinho so trocaria o buraco de lugar, para dentro dele. */
-.painel-corpo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: dense; gap: 14px; align-items: start; }
-/* A largura inteira e para a agenda do dia, que e a lista mais consultada e a
-   unica que ganha com espaco. Nas demais o texto e curto: esticadas, o nome
-   fica num canto e a etiqueta no outro, com um vao de quase mil pixels no meio
-   — pior de ler que a coluna estreita. */
-.painel-corpo > .painel-dia { grid-column: 1 / -1; }
-/* Os dois cartoes curtos — faltas e aniversariantes — vivem na mesma faixa
-   vertical da coluna direita, enquanto a esquerda leva as duas listas longas.
-   Assim o que sobra fica repartido entre eles em vez de virar um rastro de
-   270px no pe da coluna, que era o buraco ao lado dos aniversariantes.
-
-   `align-content: start` no lugar de esticar: um cartao de um nome so, alto
-   como uma lista de seis, seria vazio por dentro em vez de por fora. */
-.painel-corpo { align-content: start; }
-/* Numa lista larga o conteudo fica preso a uma medida legivel em vez de se
-   esparramar ate a borda. */
-.painel-dia .painel-horarios li { grid-template-columns: 52px minmax(0, 1fr) auto; max-width: 820px; }
-
-.painel-card { min-width: 0; padding: 15px 16px 16px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 12px; }
-.painel-card > header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 13px; }
-.painel-card h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 3px; font-size: 15px; font-weight: 600; color: var(--espresso); }
+.painel-card { min-width: 0; padding: 16px 18px 18px; background: var(--cream-soft); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 0 rgba(62,40,31,.03); }
+.painel-card > header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin: 0 0 14px; padding: 0; border: 0; }
+.painel-card h2 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 16px; font-weight: 600; color: var(--espresso); }
 .painel-card h2 svg { color: var(--bronze); }
-.painel-card header p { margin: 0; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
-.painel-acoes { display: flex; flex-wrap: wrap; gap: 7px; }
-.painel-acoes button, main .painel-acoes button { display: inline-flex; align-items: center; gap: 6px; min-height: 32px !important; padding: 6px 12px !important; font-size: 12px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 8px; color: var(--espresso); }
-.painel-acoes button:hover, main .painel-acoes button:hover { border-color: var(--bronze); background: var(--cream-deep); transform: none; }
+.painel-card header p { margin: 3px 0 0; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+.painel-titulo-linha { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.painel-contador { display: inline-flex; align-items: center; padding: 3px 10px; font-size: 11.5px; border-radius: 999px; background: var(--cream-deep); color: var(--bronze-text-deep); }
+.painel-contador.is-alerta { min-width: 22px; justify-content: center; padding: 2px 7px; background: #b3261e; color: #fff; font-weight: 600; }
+.painel-link-seta, main .painel-link-seta { display: inline-flex; align-items: center; gap: 6px; min-height: 32px !important; padding: 4px 6px !important; background: none; border: 0; color: var(--bronze-text); font-size: 12.5px; font-weight: 500; }
+.painel-link-seta:hover, main .painel-link-seta:hover { color: var(--espresso); transform: none; }
 
-/* A proxima consulta, ou a que esta acontecendo: o relogio da recepcao */
-.painel-agora { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "tag tag" "nome acao" "quando acao"; align-items: center; gap: 2px 12px; margin-bottom: 13px; padding: 13px 14px; background: var(--cream-deep); border: 1px solid var(--border); border-radius: 10px; }
-.painel-agora.is-live { background: var(--espresso); border-color: var(--espresso); color: var(--marble-soft); }
-.painel-agora-tag { grid-area: tag; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 4px; font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--bronze-text); }
-.painel-agora.is-live .painel-agora-tag { color: var(--bronze-soft); }
-.painel-agora > strong { grid-area: nome; font-size: 16px; font-weight: 600; }
-.painel-agora-quando { grid-area: quando; font-size: 12px; color: var(--text-muted); }
-.painel-agora.is-live .painel-agora-quando { color: var(--bronze-soft); }
-.painel-agora button, main .painel-agora button { grid-area: acao; display: inline-flex; align-items: center; gap: 6px; min-height: 34px !important; padding: 7px 13px !important; font-size: 12.5px; background: var(--espresso); border: 1px solid var(--espresso); border-radius: 8px; color: var(--marble-soft); }
-.painel-agora.is-live button, main .painel-agora.is-live button { background: var(--marble-soft); border-color: var(--marble-soft); color: var(--espresso); }
+/* Fluxo: quatro etapas ligadas por um fio */
+.fluxo-etapas { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 4px 0 0; list-style: none; }
+.fluxo-etapas li { position: relative; display: grid; justify-items: center; gap: 3px; text-align: center; }
+.fluxo-etapas li + li::before { content: ""; position: absolute; top: 26px; right: calc(50% + 30px); width: calc(100% - 52px); height: 1px; background: var(--bronze-soft); }
+.fluxo-icone { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; margin-bottom: 6px; border-radius: 50%; border: 1.5px solid var(--border-strong); background: var(--cream-soft); color: var(--espresso); }
+.fluxo-etapas li.is-ativo .fluxo-icone { border-color: #2f6b45; color: #2f6b45; box-shadow: 0 0 0 4px #e7f1ea; }
+.fluxo-etapas li.is-alerta .fluxo-icone { border-color: #c9731f; color: #8a4f14; box-shadow: 0 0 0 4px #fbf1e4; }
+.fluxo-etapas strong { font-size: 14px; font-weight: 600; color: var(--espresso); }
+.fluxo-etapas span:not(.fluxo-icone) { font-size: 12px; line-height: 1.4; color: var(--text-muted); }
 
-/* Lista de horarios */
-.painel-horarios { display: grid; gap: 1px; margin: 0; padding: 0; list-style: none; }
-.painel-horarios li { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 11px; align-items: center; padding: 9px 4px; border-top: 1px solid var(--border); }
-.painel-horarios li:first-child { border-top: 0; }
-/* O que ja passou continua na lista — a recepcao confere o que aconteceu —
-   mas apagado, para o olho ir direto ao que ainda vem. */
-.painel-horarios li.is-passado { opacity: .45; }
-/* A que esta acontecendo agora: fundo mais o tracinho na lateral, porque so
-   o fundo se perde entre linhas ja claras. */
-.painel-horarios li.is-agora { position: relative; background: var(--cream-deep); border-radius: 8px; padding-left: 12px; }
-.painel-horarios li.is-agora::before { content: ''; position: absolute; top: 8px; bottom: 8px; left: 3px; width: 3px; background: var(--espresso); border-radius: 999px; }
-.painel-horarios time { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--espresso); }
-.painel-horarios time.is-largo { font-size: 11.5px; font-weight: 500; text-transform: capitalize; color: var(--text-muted); }
-.painel-horarios li > div { display: grid; gap: 1px; min-width: 0; }
-.painel-horarios strong { font-size: 13px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.painel-horarios span { font-size: 11.5px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Tabela da fila: vira lista de cartoes abaixo de 720px */
+.painel-tabela { width: 100%; border-collapse: collapse; font-size: 13px; }
+.painel-tabela thead th { padding: 9px 10px; text-align: left; white-space: nowrap; font-size: 12px; font-weight: 500; color: var(--text-muted); background: var(--marble); border-bottom: 1px solid var(--border); }
+.painel-tabela thead th:first-child { border-radius: 8px 0 0 0; }
+.painel-tabela thead th:last-child { border-radius: 0 8px 0 0; }
+.painel-tabela td { padding: 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.painel-tabela tbody tr:last-child td { border-bottom: 0; }
+.painel-tabela td strong { display: block; font-weight: 600; color: var(--espresso); }
+.painel-tabela td span:not(.painel-status) { display: block; font-size: 11.5px; color: var(--text-muted); }
+.painel-hora { width: 64px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--espresso); }
+.painel-proxima { color: var(--espresso); }
+.painel-acao { width: 1%; text-align: right; white-space: nowrap; }
+.painel-acao button, main .painel-acao button { min-height: 34px !important; padding: 7px 14px !important; font-size: 12.5px; background: var(--cream-soft); border: 1px solid var(--border-strong); color: var(--espresso); }
+.painel-acao button.is-forte, main .painel-acao button.is-forte { background: var(--bronze); border-color: var(--bronze); color: var(--cream-soft); }
+.painel-acao button:hover, main .painel-acao button:hover { transform: none; filter: brightness(.96); }
 
-.painel-tag { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; font-size: 10.5px; font-weight: 500; border-radius: 999px; white-space: nowrap; }
-.painel-tag.is-warn { background: #fdf6e7; border: 1px solid #e8d6a8; color: #6b5417; }
-.painel-tag.is-ok { background: #eef6f0; border: 1px solid #cfe4d6; color: #3f7d55; }
+/* Status: cor + icone + texto — nunca so a cor */
+.painel-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; white-space: nowrap; }
+.painel-status.is-ok { color: #2f6b45; }
+.painel-status.is-warn { color: #8a4f14; }
+.painel-status.is-danger { color: #a3261e; }
+.painel-status.is-live { color: #2f6b45; }
+.painel-status.is-info { color: #3f5a78; }
+.painel-status.is-neutral { color: var(--text-muted); }
+.painel-lista .painel-status, .painel-proximas .painel-status { padding: 3px 9px; border-radius: 999px; font-size: 11.5px; background: var(--marble); border: 1px solid var(--border); }
+.painel-lista .painel-status.is-danger { background: #fbeceb; border-color: #f0c9c6; }
+.painel-lista .painel-status.is-ok { background: #eef6f0; border-color: #cfe4d6; }
+
+/* Listas curtas (recepcao e proximas consultas) */
+.painel-lista { display: grid; margin: 0; padding: 0; list-style: none; }
+.painel-lista li { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 10px 2px; border-top: 1px solid var(--border); }
+.painel-lista li:first-child { border-top: 0; }
+.painel-lista time { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--espresso); }
+.painel-lista time svg { color: var(--text-muted); }
+/* Outro dia: a data em cima, a hora embaixo — numa linha so ela espremia o nome */
+.painel-lista time.is-largo { display: grid; gap: 1px; font-size: 13px; }
+.painel-lista time.is-largo span { font-size: 11px; font-weight: 500; text-transform: capitalize; color: var(--text-muted); }
+.painel-proximas li { grid-template-columns: 76px minmax(0, 1fr) auto; }
+.painel-lista li > div { display: grid; gap: 1px; min-width: 0; }
+.painel-lista strong { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.painel-lista li > div span { font-size: 11.5px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Atencoes do dia: uma linha por pendencia, com seta */
+.painel-alertas-grade { display: grid; gap: 0; }
+.painel-pendencia, main .painel-pendencia { position: relative; display: grid; grid-template-columns: auto auto minmax(0, 1fr); grid-template-areas: "icone n titulo" "icone texto texto"; align-items: center; gap: 2px 8px; min-height: 0 !important; padding: 12px 30px 12px 2px !important; text-align: left; background: transparent; border: 0; border-top: 1px solid var(--border); border-radius: 0; color: var(--espresso); }
+.painel-alertas-grade > .painel-pendencia:first-child { border-top: 0; }
+.painel-pendencia:hover, main .painel-pendencia:hover { background: var(--marble); transform: none; }
+.painel-pendencia > svg:not(.painel-pendencia-seta) { grid-area: icone; align-self: start; width: 30px; height: 30px; padding: 7px; border-radius: 50%; background: var(--cream-deep); color: var(--bronze); }
+.painel-pendencia-n { grid-area: n; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.painel-pendencia-titulo { grid-area: titulo; font-size: 14px; font-weight: 600; }
+.painel-pendencia-texto { grid-area: texto; font-size: 12px; line-height: 1.45; color: var(--text-muted); }
+.painel-pendencia-seta { position: absolute; top: 50%; right: 6px; transform: translateY(-50%); color: var(--espresso); opacity: .6; }
+.painel-pendencia:hover .painel-pendencia-seta { opacity: 1; }
+.painel-vazio svg { vertical-align: -2px; color: #2f6b45; }
+
+@media (max-width: 1180px) {
+  /* A agenda de 3 colunas deixa de caber aqui, e a lateral de 340px tambem:
+     desce para depois da coluna principal. */
+  /* As duas colunas se desfazem numa so, e a ordem passa a ser a do que
+     pede acao: fila, atencoes, proximas; os numeros do mes vao para o fim.
+     `display: contents` deixa os cartoes das duas colunas no mesmo grid. */
+  .painel-grade { grid-template-columns: minmax(0, 1fr); }
+  .painel-principal, .painel-lateral { display: contents; }
+  .painel-fluxo { order: 1; }
+  .painel-principal > section:not(.painel-fluxo) { order: 2; }
+  .painel-atencoes { order: 3; }
+  .painel-lateral > section:not(.painel-atencoes) { order: 4; }
+  .painel-dupla { order: 5; }
+}
+@media (max-width: 860px) {
+  /* A regra de cabecalho da pagina empilha e centraliza no celular; o
+     cabecalho de cartao continua em linha: titulo a esquerda, link a direita. */
+  .painel-card > header { flex-direction: row; align-items: center; justify-content: space-between; text-align: left; }
+}
+@media (max-width: 720px) {
+  .painel-faixa { grid-template-columns: auto minmax(0, 1fr); }
+  .painel-faixa button { grid-column: 1 / -1; justify-content: center; }
+  .painel-dupla, .painel-lateral { grid-template-columns: minmax(0, 1fr); }
+  /* Fluxo em 2x2: quatro etapas numa linha de 360px cortam o texto */
+  .fluxo-etapas { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 16px; }
+  .fluxo-etapas li + li::before { display: none; }
+  /* A tabela vira cartoes: cada linha e uma consulta, com o botao inteiro */
+  .painel-tabela thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+  .painel-tabela, .painel-tabela tbody, .painel-tabela tr, .painel-tabela td { display: block; width: auto; }
+  .painel-tabela tr { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 4px 10px; padding: 12px 0; border-top: 1px solid var(--border); }
+  .painel-tabela tbody tr:first-child { border-top: 0; }
+  .painel-tabela td { padding: 0; border: 0; }
+  .painel-tabela td.painel-hora { grid-row: span 3; padding-top: 2px; }
+  .painel-proxima { font-size: 12px; color: var(--text-muted) !important; }
+  .painel-proxima::before { content: "Próxima ação: "; }
+  .painel-acao { grid-column: 2; text-align: left; margin-top: 6px; }
+  .painel-acao button, main .painel-acao button { width: 100%; justify-content: center; min-height: 44px !important; }
+  .painel-proximas li { grid-template-columns: minmax(0, 1fr) auto; }
+  .painel-proximas li time { grid-column: 1 / -1; }
+}
+
+/* ── Barra superior e cabecalho da pagina ─────────────────────────────────── */
+.topbar { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin: -4px 0 14px; }
+.topbar-busca { position: relative; flex: 0 1 380px; }
+.topbar-busca svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+main .topbar-busca input[type="search"] { width: 100%; height: 40px; padding: 8px 12px 8px 36px; border-radius: 8px; border: 1px solid var(--border-strong); background: var(--cream-soft); font-size: 13px; }
+.topbar-sino, main .topbar-sino { position: relative; width: 40px; min-height: 40px !important; padding: 0 !important; background: transparent; border: 0; color: var(--espresso); }
+.topbar-sino:hover, main .topbar-sino:hover { background: var(--cream-deep); transform: none; }
+.topbar-sino-ponto { position: absolute; top: 8px; right: 9px; width: 8px; height: 8px; border-radius: 50%; background: #b3261e; box-shadow: 0 0 0 2px var(--marble); }
+.topbar .who { margin-top: 0; padding-left: 12px; border-left: 1px solid var(--border); }
+header[data-tab="dashboard"] .eyebrow,
+.eyebrow-data { text-transform: none !important; letter-spacing: 0 !important; font-size: 14px !important; font-weight: 400 !important; color: var(--text-muted) !important; }
+/* O titulo da pagina em serifada, como no mockup; o resto do painel segue sans */
+main > header h1 { font-family: "Cormorant Garamond", "Playfair Display", Georgia, serif; font-size: clamp(30px, 3.2vw, 40px); font-weight: 500; letter-spacing: -.01em; line-height: 1.05; }
+.nav-lema { margin: 14px 12px 2px; font-family: "Cormorant Garamond", Georgia, serif; font-size: 15px; line-height: 1.3; color: rgba(248,243,238,.62); }
+@media (max-width: 860px) {
+  .topbar { justify-content: space-between; margin-top: 0; }
+  .topbar .nav-toggle { margin-bottom: 0; }
+  .topbar-busca { flex: 1 1 auto; }
+}
+@media (max-width: 720px) {
+  .topbar .who { padding-left: 0; border-left: 0; }
+}
 
 /* Receita do mes com a comparacao embutida */
 .painel-receita { display: grid; gap: 4px; margin-bottom: 14px; }
@@ -1418,7 +1487,6 @@ body.page-lock { overflow: hidden; }
   .cms-previa-palco { padding: 10px; }
   /* O dia e a coluna de numeros lado a lado ficam estreitos demais: com
      menos de 1180px a lista de horarios corta o nome da paciente. */
-  .painel-corpo { grid-template-columns: minmax(0, 1fr); }
   .lp { max-width: 620px; }
 }
 
@@ -1499,10 +1567,6 @@ body.page-lock { overflow: hidden; }
   .cms-save-actions button { flex: 1; }
   .cms-previa-palco { padding: 8px; }
   .painel-numeros { grid-template-columns: minmax(0, 1fr); }
-  .painel-agora { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tag" "nome" "quando" "acao"; }
-  .painel-agora button { margin-top: 8px; justify-content: center; }
-  .painel-horarios li { grid-template-columns: 48px minmax(0, 1fr); row-gap: 5px; }
-  .painel-tag { grid-column: 2; justify-self: start; }
   .cms-cor { grid-template-columns: 40px minmax(0, 1fr); }
   .cms-cor-valor { grid-column: 1 / -1; }
   .cms-paleta { grid-template-columns: minmax(0, 1fr); }

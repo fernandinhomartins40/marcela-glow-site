@@ -1,4 +1,5 @@
 import React from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertTriangle, Archive, ArchiveRestore, CalendarDays, FileText, HeartPulse, Mail, MessageCircle, Pencil, Phone, Plus, Search, UserRound } from 'lucide-react'
 import {
@@ -33,7 +34,14 @@ export { GENDERS, MARITAL_STATUSES, BLOOD_TYPES, REFERRAL_SOURCES, type Patient 
  */
 export function Patients() {
   const client = useQueryClient()
-  const [search, setSearch] = React.useState('')
+  /* A busca da barra superior chega como `?busca=`. Sincroniza também quando
+     a pessoa já está aqui e busca de novo lá em cima. */
+  const [params] = useSearchParams()
+  const buscaNaUrl = params.get('busca') ?? ''
+  const [search, setSearch] = React.useState(buscaNaUrl)
+  React.useEffect(() => {
+    if (buscaNaUrl) setSearch(buscaNaUrl)
+  }, [buscaNaUrl])
   // A busca vai ao servidor: sem atraso cada tecla vira uma requisição
   const debouncedSearch = useDebounced(search)
   const [showArchived, setShowArchived] = React.useState(false)
