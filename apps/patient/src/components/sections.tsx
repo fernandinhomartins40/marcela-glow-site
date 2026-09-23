@@ -315,7 +315,7 @@ export function NotificationsPanel({ notifications }: { notifications: Notificat
             setFeedback('')
             push.mutate()
           }}
-          className="btn-ghost h-9 px-3 text-xs"
+          className="btn-ghost h-11 px-3 text-xs"
           disabled={push.isPending}
         >
           {push.isPending ? <Loader2 size={14} className="animate-spin" aria-hidden="true" /> : <Bell size={14} aria-hidden="true" />}

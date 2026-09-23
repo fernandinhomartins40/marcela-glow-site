@@ -86,7 +86,7 @@ export function RequestCare({ procedures, initialIntent = 'appointment' }: { pro
                 setIntent(option.id)
                 setFeedback('')
               }}
-              className={`h-9 rounded text-sm transition-colors ${
+              className={`h-11 rounded text-sm transition-colors ${
                 intent === option.id
                   ? 'bg-card text-foreground font-medium shadow-sm'
                   : 'text-muted-foreground hover:text-foreground'

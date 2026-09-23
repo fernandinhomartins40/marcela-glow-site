@@ -24,3 +24,5 @@ A usuária aprovou os dois retratos limpos (`dra-marcela-editorial-limpa-v1.png`
 ## Derivados WebP para o site (23/09/2026)
 
 Os PNGs aprovados somavam cerca de 23 MB na landing. O site passou a importar derivados `.webp` (qualidade 82) gerados ao lado de cada original em `approved/` e `candidatas/`; os PNGs continuam como fonte e são a referência dos hashes acima. Os quatro cartões de tratamento foram reduzidos para 960 px de largura (exibidos a ~350 px); fundos e retratos mantêm a resolução original. Total dos derivados: ~560 KB. Conferidos visualmente a textura de pele e o retrato editorial, sem perda perceptível. Ao trocar um PNG aprovado, regenerar o `.webp` correspondente.
+
+O portal da paciente usa `apps/patient/src/assets/patient-botanical-mobile-v1.webp` (derivado do PNG de mesmo nome, 49 KB, SHA-256 `6E47302161D817DC`) como fundo, no lugar de `patient-background-approved-v1.png`, que era um PNG de 2 MB coberto por 86–92% de creme. O PNG antigo continua no repositório, sem uso no portal.

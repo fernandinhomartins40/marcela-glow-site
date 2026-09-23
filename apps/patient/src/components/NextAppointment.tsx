@@ -1,6 +1,6 @@
-import { CalendarDays, CalendarPlus, ChevronRight, Clock, type LucideIcon } from 'lucide-react'
+import { CalendarDays, CalendarPlus, ChevronRight, type LucideIcon } from 'lucide-react'
 import type { Appointment } from '@/lib/api'
-import { appointmentStatus, formatFriendlyDateTime, formatRelative } from '@/lib/format'
+import { appointmentStatus, formatCardDateTime, formatRelative } from '@/lib/format'
 import { StatusChip } from './ui'
 
 /**
@@ -39,34 +39,30 @@ export function NextAppointment({
   }
 
   const status = appointmentStatus(appointment.status)
-  const when = formatFriendlyDateTime(appointment.scheduledAt)
+  const when = formatCardDateTime(appointment.scheduledAt)
   const relative = formatRelative(appointment.scheduledAt)
   const title = appointment.procedure?.title ?? 'Consulta de avaliação'
 
   return (
-    <section className="panel panel-pad bg-white">
-      <div className="flex flex-wrap items-center gap-3">
-        <p className="label-eyebrow">Sua próxima consulta</p>
-        <StatusChip label={status.label} tone={status.tone} />
+    <section className="panel panel-pad bg-card shadow-[0_18px_40px_-34px_hsl(var(--espresso)/0.55)]" aria-labelledby="proxima-consulta">
+      <div className="flex items-start gap-4 sm:gap-5">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-secondary text-primary sm:h-16 sm:w-16" aria-hidden="true">
+          <CalendarDays size={26} strokeWidth={1.5} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p id="proxima-consulta" className="text-[0.95rem] font-medium text-foreground">Sua próxima consulta</p>
+          {when ? (
+            <p className="mt-1 font-display text-[1.7rem] leading-tight text-primary sm:text-3xl">{when}</p>
+          ) : (
+            <p className="mt-1 font-display text-2xl leading-tight text-primary">Aguardando horário</p>
+          )}
+          <p className="mt-1 text-sm text-muted-foreground">{title}{relative ? ` · ${relative}` : ''}</p>
+          <div className="mt-3"><StatusChip label={status.label} tone={status.tone} /></div>
+        </div>
       </div>
 
-      <h2 className="mt-3 font-display text-2xl sm:text-3xl text-primary">{title}</h2>
-
-      {when ? (
-        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-foreground">
-          <span className="inline-flex items-center gap-2 text-[0.95rem]">
-            <CalendarDays size={16} className="text-accent" aria-hidden="true" />
-            {when}
-          </span>
-          {relative && (
-            <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock size={15} className="text-accent" aria-hidden="true" />
-              {relative}
-            </span>
-          )}
-        </div>
-      ) : (
-        <p className="mt-4 text-sm text-muted-foreground leading-relaxed max-w-md">
+      {!when && (
+        <p className="mt-4 text-sm text-muted-foreground leading-relaxed">
           Sua solicitação foi recebida. A equipe entrará em contato para confirmar
           a melhor data e horário.
         </p>
@@ -79,13 +75,13 @@ export function NextAppointment({
       )}
 
       {appointment.status === 'PENDING' && (
-        <p className="mt-5 border-l-2 border-accent pl-3 text-xs leading-relaxed text-muted-foreground">
+        <p className="mt-4 border-l-2 border-accent pl-3 text-xs leading-relaxed text-muted-foreground">
           Ainda não é uma reserva confirmada. A equipe está conferindo a agenda e vai avisar você assim que finalizar.
         </p>
       )}
       {onDetails && (
-        <button type="button" onClick={onDetails} className="btn mt-6 w-full justify-center bg-[hsl(var(--espresso))] text-[hsl(var(--cream))] hover:opacity-90">
-          Ver detalhes <ChevronRight size={17} aria-hidden="true" />
+        <button type="button" onClick={onDetails} className="btn mt-5 h-12 w-full justify-center bg-primary text-primary-foreground text-base hover:bg-[hsl(var(--espresso))]">
+          Ver detalhes <ChevronRight size={18} aria-hidden="true" />
         </button>
       )}
     </section>

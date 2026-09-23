@@ -1,5 +1,5 @@
 import React from 'react'
-import { CalendarDays, FileText, Home, LogOut, MessageCircle, Sparkles, type LucideIcon } from 'lucide-react'
+import { Bell, CalendarDays, ChevronRight, FileText, Home, LogOut, Menu, MessageCircle, Sparkles, X, type LucideIcon } from 'lucide-react'
 import { logout } from '@/lib/api'
 import { firstName, initials } from '@/lib/format'
 import { cn } from './ui'
@@ -21,9 +21,15 @@ export const SECTIONS: { id: SectionId; label: string; icon: LucideIcon; badge?:
   { id: 'inicio', label: 'Início', icon: Home, badge: true },
   { id: 'consultas', label: 'Consultas', icon: CalendarDays },
   { id: 'jornada', label: 'Jornada', icon: Sparkles, destaque: true },
-  { id: 'prescricoes', label: 'Prescrições', icon: FileText },
+  { id: 'prescricoes', label: 'Documentos', icon: FileText },
   { id: 'mensagens', label: 'Mensagens', icon: MessageCircle },
 ]
+
+/* A barra do celular tem quatro seções e "Mais", como no mockup aprovado.
+   Mensagens foi para "Mais" e continua a um toque pelo cartão do Início;
+   no desktop a lateral tem espaço e mostra todas. */
+const BARRA: SectionId[] = ['inicio', 'consultas', 'jornada', 'prescricoes']
+const NO_MAIS: SectionId[] = ['mensagens']
 
 export function AppShell({
   active,
@@ -44,6 +50,24 @@ export function AppShell({
      fundo do sistema, e a troca de seção desliza. Pelo navegador nada disso
      muda — lá a barra de endereço e o botão de voltar já dão esse contexto. */
   const comoApp = useAplicativoInstalado()
+  const [maisAberto, setMaisAberto] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!maisAberto) return
+    const fechar = (event: KeyboardEvent) => event.key === 'Escape' && setMaisAberto(false)
+    window.addEventListener('keydown', fechar)
+    return () => window.removeEventListener('keydown', fechar)
+  }, [maisAberto])
+
+  /* O sino leva aos avisos, que moram no fim do Início. */
+  const abrirAvisos = () => {
+    onNavigate('inicio')
+    window.setTimeout(() => document.getElementById('avisos')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 180)
+  }
+  const ir = (id: SectionId) => {
+    setMaisAberto(false)
+    onNavigate(id)
+  }
 
   return (
     <div className={cn('min-h-screen bg-background', comoApp && 'is-app')}>
@@ -55,8 +79,8 @@ export function AppShell({
           <div className="flex items-center gap-3">
             <img src={logoMD} alt="Monograma Dra. Marcela Duch" className="h-10 w-10 object-contain shrink-0" width={40} height={40} />
             <div>
-              <p className="font-display text-[0.95rem] tracking-[0.14em] uppercase text-primary leading-tight">Dra. Marcela Duch</p>
-              <p className="mt-1 text-[0.6rem] tracking-[0.25em] uppercase text-muted-foreground">Portal da paciente</p>
+              <p className="font-display text-lg text-primary leading-tight">Dra. Marcela Duch</p>
+              <p className="mt-1 text-[0.6rem] tracking-[0.24em] uppercase text-muted-foreground">Portal da paciente</p>
             </div>
           </div>
         </div>
@@ -119,25 +143,30 @@ export function AppShell({
 
       {/* Topo — mobile */}
       <header
-        className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-5 h-16 bg-card border-b border-border"
+        className="md:hidden sticky top-0 z-30 flex items-center justify-between gap-3 px-5 h-16 bg-background/90 backdrop-blur-md border-b border-border/70"
         style={comoApp ? { paddingTop: 'env(safe-area-inset-top)', height: 'calc(4rem + env(safe-area-inset-top))' } : undefined}
       >
-        {/* A logo faltava no topo: sobrava so o texto, e o portal perdia a
-            marca justamente na tela que a paciente mais abre. */}
         <div className="flex items-center gap-3 min-w-0">
           <img src={logoMD} alt="" className="h-9 w-auto shrink-0" width={36} height={36} />
-          <div className="min-w-0">
-          <p className="font-display text-sm tracking-[0.2em] uppercase text-primary truncate">
-            Dra. Marcela Duch
-          </p>
-          <p className="text-[0.6rem] tracking-[0.2em] uppercase text-muted-foreground">
-            Portal da paciente
-          </p>
+          <div className="min-w-0 leading-tight">
+            <p className="font-display text-lg text-primary truncate">Dra. Marcela Duch</p>
+            <p className="text-[0.6rem] tracking-[0.24em] uppercase text-muted-foreground">Portal da paciente</p>
           </div>
         </div>
-        <button onClick={logout} className="btn-ghost h-10 px-3 shrink-0" aria-label="Sair da conta">
-          <LogOut size={16} aria-hidden="true" />
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={abrirAvisos}
+            className="relative inline-flex h-11 w-11 items-center justify-center rounded-full text-primary hover:bg-secondary"
+            aria-label={pending ? `${pending} aviso${pending > 1 ? 's' : ''} não lido${pending > 1 ? 's' : ''}` : 'Avisos'}
+          >
+            <Bell size={21} aria-hidden="true" />
+            {pending ? <span className="absolute top-2.5 right-2.5 h-2.5 w-2.5 rounded-full bg-[hsl(var(--bronze))] ring-2 ring-background" aria-hidden="true" /> : null}
+          </button>
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-sm font-medium text-primary" aria-hidden="true">
+            {initials(patientName)}
+          </span>
+        </div>
       </header>
 
       {/* Conteúdo */}
@@ -162,18 +191,18 @@ export function AppShell({
         {/* Cinco colunas: a Jornada entrou no meio e a grade de quatro deixava
             a ultima secao sem lugar. */}
         <ul className="grid grid-cols-5">
-          {SECTIONS.map((section) => {
+          {SECTIONS.filter((section) => BARRA.includes(section.id)).map((section) => {
             const Icon = section.icon
             const isActive = active === section.id
             return (
               <li key={section.id}>
                 <button
-                  onClick={() => onNavigate(section.id)}
+                  onClick={() => ir(section.id)}
                   aria-current={isActive ? 'page' : undefined}
                   className={cn(
                     'relative w-full flex flex-col items-center justify-center gap-1 py-2.5 min-h-[3.75rem] transition-colors',
                     section.destaque && 'pt-8',
-                    isActive ? 'text-primary' : 'text-muted-foreground',
+                    isActive ? 'text-primary font-medium' : 'text-muted-foreground',
                   )}
                 >
                   {/* A Jornada sobe num circulo acima da barra: e o que da
@@ -184,22 +213,72 @@ export function AppShell({
                       <Icon size={22} aria-hidden="true" />
                     </span>
                   ) : (
-                    <Icon size={19} aria-hidden="true" />
+                    <Icon size={20} aria-hidden="true" fill={isActive ? 'currentColor' : 'none'} fillOpacity={isActive ? 0.15 : 0} />
                   )}
-                  <span className="text-[0.65rem] tracking-wide">{section.label}</span>
+                  <span className="text-[0.68rem] tracking-wide">{section.label}</span>
                   {section.badge && pending ? (
                     <span
-                      className="absolute top-1.5 right-[22%] w-2 h-2 rounded-full bg-accent"
+                      className="absolute top-1.5 right-[22%] w-2 h-2 rounded-full bg-[hsl(var(--bronze))]"
                       aria-label={`${pending} aviso${pending > 1 ? 's' : ''} não lido${pending > 1 ? 's' : ''}`}
                     />
                   ) : null}
-                  {isActive && <span className="absolute top-0 inset-x-4 h-px bg-primary" />}
+                  {isActive && <span className="absolute top-0 inset-x-4 h-0.5 rounded-full bg-primary" />}
                 </button>
               </li>
             )
           })}
+          <li>
+            <button
+              onClick={() => setMaisAberto(true)}
+              aria-haspopup="dialog"
+              aria-expanded={maisAberto}
+              aria-current={NO_MAIS.includes(active) ? 'page' : undefined}
+              className={cn(
+                'relative w-full flex flex-col items-center justify-center gap-1 py-2.5 min-h-[3.75rem] transition-colors',
+                NO_MAIS.includes(active) ? 'text-primary font-medium' : 'text-muted-foreground',
+              )}
+            >
+              <Menu size={20} aria-hidden="true" />
+              <span className="text-[0.68rem] tracking-wide">Mais</span>
+              {NO_MAIS.includes(active) && <span className="absolute top-0 inset-x-4 h-0.5 rounded-full bg-primary" />}
+            </button>
+          </li>
         </ul>
       </nav>
+
+      {maisAberto && (
+        <div className="md:hidden fixed inset-0 z-40" role="dialog" aria-modal="true" aria-label="Mais opções">
+          <button type="button" className="absolute inset-0 w-full bg-[hsl(var(--espresso))]/40" onClick={() => setMaisAberto(false)} aria-label="Fechar" tabIndex={-1} />
+          <div className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-card px-5 pt-4 shadow-2xl" style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}>
+            <div className="flex items-center justify-between">
+              <p className="font-display text-xl text-primary">Mais</p>
+              <button type="button" onClick={() => setMaisAberto(false)} className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-secondary" aria-label="Fechar" autoFocus>
+                <X size={20} aria-hidden="true" />
+              </button>
+            </div>
+            <ul className="mt-2 divide-y divide-border">
+              {SECTIONS.filter((section) => NO_MAIS.includes(section.id)).map((section) => {
+                const Icon = section.icon
+                return (
+                  <li key={section.id}>
+                    <button type="button" onClick={() => ir(section.id)} className="flex w-full min-h-14 items-center gap-4 text-left text-foreground">
+                      <span className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-primary"><Icon size={19} aria-hidden="true" /></span>
+                      <span className="flex-1 font-medium">{section.label}</span>
+                      <ChevronRight size={18} className="text-muted-foreground" aria-hidden="true" />
+                    </button>
+                  </li>
+                )
+              })}
+              <li>
+                <button type="button" onClick={logout} className="flex w-full min-h-14 items-center gap-4 text-left text-foreground">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-primary"><LogOut size={18} aria-hidden="true" /></span>
+                  <span className="flex-1 font-medium">Sair da conta</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

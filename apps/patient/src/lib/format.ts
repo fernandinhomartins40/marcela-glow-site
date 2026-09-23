@@ -31,6 +31,22 @@ export function formatFriendlyDateTime(value: string | Date | null | undefined) 
   return format(date, "d 'de' MMMM', ' HH'h'mm", { locale: ptBR })
 }
 
+/**
+ * "Quinta-feira, 14:00", "Hoje, 14:00" ou, a mais de uma semana, "2 de
+ * outubro, 14:00". O dia da semana basta quando a consulta está perto; longe,
+ * ele sozinho confunde qual quinta é.
+ */
+export function formatCardDateTime(value: string | Date | null | undefined) {
+  const date = toDate(value)
+  if (!date) return null
+  const time = format(date, 'HH:mm', { locale: ptBR })
+  if (isToday(date)) return `Hoje, ${time}`
+  if (isTomorrow(date)) return `Amanhã, ${time}`
+  const dias = (date.getTime() - Date.now()) / 86_400_000
+  const rotulo = dias > 0 && dias < 7 ? format(date, 'EEEE', { locale: ptBR }) : format(date, "d 'de' MMMM", { locale: ptBR })
+  return `${rotulo.charAt(0).toUpperCase()}${rotulo.slice(1)}, ${time}`
+}
+
 /** "em 3 dias" / "há 2 meses" */
 export function formatRelative(value: string | Date | null | undefined) {
   const date = toDate(value)

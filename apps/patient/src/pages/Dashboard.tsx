@@ -71,13 +71,23 @@ export function Dashboard() {
               paciente ja escolheu o que quer ver, e repetir "Ola" so empurra o
               conteudo para baixo. */}
           {!planoId && (
-            <div className="mb-6">
-              <h1 className="font-display text-3xl sm:text-4xl text-primary">
-                {greeting ? `Olá, ${greeting}` : 'Olá'}
-              </h1>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                Acompanhe sua jornada de cuidado com a Dra. Marcela.
-              </p>
+            <div className="mb-6 flex items-start justify-between gap-6">
+              <div className="min-w-0">
+                <h1 className="font-display text-[2.6rem] leading-none text-primary sm:text-5xl">
+                  {greeting ? `Olá, ${greeting}` : 'Olá'}
+                </h1>
+                <p className="mt-2 text-[0.95rem] text-muted-foreground">
+                  Tudo o que você precisa para seguir seu cuidado.
+                </p>
+              </div>
+              {/* A frase do mockup: só no Início e só onde cabe sem apertar a
+                  saudação — abaixo de 400px ela quebraria em cinco linhas. */}
+              {section === 'inicio' && (
+                <p className="hidden min-[400px]:block max-w-[11rem] shrink-0 pt-1 font-display text-[1.05rem] italic leading-snug text-foreground/75">
+                  Cuidar de você é um processo para a vida toda.
+                  <span className="mt-2 block h-px w-8 bg-accent" aria-hidden="true" />
+                </p>
+              )}
             </div>
           )}
 
