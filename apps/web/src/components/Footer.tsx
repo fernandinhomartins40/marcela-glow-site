@@ -1,4 +1,4 @@
-import { ArrowRight, ChevronRight, Clock3, Instagram, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowRight, ChevronRight, Instagram, Mail, MapPin, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useImage, useSection } from "@/hooks/useLanding";
 import logoMD from "@/assets/brand/md-monogram-white.webp";
@@ -64,20 +64,17 @@ const Footer = () => {
       <a href={`https://wa.me/55${phoneDigits}`} target="_blank" rel="noopener noreferrer" className={social} aria-label="WhatsApp">
         <WhatsAppIcon />
       </a>
-      <a href={`mailto:${mail}`} className={social} aria-label="E-mail">
-        <Mail className="h-[18px] w-[18px]" aria-hidden="true" />
-      </a>
     </>
   );
 
   return (
     <footer id="contato" className="bg-[hsl(var(--espresso))] text-[hsl(var(--cream))] border-t border-[hsl(var(--cream))]/10">
-      <div className="container mx-auto px-5 sm:px-6 lg:px-10 pt-10 pb-6 md:pt-12">
+      <div className="container mx-auto px-5 sm:px-6 lg:px-10 pt-9 pb-5 md:pt-10">
         <div className="grid gap-8 md:grid-cols-12 md:gap-8 lg:gap-12">
           {/* Marca */}
           <div className="md:col-span-4">
             <div className="flex items-center gap-3">
-              <img src={logo.src} alt={logo.alt} className="h-10 w-auto brightness-0 invert opacity-95" width={40} height={40} loading="lazy" />
+              <img src={logo.src} alt={logo.alt} className="h-12 w-auto brightness-0 invert opacity-95" width={48} height={48} loading="lazy" />
               <span className="font-display text-xl">Dra. Marcela Duch</span>
             </div>
             <p className="mt-4 hidden max-w-[17rem] text-sm leading-relaxed text-[hsl(var(--cream))]/75 md:block">{content.tagline}</p>
@@ -128,11 +125,12 @@ const Footer = () => {
           {/* Horário */}
           <div className="md:col-span-3">
             <p className={`${heading} hidden md:block`}>Horário</p>
-            <p className="hidden gap-3 text-sm leading-relaxed text-[hsl(var(--cream))]/85 md:flex">
-              <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-[hsl(var(--bronze-light))]" strokeWidth={1.5} aria-hidden="true" />
-              <span>Segunda a sexta: 9h às 18h<br />Sábado: 9h às 13h</span>
+            <p className="hidden text-sm leading-relaxed text-[hsl(var(--cream))]/85 md:block">
+              Segunda a sexta: 9h às 18h<br />Sábado: 9h às 13h
             </p>
-            <Button variant="ctaLight" className="w-full md:mt-5 md:w-auto" onClick={() => scrollToSection("agendamento")}>
+            {/* No mockup o CTA do rodapé é bronze, não creme: o creme já é o
+                botão do formulário logo acima, e dois iguais disputariam. */}
+            <Button className="w-full border border-[hsl(var(--bronze))] bg-[hsl(var(--bronze))] text-[hsl(var(--cream))] hover:bg-[hsl(var(--bronze))]/85 md:mt-5 md:w-auto" onClick={() => scrollToSection("agendamento")}>
               Agendar avaliação <ArrowRight aria-hidden="true" />
             </Button>
           </div>

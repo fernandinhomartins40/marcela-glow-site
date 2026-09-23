@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowRight, CalendarClock, CheckCircle2, ClipboardCheck, Clock3, Mail, MapPin, Phone, UserRound } from "lucide-react";
+import { ArrowRight, CalendarClock, CheckCircle2, ClipboardCheck, Clock3, Mail, MapPin, Phone, Plus, UserRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,17 +30,17 @@ const FALLBACK: AppointmentContent = {
   whatsapp: null,
 };
 
+/* O horário de atendimento fica no rodapé, logo abaixo — aqui, como no
+   mockup, só os canais de contato. */
 const contactBlocks: { label: string; icon: LucideIcon; lines: string[] }[] = [
   { label: "Telefone / WhatsApp", icon: Phone, lines: ["(67) 99944-6066"] },
   { label: "E-mail", icon: Mail, lines: ["contato@dramarceladuch.com.br"] },
-  { label: "Endereço", icon: MapPin, lines: ["Av. 16, nº 890 — Ágatha Center", "Chapadão do Sul — MS"] },
-  { label: "Atendimento", icon: Clock3, lines: ["Segunda a sexta · 9h às 18h", "Sábado · 9h às 13h"] },
+  { label: "Endereço", icon: MapPin, lines: ["Chapadão do Sul — MS", "Av. 16, nº 890 — Ágatha Center"] },
 ];
 
-/* As três etapas na ordem em que o formulário as pede. */
 const formSteps: { icon: LucideIcon; title: string; detail: string }[] = [
+  { icon: CalendarClock, title: "Escolha o dia", detail: "e o horário" },
   { icon: UserRound, title: "Suas informações", detail: "Nome e contato" },
-  { icon: CalendarClock, title: "Dia e horário", detail: "Se tiver preferência" },
   { icon: CheckCircle2, title: "Confirmação", detail: "Feita pela equipe" },
 ];
 
@@ -69,6 +69,9 @@ const Appointment = () => {
     message: "",
   });
   const [slot, setSlot] = useState<string | null>(null);
+  /* A observação é opcional e o mockup não a mostra: fica atrás de um link,
+     e abre sozinha se já tiver texto. */
+  const [showMessage, setShowMessage] = useState(false);
   const [submitted, setSubmitted] = useState<{ name: string; slot: string | null } | null>(null);
 
   const queryClient = useQueryClient();
@@ -121,7 +124,7 @@ const Appointment = () => {
   };
 
   const fieldClass =
-    "bg-[hsl(var(--cream))]/[0.04] border border-[hsl(var(--cream))]/25 rounded-[3px] px-3.5 h-12 text-[hsl(var(--cream))] placeholder:text-[hsl(var(--cream))]/50 focus-visible:ring-1 focus-visible:ring-[hsl(var(--bronze-light))] focus-visible:ring-offset-0 focus-visible:border-[hsl(var(--bronze-light))] transition-colors duration-300";
+    "bg-[hsl(var(--cream))]/[0.04] border border-[hsl(var(--cream))]/25 rounded-[3px] px-3.5 h-11 text-[hsl(var(--cream))] placeholder:text-[hsl(var(--cream))]/50 focus-visible:ring-1 focus-visible:ring-[hsl(var(--bronze-light))] focus-visible:ring-offset-0 focus-visible:border-[hsl(var(--bronze-light))] transition-colors duration-300";
 
   const startAnotherRequest = () => {
     setSubmitted(null);
@@ -134,33 +137,33 @@ const Appointment = () => {
   return (
     <section
       id="agendamento"
-      className="relative section-y bg-espresso overflow-hidden"
+      className="relative bg-espresso overflow-hidden py-14 md:py-16"
     >
 
       <div className="container mx-auto px-5 sm:px-6 lg:px-10 relative z-10">
-        <div className="grid lg:grid-cols-12 gap-10 lg:gap-20 max-w-6xl mx-auto">
+        <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-start">
           {/* Coluna de informações */}
           <div className="lg:col-span-5 min-w-0 animate-fade-in">
-            <p className="label-eyebrow mb-4">{content.eyebrow}</p>
-            <h2 className="font-display type-section text-[hsl(var(--cream))]">
+            <p className="label-eyebrow label-rule mb-4">{content.eyebrow}</p>
+            <h2 className="font-display text-[clamp(2.2rem,3.6vw,3rem)] leading-[1.02] text-[hsl(var(--cream))]">
               {content.titleTop}
               <span className="block italic font-light text-[hsl(var(--bronze-light))]">
                 {content.titleBottom}
               </span>
             </h2>
 
-            <p className="mt-5 mb-9 max-w-md text-base leading-relaxed text-[hsl(var(--cream))]/80 md:mb-12">
+            <p className="mt-4 mb-7 max-w-md text-base leading-relaxed text-[hsl(var(--cream))]/80">
               {content.lead}
             </p>
 
-            <ul className="space-y-5">
+            <ul className="space-y-4">
               {contactBlocks.map(({ label, icon: Icon, lines }) => (
                 <li key={label} className="flex items-start gap-4">
                   <Icon className="mt-0.5 h-5 w-5 shrink-0 text-[hsl(var(--bronze-light))]" strokeWidth={1.4} aria-hidden="true" />
                   <div>
                     <p className="sr-only">{label}</p>
-                    {lines.map((line) => (
-                      <p key={line} className="text-[0.95rem] leading-relaxed text-[hsl(var(--cream))]/90">
+                    {lines.map((line, i) => (
+                      <p key={line} className={`text-[0.95rem] leading-relaxed ${i === 0 ? "text-[hsl(var(--cream))]/90" : "text-[hsl(var(--cream))]/75"}`}>
                         {line}
                       </p>
                     ))}
@@ -216,27 +219,27 @@ const Appointment = () => {
             ) : (
             <form
               onSubmit={handleSubmit}
-              className="rounded-md border border-[hsl(var(--cream))]/15 bg-[hsl(var(--cream))]/[0.03] p-5 sm:p-8 md:p-10"
+              className="rounded-md border border-[hsl(var(--cream))]/15 bg-[hsl(var(--cream))]/[0.03] p-5 sm:p-6"
             >
-              <p className="label-eyebrow mb-6">Solicite sua avaliação</p>
+              <p className="label-eyebrow mb-4">Solicite sua avaliação</p>
 
-              <ol className="grid gap-4 border-b border-[hsl(var(--cream))]/10 pb-6 sm:grid-cols-3 sm:gap-3">
-                {formSteps.map(({ icon: Icon, title, detail }) => (
-                  <li key={title} className="flex items-center gap-3">
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[hsl(var(--bronze-light))]/50 text-[hsl(var(--bronze-light))]">
-                      <Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+              <ol className="grid gap-3 border-b border-[hsl(var(--cream))]/10 pb-4 sm:grid-cols-3 sm:gap-0">
+                {formSteps.map(({ icon: Icon, title, detail }, index) => (
+                  <li key={title} className={`flex items-center gap-2.5 sm:px-3 ${index > 0 ? "sm:border-l sm:border-[hsl(var(--cream))]/15" : "sm:pl-0"}`}>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[hsl(var(--cream))]/10 text-[hsl(var(--bronze-light))]">
+                      <Icon className="h-4 w-4" strokeWidth={1.6} aria-hidden="true" />
                     </span>
-                    <span>
-                      <strong className="block text-sm font-medium text-[hsl(var(--cream))]">{title}</strong>
+                    <span className="leading-tight">
+                      <strong className="block text-[0.8125rem] font-medium text-[hsl(var(--cream))]">{title}</strong>
                       <span className="block text-xs text-[hsl(var(--cream))]/70">{detail}</span>
                     </span>
                   </li>
                 ))}
               </ol>
 
-              <div className="mt-7 space-y-6">
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
                 <div>
-                  <label htmlFor="appointment-name" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/80">
+                  <label htmlFor="appointment-name" className="mb-1.5 block text-xs text-[hsl(var(--cream))]/80">
                     Nome completo <span className="text-[hsl(var(--bronze-light))]">*</span>
                   </label>
                   <Input
@@ -250,47 +253,26 @@ const Appointment = () => {
                     required
                   />
                 </div>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label htmlFor="appointment-email" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/80">
-                      E-mail <span className="text-[hsl(var(--bronze-light))]">*</span>
-                    </label>
-                    <Input
-                      id="appointment-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    maxLength={254}
-                      className={fieldClass}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="appointment-phone" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/80">
-                      Telefone ou WhatsApp <span className="text-[hsl(var(--bronze-light))]">*</span>
-                    </label>
-                    <Input
-                      id="appointment-phone"
-                      type="tel"
-                      placeholder="(67) 90000-0000"
+                <div>
+                  <label htmlFor="appointment-phone" className="mb-1.5 block text-xs text-[hsl(var(--cream))]/80">
+                    WhatsApp <span className="text-[hsl(var(--bronze-light))]">*</span>
+                  </label>
+                  <Input
+                    id="appointment-phone"
+                    type="tel"
+                    placeholder="(67) 90000-0000"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     maxLength={40}
-                      className={fieldClass}
-                      required
-                    />
-                  </div>
+                    className={fieldClass}
+                    required
+                  />
                 </div>
-
                 <div>
-                  <p className="mb-2 text-xs tracking-wide text-[hsl(var(--cream))]/80">Procedimento de interesse <span className="text-[hsl(var(--cream))]/45">(opcional)</span></p>
+                  <p className="mb-1.5 block text-xs text-[hsl(var(--cream))]/80">Procedimento <span className="text-[hsl(var(--cream))]/55">(opcional)</span></p>
                   {proceduresPending || proceduresError || procedures.length === 0 ? (
-                    <p className="border-b border-[hsl(var(--cream))]/25 py-3 text-sm text-[hsl(var(--cream))]/65" role="status">
-                      {proceduresPending
-                        ? "Carregando procedimentos…"
-                        : "A lista de procedimentos não está disponível agora. Descreva seu interesse no campo abaixo; você ainda pode pedir uma avaliação."}
+                    <p className={`${fieldClass} flex items-center text-sm text-[hsl(var(--cream))]/70`} role="status">
+                      {proceduresPending ? "Carregando procedimentos…" : "Conte seu interesse na observação"}
                     </p>
                   ) : <Select
                     value={formData.procedure}
@@ -308,50 +290,50 @@ const Appointment = () => {
                     </SelectContent>
                   </Select>}
                 </div>
-
                 <div>
-                  <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                    <p className="label-eyebrow">
-                      Horário de preferência
-                      <span className="ml-2 normal-case tracking-normal text-[hsl(var(--cream))]/40">
-                        (opcional)
-                      </span>
-                    </p>
-                    {slot && (
-                      <button
-                        type="button"
-                        onClick={() => setSlot(null)}
-                        className="text-xs tracking-wide text-[hsl(var(--cream))]/50 underline underline-offset-4 transition-colors hover:text-[hsl(var(--cream))]"
-                      >
-                        limpar
-                      </button>
-                    )}
-                  </div>
-
-                  <SlotPicker
-                    procedureId={selectedProcedureId}
-                    value={slot}
-                    onChange={setSlot}
-                    disclaimer={content.disclaimer}
+                  <label htmlFor="appointment-email" className="mb-1.5 block text-xs text-[hsl(var(--cream))]/80">
+                    E-mail <span className="text-[hsl(var(--bronze-light))]">*</span>
+                  </label>
+                  <Input
+                    id="appointment-email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    maxLength={254}
+                    className={fieldClass}
+                    required
                   />
+                </div>
+              </div>
 
+              <div className="mt-5">
+                <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <p className="text-xs text-[hsl(var(--cream))]/80">
+                    Selecione a data e horário <span className="text-[hsl(var(--cream))]/55">(opcional)</span>
+                  </p>
                   {slot && (
-                    <p className="mt-3 flex items-start gap-2.5 text-sm font-light text-[hsl(var(--cream))]/75">
-                      <span className="mt-2 h-px w-5 shrink-0 bg-[hsl(var(--bronze))]" />
-                      <span>
-                        Você escolheu{" "}
-                        <span className="text-[hsl(var(--cream))]">
-                          {formatChosenSlot(slot)}
-                        </span>
-                        .
-                      </span>
-                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setSlot(null)}
+                      className="text-xs text-[hsl(var(--cream))]/70 underline underline-offset-4 hover:text-[hsl(var(--cream))]"
+                    >
+                      limpar
+                    </button>
                   )}
                 </div>
+                <SlotPicker procedureId={selectedProcedureId} value={slot} onChange={setSlot} />
+                {slot && (
+                  <p className="mt-2 text-sm text-[hsl(var(--cream))]/80">
+                    Você escolheu <span className="text-[hsl(var(--cream))]">{formatChosenSlot(slot)}</span>.
+                  </p>
+                )}
+              </div>
 
-                <div>
-                  <label htmlFor="appointment-message" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/80">
-                    Algo que a equipe deve saber <span className="text-[hsl(var(--cream))]/45">(opcional)</span>
+              {showMessage || formData.message ? (
+                <div className="mt-4">
+                  <label htmlFor="appointment-message" className="mb-1.5 block text-xs text-[hsl(var(--cream))]/80">
+                    Algo que a equipe deve saber <span className="text-[hsl(var(--cream))]/55">(opcional)</span>
                   </label>
                   <Textarea
                     id="appointment-message"
@@ -359,24 +341,32 @@ const Appointment = () => {
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     maxLength={4000}
-                    className={`${fieldClass} scrollbar-on-dark h-auto min-h-[110px] py-3 resize-none`}
+                    autoFocus={showMessage && !formData.message}
+                    className={`${fieldClass} scrollbar-on-dark h-auto min-h-[88px] py-3 resize-none`}
                   />
                 </div>
-
-                <p className="text-xs leading-relaxed text-[hsl(var(--cream))]/50 font-light">
-                  * Campos obrigatórios. Usaremos seus dados para responder a este pedido de avaliação.
-                </p>
-
-                <Button
-                  type="submit"
-                  variant="ctaLight"
-                  size="lg"
-                  className="w-full"
-                  disabled={mutation.isPending}
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowMessage(true)}
+                  className="mt-3 inline-flex min-h-11 items-center gap-1.5 text-sm text-[hsl(var(--cream))]/75 hover:text-[hsl(var(--cream))]"
                 >
-                  {mutation.isPending ? "Enviando..." : <>Solicitar avaliação <ArrowRight aria-hidden="true" /></>}
-                </Button>
-              </div>
+                  <Plus className="h-4 w-4" aria-hidden="true" /> Adicionar uma observação
+                </button>
+              )}
+
+              <Button
+                type="submit"
+                variant="ctaLight"
+                size="lg"
+                className="mt-4 w-full"
+                disabled={mutation.isPending}
+              >
+                {mutation.isPending ? "Enviando..." : <>Solicitar agendamento <ArrowRight aria-hidden="true" /></>}
+              </Button>
+              <p className="mt-3 text-xs leading-relaxed text-[hsl(var(--cream))]/65">
+                {content.disclaimer} Usaremos seus dados só para responder a este pedido. * Obrigatório.
+              </p>
             </form>
             )}
           </div>
