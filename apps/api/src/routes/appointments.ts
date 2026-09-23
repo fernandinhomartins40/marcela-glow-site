@@ -28,14 +28,23 @@ const APPOINTMENT_INCLUDE = {
 // Schemas
 // ─────────────────────────────────────────────────────────────────────────────
 
-const createSchema = z.object({
-  name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
-  email: z.string().email('E-mail inválido'),
-  phone: z.string().min(8, 'Telefone deve ter ao menos 8 caracteres'),
-  procedure: z.string().optional(), // título ou id
-  message: z.string().optional(),
+const optionalTrimmed = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .optional()
+    .transform((value) => value || undefined)
+
+/** Entrada pública: normaliza antes de gravar, sem aceitar texto ilimitado. */
+export const publicAppointmentCreateSchema = z.object({
+  name: z.string().trim().min(2, 'Nome deve ter ao menos 2 caracteres').max(120),
+  email: z.string().trim().toLowerCase().email('E-mail inválido').max(254),
+  phone: z.string().trim().min(8, 'Telefone deve ter ao menos 8 caracteres').max(40),
+  procedure: optionalTrimmed(120), // título ou id
+  message: optionalTrimmed(4000),
   scheduledAt: z.string().datetime({ offset: true }).optional(),
-  tenantSlug: z.string().min(1, 'tenantSlug é obrigatório'),
+  tenantSlug: z.string().trim().min(1, 'tenantSlug é obrigatório').max(80),
 })
 
 const updateSchema = z.object({
@@ -177,7 +186,7 @@ router.get('/availability', async (req: Request, res: Response, next: NextFuncti
 
 router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const body = createSchema.parse(req.body)
+    const body = publicAppointmentCreateSchema.parse(req.body)
     const tenant = await resolveTenantBySlug(body.tenantSlug)
 
     let procedureId: string | undefined

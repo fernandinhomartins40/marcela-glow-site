@@ -168,3 +168,8 @@ Validar visualmente em navegador os breakpoints e estados reais do site, CRM e p
 
 - A captura pública integral em 390 e 1440 px confirmou as seções hero, sobre, protocolos, tecnologia, depoimentos, avaliação e rodapé. A seção Tecnologia exibia painéis quase vazios com apenas “TS” e “PE”; o editor do CRM dizia que havia foto, mas o componente nunca usou imagem. Não foi encontrada foto original do T-Sculptor no workspace; não foi inventada uma imagem clínica.
 - As duas áreas foram redesenhadas como capas editoriais em CSS, usando nome, categoria, número e iniciais dos recursos já salvos. A prévia do CMS e os rótulos do editor foram alinhados ao comportamento real. Capturas do build local em 390 e 1440 px foram inspecionadas sem overflow horizontal; builds da landing, CRM e API passaram. Faltam validação da prévia autenticada, mais viewports, interação e comparação da página pública depois do deploy. W06 segue parcialmente implementada, não integralmente validada.
+
+## Continuação — entrada pública de agendamento
+
+- A revisão do caminho landing → API identificou campos públicos sem normalização e limites explícitos. O formulário e a API agora apararam valores; e-mail é normalizado em minúsculas, os opcionais vazios não são gravados e nome, telefone, procedimento e mensagem têm limites compatíveis com a ficha. A regra de disponibilidade e o status `PENDING` continuam inalterados.
+- Dois testes de regressão cobrem normalização e excesso de texto. Build da API e landing e 75 testes da API passaram. Ainda falta jornada autenticada/integrada em banco e verificação em navegador dos estados de rede, conflito de horário e sucesso real; não tratar essa parte como validação total de W08.

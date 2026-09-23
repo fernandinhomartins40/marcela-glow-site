@@ -115,11 +115,11 @@ const Appointment = () => {
     }
 
     mutation.mutate({
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      procedure: formData.procedure || undefined,
-      message: formData.message || undefined,
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      phone: formData.phone.trim(),
+      procedure: formData.procedure.trim() || undefined,
+      message: formData.message.trim() || undefined,
       scheduledAt: slot || undefined,
     });
   };
@@ -273,6 +273,7 @@ const Appointment = () => {
                     placeholder="Como prefere ser chamada"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    maxLength={120}
                     className={fieldClass}
                     required
                   />
@@ -287,8 +288,9 @@ const Appointment = () => {
                       id="appointment-email"
                       type="email"
                       placeholder="seu@email.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    maxLength={254}
                       className={fieldClass}
                       required
                     />
@@ -301,8 +303,9 @@ const Appointment = () => {
                       id="appointment-phone"
                       type="tel"
                       placeholder="(67) 90000-0000"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    maxLength={40}
                       className={fieldClass}
                       required
                     />
@@ -383,6 +386,7 @@ const Appointment = () => {
                     placeholder="Preferência de dia, horário ou uma dúvida"
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    maxLength={4000}
                     className={`${fieldClass} scrollbar-on-dark h-auto min-h-[110px] py-3 resize-none`}
                   />
                 </div>
