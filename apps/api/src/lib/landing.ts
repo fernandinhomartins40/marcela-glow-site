@@ -34,8 +34,8 @@ export const heroSchema = z.object({
   /* Três é o que o carrossel comporta sem virar apresentação de slides; menos
      de um deixaria a primeira tela do site em branco. */
   slides: z.array(heroSlideSchema).min(1).max(5),
-  primaryCta: trimmed(2, 40).default('Agendar Avaliação'),
-  secondaryCta: trimmed(2, 40).default('Conheça os Protocolos'),
+  primaryCta: trimmed(2, 40).default('Agendar avaliação'),
+  secondaryCta: trimmed(2, 40).default('Mais sobre os procedimentos'),
 })
 
 // ── Sobre ────────────────────────────────────────────────────────────────────
@@ -255,8 +255,8 @@ export const LANDING_DEFAULTS: { [K in LandingSectionId]: z.input<(typeof LANDIN
         image: null,
       },
     ],
-    primaryCta: 'Agendar Avaliação',
-    secondaryCta: 'Conheça os Protocolos',
+    primaryCta: 'Agendar avaliação',
+    secondaryCta: 'Mais sobre os procedimentos',
   },
   ABOUT: {
     eyebrow: 'Dra. Marcela Campanini Duch',
@@ -277,11 +277,11 @@ export const LANDING_DEFAULTS: { [K in LandingSectionId]: z.input<(typeof LANDIN
     watermark: 'marcela',
   },
   PROCEDURES: {
-    eyebrow: 'Protocolos',
+    eyebrow: 'Tratamentos em destaque',
     titleTop: 'Tratamentos',
     titleBottom: 'com propósito.',
-    lead: 'Cada protocolo nasce de uma análise médica e do que a sua pele precisa naquele momento.',
-    ctaLabel: 'Ver todos os protocolos',
+    lead: 'Cada procedimento é escolhido e indicado para a sua real necessidade, com foco em saúde, naturalidade e resultados duradouros.',
+    ctaLabel: 'Ver todos os tratamentos',
   },
   TECHNOLOGY: {
     eyebrow: 'Recursos médicos',
@@ -348,12 +348,12 @@ export const LANDING_DEFAULTS: { [K in LandingSectionId]: z.input<(typeof LANDIN
      dia a marca mudar no CSS, este bloco precisa acompanhar — é o que
      "Restaurar padrão" devolve. */
   THEME: {
-    cream: '36 35% 96%',
-    creamDeep: '34 28% 88%',
-    espresso: '22 30% 14%',
-    bronze: '28 22% 55%',
-    bronzeLight: '32 25% 75%',
-    marbleVein: '36 25% 80%',
+    cream: '30 42% 95%',
+    creamDeep: '28 42% 85%',
+    espresso: '17 33% 18%',
+    bronze: '17 39% 35%',
+    bronzeLight: '29 34% 67%',
+    marbleVein: '25 28% 83%',
   },
   SEO: {
     title: 'Dra. Marcela Duch — Medicina Estética',

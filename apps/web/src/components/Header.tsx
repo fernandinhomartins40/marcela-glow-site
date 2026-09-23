@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Menu, UserRound, X } from "lucide-react";
+import { ArrowRight, Menu, UserRound, X } from "lucide-react";
 import { useImage } from "@/hooks/useLanding";
 import logoMD from "@/assets/brand/md-monogram-brown.webp";
 
@@ -41,12 +41,13 @@ const Header = () => {
     }
   };
 
+  /* A ordem do mockup aprovado. "Conteúdos" ficou de fora: o site não tem
+     essa seção, e um link para lugar nenhum é pior que um link a menos. */
   const links = [
     { id: "home", label: "Início" },
+    { id: "procedimentos", label: "Procedimentos" },
     { id: "sobre", label: "Sobre" },
-    { id: "procedimentos", label: "Tratamentos" },
     { id: "tecnologias", label: "Tecnologia" },
-    { id: "depoimentos", label: "Depoimentos" },
     { id: "contato", label: "Contato" },
   ];
 
@@ -58,7 +59,7 @@ const Header = () => {
          entra, mesmo sem rolagem. */
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isMobileMenuOpen ? "max-h-[100svh] overflow-y-auto" : ""} ${
         isScrolled || isMobileMenuOpen
-          ? "bg-background/95 backdrop-blur-md border-b border-border"
+          ? "bg-background/95 backdrop-blur-md border-b border-border shadow-[0_8px_24px_-20px_hsl(var(--espresso)/0.6)]"
           : "bg-transparent"
       }`}
     >
@@ -80,7 +81,7 @@ const Header = () => {
             <img
               src={logo.src}
               alt={logo.alt}
-              className="h-11 sm:h-11 md:h-12 w-auto shrink-0 transition-transform duration-500 group-hover:scale-105"
+              className="h-10 md:h-11 w-auto shrink-0 transition-transform duration-500 group-hover:scale-105"
               width={48}
               height={48}
             />
@@ -90,10 +91,10 @@ const Header = () => {
                 botão de menu — e o registro do CRM continua só a partir do tablet,
                 onde há largura para as duas linhas sem espremer nada. */}
             <div className="flex flex-col leading-tight whitespace-nowrap">
-              <span className="font-display text-[0.8125rem] sm:text-sm lg:text-base xl:text-lg tracking-[0.08em] sm:tracking-[0.14em] lg:tracking-[0.18em] xl:tracking-[0.25em] uppercase text-primary">
+              <span className="font-display text-lg sm:text-xl text-primary">
                 Dra. Marcela Duch
               </span>
-              <span className="hidden sm:block text-[0.75rem] sm:text-[0.55rem] xl:text-[0.6rem] tracking-[0.2em] xl:tracking-[0.3em] uppercase text-muted-foreground">
+              <span className="hidden sm:block lg:hidden text-[0.6rem] tracking-[0.2em] uppercase text-muted-foreground">
                 Médica · CRM/MS 5691
               </span>
             </div>
@@ -103,12 +104,12 @@ const Header = () => {
           {/* Em 1024px os seis itens com tracking de desktop somavam 522px e,
               com a marca e o CTA, estouravam a linha. O espaçamento cresce por
               faixa: apertado no notebook, folgado no monitor grande. */}
-          <nav className="hidden lg:flex min-w-0 items-center justify-center gap-3 xl:gap-6 2xl:gap-8">
+          <nav className="hidden lg:flex min-w-0 items-center justify-center gap-5 xl:gap-8">
             {links.map((link) => (
               <button
                 key={link.id}
                 onClick={() => scrollToSection(link.id)}
-                className="link-underline whitespace-nowrap text-[0.75rem] sm:text-[0.6rem] xl:text-[0.65rem] 2xl:text-[0.7rem] tracking-[0.1em] xl:tracking-[0.16em] 2xl:tracking-[0.25em] uppercase font-medium text-foreground/80 hover:text-foreground transition-colors"
+                className="link-underline whitespace-nowrap text-[0.8125rem] font-medium text-foreground/80 hover:text-primary transition-colors"
               >
                 {link.label}
               </button>
@@ -120,10 +121,9 @@ const Header = () => {
             <Button
               variant="cta"
               size="sm"
-              className="xl:h-12 xl:px-7 xl:text-sm"
               onClick={() => scrollToSection("agendamento")}
             >
-              Solicitar avaliação
+              Agendar avaliação <ArrowRight aria-hidden="true" />
             </Button>
             <Button
               asChild
@@ -152,12 +152,12 @@ const Header = () => {
         </div>
 
         {/* Mobile Menu */}
-        <nav id="mobile-site-navigation" hidden={!isMobileMenuOpen} className="lg:hidden mt-6 pb-6 space-y-1 animate-fade-in border-t border-border pt-6">
+        <nav id="mobile-site-navigation" hidden={!isMobileMenuOpen} className="lg:hidden mt-4 pb-6 animate-fade-in border-t border-border pt-2">
             {links.map((link) => (
               <button
                 key={link.id}
                 onClick={() => scrollToSection(link.id)}
-                className="block w-full text-left py-3 px-2 text-sm tracking-[0.2em] uppercase hover:text-accent transition-colors"
+                className="block w-full border-b border-border/70 text-left py-3.5 px-1 font-display text-xl text-primary hover:text-[hsl(var(--bronze))] transition-colors"
               >
                 {link.label}
               </button>
@@ -168,7 +168,7 @@ const Header = () => {
               className="w-full mt-4"
               onClick={() => scrollToSection("agendamento")}
             >
-              Solicitar avaliação
+              Agendar avaliação <ArrowRight aria-hidden="true" />
             </Button>
             <Button
               asChild

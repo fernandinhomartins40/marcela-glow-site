@@ -20,3 +20,7 @@ Próxima ação: caso a usuária forneça as fotos originais, derivar variantes 
 ## Aprovação de 23/09/2026
 
 A usuária aprovou os dois retratos limpos (`dra-marcela-editorial-limpa-v1.png` e `dra-marcela-portrait-limpa-v1.png`) para o redesign da landing, do CRM e do portal. Eles continuam na pasta `candidatas/` para não quebrar importações; o estado de referência é esta tabela. Se chegarem fotos originais sem arte, elas substituem estas versões e o hash é registrado aqui.
+
+## Derivados WebP para o site (23/09/2026)
+
+Os PNGs aprovados somavam cerca de 23 MB na landing. O site passou a importar derivados `.webp` (qualidade 82) gerados ao lado de cada original em `approved/` e `candidatas/`; os PNGs continuam como fonte e são a referência dos hashes acima. Os quatro cartões de tratamento foram reduzidos para 960 px de largura (exibidos a ~350 px); fundos e retratos mantêm a resolução original. Total dos derivados: ~560 KB. Conferidos visualmente a textura de pele e o retrato editorial, sem perda perceptível. Ao trocar um PNG aprovado, regenerar o `.webp` correspondente.

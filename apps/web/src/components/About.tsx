@@ -1,7 +1,8 @@
+import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSection } from "@/hooks/useLanding";
-import marble from "@/assets/approved/landing-philosophy-marble-v2.png";
-import botanical from "@/assets/approved/landing-quote-botanical-v2.png";
+import marble from "@/assets/approved/landing-philosophy-marble-v2.webp";
+import botanical from "@/assets/approved/landing-quote-botanical-v2.webp";
 
 interface AboutContent {
   eyebrow: string;
@@ -45,21 +46,21 @@ const About = () => {
           <img src={marble} alt="" aria-hidden="true" className="absolute inset-0 -z-10 h-full w-full object-cover object-left opacity-85" />
           <div className="absolute inset-0 -z-10 bg-background/50" aria-hidden="true" />
           <div className="max-w-xl">
-            <p className="label-eyebrow">Minha filosofia</p>
-            <h2 className="mt-5 font-display type-section text-primary">Evoluir <span className="block italic font-light">sem exageros</span></h2>
+            <p className="label-eyebrow label-rule">Minha filosofia</p>
+            <h2 className="mt-5 font-display type-section text-primary">Evoluir <span className="block">sem exageros</span></h2>
             <p className="mt-7 max-w-md text-base leading-relaxed text-foreground/80">{content.lead}</p>
-            <Button variant="cta" size="lg" className="mt-9" onClick={scrollToAppointment}>{content.ctaLabel}</Button>
+            <Button variant="cta" className="mt-9" onClick={scrollToAppointment}>{content.ctaLabel} <ArrowRight aria-hidden="true" /></Button>
           </div>
         </div>
         <aside className="relative flex min-h-[34rem] items-center justify-center overflow-hidden bg-[hsl(var(--cream))] px-7 py-16 text-center sm:px-12 md:py-24">
           <img src={botanical} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover object-bottom opacity-95" />
           <div className="absolute inset-0 bg-background/20" aria-hidden="true" />
-          <span className="absolute right-[-3rem] top-[-2rem] font-display text-[15rem] leading-none text-accent/10 select-none" aria-hidden="true">“</span>
           <div className="relative max-w-md">
-            <p className="font-editorial-italic text-3xl leading-snug text-primary sm:text-4xl">“Estética de verdade é quando você se reconhece — e se sente bem.”</p>
+            <span className="block font-display text-7xl leading-[0.6] text-[hsl(var(--bronze-light))] select-none" aria-hidden="true">“</span>
+            <p className="mt-6 font-editorial-italic text-[1.75rem] leading-snug text-primary sm:text-4xl">“Estética de verdade é quando você se reconhece — e se sente bem.”</p>
             <span className="mx-auto mt-8 block h-px w-12 bg-accent" />
             <p className="mt-5 text-[0.65rem] uppercase tracking-[0.28em] text-muted-foreground">Dra. Marcela Duch</p>
-            <p className="mt-12 text-sm leading-relaxed text-foreground/60">{content.eyebrow}<br />{content.crmLabel} {content.crmNumber}</p>
+            <p className="mt-4 text-sm leading-relaxed text-foreground/65">{content.eyebrow}<br />{content.crmLabel} {content.crmNumber}</p>
           </div>
         </aside>
       </div>

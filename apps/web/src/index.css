@@ -15,46 +15,54 @@
    dentro de `hsl()`. Ao trazer CSS do painel, converter o formato. */
   :root {
     /* Base — bege cremoso/mármore */
-    --background: 30 29% 96%;        /* Off-white oficial #F8F3EE */
-    --foreground: 20 8% 15%;         /* Grafite oficial #272321 */
+    --background: 30 42% 95%;        /* Off-white oficial #F8F3EE */
+    --foreground: 20 8% 14%;         /* Grafite oficial #272321 */
 
     --card: 30 29% 98%;
-    --card-foreground: 20 8% 15%;
+    --card-foreground: 20 8% 14%;
 
     --popover: 30 29% 98%;
-    --popover-foreground: 20 8% 15%;
+    --popover-foreground: 20 8% 14%;
 
     /* Primário — marrom chocolate (cor da roupa nas fotos) */
-    --primary: 17 39% 25%;           /* Marrom profundo oficial #3E281F */
-    --primary-foreground: 30 29% 96%;
+    /* Os valores HSL abaixo foram reconvertidos do hex oficial em 23/09/2026.
+       Antes, o --primary dizia ser o profundo #3E281F e valia o institucional
+       #5B3828; o --espresso repetia o mesmo erro, e por isso o rodape e a
+       faixa escura saiam mais claros que a marca. */
+    --primary: 19 39% 26%;           /* Marrom institucional oficial #5B3828 */
+    --primary-foreground: 30 42% 95%;
 
     /* Secundário — bege areia médio */
-    --secondary: 25 39% 86%;         /* Nude claro oficial #E9D8C9 */
-    --secondary-foreground: 17 39% 25%;
+    --secondary: 28 42% 85%;         /* Nude claro oficial #E9D8C9 */
+    --secondary-foreground: 19 39% 26%;
 
     --muted: 25 39% 92%;
     --muted-foreground: 17 28% 33%;  /* Marrom médio sóbrio */
 
     /* Acento — bronze sutil terroso (não dourado brilhante) */
-    --accent: 25 31% 67%;            /* Nude oficial #C7A98D */
-    --accent-foreground: 17 39% 25%;
+    --accent: 29 34% 67%;            /* Nude oficial #C7A98D */
+    --accent-foreground: 19 39% 26%;
 
     --destructive: 0 60% 45%;
-    --destructive-foreground: 30 29% 96%;
+    --destructive-foreground: 30 42% 95%;
 
     --border: 25 28% 83%;
     --input: 25 31% 91%;
-    --ring: 17 39% 25%;
+    --ring: 19 39% 26%;
 
     --radius: 0.25rem;
 
     /* Tons editoriais adicionais */
-    --cream: 30 29% 96%;             /* Off-white oficial */
-    --cream-deep: 25 39% 86%;        /* Nude claro oficial */
-    --espresso: 17 39% 25%;          /* Marrom profundo oficial */
-    --bronze: 17 39% 35%;            /* Marrom institucional #5B3828 */
-    --bronze-light: 25 31% 67%;      /* Nude oficial */
+    --cream: 30 42% 95%;             /* Off-white oficial */
+    --cream-deep: 28 42% 85%;        /* Nude claro oficial */
+    --espresso: 17 33% 18%;          /* Marrom profundo oficial #3E281F */
+    --bronze: 17 39% 35%;            /* Tom derivado, entre o institucional e o nude (#7B4D38) */
+    --bronze-light: 29 34% 67%;      /* Nude oficial */
     --marble-vein: 25 28% 83%;       /* Veio do mármore */
+    /* Nude legível para título grande em itálico ("com propósito."). O
+       --accent é cor de decoração: medido, dá 2,08:1 sobre o creme. Este dá
+       4,05:1 no creme e 3,21:1 no nude claro — passa o 3:1 de texto grande. */
+    --accent-text: 25 30% 46%;
 
     /* Gradientes
 
@@ -113,33 +121,44 @@
   .hero-editorial { isolation: isolate; }
   .hero-editorial-background { position: absolute; inset: 0; z-index: 0; }
   .hero-editorial-background img { width: 100%; height: 100%; object-fit: cover; object-position: center; }
-  .hero-editorial-photo { position: absolute; z-index: 1; inset-block: 0; right: 0; width: min(56vw, 900px); -webkit-mask-image: linear-gradient(to right, transparent, black 24%); mask-image: linear-gradient(to right, transparent, black 24%); }
-  .hero-editorial-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 28%; }
-  .hero-editorial-shade { position: absolute; z-index: 2; inset: 0; pointer-events: none; background: linear-gradient(90deg, hsl(var(--cream) / .7), hsl(var(--cream) / .38) 40%, transparent 68%); }
-  .hero-editorial-inner { position: relative; z-index: 3; display: flex; align-items: center; min-height: 100svh; padding-top: clamp(7rem, 14svh, 11rem); padding-bottom: clamp(6rem, 12svh, 9rem); }
-  .hero-editorial-copy { width: min(53%, 660px); }
-  .hero-editorial-copy h1 { margin-top: clamp(1.2rem, 3.2svh, 2.5rem); font-size: clamp(4.15rem, min(6.8vw, 13svh), 7rem); line-height: .88; letter-spacing: -.025em; }
-  .hero-editorial-lead { max-width: 34rem; margin-top: clamp(1.4rem, 3svh, 2.25rem); font-size: clamp(1rem, 1.35vw, 1.3rem); line-height: 1.48; color: hsl(var(--foreground) / .83); }
-  .hero-editorial-actions { display: flex; flex-wrap: wrap; gap: .85rem; margin-top: clamp(1.6rem, 3.6svh, 2.5rem); }
-  .hero-editorial-signature { margin-top: clamp(1.5rem, 4svh, 3rem); font-size: .7rem; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: hsl(var(--espresso) / .8); }
-  .hero-editorial-watermark { position: absolute; z-index: 3; right: clamp(2rem, 5vw, 6rem); bottom: 5rem; font-size: .7rem; letter-spacing: .38em; text-transform: uppercase; color: hsl(var(--espresso) / .72); }
-  @media (max-width: 767px) {
-    .hero-editorial-inner { align-items: flex-start; min-height: max(100svh, 690px); padding-top: clamp(9rem, 19svh, 12rem); padding-bottom: 6rem; }
-    .hero-editorial-photo { right: -8vw; width: 78vw; -webkit-mask-image: linear-gradient(to right, transparent 25%, black 55%); mask-image: linear-gradient(to right, transparent 25%, black 55%); }
-    .hero-editorial-photo img { object-position: 54% 18%; }
-    .hero-editorial-shade { background: linear-gradient(90deg, hsl(var(--cream) / .92), hsl(var(--cream) / .68) 43%, transparent 74%); }
-    .hero-editorial-copy { width: min(78vw, 340px); }
-    .hero-editorial-copy .label-eyebrow { max-width: 22ch; }
-    .hero-editorial-copy h1 { margin-top: 1.15rem; font-size: clamp(2.2rem, 10vw, 4.15rem); line-height: .94; }
-    .hero-editorial-lead { max-width: 23ch; margin-top: 1.5rem; font-size: clamp(.91rem, 3.6vw, 1.1rem); line-height: 1.42; }
-    .hero-editorial-actions { display: grid; justify-items: start; gap: .45rem; margin-top: 1.7rem; }
-    .hero-editorial-actions > button { min-height: 44px; max-width: min(64vw, 240px); padding-inline: .9rem; font-size: .8rem; letter-spacing: .02em; white-space: normal; text-align: left; }
-    .hero-editorial-signature { max-width: 24ch; margin-top: 1.6rem; font-size: .55rem; line-height: 1.6; letter-spacing: .16em; }
+  .hero-editorial-photo { position: absolute; z-index: 1; inset-block: 0; right: 0; width: min(54vw, 880px); -webkit-mask-image: linear-gradient(to right, transparent, black 26%); mask-image: linear-gradient(to right, transparent, black 26%); }
+  .hero-editorial-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 22%; }
+  .hero-editorial-shade { position: absolute; z-index: 2; inset: 0; pointer-events: none; background: linear-gradient(90deg, hsl(var(--cream) / .72), hsl(var(--cream) / .36) 40%, transparent 66%); }
+  /* O mockup aprovado tem hero mais baixo que a tela: a faixa de confiança
+     aparece sem rolar em 1440×900. O teto evita o título solto num monitor alto. */
+  .hero-editorial-inner { position: relative; z-index: 3; display: flex; align-items: center; min-height: clamp(560px, 86svh, 780px); padding-top: clamp(6.5rem, 12svh, 8.5rem); padding-bottom: clamp(3.5rem, 8svh, 5.5rem); }
+  .hero-editorial-copy { width: min(52%, 640px); }
+  .hero-editorial-copy h1 { margin-top: clamp(1rem, 2.6svh, 1.75rem); font-size: clamp(3.6rem, min(6.2vw, 12svh), 6.4rem); font-weight: 400; line-height: .92; letter-spacing: -.02em; }
+  .hero-editorial-lead { max-width: 30rem; margin-top: clamp(1.1rem, 2.6svh, 1.75rem); font-size: clamp(1rem, 1.25vw, 1.2rem); line-height: 1.5; color: hsl(var(--foreground) / .82); }
+  .hero-editorial-actions { display: flex; flex-wrap: wrap; gap: .85rem; margin-top: clamp(1.5rem, 3.4svh, 2.25rem); }
+  .hero-editorial-signature { display: flex; align-items: center; gap: .9rem; margin-top: clamp(1.5rem, 3.6svh, 2.5rem); font-size: .68rem; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; color: hsl(var(--espresso) / .78); }
+  .hero-editorial-signature::before { content: ""; width: 2rem; height: 1px; background: hsl(var(--espresso) / .45); }
+  .hero-editorial-photo-mobile { display: none; }
+  .hero-editorial-watermark { position: absolute; z-index: 3; right: clamp(1.5rem, 4vw, 4.5rem); top: 34%; display: grid; gap: .55rem; font-size: .66rem; letter-spacing: .36em; text-transform: uppercase; color: hsl(var(--espresso) / .72); }
+  .hero-editorial-dots { position: absolute; z-index: 20; bottom: .75rem; left: 50%; display: flex; transform: translateX(-50%); }
+  @media (max-width: 1023px) {
     .hero-editorial-watermark { display: none; }
   }
-  @media (max-width: 359px) {
-    .hero-editorial-copy { width: 78vw; }
-    .hero-editorial-photo { right: -16vw; width: 82vw; }
+  @media (max-width: 767px) {
+    .hero-editorial-photo, .hero-editorial-shade { display: none; }
+    .hero-editorial-inner { display: block; min-height: 0; padding-top: 6.5rem; padding-bottom: 2.75rem; }
+    .hero-editorial-copy { width: 100%; }
+    .hero-editorial-copy h1 { margin-top: 1rem; font-size: clamp(2.6rem, 12.5vw, 3.6rem); line-height: .96; }
+    .hero-editorial-lead { max-width: 34ch; margin-top: 1rem; font-size: 1rem; line-height: 1.5; }
+    /* Retrato sangrando até as bordas da tela, dissolvido em cima e embaixo
+       sobre o mármore — sem cobrir texto nem botão. */
+    .hero-editorial-photo-mobile { position: relative; display: block; margin: 1.25rem -1.25rem 0; aspect-ratio: 4 / 4.4; -webkit-mask-image: linear-gradient(to bottom, transparent, black 14%, black 80%, transparent); mask-image: linear-gradient(to bottom, transparent, black 14%, black 80%, transparent); }
+    .hero-editorial-photo-mobile img { width: 100%; height: 100%; object-fit: cover; object-position: 62% 20%; }
+    .hero-editorial-pillars { position: absolute; left: 1.25rem; top: 20%; display: grid; gap: .45rem; font-size: .56rem; letter-spacing: .22em; text-transform: uppercase; color: hsl(var(--espresso) / .8); }
+    .hero-editorial-pillars::after { content: ""; width: 2rem; height: 1px; margin-top: .3rem; background: hsl(var(--espresso) / .45); }
+    .hero-editorial-actions { display: grid; gap: .65rem; margin-top: 1rem; }
+    .hero-editorial-actions > button { width: 100%; }
+    .hero-editorial-signature { justify-content: center; margin-top: 1.75rem; font-size: .6rem; letter-spacing: .2em; }
+    .hero-editorial-signature::before { display: none; }
+    .hero-editorial-dots { bottom: .25rem; }
+  }
+  @media (min-width: 640px) and (max-width: 767px) {
+    .hero-editorial-photo-mobile { margin-inline: -1.5rem; aspect-ratio: 4 / 3.4; }
   }
 }
 
@@ -281,7 +300,26 @@
     font-weight: 500;
     letter-spacing: 0.3em;
     text-transform: uppercase;
-    color: hsl(var(--accent));
+    /* Era --accent, 2,08:1 sobre o creme. O bronze dá 6,66:1. */
+    color: hsl(var(--bronze));
+  }
+
+  /* Sobrelinha seguida de filete, como no mockup ("MINHA FILOSOFIA ——"). */
+  .label-rule {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.9rem;
+  }
+  .label-rule::after {
+    content: "";
+    width: 2.75rem;
+    height: 1px;
+    background-color: currentColor;
+    opacity: 0.55;
+  }
+
+  .text-accent-legible {
+    color: hsl(var(--accent-text));
   }
 
   /* === ESCALA TIPOGRÁFICA ===

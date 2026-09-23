@@ -1,3 +1,4 @@
+import { CircleCheck } from "lucide-react";
 import { useSection } from "@/hooks/useLanding";
 
 interface TechItem {
@@ -55,96 +56,83 @@ const FALLBACK: TechContent = {
   watermark: "tecnologia",
 };
 
+/* Capa editorial feita com os dados do recurso: sem foto fictícia. */
+const Cover = ({ tech }: { tech: TechItem }) => (
+  <div className="relative mx-auto aspect-[5/4] w-full max-w-md overflow-hidden rounded-md border border-border bg-marble shadow-[0_24px_50px_-36px_hsl(var(--espresso)/0.7)] md:max-w-none" aria-hidden="true">
+    <span className="absolute right-5 top-6 font-display text-[6.5rem] leading-none text-primary/[0.09] select-none md:text-[8rem]">
+      {tech.monogram}
+    </span>
+    <div className="relative flex h-full flex-col justify-between p-6 md:p-8">
+      <span className="text-xs tabular-nums text-muted-foreground">{tech.number}</span>
+      <div className="max-w-[16rem]">
+        <span className="block text-[0.62rem] font-medium uppercase tracking-[0.2em] text-muted-foreground">{tech.eyebrow}</span>
+        <span className="mt-2 block font-display text-2xl leading-tight text-primary md:text-[1.75rem]">{tech.name}</span>
+      </div>
+    </div>
+  </div>
+);
+
+const Points = ({ points }: { points: string[] }) => (
+  <ul className="mt-6 space-y-2.5">
+    {points.map((point) => (
+      <li key={point} className="flex items-start gap-3 text-sm leading-relaxed text-foreground/80">
+        <CircleCheck className="mt-0.5 h-4 w-4 shrink-0 text-[hsl(var(--accent-text))]" strokeWidth={1.5} aria-hidden="true" />
+        {point}
+      </li>
+    ))}
+  </ul>
+);
+
 const Technology = () => {
   const { content, isVisible } = useSection<TechContent>("TECHNOLOGY", FALLBACK);
   const technologies = content.items.length ? content.items : FALLBACK.items;
 
   if (!isVisible) return null;
 
+  const [first, ...rest] = technologies;
+
   return (
     <section
       id="tecnologias"
       className="relative section-y bg-background overflow-hidden"
     >
-      {/* Watermark editorial */}
-      <span className="absolute top-4 right-0 hidden text-watermark text-[10vw] leading-none font-display pointer-events-none select-none whitespace-nowrap lg:block">
-        {content.watermark}
-      </span>
+      <div className="container mx-auto max-w-6xl px-5 sm:px-6 lg:px-10 relative space-y-14 md:space-y-20">
+        {/* O cabeçalho da seção e o primeiro recurso dividem a mesma linha,
+            como no mockup: o título abre, os pontos do recurso sustentam. */}
+        {first && (
+          <div className="grid items-center gap-8 md:grid-cols-12 md:gap-14">
+            <div className="md:col-span-7 animate-fade-in">
+              <p className="label-eyebrow label-rule mb-4 md:mb-5">{content.eyebrow}</p>
+              <h2 className="font-display type-section text-primary">
+                {content.titleTop}
+                <span className="block italic font-light text-accent-legible">{content.titleBottom}</span>
+              </h2>
+              <p className="mt-5 max-w-lg text-base leading-relaxed text-foreground/70">{content.lead}</p>
+              <p className="mt-3 max-w-lg text-sm leading-relaxed text-foreground/65">{first.description}</p>
+              <Points points={first.points} />
+            </div>
+            <div className="md:col-span-5">
+              <Cover tech={first} />
+            </div>
+          </div>
+        )}
 
-      <div className="container mx-auto px-5 sm:px-6 lg:px-10 relative">
-        {/* Cabeçalho */}
-        <div className="max-w-3xl section-head animate-fade-in">
-          <p className="label-eyebrow mb-4 md:mb-5">{content.eyebrow}</p>
-          <h2 className="font-display type-section text-primary">
-            {content.titleTop}
-            <span className="block italic font-light text-accent">{content.titleBottom}</span>
-          </h2>
-          <p className="font-editorial-italic type-lead text-foreground/70 mt-5 md:mt-6 max-w-xl">
-            {content.lead}
-          </p>
-        </div>
-
-        {/* Blocos alternados */}
-        <div className="max-w-6xl mx-auto space-y-16 md:space-y-32">
-          {technologies.map((tech, index) => {
-            const reversed = index % 2 === 1;
-            return (
-              <div
-                key={tech.number}
-                className="grid md:grid-cols-12 gap-8 md:gap-16 items-center animate-fade-in"
-              >
-                {/* Capa editorial feita com os dados do recurso: sem foto fictícia. */}
-                <div
-                  className={`md:col-span-5 ${
-                    reversed ? "md:order-1" : "md:order-2"
-                  }`}
-                >
-                  <div className="relative aspect-[4/5] max-w-xs mx-auto md:max-w-none overflow-hidden border border-border bg-marble" aria-hidden="true">
-                    <span className="absolute -right-4 top-1/4 font-display text-[9rem] md:text-[11rem] leading-none text-primary/10 select-none">
-                      {tech.monogram}
-                    </span>
-                    <div className="absolute inset-4 border border-primary/20" />
-                    <div className="relative flex h-full flex-col justify-between p-8 md:p-10">
-                      <span className="font-display text-2xl text-primary/65">{tech.number}</span>
-                      <div className="max-w-[17rem]">
-                        <span className="block text-[0.65rem] font-medium uppercase tracking-[0.2em] text-primary/70">{tech.eyebrow}</span>
-                        <span className="mt-4 block font-display text-3xl md:text-4xl leading-tight text-primary">{tech.name}</span>
-                        <span className="mt-6 block h-px w-12 bg-accent" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Texto */}
-                <div
-                  className={`md:col-span-7 ${
-                    reversed ? "md:order-2" : "md:order-1"
-                  }`}
-                >
-                  <p className="label-eyebrow mb-4">{tech.eyebrow}</p>
-                  <h3 className="font-display type-block text-primary mb-5">
-                    {tech.name}
-                  </h3>
-                  <div className="divider-luxe mb-6" />
-                  <p className="font-editorial text-lg md:text-xl leading-relaxed text-foreground/80 mb-8">
-                    {tech.description}
-                  </p>
-
-                  <div className="space-y-3 md:space-y-4">
-                    {tech.points.map((point, i) => (
-                      <div key={i} className="flex items-start gap-4">
-                        <div className="w-8 h-px bg-accent mt-3 shrink-0" />
-                        <p className="text-base text-foreground/75 font-light tracking-wide">
-                          {point}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+        {rest.map((tech, index) => {
+          const coverFirst = index % 2 === 0;
+          return (
+            <div key={tech.number} className="grid items-center gap-8 md:grid-cols-12 md:gap-14 animate-fade-in">
+              <div className={`md:col-span-5 ${coverFirst ? "md:order-1" : "md:order-2"}`}>
+                <Cover tech={tech} />
               </div>
-            );
-          })}
-        </div>
+              <div className={`md:col-span-7 ${coverFirst ? "md:order-2" : "md:order-1"}`}>
+                <p className="label-eyebrow mb-3">{tech.eyebrow}</p>
+                <h3 className="font-display type-block text-primary">{tech.name}</h3>
+                <p className="mt-4 max-w-lg text-base leading-relaxed text-foreground/70">{tech.description}</p>
+                <Points points={tech.points} />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </section>
   );

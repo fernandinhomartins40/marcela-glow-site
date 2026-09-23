@@ -186,7 +186,7 @@ export const newsletterApi = {
 // ─── Landing ─────────────────────────────────────────────────────────────────
 
 export interface LandingResponse {
-  sections: Record<string, { content: unknown; isVisible: boolean }>
+  sections: Record<string, { content: unknown; isVisible: boolean; isCustom?: boolean }>
   images: Record<string, { url: string; width: number; height: number; alt: string }>
 }
 

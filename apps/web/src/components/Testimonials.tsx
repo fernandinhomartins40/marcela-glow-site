@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { testimonialsApi } from "@/lib/api";
 import { useSection } from "@/hooks/useLanding";
-import background from "@/assets/approved/landing-testimonials-marble-v2.png";
+import background from "@/assets/approved/landing-testimonials-marble-v2.webp";
 
 interface TestimonialsContent {
   eyebrow: string;
@@ -13,8 +13,8 @@ interface TestimonialsContent {
 
 const FALLBACK: TestimonialsContent = {
   eyebrow: "Depoimentos",
-  titleTop: "O que dizem",
-  titleBottom: "as pacientes.",
+  titleTop: "Quem já",
+  titleBottom: "passou por aqui.",
 };
 
 const FALLBACK_TESTIMONIALS = [
@@ -53,83 +53,60 @@ const Testimonials = () => {
 
   if (!isVisible) return null;
 
+  const arrowClass =
+    "flex h-11 w-11 items-center justify-center rounded-[3px] border border-primary/25 text-primary transition-colors duration-300 hover:bg-primary hover:text-primary-foreground";
+
   return (
     <section
       id="depoimentos"
-      className="relative section-y bg-[hsl(var(--cream-deep))] border-y border-border overflow-hidden"
+      className="relative overflow-hidden bg-[hsl(var(--cream-deep))] py-16 md:py-24"
     >
-      <img src={background} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-55" />
-      <div className="absolute inset-0 bg-background/35" aria-hidden="true" />
-      {/* Watermark */}
-      <span className="absolute top-4 left-1/2 hidden -translate-x-1/2 text-watermark text-[10vw] leading-none font-display pointer-events-none select-none whitespace-nowrap lg:block">
-        pacientes
-      </span>
+      <img src={background} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 h-full w-full object-cover object-right" />
+      <div className="absolute inset-0 bg-background/25" aria-hidden="true" />
 
-      <div className="container mx-auto px-5 sm:px-6 lg:px-10 relative">
-        <div className="max-w-3xl section-head animate-fade-in">
-          <p className="label-eyebrow mb-4 md:mb-5">{content.eyebrow}</p>
+      <div className="container relative mx-auto grid max-w-6xl items-center gap-8 px-5 sm:px-6 lg:grid-cols-12 lg:gap-12 lg:px-10">
+        <div className="lg:col-span-5 animate-fade-in">
+          <p className="label-eyebrow mb-3">{content.eyebrow}</p>
           <h2 className="font-display type-section text-primary">
             {content.titleTop}
-            <span className="block italic font-light text-accent">{content.titleBottom}</span>
+            <span className="block italic font-light text-accent-legible">{content.titleBottom}</span>
           </h2>
         </div>
 
-        <div className="max-w-4xl mx-auto">
-          {/* Citação editorial */}
-          <blockquote key={current.id} className="animate-fade-in text-center">
-            <span
-              aria-hidden="true"
-              className="font-display block text-6xl md:text-8xl text-accent/30 leading-none mb-2 select-none"
-            >
-              &ldquo;
-            </span>
-
-            <p className="font-editorial-italic text-[clamp(1.4rem,3.2vw,2.4rem)] leading-[1.3] text-foreground/85 max-w-3xl mx-auto text-balance">
-              {current.text}
+        <div className="lg:col-span-7 lg:col-start-6 xl:col-span-6 xl:col-start-7">
+          <blockquote key={current.id} className="animate-fade-in text-center lg:text-left" aria-live="polite">
+            <p className="font-editorial-italic text-[clamp(1.25rem,2.4vw,1.75rem)] leading-[1.4] text-primary max-w-2xl mx-auto lg:mx-0 text-balance">
+              &ldquo;{current.text}&rdquo;
             </p>
-
-            <footer className="mt-8 md:mt-12">
-              <div className="divider-luxe mb-5" />
-              <p className="text-[0.78rem] sm:text-[0.7rem] tracking-[0.3em] uppercase text-primary font-medium">
-                {current.authorName}
-              </p>
+            <footer className="mt-5 text-[0.7rem] tracking-[0.24em] uppercase text-muted-foreground">
+              {current.authorName}
             </footer>
           </blockquote>
 
-          {/* Navegação */}
-          <div className="flex items-center justify-center gap-6 mt-10 md:mt-16">
-            <button
-              onClick={prev}
-              className="w-11 h-11 border border-foreground/25 flex items-center justify-center hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-500"
-              aria-label="Depoimento anterior"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-
-            <div className="flex items-center gap-3">
-              {testimonials.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentIndex(index)}
-                  className={`h-px transition-all duration-500 ${
-                    index === activeIndex ? "w-10 bg-primary" : "w-5 bg-primary/30"
-                  }`}
-                  aria-label={`Ir para depoimento ${index + 1}`}
-                />
-              ))}
-              <span className="ml-2 text-[0.75rem] sm:text-[0.65rem] tracking-[0.3em] uppercase text-muted-foreground">
-                {String(activeIndex + 1).padStart(2, "0")} / {String(testimonials.length).padStart(2, "0")}
-              </span>
+          {testimonials.length > 1 && (
+            <div className="mt-7 flex items-center justify-center gap-5 lg:justify-start">
+              <button type="button" onClick={prev} className={arrowClass} aria-label="Depoimento anterior">
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <div className="flex items-center">
+                {testimonials.map((_, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => setCurrentIndex(index)}
+                    className="flex h-11 w-6 items-center justify-center"
+                    aria-label={`Ir para depoimento ${index + 1}`}
+                    aria-current={index === activeIndex ? "true" : undefined}
+                  >
+                    <span className={`block h-1.5 w-1.5 rounded-full transition-colors ${index === activeIndex ? "bg-primary" : "bg-primary/30"}`} />
+                  </button>
+                ))}
+              </div>
+              <button type="button" onClick={next} className={arrowClass} aria-label="Próximo depoimento">
+                <ChevronRight className="h-4 w-4" />
+              </button>
             </div>
-
-            <button
-              onClick={next}
-              className="w-11 h-11 border border-foreground/25 flex items-center justify-center hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-500"
-              aria-label="Próximo depoimento"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
+          )}
         </div>
       </div>
     </section>

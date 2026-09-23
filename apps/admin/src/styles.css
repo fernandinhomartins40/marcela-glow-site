@@ -665,10 +665,10 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .lp { container-type: inline-size; overflow: hidden; border: 1px solid var(--border); border-radius: 10px;
       font-family: "Inter", system-ui, sans-serif;
       /* Copiados de apps/web/src/index.css — mesma paleta, mesmos valores. */
-      --background: 36 30% 94%; --foreground: 24 25% 18%; --primary: 24 25% 20%;
-      --primary-foreground: 36 30% 96%; --accent: 28 22% 55%;
-      --cream: 36 35% 96%; --cream-deep: 34 28% 88%; --espresso: 22 30% 14%;
-      --bronze: 28 22% 55%; --bronze-light: 32 25% 75%;
+      --background: 30 42% 95%; --foreground: 20 8% 14%; --primary: 19 39% 26%;
+      --primary-foreground: 30 42% 95%; --accent: 29 34% 67%;
+      --cream: 30 42% 95%; --cream-deep: 28 42% 85%; --espresso: 17 33% 18%;
+      --bronze: 17 39% 35%; --bronze-light: 29 34% 67%;
       background: hsl(var(--background)); color: hsl(var(--foreground)); }
 
 /* Fundos por secao, iguais aos do site */

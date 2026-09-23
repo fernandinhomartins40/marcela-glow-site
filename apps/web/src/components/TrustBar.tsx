@@ -9,14 +9,14 @@ const items = [
 /** Pontos de confiança antes da apresentação da médica: evidência, não promessa. */
 export default function TrustBar() {
   return (
-    <section aria-label="Informações da clínica" className="border-y border-border bg-background">
+    <section aria-label="Informações da clínica" className="border-b border-border bg-[hsl(var(--card))]">
       <div className="container mx-auto grid px-5 sm:px-6 lg:grid-cols-3 lg:px-10">
         {items.map(({ icon: Icon, title, detail }) => (
-          <div key={title} className="flex min-h-28 items-center gap-4 border-b border-border py-5 last:border-b-0 lg:justify-center lg:border-b-0 lg:border-r lg:px-8 lg:last:border-r-0">
-            <Icon className="h-7 w-7 shrink-0 text-accent" strokeWidth={1.4} aria-hidden="true" />
+          <div key={title} className="flex min-h-24 items-center gap-5 border-b border-border py-6 last:border-b-0 lg:min-h-28 lg:justify-center lg:border-b-0 lg:border-r lg:px-8 lg:last:border-r-0">
+            <Icon className="h-10 w-10 shrink-0 text-primary lg:h-8 lg:w-8" strokeWidth={1.1} aria-hidden="true" />
             <div>
-              <p className="font-display text-lg text-primary">{title}</p>
-              <p className="mt-1 text-[0.62rem] uppercase tracking-[0.18em] text-muted-foreground">{detail}</p>
+              <p className="font-display text-xl text-primary">{title}</p>
+              <p className="mt-1 text-[0.66rem] uppercase tracking-[0.2em] text-muted-foreground">{detail}</p>
             </div>
           </div>
         ))}

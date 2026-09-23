@@ -36,7 +36,12 @@ const seguro = (valor: unknown) =>
 
 const Theme = () => {
   const { data } = useLanding();
-  const gravado = data?.sections?.THEME?.content as ThemeContent | undefined;
+  /* A API manda o THEME sempre, com o padrao quando a clinica nunca salvou.
+     Sem olhar `isCustom`, o padrao da API vencia o do CSS — e os dois ja
+     divergiram uma vez: a paleta oficial estava no CSS e o site pintava a
+     antiga. So a paleta que alguem gravou no painel sobrescreve o CSS. */
+  const secao = data?.sections?.THEME;
+  const gravado = secao?.isCustom === false ? undefined : (secao?.content as ThemeContent | undefined);
 
   /* Sem paleta gravada nao escrevemos token nenhum, e o CSS fica com os valores
      dele. Aplicar o fallback aqui daria quase no mesmo — as cores sao as mesmas

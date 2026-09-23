@@ -93,7 +93,7 @@ const SlotPicker = ({
   if (isLoading) {
     return (
       <div className="border border-[hsl(var(--cream))]/12 bg-[hsl(var(--cream))]/[0.03] p-4 sm:p-5">
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-hidden">
           {Array.from({ length: 5 }).map((_, index) => (
             <div
               key={index}

@@ -9,41 +9,41 @@
 
 @layer base {
   :root {
-    --background: 30 29% 96%;
-    --foreground: 20 8% 15%;
+    --background: 30 42% 95%;
+    --foreground: 20 8% 14%;
 
     --card: 30 29% 98%;
-    --card-foreground: 20 8% 15%;
+    --card-foreground: 20 8% 14%;
 
     --popover: 30 29% 98%;
-    --popover-foreground: 20 8% 15%;
+    --popover-foreground: 20 8% 14%;
 
-    --primary: 17 39% 25%;
-    --primary-foreground: 30 29% 96%;
+    --primary: 19 39% 26%;
+    --primary-foreground: 30 42% 95%;
 
-    --secondary: 25 39% 86%;
-    --secondary-foreground: 17 39% 25%;
+    --secondary: 28 42% 85%;
+    --secondary-foreground: 19 39% 26%;
 
     --muted: 25 39% 92%;
     --muted-foreground: 17 28% 33%;
 
-    --accent: 25 31% 67%;
-    --accent-foreground: 17 39% 25%;
+    --accent: 29 34% 67%;
+    --accent-foreground: 19 39% 26%;
 
     --destructive: 0 60% 45%;
-    --destructive-foreground: 30 29% 96%;
+    --destructive-foreground: 30 42% 95%;
 
     --border: 25 28% 83%;
     --input: 25 31% 91%;
-    --ring: 17 39% 25%;
+    --ring: 19 39% 26%;
 
     --radius: 0.375rem;
 
-    --cream: 30 29% 96%;
-    --cream-deep: 25 39% 86%;
-    --espresso: 17 39% 25%;
+    --cream: 30 42% 95%;
+    --cream-deep: 28 42% 85%;
+    --espresso: 17 33% 18%;
     --bronze: 17 39% 35%;
-    --bronze-light: 25 31% 67%;
+    --bronze-light: 29 34% 67%;
 
     /* Estados — derivados da paleta terrosa, não cores puras de sistema */
     --success: 145 30% 34%;

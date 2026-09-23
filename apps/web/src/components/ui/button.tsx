@@ -8,7 +8,7 @@ const buttonVariants = cva(
   // `max-w-full` + quebra de palavra: o rótulo longo ("Ver Todos os Protocolos")
   // com tracking largo media 350px e furava a viewport de 360px, criando scroll
   // horizontal na página inteira. Sem `whitespace-nowrap` o texto acomoda.
-  "inline-flex max-w-full items-center justify-center gap-2 break-words text-center text-[0.8125rem] sm:text-sm font-medium tracking-[0.1em] sm:tracking-[0.2em] uppercase ring-offset-background transition-all duration-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-3.5 [&_svg]:shrink-0",
+  "inline-flex max-w-full items-center justify-center gap-2.5 break-words rounded-[3px] text-center text-sm font-medium tracking-[0.01em] ring-offset-background transition-all duration-500 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -25,7 +25,10 @@ const buttonVariants = cva(
         hero:
           "bg-[hsl(var(--cream))] text-primary border border-primary/20 hover:bg-primary hover:text-primary-foreground hover:border-primary",
         cta:
-          "bg-primary text-primary-foreground hover:bg-[hsl(var(--espresso))] border border-primary",
+          "bg-primary text-primary-foreground shadow-[0_10px_24px_-14px_hsl(var(--espresso)/0.7)] hover:bg-[hsl(var(--bronze))] border border-primary",
+        /* CTA claro sobre fundo espresso (agendamento, rodape). */
+        ctaLight:
+          "bg-[hsl(var(--cream-deep))] text-[hsl(var(--espresso))] border border-[hsl(var(--cream-deep))] hover:bg-[hsl(var(--cream))]",
         ghostLight:
           "border border-[hsl(var(--cream))]/40 text-[hsl(var(--cream))] hover:bg-[hsl(var(--cream))] hover:text-primary backdrop-blur-sm",
       },
@@ -34,8 +37,8 @@ const buttonVariants = cva(
       // alvo de toque de 44px recomendado mesmo quando a altura encolhe.
       size: {
         default: "min-h-11 h-auto px-5 py-3 sm:px-7",
-        sm: "min-h-10 h-auto px-4 py-2 text-xs sm:px-5",
-        lg: "min-h-12 h-auto px-6 py-3.5 sm:min-h-14 sm:px-10",
+        sm: "min-h-10 h-auto px-4 py-2 text-[0.8125rem] sm:px-5",
+        lg: "min-h-12 h-auto px-6 py-3 sm:px-8",
         icon: "h-11 w-11 shrink-0 sm:h-10 sm:w-10",
       },
     },

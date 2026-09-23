@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { CheckCircle2, ClipboardCheck, Clock3, UserRound } from "lucide-react";
+import { ArrowRight, CalendarClock, CheckCircle2, ClipboardCheck, Clock3, Mail, MapPin, Phone, UserRound } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,32 +21,27 @@ interface AppointmentContent {
 }
 
 const FALLBACK: AppointmentContent = {
-  eyebrow: "Primeiro passo",
-  titleTop: "Agende sua",
-  titleBottom: "avaliação.",
-  lead: "Entenda qual protocolo faz sentido para o seu momento.",
+  eyebrow: "Agende sua avaliação",
+  titleTop: "Vamos conversar",
+  titleBottom: "sobre você.",
+  lead: "Entenda as melhores opções para realçar sua beleza e cuidar da sua saúde.",
   disclaimer:
     "Este é um pedido de horário, não uma reserva confirmada. A equipe confere a agenda e entra em contato com você.",
   whatsapp: null,
 };
 
-const contactBlocks = [
-  {
-    label: "Telefone / WhatsApp",
-    lines: ["(67) 99944-6066"],
-  },
-  {
-    label: "E-mail",
-    lines: ["contato@dramarceladuch.com.br"],
-  },
-  {
-    label: "Endereço",
-    lines: ["Av. 16, nº 890 — Ágatha Center", "Chapadão do Sul — MS"],
-  },
-  {
-    label: "Atendimento",
-    lines: ["Segunda a sexta · 9h às 18h", "Sábado · 9h às 13h"],
-  },
+const contactBlocks: { label: string; icon: LucideIcon; lines: string[] }[] = [
+  { label: "Telefone / WhatsApp", icon: Phone, lines: ["(67) 99944-6066"] },
+  { label: "E-mail", icon: Mail, lines: ["contato@dramarceladuch.com.br"] },
+  { label: "Endereço", icon: MapPin, lines: ["Av. 16, nº 890 — Ágatha Center", "Chapadão do Sul — MS"] },
+  { label: "Atendimento", icon: Clock3, lines: ["Segunda a sexta · 9h às 18h", "Sábado · 9h às 13h"] },
+];
+
+/* As três etapas na ordem em que o formulário as pede. */
+const formSteps: { icon: LucideIcon; title: string; detail: string }[] = [
+  { icon: UserRound, title: "Suas informações", detail: "Nome e contato" },
+  { icon: CalendarClock, title: "Dia e horário", detail: "Se tiver preferência" },
+  { icon: CheckCircle2, title: "Confirmação", detail: "Feita pela equipe" },
 ];
 
 /** "quinta-feira, 4 de setembro, às 14:30" — confirma a escolha por extenso */
@@ -125,7 +121,7 @@ const Appointment = () => {
   };
 
   const fieldClass =
-    "bg-transparent border-0 border-b border-[hsl(var(--cream))]/25 rounded-none px-0 h-12 text-[hsl(var(--cream))] placeholder:text-[hsl(var(--cream))]/45 focus-visible:ring-0 focus-visible:border-[hsl(var(--bronze))] transition-colors duration-500";
+    "bg-[hsl(var(--cream))]/[0.04] border border-[hsl(var(--cream))]/25 rounded-[3px] px-3.5 h-12 text-[hsl(var(--cream))] placeholder:text-[hsl(var(--cream))]/50 focus-visible:ring-1 focus-visible:ring-[hsl(var(--bronze-light))] focus-visible:ring-offset-0 focus-visible:border-[hsl(var(--bronze-light))] transition-colors duration-300";
 
   const startAnotherRequest = () => {
     setSubmitted(null);
@@ -140,19 +136,12 @@ const Appointment = () => {
       id="agendamento"
       className="relative section-y bg-espresso overflow-hidden"
     >
-      {/* Watermark */}
-      <span
-        className="absolute -bottom-8 left-1/2 hidden -translate-x-1/2 font-display text-[16vw] lg:text-[11vw] pointer-events-none select-none whitespace-nowrap md:block"
-        style={{ color: "hsl(var(--cream) / 0.05)" }}
-      >
-        agendar
-      </span>
 
       <div className="container mx-auto px-5 sm:px-6 lg:px-10 relative z-10">
         <div className="grid lg:grid-cols-12 gap-10 lg:gap-20 max-w-6xl mx-auto">
           {/* Coluna de informações */}
           <div className="lg:col-span-5 min-w-0 animate-fade-in">
-            <p className="label-eyebrow mb-4 md:mb-5">{content.eyebrow}</p>
+            <p className="label-eyebrow mb-4">{content.eyebrow}</p>
             <h2 className="font-display type-section text-[hsl(var(--cream))]">
               {content.titleTop}
               <span className="block italic font-light text-[hsl(var(--bronze-light))]">
@@ -160,39 +149,32 @@ const Appointment = () => {
               </span>
             </h2>
 
-            <div className="divider-luxe my-6 md:my-8" />
-
-            <p className="font-editorial-italic type-lead text-[hsl(var(--cream))]/70 mb-10 md:mb-14">
+            <p className="mt-5 mb-9 max-w-md text-base leading-relaxed text-[hsl(var(--cream))]/80 md:mb-12">
               {content.lead}
             </p>
 
-            <div className="space-y-6 md:space-y-8">
-              {contactBlocks.map((block) => (
-                <div key={block.label} className="flex items-start gap-5">
-                  <div className="w-8 h-px bg-[hsl(var(--bronze))] mt-3 shrink-0" />
+            <ul className="space-y-5">
+              {contactBlocks.map(({ label, icon: Icon, lines }) => (
+                <li key={label} className="flex items-start gap-4">
+                  <Icon className="mt-0.5 h-5 w-5 shrink-0 text-[hsl(var(--bronze-light))]" strokeWidth={1.4} aria-hidden="true" />
                   <div>
-                    <p className="text-[0.75rem] sm:text-[0.65rem] tracking-[0.3em] uppercase text-[hsl(var(--bronze-light))] mb-2">
-                      {block.label}
-                    </p>
-                    {block.lines.map((line) => (
-                      <p
-                        key={line}
-                        className="text-base font-light tracking-wide text-[hsl(var(--cream))]/85"
-                      >
+                    <p className="sr-only">{label}</p>
+                    {lines.map((line) => (
+                      <p key={line} className="text-[0.95rem] leading-relaxed text-[hsl(var(--cream))]/90">
                         {line}
                       </p>
                     ))}
                   </div>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
 
           {/* Formulário */}
           <div className="lg:col-span-7 min-w-0 animate-fade-in">
             {submitted ? (
               <section
-                className="border border-[hsl(var(--cream))]/20 bg-[hsl(var(--cream))]/[0.04] p-6 sm:p-8 md:p-12"
+                className="rounded-md border border-[hsl(var(--cream))]/20 bg-[hsl(var(--cream))]/[0.04] p-6 sm:p-8 md:p-10"
                 aria-live="polite"
               >
                 <CheckCircle2 className="h-8 w-8 text-[hsl(var(--bronze-light))]" aria-hidden="true" />
@@ -234,37 +216,27 @@ const Appointment = () => {
             ) : (
             <form
               onSubmit={handleSubmit}
-              className="border border-[hsl(var(--cream))]/15 p-6 sm:p-8 md:p-12"
+              className="rounded-md border border-[hsl(var(--cream))]/15 bg-[hsl(var(--cream))]/[0.03] p-5 sm:p-8 md:p-10"
             >
-              <p className="label-eyebrow mb-8">Solicitação de avaliação</p>
+              <p className="label-eyebrow mb-6">Solicite sua avaliação</p>
 
-              <ol className="grid gap-3 border-y border-[hsl(var(--cream))]/10 py-5 sm:grid-cols-3">
-                <li className="flex gap-3">
-                  <span className="font-display text-2xl leading-none text-[hsl(var(--bronze-light))]">01</span>
-                  <span>
-                    <strong className="block text-sm font-medium text-[hsl(var(--cream))]">Seus dados</strong>
-                    <span className="mt-1 block text-xs leading-relaxed text-[hsl(var(--cream))]/50">Para a equipe entrar em contato.</span>
-                  </span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="font-display text-2xl leading-none text-[hsl(var(--bronze-light))]">02</span>
-                  <span>
-                    <strong className="block text-sm font-medium text-[hsl(var(--cream))]">Sua preferência</strong>
-                    <span className="mt-1 block text-xs leading-relaxed text-[hsl(var(--cream))]/50">Procedimento e horário, se desejar.</span>
-                  </span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="font-display text-2xl leading-none text-[hsl(var(--bronze-light))]">03</span>
-                  <span>
-                    <strong className="block text-sm font-medium text-[hsl(var(--cream))]">Confirmação</strong>
-                    <span className="mt-1 block text-xs leading-relaxed text-[hsl(var(--cream))]/50">A reserva só é confirmada pela equipe.</span>
-                  </span>
-                </li>
+              <ol className="grid gap-4 border-b border-[hsl(var(--cream))]/10 pb-6 sm:grid-cols-3 sm:gap-3">
+                {formSteps.map(({ icon: Icon, title, detail }) => (
+                  <li key={title} className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[hsl(var(--bronze-light))]/50 text-[hsl(var(--bronze-light))]">
+                      <Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden="true" />
+                    </span>
+                    <span>
+                      <strong className="block text-sm font-medium text-[hsl(var(--cream))]">{title}</strong>
+                      <span className="block text-xs text-[hsl(var(--cream))]/70">{detail}</span>
+                    </span>
+                  </li>
+                ))}
               </ol>
 
-              <div className="mt-8 space-y-7 md:space-y-8">
+              <div className="mt-7 space-y-6">
                 <div>
-                  <label htmlFor="appointment-name" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/70">
+                  <label htmlFor="appointment-name" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/80">
                     Nome completo <span className="text-[hsl(var(--bronze-light))]">*</span>
                   </label>
                   <Input
@@ -279,9 +251,9 @@ const Appointment = () => {
                   />
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-7 md:gap-8">
+                <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label htmlFor="appointment-email" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/70">
+                    <label htmlFor="appointment-email" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/80">
                       E-mail <span className="text-[hsl(var(--bronze-light))]">*</span>
                     </label>
                     <Input
@@ -296,7 +268,7 @@ const Appointment = () => {
                     />
                   </div>
                   <div>
-                    <label htmlFor="appointment-phone" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/70">
+                    <label htmlFor="appointment-phone" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/80">
                       Telefone ou WhatsApp <span className="text-[hsl(var(--bronze-light))]">*</span>
                     </label>
                     <Input
@@ -313,7 +285,7 @@ const Appointment = () => {
                 </div>
 
                 <div>
-                  <p className="mb-2 text-xs tracking-wide text-[hsl(var(--cream))]/70">Procedimento de interesse <span className="text-[hsl(var(--cream))]/45">(opcional)</span></p>
+                  <p className="mb-2 text-xs tracking-wide text-[hsl(var(--cream))]/80">Procedimento de interesse <span className="text-[hsl(var(--cream))]/45">(opcional)</span></p>
                   {proceduresPending || proceduresError || procedures.length === 0 ? (
                     <p className="border-b border-[hsl(var(--cream))]/25 py-3 text-sm text-[hsl(var(--cream))]/65" role="status">
                       {proceduresPending
@@ -378,7 +350,7 @@ const Appointment = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="appointment-message" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/70">
+                  <label htmlFor="appointment-message" className="mb-2 block text-xs tracking-wide text-[hsl(var(--cream))]/80">
                     Algo que a equipe deve saber <span className="text-[hsl(var(--cream))]/45">(opcional)</span>
                   </label>
                   <Textarea
@@ -397,12 +369,12 @@ const Appointment = () => {
 
                 <Button
                   type="submit"
-                  variant="ghostLight"
+                  variant="ctaLight"
                   size="lg"
                   className="w-full"
                   disabled={mutation.isPending}
                 >
-                  {mutation.isPending ? "Enviando..." : "Solicitar Avaliação"}
+                  {mutation.isPending ? "Enviando..." : <>Solicitar avaliação <ArrowRight aria-hidden="true" /></>}
                 </Button>
               </div>
             </form>
