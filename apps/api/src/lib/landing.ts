@@ -335,7 +335,7 @@ export const LANDING_DEFAULTS: { [K in LandingSectionId]: z.input<(typeof LANDIN
   },
   FOOTER: {
     tagline:
-      'Medicina estética com estratégia: saúde da pele, gerenciamento de envelhecimento e naturalidade em cada plano.',
+      'Medicina estética com ciência, sensibilidade e respeito pela sua história.',
     address: 'Chapadão do Sul/MS',
     phone: null,
     email: null,

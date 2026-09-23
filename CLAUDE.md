@@ -161,6 +161,42 @@ corrigiu e o que ficou pendente. Sem isso a proxima refaz o mesmo caminho.
 
 ### Registro
 
+**2026-09-23 — redesign aprovado: landing, CRM e portal**
+
+Aplicados os mockups aprovados nos três apps, desktop e mobile. Achados
+junto, e corrigidos porque mudavam o que o redesign mostra:
+
+- **A paleta HSL estava mal convertida do hex oficial.** `--primary` e
+  `--espresso` diziam ser o profundo `#3E281F` e valiam o institucional
+  `#5B3828`; rodapé e faixas saíam mais claros que a marca. Reconvertido no
+  `web`, no `patient` e na prévia `.lp` do painel. **Converter hex→HSL com
+  conta, não a olho** — os valores oficiais estão comentados em `index.css`.
+- **O site aplicava o THEME padrão da API por cima do CSS.** A API manda o
+  THEME sempre, com o padrão quando ninguém salvou, e o padrão tinha a paleta
+  antiga. `Theme.tsx` agora só escreve tokens com `isCustom`.
+- **A fila do "Hoje" devolvia a consulta inteira** (contato, mensagem,
+  notas) a qualquer perfil com leitura de agenda, e sumia com a consulta
+  concluída justo quando abria a cobrança. Recortada e ampliada em
+  `admin.ts`; três testes em `dashboard-visibility.test.ts`, verificados
+  falhando.
+- **~23 MB de PNG na landing** viraram ~560 KB de WebP; o fundo do portal,
+  2 MB coberto a 90% de creme, virou o botânico aprovado (49 KB).
+- Sobretítulos em `--accent` davam 2,08:1; passaram ao bronze.
+
+Verificado em navegador (Playwright com o Chrome da máquina, API simulada por
+`page.route`), papel a papel no CRM e seção a seção no portal, em 375 a
+1440 px; containers de web, admin, api e patient compilados.
+
+Aprendido: **medir o transbordo pelos elementos, não pelo `scrollWidth`.**
+Com `overflow-x: hidden` no `body`, os atalhos do portal passavam 100px da
+tela e o `scrollWidth` continuava 375 — só a captura mostrou.
+
+Pendente: validar com API e banco reais (a simulação não prova o contrato);
+o segundo CTA e os textos padrão novos só aparecem onde o CMS não foi
+editado; "Conteúdos" do mockup não tem seção e ficou fora do menu; a
+newsletter saiu do rodapé para seguir a proposta, mas continua no CMS e na
+API.
+
 **2026-09-22 — dashboard respeita permissões de cada domínio**
 
 Na modernização da central operacional, a rota `/api/admin/dashboard` exigia

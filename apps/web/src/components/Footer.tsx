@@ -1,31 +1,26 @@
-import { ArrowRight, ChevronRight, Clock3, Instagram, Mail, MapPin, Phone, Stethoscope } from "lucide-react";
+import { ArrowRight, ChevronRight, Clock3, Instagram, Mail, MapPin, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
-import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import { newsletterApi, getErrorMessage } from "@/lib/api";
 import { useImage, useSection } from "@/hooks/useLanding";
 import logoMD from "@/assets/brand/md-monogram-white.webp";
 
+/* O rodapé segue o mockup aprovado: marca, navegação, contato e horário numa
+   faixa compacta, e embaixo só direitos, políticas e CRM. A newsletter e o
+   link do painel médico saíram por isso — a equipe entra direto por /admin/.
+   Os campos da newsletter continuam no CMS e na API, sem uso aqui. */
 interface FooterContent {
   tagline: string;
   address: string;
   phone: string | null;
   email: string | null;
   instagram: string | null;
-  newsletterTitle: string;
-  newsletterLead: string;
 }
 
 const FALLBACK: FooterContent = {
-  tagline: "Medicina estética e saúde da pele, com estratégia e naturalidade.",
+  tagline: "Medicina estética com ciência, sensibilidade e respeito pela sua história.",
   address: "Av. 16, nº 890 — Ágatha Center, Chapadão do Sul — MS",
   phone: "67999446066",
   email: "contato@dramarceladuch.com.br",
   instagram: "dramarceladuch",
-  newsletterTitle: "Receba novidades",
-  newsletterLead: "Conteúdos sobre saúde da pele e envelhecimento inteligente.",
 };
 
 /** (67) 99944-6066 — como se lê, não como se disca. */
@@ -41,7 +36,6 @@ const quickLinks = [
   { id: "procedimentos", label: "Procedimentos" },
   { id: "sobre", label: "Sobre" },
   { id: "tecnologias", label: "Tecnologia" },
-  { id: "depoimentos", label: "Depoimentos" },
   { id: "agendamento", label: "Contato" },
 ];
 
@@ -52,115 +46,73 @@ const WhatsAppIcon = () => (
 );
 
 const Footer = () => {
-  const [email, setEmail] = useState("");
   const { content } = useSection<FooterContent>("FOOTER", FALLBACK);
   const logo = useImage("footer.logo", logoMD, "MD - Dra. Marcela Duch");
-  const whatsapp = content.phone ? content.phone.replace(/\D/g, "") : null;
-
-  const mutation = useMutation({
-    mutationFn: newsletterApi.subscribe,
-    onSuccess: () => {
-      toast.success("Obrigada por se inscrever! Você receberá nossas novidades em breve.");
-      setEmail("");
-    },
-    onError: (error) => {
-      toast.error(getErrorMessage(error));
-    },
-  });
-
-  const handleNewsletter = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email) {
-      mutation.mutate(email);
-    }
-  };
-
-  const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
-  const phoneDigits = whatsapp ?? "67999446066";
+  const phoneDigits = content.phone ? content.phone.replace(/\D/g, "") : "67999446066";
   const mail = content.email ?? FALLBACK.email ?? "";
-  const heading = "mb-5 text-[0.66rem] font-medium uppercase tracking-[0.24em] text-[hsl(var(--bronze-light))]";
+
+  const scrollToSection = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+
+  const heading = "mb-4 text-[0.66rem] font-medium uppercase tracking-[0.24em] text-[hsl(var(--bronze-light))]";
   const social =
-    "flex h-10 w-10 items-center justify-center rounded-full border border-[hsl(var(--cream))]/25 text-[hsl(var(--cream))] transition-colors duration-300 hover:bg-[hsl(var(--cream))] hover:text-[hsl(var(--espresso))]";
+    "flex h-11 w-11 items-center justify-center rounded-full text-[hsl(var(--cream))]/90 transition-colors duration-300 hover:bg-[hsl(var(--cream))]/10 hover:text-[hsl(var(--cream))]";
+  const socialLinks = (
+    <>
+      <a href={`https://www.instagram.com/${content.instagram ?? "dramarceladuch"}/`} target="_blank" rel="noopener noreferrer" className={social} aria-label="Instagram">
+        <Instagram className="h-[18px] w-[18px]" aria-hidden="true" />
+      </a>
+      <a href={`https://wa.me/55${phoneDigits}`} target="_blank" rel="noopener noreferrer" className={social} aria-label="WhatsApp">
+        <WhatsAppIcon />
+      </a>
+      <a href={`mailto:${mail}`} className={social} aria-label="E-mail">
+        <Mail className="h-[18px] w-[18px]" aria-hidden="true" />
+      </a>
+    </>
+  );
 
   return (
-    <footer
-      id="contato"
-      className="bg-[hsl(var(--espresso))] text-[hsl(var(--cream))] border-t border-[hsl(var(--cream))]/10"
-    >
-      <div className="container mx-auto px-5 sm:px-6 lg:px-10 pt-14 pb-8 md:pt-20">
-        <div className="grid gap-10 md:grid-cols-12 md:gap-8 lg:gap-12">
+    <footer id="contato" className="bg-[hsl(var(--espresso))] text-[hsl(var(--cream))] border-t border-[hsl(var(--cream))]/10">
+      <div className="container mx-auto px-5 sm:px-6 lg:px-10 pt-10 pb-6 md:pt-12">
+        <div className="grid gap-8 md:grid-cols-12 md:gap-8 lg:gap-12">
           {/* Marca */}
           <div className="md:col-span-4">
             <div className="flex items-center gap-3">
-              <img
-                src={logo.src}
-                alt={logo.alt}
-                className="h-11 w-auto brightness-0 invert opacity-95"
-                width={44}
-                height={44}
-                loading="lazy"
-              />
+              <img src={logo.src} alt={logo.alt} className="h-10 w-auto brightness-0 invert opacity-95" width={40} height={40} loading="lazy" />
               <span className="font-display text-xl">Dra. Marcela Duch</span>
             </div>
-            <p className="mt-5 max-w-xs text-sm leading-relaxed text-[hsl(var(--cream))]/75">
-              {content.tagline}
-            </p>
-            <div className="mt-6 flex gap-3">
-              <a
-                href={`https://www.instagram.com/${content.instagram ?? "dramarceladuch"}/`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={social}
-                aria-label="Instagram"
-              >
-                <Instagram className="w-4 h-4" aria-hidden="true" />
-              </a>
-              <a
-                href={`https://wa.me/55${phoneDigits}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={social}
-                aria-label="WhatsApp"
-              >
-                <WhatsAppIcon />
-              </a>
-            </div>
+            <p className="mt-4 hidden max-w-[17rem] text-sm leading-relaxed text-[hsl(var(--cream))]/75 md:block">{content.tagline}</p>
+            <div className="-ml-3 mt-3 hidden gap-1 md:flex">{socialLinks}</div>
           </div>
 
-          {/* Navegação: lista com seta no celular, coluna simples no desktop */}
-          <nav className="md:col-span-2" aria-label="Rodapé">
-            <p className={heading}>Navegação</p>
-            <ul className="divide-y divide-[hsl(var(--cream))]/10 lg:divide-y-0 lg:space-y-2.5">
-              {quickLinks.map((link) => (
-                <li key={link.id}>
-                  <button
-                    type="button"
-                    onClick={() => scrollToSection(link.id)}
-                    className="flex min-h-11 w-full items-center justify-between text-left text-sm text-[hsl(var(--cream))]/85 transition-colors hover:text-[hsl(var(--cream))] lg:min-h-0"
-                  >
-                    {link.label}
-                    <ChevronRight className="h-4 w-4 text-[hsl(var(--cream))]/50 lg:hidden" aria-hidden="true" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          {/* Navegação: no celular, a lista e os ícones sociais dividem a linha */}
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4 md:col-span-2 md:block">
+            <nav aria-label="Rodapé">
+              <p className={`${heading} hidden md:block`}>Navegação</p>
+              <ul className="md:space-y-1.5">
+                {quickLinks.map((link) => (
+                  <li key={link.id}>
+                    <button
+                      type="button"
+                      onClick={() => scrollToSection(link.id)}
+                      className="flex min-h-11 w-full items-center justify-between gap-3 text-left text-sm text-[hsl(var(--cream))]/85 transition-colors hover:text-[hsl(var(--cream))] md:min-h-0 md:w-auto"
+                    >
+                      {link.label}
+                      <ChevronRight className="h-4 w-4 text-[hsl(var(--cream))]/55 md:hidden" aria-hidden="true" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+            <div className="flex flex-col items-center gap-1 pt-1 md:hidden">{socialLinks}</div>
+          </div>
 
           {/* Contato */}
-          <div className="md:col-span-3">
+          <div className="hidden md:col-span-3 md:block">
             <p className={heading}>Contato</p>
-            <ul className="space-y-3.5 text-sm text-[hsl(var(--cream))]/85">
+            <ul className="space-y-3 text-sm text-[hsl(var(--cream))]/85">
               <li className="flex items-start gap-3">
                 <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[hsl(var(--bronze-light))]" strokeWidth={1.5} aria-hidden="true" />
-                <a href={`https://wa.me/55${phoneDigits}`} target="_blank" rel="noopener noreferrer" className="hover:text-[hsl(var(--cream))]">
-                  {formatPhone(phoneDigits)}
-                </a>
+                <a href={`https://wa.me/55${phoneDigits}`} target="_blank" rel="noopener noreferrer" className="hover:text-[hsl(var(--cream))]">{formatPhone(phoneDigits)}</a>
               </li>
               <li className="flex items-start gap-3">
                 <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[hsl(var(--bronze-light))]" strokeWidth={1.5} aria-hidden="true" />
@@ -175,59 +127,26 @@ const Footer = () => {
 
           {/* Horário */}
           <div className="md:col-span-3">
-            <p className={heading}>Horário</p>
-            <p className="flex items-start gap-3 text-sm leading-relaxed text-[hsl(var(--cream))]/85">
+            <p className={`${heading} hidden md:block`}>Horário</p>
+            <p className="hidden gap-3 text-sm leading-relaxed text-[hsl(var(--cream))]/85 md:flex">
               <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-[hsl(var(--bronze-light))]" strokeWidth={1.5} aria-hidden="true" />
               <span>Segunda a sexta: 9h às 18h<br />Sábado: 9h às 13h</span>
             </p>
-            <Button variant="ctaLight" className="mt-6 w-full md:w-auto" onClick={() => scrollToSection("agendamento")}>
+            <Button variant="ctaLight" className="w-full md:mt-5 md:w-auto" onClick={() => scrollToSection("agendamento")}>
               Agendar avaliação <ArrowRight aria-hidden="true" />
             </Button>
           </div>
         </div>
 
-        {/* Newsletter: fora do mockup, mas é um recurso em uso; fica numa faixa
-            própria para não disputar a grade das quatro colunas. */}
-        <form
-          onSubmit={handleNewsletter}
-          className="mt-12 flex flex-col gap-4 border-t border-[hsl(var(--cream))]/12 pt-8 md:flex-row md:items-end md:justify-between"
-        >
-          <div>
-            <p className="font-display text-lg">{content.newsletterTitle}</p>
-            <p className="mt-1 text-sm text-[hsl(var(--cream))]/70">{content.newsletterLead}</p>
-          </div>
-          <div className="flex w-full gap-2 md:max-w-md">
-            <label htmlFor="footer-newsletter" className="sr-only">Seu e-mail</label>
-            <Input
-              id="footer-newsletter"
-              type="email"
-              placeholder="Seu e-mail"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="h-11 flex-1 rounded-[3px] border-[hsl(var(--cream))]/25 bg-[hsl(var(--cream))]/[0.04] text-[hsl(var(--cream))] placeholder:text-[hsl(var(--cream))]/50 focus-visible:ring-1 focus-visible:ring-[hsl(var(--bronze-light))] focus-visible:ring-offset-0"
-              required
-            />
-            <Button type="submit" variant="ghostLight" className="shrink-0" disabled={mutation.isPending}>
-              {mutation.isPending ? "Inscrevendo..." : "Inscrever"}
-            </Button>
-          </div>
-        </form>
-
         {/* Barra inferior */}
-        <div className="mt-8 flex flex-col items-center gap-4 border-t border-[hsl(var(--cream))]/12 pt-6 text-center text-xs text-[hsl(var(--cream))]/65 md:flex-row md:justify-between md:text-left">
+        <div className="mt-8 flex flex-col items-center gap-3 border-t border-[hsl(var(--cream))]/12 pt-5 text-center text-xs text-[hsl(var(--cream))]/65 md:flex-row md:justify-between md:text-left">
           <p>© {new Date().getFullYear()} Dra. Marcela Duch. Todos os direitos reservados.</p>
-          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
             <a href="#" className="hover:text-[hsl(var(--cream))]">Política de Privacidade</a>
+            <span aria-hidden="true">|</span>
             <a href="#" className="hover:text-[hsl(var(--cream))]">Termos de Uso</a>
-            <span>CRM/MS 5691</span>
-            <a
-              href="/admin/"
-              className="inline-flex items-center gap-1.5 hover:text-[hsl(var(--cream))]"
-              aria-label="Acessar painel médico"
-            >
-              <Stethoscope className="h-3.5 w-3.5" aria-hidden="true" />
-              Painel Médico
-            </a>
+            <span aria-hidden="true" className="hidden md:inline">|</span>
+            <span className="basis-full md:basis-auto">CRM/MS 5691</span>
           </div>
         </div>
       </div>
