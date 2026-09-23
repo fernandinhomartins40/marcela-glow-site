@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "file": "hero-regeneracao-desktop-v1.png",
+      "format": "png",
+      "bytes": 1908580,
+      "responsive_variant": "desktop",
+      "purpose": "Asset aprovado para fundo do hero desktop: camadas minerais nude com área clara à esquerda; preservar retratos reais da médica como conteúdo principal.",
+      "component": "apps/web/src/components/Hero.tsx",
+      "rendered_width": "100vw em 1024px ou mais",
+      "object_fit": "cover",
+      "object_position": "80% 50%",
+      "srcset_sizes": "(max-width: 767px) 100vw, 100vw",
+      "fallback": "apps/web/src/assets/marble-texture.jpg",
+      "alt": "",
+      "width": 1672,
+      "height": 941,
+      "aspect_ratio": 1.7768
+    },
+    {
+      "file": "hero-regeneracao-mobile-v1.png",
+      "format": "png",
+      "bytes": 2043375,
+      "responsive_variant": "mobile",
+      "purpose": "Asset aprovado para fundo do hero e portal em telas compactas; manter zona superior livre para texto e CTAs.",
+      "component": "apps/web/src/components/Hero.tsx",
+      "rendered_width": "100vw abaixo de 768px",
+      "object_fit": "cover",
+      "object_position": "72% 62%",
+      "srcset_sizes": "(max-width: 767px) 100vw, 100vw",
+      "fallback": "apps/web/src/assets/marble-texture.jpg",
+      "alt": "",
+      "width": 1122,
+      "height": 1402,
+      "aspect_ratio": 0.8003
+    },
+    {
+      "file": "marble-editorial-desktop-v1.png",
+      "format": "png",
+      "bytes": 2130963,
+      "responsive_variant": "desktop",
+      "purpose": "Fundo editorial de mármore claro para a landing aprovada; deve permanecer atrás de conteúdo HTML e fotografia real.",
+      "component": "apps/web/src/components/Hero.tsx",
+      "rendered_width": "100vw em 768px ou mais",
+      "object_fit": "cover",
+      "object_position": "50% 50%",
+      "srcset_sizes": "100vw",
+      "fallback": "apps/web/src/assets/marble-texture.jpg",
+      "alt": "",
+      "width": 1672,
+      "height": 941,
+      "aspect_ratio": 1.7768
+    },
+    {
+      "file": "patient-botanical-mobile-v1.png",
+      "format": "png",
+      "bytes": 2049344,
+      "responsive_variant": "mobile",
+      "purpose": "Fundo botânico sutil do portal da paciente, com área de leitura livre e sem texto rasterizado.",
+      "component": "apps/patient/src/styles.css",
+      "rendered_width": "100vw abaixo de 768px",
+      "object_fit": "cover",
+      "object_position": "right top",
+      "srcset_sizes": "100vw",
+      "fallback": "cor sólida #F8F3EE",
+      "alt": "",
+      "width": 939,
+      "height": 1672,
+      "aspect_ratio": 0.5616
+    }
+  ]
+}
