@@ -10,9 +10,9 @@ Fonte de verdade operacional para o Goal. Conferida contra `apps/web/src/pages/I
 | --- | --- | --- | --- | --- | --- |
 | W01 | Header, navegação e menu móvel | `components/Header.tsx` | M/D/I | P | Logo, menu, âncoras, foco, scroll |
 | W02 | Hero, três slides e CTAs | `components/Hero.tsx`, `index.css` | M/D/I | P | Conferir visualmente foto/fundo aprovados em 320/390/768/1024/1440, crop, legibilidade, CMS e interação; sem navegador ainda não há `V` |
-| W03 | Faixa editorial | `components/Marquee.tsx` | M/D | P | Movimento reduzido, corte |
-| W04 | Sobre | `components/About.tsx` | M/D/I | P | Retrato, texto, CTA e override CMS |
-| W05 | Protocolos | `components/Procedures.tsx` | M/D | P | Cards, links, dados longos |
+| W03 | Faixa editorial e confiança clínica | `components/Marquee.tsx`, `components/TrustBar.tsx` | M/D/I parcial | P | Faixa de confiança em 390/1440; movimento reduzido e demais interações pendentes |
+| W04 | Sobre | `components/About.tsx` | M/D/I parcial | P | Composição editorial em 390/1440; CTA, texto de CMS e acessibilidade ainda exigem jornada executada |
+| W05 | Áreas de cuidado e protocolos | `components/CareAreas.tsx`, `components/Procedures.tsx` | M/D/I parcial | P | Quatro áreas e protocolo dinâmico em 390/1440; links e dados longos pendentes |
 | W06 | Tecnologia | `components/Technology.tsx` | M/D/I parcial | P | Capas editoriais em 390/1440 sem overflow; falta CMS autenticado, estados e demais viewports |
 | W07 | Depoimentos | `components/Testimonials.tsx` | M/D | P | Estados vazio/longo e privacidade |
 | W08 | Solicitar avaliação | `components/Appointment.tsx` | M/D | P | Erro, envio duplo, continuidade no CRM/portal |

@@ -173,3 +173,8 @@ Validar visualmente em navegador os breakpoints e estados reais do site, CRM e p
 
 - A revisão do caminho landing → API identificou campos públicos sem normalização e limites explícitos. O formulário e a API agora apararam valores; e-mail é normalizado em minúsculas, os opcionais vazios não são gravados e nome, telefone, procedimento e mensagem têm limites compatíveis com a ficha. A regra de disponibilidade e o status `PENDING` continuam inalterados.
 - Dois testes de regressão cobrem normalização e excesso de texto. Build da API e landing e 75 testes da API passaram. Ainda falta jornada autenticada/integrada em banco e verificação em navegador dos estados de rede, conflito de horário e sucesso real; não tratar essa parte como validação total de W08.
+
+## Continuação — fatia visual aprovada da landing
+
+- A observação de que a modernização ainda parecia invisível era correta: a landing preservava grande parte da sequência visual antiga. A nova fatia implementa, em código e com dados existentes, a composição aprovada logo após o hero: faixa de confiança com CRM/atendimento/localidade, bloco editorial “Evoluir sem exageros” e quatro áreas de cuidado (Face, Pele, Pescoço e Corpo).
+- Foram preservados CMS, lista de protocolos e agendamento. As novas áreas levam a uma ação real de avaliação, em vez de um link decorativo. Capturas locais integrais em 390 e 1440 px mostram a nova estrutura; build da landing passou. A composição ainda exige validação pública após deploy, teclado, zoom e conteúdo longo/CMS antes de ser promovida a `V`.
