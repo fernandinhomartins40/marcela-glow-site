@@ -118,8 +118,15 @@ async function detalhar(runId, tudo) {
   varrer(raiz)
 
   for (const q of quebrados) {
-    const alvo = arquivos.find((a) => a.includes(`${q.numero}_${q.nome}`)) ??
-      arquivos.find((a) => a.includes(q.nome))
+    /* Varios jobs tem passo de mesmo nome ("Build and push", "Checkout"):
+       sem filtrar pela pasta do job, o log mostrado era o de outro job. */
+    const doJob = arquivos.filter((a) => a.includes(`${q.job}\\`) || a.includes(`${q.job}/`))
+    /* Desde 09/2026 o zip traz um arquivo por job na raiz ("1_Build web.txt")
+       e so `system.txt` na pasta do job; o formato antigo tinha um por passo. */
+    const base = (a) => a.split(/[\\/]/).pop()
+    const alvo = doJob.find((a) => a.includes(`${q.numero}_${q.nome}`)) ??
+      doJob.find((a) => a.includes(q.nome)) ??
+      arquivos.find((a) => new RegExp(`^\\d+_${q.job}\\.txt$`).test(base(a)))
     if (!alvo) { console.log(`\n(log do passo "${q.nome}" nao encontrado no zip)`); continue }
     const linhas = readFileSync(alvo, 'utf8').split(/\r?\n/).map((l) => l.replace(/^\S+Z /, ''))
     console.log(`\n${'='.repeat(70)}\n${q.nome}\n${'='.repeat(70)}`)
@@ -127,7 +134,7 @@ async function detalhar(runId, tudo) {
 
     /* O erro raramente esta na ultima linha: um build quebra no meio e o
        resto e ruido de rollback. Mostra o que casa com erro e o fim. */
-    const padrao = /error TS\d+|Cannot find module|ERROR:|error:|falhou|failed|Error:|npm ERR!|exit code [1-9]/i
+    const padrao = /error TS\d+|Cannot find module|Could not (load|resolve)|ENOENT|ERROR:|error:|falhou|failed|Error:|npm ERR!|exit code [1-9]/i
     const achados = linhas.map((l, i) => [i, l]).filter(([, l]) => padrao.test(l) && l.trim())
     if (achados.length) {
       console.log('\n--- linhas com erro ---')
