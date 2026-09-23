@@ -13,7 +13,7 @@ Fonte de verdade operacional para o Goal. Conferida contra `apps/web/src/pages/I
 | W03 | Faixa editorial | `components/Marquee.tsx` | M/D | P | Movimento reduzido, corte |
 | W04 | Sobre | `components/About.tsx` | M/D/I | P | Retrato, texto, CTA e override CMS |
 | W05 | Protocolos | `components/Procedures.tsx` | M/D | P | Cards, links, dados longos |
-| W06 | Tecnologia | `components/Technology.tsx` | M/D | P | Conteúdo, ordem responsiva |
+| W06 | Tecnologia | `components/Technology.tsx` | M/D/I parcial | P | Capas editoriais em 390/1440 sem overflow; falta CMS autenticado, estados e demais viewports |
 | W07 | Depoimentos | `components/Testimonials.tsx` | M/D | P | Estados vazio/longo e privacidade |
 | W08 | Solicitar avaliação | `components/Appointment.tsx` | M/D | P | Erro, envio duplo, continuidade no CRM/portal |
 | W09 | Rodapé e contatos | `components/Footer.tsx` | M/D/I | P | Logo, links e foco |

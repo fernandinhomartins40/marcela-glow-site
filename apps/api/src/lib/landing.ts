@@ -72,7 +72,7 @@ export const technologyItemSchema = z.object({
   number: trimmed(1, 4),
   name: trimmed(2, 80),
   eyebrow: trimmed(2, 60),
-  /** Duas letras desenhadas em tipo grande — a seção não usa foto. */
+  /** Iniciais decorativas da capa editorial — a seção não usa foto. */
   monogram: trimmed(1, 3),
   description: trimmed(20, 600),
   points: z.array(trimmed(3, 200)).max(8),

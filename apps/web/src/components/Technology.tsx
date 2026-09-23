@@ -93,21 +93,24 @@ const Technology = () => {
                 key={tech.number}
                 className="grid md:grid-cols-12 gap-8 md:gap-16 items-center animate-fade-in"
               >
-                {/* Monograma */}
+                {/* Capa editorial feita com os dados do recurso: sem foto fictícia. */}
                 <div
                   className={`md:col-span-5 ${
                     reversed ? "md:order-1" : "md:order-2"
                   }`}
                 >
-                  <div className="relative aspect-[4/5] max-w-xs mx-auto md:max-w-none bg-marble">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="font-display text-7xl md:text-8xl lg:text-9xl text-primary/15 tracking-tight select-none">
-                        {tech.monogram}
-                      </span>
-                    </div>
-                    <div className="absolute inset-3 border border-[hsl(var(--cream))]/40 pointer-events-none" />
-                    <div className="absolute top-5 left-5 font-display text-2xl text-accent/70">
-                      {tech.number}
+                  <div className="relative aspect-[4/5] max-w-xs mx-auto md:max-w-none overflow-hidden border border-border bg-marble" aria-hidden="true">
+                    <span className="absolute -right-4 top-1/4 font-display text-[9rem] md:text-[11rem] leading-none text-primary/10 select-none">
+                      {tech.monogram}
+                    </span>
+                    <div className="absolute inset-4 border border-primary/20" />
+                    <div className="relative flex h-full flex-col justify-between p-8 md:p-10">
+                      <span className="font-display text-2xl text-primary/65">{tech.number}</span>
+                      <div className="max-w-[17rem]">
+                        <span className="block text-[0.65rem] font-medium uppercase tracking-[0.2em] text-primary/70">{tech.eyebrow}</span>
+                        <span className="mt-4 block font-display text-3xl md:text-4xl leading-tight text-primary">{tech.name}</span>
+                        <span className="mt-6 block h-px w-12 bg-accent" />
+                      </div>
                     </div>
                   </div>
                 </div>

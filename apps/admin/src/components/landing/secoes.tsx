@@ -219,7 +219,7 @@ export function SectionFields({
         <RepeatingList
           label="Equipamentos e recursos"
           singular="recurso"
-          hint="Cada um vira um bloco com foto de um lado e texto do outro."
+          hint="Cada recurso vira uma capa editorial com nome e categoria, ao lado do texto. Não há foto de equipamento nesta seção."
           items={items}
           max={6}
           itemTitle={(item, index) => item.name || `Recurso ${index + 1}`}
@@ -234,7 +234,7 @@ export function SectionFields({
                 <Field label="Numeração" hint="Ex.: 01, 02 — só decorativa.">
                   <input value={item.number} onChange={(e) => update({ ...item, number: e.target.value })} />
                 </Field>
-                <Field label="Iniciais" hint="1 a 3 letras, grandes ao fundo da foto.">
+                <Field label="Iniciais decorativas" hint="1 a 3 letras, discretas ao fundo da capa editorial.">
                   <input value={item.monogram} onChange={(e) => update({ ...item, monogram: e.target.value })} maxLength={3} />
                 </Field>
               </div>

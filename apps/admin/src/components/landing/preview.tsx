@@ -243,26 +243,26 @@ export function SectionPreview({
           </div>
           <div className="lp-stack" style={{ gap: '7cqw' }}>
             {items.map((item, index) => (
-              /* No site os blocos alternam o lado da imagem; a prévia faz o
+              /* No site os blocos alternam o lado da capa; a prévia faz o
                  mesmo, senão o ritmo da seção não aparece. */
               <div key={index} className={`lp-split${index % 2 ? '' : ' lp-split-reverse'}`}>
                 <div
                   className="lp-figure lp-marble"
-                  style={{ aspectRatio: '4 / 5', order: index % 2 ? 2 : 0 }}
+                  style={{ aspectRatio: '4 / 5', order: index % 2 ? 2 : 0, overflow: 'hidden' }}
                 >
                   <span
                     className="lp-display"
                     style={{
                       position: 'absolute',
-                      inset: 0,
-                      display: 'grid',
-                      placeItems: 'center',
-                      fontSize: '14cqw',
-                      color: 'hsl(var(--primary) / .15)',
+                      top: '24%',
+                      right: '-2cqw',
+                      fontSize: '13cqw',
+                      color: 'hsl(var(--primary) / .1)',
                     }}
                   >
                     {item.monogram}
                   </span>
+                  <span style={{ position: 'absolute', inset: '2cqw', border: '1px solid hsl(var(--primary) / .2)', pointerEvents: 'none' }} />
                   <span
                     className="lp-display"
                     style={{
@@ -275,6 +275,10 @@ export function SectionPreview({
                   >
                     {item.number}
                   </span>
+                  <div style={{ position: 'absolute', left: '4cqw', right: '4cqw', bottom: '5cqw', color: 'hsl(var(--primary))' }}>
+                    <span className="lp-eyebrow">{item.eyebrow}</span>
+                    <span className="lp-display" style={{ display: 'block', marginTop: '1cqw', fontSize: '5cqw', lineHeight: 1.1 }}>{item.name}</span>
+                  </div>
                 </div>
                 <div className="lp-stack">
                   <p className="lp-eyebrow">{item.eyebrow}</p>
