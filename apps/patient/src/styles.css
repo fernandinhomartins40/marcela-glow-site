@@ -191,8 +191,10 @@
      fonte acompanha a largura e a palavra pode avançar uns pixels sobre o vão
      entre colunas, que está vazio. */
   .jornada-regua strong {
-    @apply mt-1 font-medium text-foreground whitespace-nowrap;
+    @apply mt-1 font-medium text-foreground;
     font-size: clamp(0.72rem, 3vw, 0.95rem);
+    overflow-wrap: normal;
+    hyphens: manual;
   }
   .jornada-regua li > span:not(.jornada-regua-marco):not(.sr-only) {
     @apply text-[0.72rem] text-muted-foreground sm:text-xs;

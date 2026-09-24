@@ -320,7 +320,10 @@ button.danger-solid { background: #a33131; border: 1px solid #a33131; color: #ff
 .data-main:hover:not(.static) strong { text-decoration: underline; text-underline-offset: 3px; }
 .data-avatar { width: 34px; height: 34px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--cream-deep); color: var(--bronze-text-deep); }
 .data-text { display: grid; gap: 3px; min-width: 0; }
-.data-text strong { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13.5px; font-weight: 600; }
+/* `flex-wrap`: sem ele as etiquetas, que não encolhem, espremiam o nome
+   até o `overflow-wrap: anywhere` parti-lo letra por letra — "F/e/r/n/a/n/d/a"
+   na Recepção em 375px. Agora, sem espaço, as etiquetas descem uma linha. */
+.data-text strong { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; font-size: 13.5px; font-weight: 600; }
 .data-meta { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--text-muted); }
 .data-meta span { display: inline-flex; align-items: center; gap: 4px; }
 .data-counts { display: inline-flex; gap: 12px; font-size: 12px; color: var(--text-muted); }
@@ -1266,7 +1269,9 @@ main .data-actions button.encounter-open {
 .schedule-queue h2 { margin: 0; font-family: inherit; font-size: 15px; font-weight: 600; letter-spacing: 0; color: var(--espresso); }
 .queue-count { min-width: 22px; height: 22px; padding: 0 7px; border-radius: 999px; background: var(--espresso); color: var(--cream-soft); font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
 .schedule-queue ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-height: 60vh; overflow-y: auto; }
-.queue-card { width: 100%; display: grid; gap: 3px; text-align: left; padding: 11px 12px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; color: var(--espresso); transition: border-color .2s ease, background .2s ease; }
+/* `justify-content`/`justify-items`: o `button` base centraliza, e em grade isso
+   centralizava as trilhas — o nome ficava no meio do cartão. */
+.queue-card { width: 100%; display: grid; justify-content: stretch; justify-items: start; gap: 3px; text-align: left; padding: 11px 12px; background: var(--marble-soft); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; color: var(--espresso); transition: border-color .2s ease, background .2s ease; }
 .queue-card:hover { border-color: var(--bronze); background: #fff; }
 .queue-card strong { font-size: 13px; font-weight: 600; color: var(--espresso); }
 .queue-card span { font-size: 12px; color: var(--text-muted); }
@@ -1332,7 +1337,7 @@ main .data-actions button.encounter-open {
    nome saía por cima da borda. O cartão nunca fica menor que suas duas linhas,
    ainda que isso o faça avançar sobre a faixa de horário seguinte — é melhor
    ler o nome do que respeitar a régua. */
-.event { position: absolute; min-width: 0; min-height: 34px; display: grid; align-content: center; gap: 2px; padding: 5px 8px; border: 0; border-left: 3px solid; border-radius: 5px; cursor: pointer; overflow: hidden; text-align: left; font-size: 11px; line-height: 1.35; }
+.event { position: absolute; min-width: 0; min-height: 34px; display: grid; align-content: center; justify-content: stretch; justify-items: stretch; gap: 2px; padding: 5px 8px; border: 0; border-left: 3px solid; border-radius: 5px; cursor: pointer; overflow: hidden; text-align: left; font-size: 11px; line-height: 1.35; }
 .event strong { font-size: 11px; font-weight: 600; }
 .event span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .event.success { background: #e4efe6; border-color: #4a7d58; color: #2c5236; }
@@ -1531,8 +1536,7 @@ body.page-lock { overflow: hidden; }
      espreme as sete etapas em cinco faixas de 150px. Aqui as colunas so
      encolhem um pouco e o quadro continua rolando. */
   .kanban { grid-auto-columns: minmax(180px, 1fr); }
-  .block-form { grid-template-columns: repeat(2, minmax(0,1fr)); }
-  .block-form > button { grid-column: 1 / -1; }
+
 }
 
 /* Tablet em pé: a grade de horários e a de durações não cabem mais em linha */
@@ -1634,7 +1638,9 @@ body.page-lock { overflow: hidden; }
   .auth-panel p { font-size: clamp(16px, 4.4vw, 20px); }
   main { padding: 20px 16px; }
   main::before { display: none; }
-  header { align-items: flex-start; flex-direction: column; }
+  /* Só o cabeçalho da página empilha. Como `header` solto, a regra pegava o
+     <header> de cada cartão e punha o contador embaixo do título, centrado. */
+  main > header { align-items: flex-start; flex-direction: column; }
   header h1 { font-size: clamp(24px, 6vw, 34px); }
   .table article { grid-template-columns: minmax(0, 1fr); }
   .page-hint { max-width: none; }
@@ -1649,14 +1655,16 @@ body.page-lock { overflow: hidden; }
     transform: translateX(-100%);
     transition: transform .22s ease;
     overflow-y: auto;
-    box-shadow: 0 0 40px rgba(47,34,27,.3);
+    /* A sombra só com a gaveta aberta: fechada, ela vazava 40px na borda
+       esquerda de toda tela do celular, como uma faixa escura. */
+    box-shadow: none;
     /* Anula o `sticky` do desktop: aqui a gaveta e `fixed` e o `inset` ja da
        a altura da tela. */
     height: auto;
     max-height: none;
     align-self: stretch;
   }
-  .nav-open .app-nav { transform: translateX(0); }
+  .nav-open .app-nav { transform: translateX(0); box-shadow: 0 0 40px rgba(47,34,27,.3); }
 
   /* Aqui a lateral virou gaveta e não ocupa mais coluna: a página volta a usar
      a tela inteira, senão sobraria uma faixa vazia à esquerda. */
@@ -2658,8 +2666,13 @@ main a.reception-cobrar {
   .aviso-visto { width: 100%; justify-content: center; }
   .encounter-avisos { width: 100%; }
   .encounter-avisos > * { flex: 1; }
-  .reception-topo-acoes { width: 100%; }
-  .reception-topo-acoes > * { flex: 1; }
+  /* Quatro botões numa linha de 343px partiam "Chamar a médica" em três
+     linhas. Em grade de duas: o aviso à médica ocupa a linha de cima, com o
+     botão de recado ao lado; agenda e encaixe dividem a de baixo. */
+  .reception-topo-acoes { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .reception-topo-acoes > .aviso-enviar { grid-column: 1 / -1; display: flex; flex-wrap: nowrap; gap: 8px; }
+  .reception-topo-acoes > .aviso-enviar > button:first-child { flex: 1; }
+  .reception-topo-acoes button { white-space: nowrap; justify-content: center; }
 }
 
 /* ── Navegacao de dia na faixa de confirmacao ─────────────────────────────────
@@ -3183,3 +3196,12 @@ main .receber-meio {
    Tailwind e nenhuma diretiva `@tailwind`, entao nenhuma classe utilitaria era
    gerada e o icone ficava desalinhado do numero. */
 .meta-com-icone { display: inline-flex; align-items: center; gap: 4px; }
+
+/* Bloqueios de agenda entre 901 e 1024px: duas colunas. Ficava dentro do
+   `max-width: 1024px`, escrito depois do `max-width: 900px` de uma coluna — e
+   por vir depois vencia também no celular, onde o campo "Término" passava
+   23px da borda do cartão. */
+@media (min-width: 901px) and (max-width: 1024px) {
+  .block-form { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .block-form > button { grid-column: 1 / -1; }
+}

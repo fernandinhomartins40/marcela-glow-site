@@ -191,7 +191,23 @@ Aprendido: **medir o transbordo pelos elementos, não pelo `scrollWidth`.**
 Com `overflow-x: hidden` no `body`, os atalhos do portal passavam 100px da
 tela e o `scrollWidth` continuava 375 — só a captura mostrou.
 
-Pendente: validar com API e banco reais (a simulação não prova o contrato);
+**Depois, com banco descartável e dados de demonstração**, a Recepção em
+375px partia nomes letra por letra ("F/e/r/n/a/n/d/a"), os cartões da Agenda
+centralizavam o texto e empilhavam o contador sob o título, a gaveta fechada
+deixava uma faixa escura na borda esquerda de toda tela, e os bloqueios em
+Ajustes passavam do cartão. As quatro causas eram regras globais — `.data-text
+strong` sem `flex-wrap`, `header` solto no `@media` de celular, `justify-content`
+do `button` base herdado por botão em grade, e um `@media (max-width: 1024px)`
+escrito depois do de 900px. Travado em `apps/admin/src/responsivo.test.ts`,
+verificado falhando. Depois: 17 telas × 5 larguras (375 a 1280) limpas.
+
+**A API local barra a auditoria sem avisar:** `RATE_LIMIT_MAX` padrão é 100
+por 15 min, e a partir da vigésima tela as páginas vinham vazias — e uma tela
+vazia não estoura nada. Subir a API de teste com `RATE_LIMIT_MAX` alto e
+reprovar a tela que não carregou os dados.
+
+Pendente: a simulação por `page.route` não prova o contrato — o que vale é a
+medição com banco descartável;
 o segundo CTA e os textos padrão novos só aparecem onde o CMS não foi
 editado; "Conteúdos" do mockup não tem seção e ficou fora do menu; a
 newsletter saiu do rodapé para seguir a proposta, mas continua no CMS e na

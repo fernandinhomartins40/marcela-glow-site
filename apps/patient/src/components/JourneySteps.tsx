@@ -26,6 +26,10 @@ interface Etapa {
   estado: Estado
 }
 
+/* Hífen opcional: em 375px a palavra não cabe na coluna e quebra como
+   "Acompanha-/mento", em vez de vazar sobre a borda do cartão. */
+const ACOMPANHAMENTO = 'Acompanha\u00ADmento'
+
 const dia = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) : ''
 
@@ -40,7 +44,7 @@ export function etapasDaJornada(appointments: Appointment[], plano: PlanoResumo 
       { titulo: 'Avaliação', detalhe: avaliada ? dia(avaliacao?.scheduledAt) : 'Em breve', estado: avaliada ? 'feita' : 'atual' },
       { titulo: 'Plano', detalhe: avaliada ? 'Em definição' : 'Em breve', estado: avaliada ? 'atual' : 'futura' },
       { titulo: 'Sessões', detalhe: 'Em breve', estado: 'futura' },
-      { titulo: 'Acompanhamento', detalhe: 'Em breve', estado: 'futura' },
+      { titulo: ACOMPANHAMENTO, detalhe: 'Em breve', estado: 'futura' },
     ]
   }
 
@@ -55,7 +59,7 @@ export function etapasDaJornada(appointments: Appointment[], plano: PlanoResumo 
       detalhe: concluido ? `${total} de ${total}` : emSessoes ? `${feitas} de ${total}` : 'Em breve',
       estado: concluido ? 'feita' : emSessoes ? 'atual' : 'futura',
     },
-    { titulo: 'Acompanhamento', detalhe: concluido ? 'Em andamento' : 'Em breve', estado: concluido ? 'atual' : 'futura' },
+    { titulo: ACOMPANHAMENTO, detalhe: concluido ? 'Em andamento' : 'Em breve', estado: concluido ? 'atual' : 'futura' },
   ]
 }
 
