@@ -1,12 +1,13 @@
-import { ArrowRight, ChevronRight, Instagram, Mail, MapPin, Phone } from "lucide-react";
+import { ArrowRight, ChevronRight, Instagram, Mail, MapPin, Phone, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useImage, useSection } from "@/hooks/useLanding";
 import logoMD from "@/assets/brand/md-monogram-white.webp";
 
 /* O rodapé segue o mockup aprovado: marca, navegação, contato e horário numa
-   faixa compacta, e embaixo só direitos, políticas e CRM. A newsletter e o
-   link do painel médico saíram por isso — a equipe entra direto por /admin/.
-   Os campos da newsletter continuam no CMS e na API, sem uso aqui. */
+   faixa compacta, e embaixo direitos, políticas e CRM. A newsletter saiu por
+   isso (os campos continuam no CMS e na API, sem uso aqui). O link do painel
+   médico ficou: fora do mockup, mas é a porta de entrada da equipe, e tirá-lo
+   deixava a médica procurando o endereço. */
 interface FooterContent {
   tagline: string;
   address: string;
@@ -145,6 +146,11 @@ const Footer = () => {
             <a href="#" className="hover:text-[hsl(var(--cream))]">Termos de Uso</a>
             <span aria-hidden="true" className="hidden md:inline">|</span>
             <span className="basis-full md:basis-auto">CRM/MS 5691</span>
+            <span aria-hidden="true" className="hidden md:inline">|</span>
+            <a href="/admin/" className="inline-flex min-h-11 items-center gap-1.5 hover:text-[hsl(var(--cream))] md:min-h-0">
+              <Stethoscope className="h-3.5 w-3.5" aria-hidden="true" />
+              Painel médico
+            </a>
           </div>
         </div>
       </div>
