@@ -10,6 +10,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { proceduresApi, appointmentsApi, getErrorMessage } from "@/lib/api";
 import SlotPicker from "@/components/SlotPicker";
 import { useSection } from "@/hooks/useLanding";
+import { EM_PREVIA } from "@/lib/previa";
+import { FALLBACK_CONTATO, formatPhone } from "@/components/Footer";
 
 interface AppointmentContent {
   eyebrow: string;
@@ -30,13 +32,16 @@ const FALLBACK: AppointmentContent = {
   whatsapp: null,
 };
 
-/* O horário de atendimento fica no rodapé, logo abaixo — aqui, como no
-   mockup, só os canais de contato. */
-const contactBlocks: { label: string; icon: LucideIcon; lines: string[] }[] = [
-  { label: "Telefone / WhatsApp", icon: Phone, lines: ["(67) 99944-6066"] },
-  { label: "E-mail", icon: Mail, lines: ["contato@dramarceladuch.com.br"] },
-  { label: "Endereço", icon: MapPin, lines: ["Chapadão do Sul — MS", "Av. 16, nº 890 — Ágatha Center"] },
-];
+/* O contato vem do Rodapé no painel: é a mesma clínica, e dois lugares para
+   o mesmo telefone acabariam divergindo. O horário fica só no rodapé, logo
+   abaixo — aqui, como no mockup, só os canais. */
+function blocosDeContato(c: { phone: string | null; email: string | null; address: string }) {
+  const blocos: { label: string; icon: LucideIcon; lines: string[] }[] = [];
+  if (c.phone) blocos.push({ label: "Telefone / WhatsApp", icon: Phone, lines: [formatPhone(c.phone)] });
+  if (c.email) blocos.push({ label: "E-mail", icon: Mail, lines: [c.email] });
+  if (c.address) blocos.push({ label: "Endereço", icon: MapPin, lines: [c.address] });
+  return blocos;
+}
 
 const formSteps: { icon: LucideIcon; title: string; detail: string }[] = [
   { icon: CalendarClock, title: "Escolha o dia", detail: "e o horário" },
@@ -61,6 +66,8 @@ function formatChosenSlot(startsAt: string) {
 
 const Appointment = () => {
   const { content, isVisible } = useSection<AppointmentContent>("APPOINTMENT", FALLBACK);
+  const { content: contato } = useSection("FOOTER", FALLBACK_CONTATO);
+  const contactBlocks = blocosDeContato(contato);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -107,6 +114,12 @@ const Appointment = () => {
     e.preventDefault();
 
     if (mutation.isPending) return;
+    /* Na prévia do painel o formulário é de mentira: enviar criaria um pedido
+       de horário de verdade na agenda. */
+    if (EM_PREVIA) {
+      toast.info("Na prévia o envio fica desligado — no site ele funciona normalmente.");
+      return;
+    }
 
     if (!formData.name || !formData.email || !formData.phone) {
       toast.error("Por favor, preencha todos os campos obrigatórios");

@@ -484,10 +484,10 @@ export function HeadingFields({
         <input value={draft.eyebrow ?? ''} onChange={(e) => set('eyebrow', e.target.value)} />
       </Field>
       <div className="form-row form-row-2">
-        <Field label="Título — 1ª linha" hint="Sai em letra reta, mais firme.">
+        <Field label="Título — 1ª linha" hint="A primeira linha do título.">
           <input value={draft.titleTop ?? ''} onChange={(e) => set('titleTop', e.target.value)} />
         </Field>
-        <Field label="Título — 2ª linha" hint="Sai em itálico, mais leve.">
+        <Field label="Título — 2ª linha" hint="A segunda; em algumas seções sai em itálico.">
           <input value={draft.titleBottom ?? ''} onChange={(e) => set('titleBottom', e.target.value)} />
         </Field>
       </div>

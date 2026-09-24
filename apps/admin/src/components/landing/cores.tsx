@@ -141,33 +141,3 @@ export function ColorField({
     </div>
   )
 }
-
-/**
- * Como as cores conversam entre si.
- *
- * Seis quadradinhos não dizem se a paleta funciona — o que diz é ver o texto
- * escuro sobre o creme e o claro sobre o marrom, que é o que a página faz o
- * tempo todo.
- */
-export function ColorPreview({ cores }: { cores: Record<string, string> }) {
-  const cor = (campo: string) => `hsl(${cores[campo] ?? '0 0% 50%'})`
-
-  return (
-    <div className="cms-paleta">
-      <div className="cms-paleta-claro" style={{ background: cor('cream') }}>
-        <p style={{ color: cor('bronze') }}>MEDICINA ESTÉTICA</p>
-        <strong style={{ color: cor('espresso') }}>Beleza com estratégia</strong>
-        <span style={{ background: cor('marbleVein') }} />
-        <div className="cms-paleta-botoes">
-          <span style={{ background: cor('espresso'), color: cor('cream') }}>Agendar</span>
-          <span style={{ borderColor: cor('bronze'), color: cor('espresso') }}>Protocolos</span>
-        </div>
-      </div>
-      <div className="cms-paleta-escuro" style={{ background: cor('espresso') }}>
-        <p style={{ color: cor('bronzeLight') }}>RODAPÉ</p>
-        <strong style={{ color: cor('cream') }}>Dra. Marcela Duch</strong>
-        <span style={{ background: cor('creamDeep') }} />
-      </div>
-    </div>
-  )
-}

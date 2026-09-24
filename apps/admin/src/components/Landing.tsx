@@ -1,8 +1,11 @@
 import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  BadgeCheck,
   CalendarCheck,
   Check,
+  Flower2,
+  GalleryHorizontal,
   ExternalLink,
   Eye,
   EyeOff,
@@ -21,8 +24,8 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import { api, ConfirmDialog, errorMessage } from '../lib/ui'
 import { SectionFields } from './landing/secoes'
-import { SectionPreview } from './landing/preview'
-import { ColorPreview } from './landing/cores'
+import { SearchPreview } from './landing/preview'
+import { PreviaAoVivo } from './landing/PreviaAoVivo'
 import type { SectionId, SectionState, LandingData } from './landing/types'
 
 /**
@@ -42,9 +45,9 @@ import type { SectionId, SectionState, LandingData } from './landing/types'
  *    ao lado de "Restaurar", e desligar o site inteiro por engano ficava a um
  *    clique de distância do que se queria fazer.
  *
- * 3. **A prévia fecha a página.** Lateral, ela dividia a largura o tempo todo;
- *    embutida no fim, ela recebe a página inteira e mostra a seção no tamanho
- *    em que dá para julgá-la.
+ * 3. **A prévia acompanha a escrita.** Em tela larga ela fica ao lado do
+ *    formulário, presa na tela; em tela menor, depois dele. É o próprio site
+ *    numa moldura (`PreviaAoVivo`), não uma cópia.
  */
 
 const SECTIONS: {
@@ -56,28 +59,32 @@ const SECTIONS: {
 }[] = [
   { id: 'THEME', label: 'Cores', icon: Palette, about: 'A paleta da marca. Muda o site inteiro de uma vez — todas as seções usam estas cores.' },
   { id: 'HERO', label: 'Primeira tela', icon: Sparkles, about: 'O carrossel grande que aparece assim que o site abre, com os botões de agendar.' },
-  { id: 'ABOUT', label: 'Sobre a doutora', icon: UserRound, about: 'A foto ao lado do texto de apresentação, com o número do CRM.' },
-  { id: 'PROCEDURES', label: 'Tratamentos', icon: Layers, about: 'O título e o texto que apresentam a lista de tratamentos.' },
+  { id: 'TRUST', label: 'Faixa de confiança', icon: BadgeCheck, about: 'A faixa clara logo abaixo da primeira tela: CRM, atendimento e cidade.' },
+  { id: 'ABOUT', label: 'Minha filosofia', icon: UserRound, about: 'O texto de apresentação sobre o mármore e a citação da doutora ao lado.' },
+  { id: 'CARE', label: 'Áreas de cuidado', icon: Flower2, about: 'Os quatro cartões com foto: face, pele, pescoço e corpo.' },
+  { id: 'VALUES', label: 'Faixa de valores', icon: GalleryHorizontal, about: 'A tira escura com as palavras que resumem o atendimento.' },
+  { id: 'PROCEDURES', label: 'Tratamentos em destaque', icon: Layers, about: 'O título e o texto que apresentam a lista de tratamentos.' },
   { id: 'TECHNOLOGY', label: 'Tecnologia', icon: Wrench, about: 'Os blocos que explicam cada equipamento e o que ele faz.' },
   { id: 'TESTIMONIALS', label: 'Depoimentos', icon: MessageSquareQuote, about: 'O cabeçalho acima dos depoimentos das pacientes.' },
   { id: 'APPOINTMENT', label: 'Agendamento', icon: CalendarCheck, about: 'O convite ao lado do formulário de solicitação de horário.' },
-  { id: 'FOOTER', label: 'Rodapé', icon: PanelBottom, about: 'O fim da página: logo, endereço, telefone e redes sociais.' },
+  { id: 'FOOTER', label: 'Rodapé e contato', icon: PanelBottom, about: 'Logo, contato e horário. O telefone, o e-mail e o endereço também aparecem no agendamento.' },
   { id: 'SEO', label: 'Google e redes', icon: Search, about: 'O título e o resumo que aparecem no Google e ao compartilhar o link.' },
 ]
 
 /**
  * A página do site de cima a baixo, na ordem em que a visitante rola.
  *
- * Duas partes não têm aba porque não são editáveis: o menu do topo e a faixa
- * rolante de palavras vivem no código do site. Omiti-las daria a entender que
- * a página começa no carrossel, e quem procurasse onde mudar o menu ficaria
- * girando pelas oito abas. Listá-las como travadas responde a pergunta.
+ * Só o menu do topo não tem aba: os links vivem no código do site, porque cada
+ * um aponta para uma seção. Listá-lo como travado responde "onde mudo o menu"
+ * sem a pessoa girar pelas abas procurando.
  */
 const PAGINA: ({ id: SectionId } | { fixo: string; nota: string })[] = [
   { fixo: 'Menu do topo', nota: 'Os links do menu vêm do código do site' },
   { id: 'HERO' },
-  { fixo: 'Faixa rolante', nota: 'A tira escura com as palavras que passam' },
+  { id: 'TRUST' },
   { id: 'ABOUT' },
+  { id: 'CARE' },
+  { id: 'VALUES' },
   { id: 'PROCEDURES' },
   { id: 'TECHNOLOGY' },
   { id: 'TESTIMONIALS' },
@@ -124,18 +131,22 @@ export function Landing() {
               <li
                 key={parte.id}
                 className={`${active === parte.id ? 'is-active' : ''}${
-                  data.isVisible ? '' : ' is-off'
+                  data?.isVisible === false ? ' is-off' : ''
                 }`}
               >
-                {meta.label}
-                {!data.isVisible && <EyeOff size={11} aria-hidden="true" />}
+                {/* O mapa também leva à aba: é onde a pessoa olha para achar
+                    "aquela parte do site". */}
+                <button type="button" className="cms-mapa-ir" onClick={() => setActive(parte.id)}>
+                  {meta.label}
+                </button>
+                {data?.isVisible === false && <EyeOff size={11} aria-hidden="true" />}
               </li>
             )
           })}
         </ol>
         <p className="cms-mapa-nota">
           <Lock size={11} aria-hidden="true" />
-          As partes com cadeado não se editam por aqui — elas vêm prontas no site.
+          O menu do topo não se edita por aqui — ele vem pronto no site.
         </p>
       </div>
 
@@ -330,6 +341,10 @@ function SectionEditor({
         </>
       )}
 
+      {/* Formulário e prévia lado a lado em tela larga, com a prévia presa na
+          tela: dá para ver a seção mudar enquanto se escreve. Em tela menor a
+          prévia desce para depois do formulário. */}
+      <div className="cms-corpo">
       <div className="cms-form">
         <SectionFields
           id={id}
@@ -348,7 +363,13 @@ function SectionEditor({
               <Eye size={15} aria-hidden="true" />
               Prévia de {meta.label.toLowerCase()}
             </h3>
-            <p>Veja como esta seção vai aparecer no site.</p>
+            <p>
+              {id === 'SEO'
+                ? 'Como o link aparece no Google e ao ser compartilhado.'
+                : id === 'THEME'
+                  ? 'O site inteiro, com as cores que você está escolhendo.'
+                  : 'É o próprio site: esta seção exatamente como a visitante vai ver.'}
+            </p>
           </div>
           <span className="cms-vivo">
             <span aria-hidden="true" />
@@ -356,13 +377,14 @@ function SectionEditor({
           </span>
         </div>
         <div className="cms-previa-palco">
-          {id === 'THEME' ? (
-            <ColorPreview cores={draft as Record<string, string>} />
+          {id === 'SEO' ? (
+            <SearchPreview title={draft.title ?? ''} description={draft.description ?? ''} og={images['seo.og']} />
           ) : (
-            <SectionPreview id={id} draft={draft} images={images} />
+            <PreviaAoVivo secao={id} draft={draft} images={images} />
           )}
         </div>
       </section>
+      </div>
 
       {/* A barra acompanha a rolagem: com um formulário longo, o botão de salvar
           no topo fica fora da tela justamente quando termina de escrever. */}

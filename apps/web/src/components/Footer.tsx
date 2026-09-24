@@ -14,9 +14,10 @@ interface FooterContent {
   phone: string | null;
   email: string | null;
   instagram: string | null;
+  hours?: string[];
 }
 
-const FALLBACK: FooterContent = {
+export const FALLBACK_CONTATO: FooterContent = {
   tagline: "Medicina estética com ciência, sensibilidade e respeito pela sua história.",
   address: "Av. 16, nº 890 — Ágatha Center, Chapadão do Sul — MS",
   phone: "67999446066",
@@ -25,12 +26,15 @@ const FALLBACK: FooterContent = {
 };
 
 /** (67) 99944-6066 — como se lê, não como se disca. */
-function formatPhone(digits: string) {
+export function formatPhone(digits: string) {
   const only = digits.replace(/\D/g, "").replace(/^55/, "");
   if (only.length === 11) return `(${only.slice(0, 2)}) ${only.slice(2, 7)}-${only.slice(7)}`;
   if (only.length === 10) return `(${only.slice(0, 2)}) ${only.slice(2, 6)}-${only.slice(6)}`;
   return digits;
 }
+
+/* O horário que o site mostra enquanto o painel não gravar outro. */
+export const HORARIO = ["Segunda a sexta: 9h às 18h", "Sábado: 9h às 13h"];
 
 const quickLinks = [
   { id: "home", label: "Início" },
@@ -47,10 +51,10 @@ const WhatsAppIcon = () => (
 );
 
 const Footer = () => {
-  const { content } = useSection<FooterContent>("FOOTER", FALLBACK);
+  const { content } = useSection<FooterContent>("FOOTER", FALLBACK_CONTATO);
   const logo = useImage("footer.logo", logoMD, "MD - Dra. Marcela Duch");
   const phoneDigits = content.phone ? content.phone.replace(/\D/g, "") : "67999446066";
-  const mail = content.email ?? FALLBACK.email ?? "";
+  const mail = content.email ?? FALLBACK_CONTATO.email ?? "";
 
   const scrollToSection = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 
@@ -127,7 +131,9 @@ const Footer = () => {
           <div className="md:col-span-3">
             <p className={`${heading} hidden md:block`}>Horário</p>
             <p className="hidden text-sm leading-relaxed text-[hsl(var(--cream))]/85 md:block">
-              Segunda a sexta: 9h às 18h<br />Sábado: 9h às 13h
+              {(content.hours?.length ? content.hours : HORARIO).map((linha, i) => (
+                <span key={i} className="block">{linha}</span>
+              ))}
             </p>
             {/* No mockup o CTA do rodapé é bronze, não creme: o creme já é o
                 botão do formulário logo acima, e dois iguais disputariam. */}

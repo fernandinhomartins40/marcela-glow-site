@@ -486,6 +486,12 @@ enum LandingSection {
   APPOINTMENT
   FOOTER
   SEO
+  /// Faixa de confiança sob o hero (CRM, atendimento, cidade).
+  TRUST
+  /// Áreas de cuidado: os quatro cartões com foto (face, pele, pescoço, corpo).
+  CARE
+  /// Faixa escura de valores entre as áreas e os tratamentos.
+  VALUES
 }
 
 /// Conteúdo de uma seção da landing.

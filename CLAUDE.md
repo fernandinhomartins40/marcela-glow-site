@@ -161,6 +161,43 @@ corrigiu e o que ficou pendente. Sem isso a proxima refaz o mesmo caminho.
 
 ### Registro
 
+**2026-09-24 — o editor "Site" do painel acompanha a landing redesenhada**
+
+A prévia do painel era uma cópia da landing (o bloco `.lp`), redesenhada à
+mão, e depois do redesign mostrava uma página que já não existia. Agora **a
+prévia é o próprio site**: `PreviaAoVivo` embute `/previa?secao=…` e manda o
+rascunho por `postMessage` a cada tecla; o site desenha a seção com os mesmos
+componentes (`apps/web/src/pages/Previa.tsx`). Comparado pixel a pixel com a
+landing: TRUST e ABOUT idênticos; as demais diferem só por 1px de
+arredondamento de subpixel. Em tela ≥1180px a prévia fica ao lado do
+formulário, presa na tela; tem modo computador (1440px reduzido) e celular.
+
+Três seções da landing não tinham configuração e ganharam: **faixa de
+confiança** (`TRUST`), **áreas de cuidado** com as quatro fotos (`CARE`,
+slots `care.0`–`care.3`) e **faixa de valores** (`VALUES`) — migração que
+acrescenta os valores ao enum `LandingSection`. Campos que o site mostrava
+fixos passaram ao CMS: título, rótulo e citação do Sobre, legenda e assinatura
+do hero, horário do rodapé. O agendamento lê telefone, e-mail e endereço do
+Rodapé. Saíram do editor os campos que o redesign deixou de desenhar (palavras
+de fundo, retrato e pontos do Sobre, newsletter, WhatsApp do agendamento); os
+dados continuam no schema.
+
+Travas da prévia, em `previa.test.ts`: só escuta dentro de moldura e na rota
+`/previa`; só aceita mensagem do próprio domínio; imagem só com URL que não
+escape do `url()`; o formulário de agendamento não envia dentro da prévia
+(verificado com controle: no site público o mesmo envio cria o pedido).
+
+**Campo novo em schema da landing precisa de `.default()`.** A rota pública
+troca pelo padrão de fábrica o conteúdo que não passa no schema — sem padrão,
+o que a clínica escreveu antes do campo existir some do site sem aviso.
+`landing-schemas.test.ts` guarda isso com o formato gravado antes do redesign.
+
+**Para acrescentar uma seção à landing:** schema com padrões e entrada em
+`LANDING_DEFAULTS` (API), valor no enum com migração, `useSection` no
+componente do site, entrada em `POR_SECAO` de `Previa.tsx`, e em `SECTIONS`,
+`PAGINA` e `SectionFields` do painel. Faltando a da prévia, a aba abre a
+página inteira em vez da seção.
+
 **2026-09-23 — redesign aprovado: landing, CRM e portal**
 
 Aplicados os mockups aprovados nos três apps, desktop e mobile. Achados

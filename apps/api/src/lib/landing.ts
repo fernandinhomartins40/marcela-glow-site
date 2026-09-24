@@ -25,8 +25,9 @@ export const heroSlideSchema = z.object({
   titleTop: trimmed(1, 40),
   titleBottom: trimmed(1, 40),
   subtitle: trimmed(10, 300),
-  /** Palavra gigante no fundo; some abaixo de `lg`. */
-  watermark: trimmed(1, 20),
+  /** Palavra de fundo do layout anterior. O redesign não a desenha e o painel
+      não a pede mais; fica opcional para o conteúdo gravado continuar válido. */
+  watermark: z.string().trim().max(20).default(''),
   image: imageSlot,
 })
 
@@ -36,6 +37,13 @@ export const heroSchema = z.object({
   slides: z.array(heroSlideSchema).min(1).max(5),
   primaryCta: trimmed(2, 40).default('Agendar avaliação'),
   secondaryCta: trimmed(2, 40).default('Mais sobre os procedimentos'),
+  /* Campos do redesign de 23/09/2026. Todo campo novo tem padrão: conteúdo
+     gravado antes dele precisa continuar passando no schema, senão a rota
+     pública descarta o que a clínica escreveu e devolve o texto de fábrica. */
+  /** A legenda vertical ao lado do retrato ("Ciência · Experiência · Naturalidade"). */
+  pillars: z.array(trimmed(2, 24)).max(4).default(['Ciência', 'Experiência', 'Naturalidade']),
+  /** A linha sob os botões ("Saúde · Equilíbrio · Resultados reais"). */
+  signature: z.string().trim().max(80).default('Saúde · Equilíbrio · Resultados reais'),
 })
 
 // ── Sobre ────────────────────────────────────────────────────────────────────
@@ -52,6 +60,11 @@ export const aboutSchema = z.object({
   ctaLabel: trimmed(2, 40).default('Conhecer a Abordagem'),
   portrait: imageSlot,
   watermark: trimmed(1, 20).default('marcela'),
+  /** A linha pequena acima do título ("Minha filosofia"). */
+  philosophyLabel: trimmed(2, 60).default('Minha filosofia'),
+  /** A citação do painel da direita. */
+  quote: trimmed(10, 240).default('Estética de verdade é quando você se reconhece — e se sente bem.'),
+  quoteAuthor: trimmed(2, 80).default('Dra. Marcela Duch'),
 })
 
 // ── Procedimentos ────────────────────────────────────────────────────────────
@@ -119,6 +132,57 @@ export const footerSchema = z.object({
   newsletterTitle: trimmed(3, 80).default('Novidades'),
   newsletterLead: trimmed(10, 300),
   logo: imageSlot,
+  /** O horário de atendimento, uma linha por faixa de dias. */
+  hours: z.array(trimmed(3, 60)).max(4).default(['Segunda a sexta: 9h às 18h', 'Sábado: 9h às 13h']),
+})
+
+// ── Faixa de confiança ───────────────────────────────────────────────────────
+
+/** Os ícones que a faixa sabe desenhar — o site mapeia cada nome para um desenho. */
+export const TRUST_ICONS = ['registro', 'pessoa', 'local', 'agenda', 'coracao', 'estrela'] as const
+
+export const trustSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        icon: z.enum(TRUST_ICONS),
+        title: trimmed(2, 60),
+        detail: z.string().trim().max(80).default(''),
+      }),
+    )
+    .min(1)
+    .max(4),
+})
+
+// ── Áreas de cuidado ─────────────────────────────────────────────────────────
+
+export const CARE_ICONS = ['rosto', 'pele', 'pescoco', 'corpo', 'cabelo', 'bemestar'] as const
+
+export const careSchema = z.object({
+  eyebrow: trimmed(2, 80),
+  title: trimmed(2, 100),
+  lead: trimmed(10, 400),
+  /* Quatro cartões, cada um com a sua foto (`care.0` a `care.3`): é o que a
+     grade do mockup comporta numa linha. */
+  items: z
+    .array(
+      z.object({
+        name: trimmed(2, 40),
+        description: trimmed(10, 200),
+        icon: z.enum(CARE_ICONS),
+        alt: z.string().trim().max(120).default(''),
+      }),
+    )
+    .min(1)
+    .max(4),
+})
+
+// ── Faixa de valores ─────────────────────────────────────────────────────────
+
+/* A tira escura entre as áreas e os tratamentos. No celular aparecem as
+   quatro primeiras. */
+export const valuesSchema = z.object({
+  items: z.array(trimmed(2, 40)).min(2).max(8),
 })
 
 // ── SEO ──────────────────────────────────────────────────────────────────────
@@ -182,6 +246,9 @@ export const LANDING_SCHEMAS = {
   FOOTER: footerSchema,
   SEO: seoSchema,
   THEME: themeSchema,
+  TRUST: trustSchema,
+  CARE: careSchema,
+  VALUES: valuesSchema,
 } as const
 
 export type LandingSectionId = keyof typeof LANDING_SCHEMAS
@@ -202,6 +269,12 @@ export const IMAGE_TARGETS: Record<string, { width: number; height: number; mime
   'hero.3': { width: 1080, height: 1350, mime: 'image/jpeg', label: 'Hero — slide 4' },
   'hero.4': { width: 1080, height: 1350, mime: 'image/jpeg', label: 'Hero — slide 5' },
   'about.portrait': { width: 1080, height: 1350, mime: 'image/jpeg', label: 'Sobre — retrato' },
+  /* 4:3, como os cartões das áreas de cuidado; 1200px cobre o cartão em tela
+     retina sem pesar a página. */
+  'care.0': { width: 1200, height: 900, mime: 'image/jpeg', label: 'Áreas de cuidado — cartão 1' },
+  'care.1': { width: 1200, height: 900, mime: 'image/jpeg', label: 'Áreas de cuidado — cartão 2' },
+  'care.2': { width: 1200, height: 900, mime: 'image/jpeg', label: 'Áreas de cuidado — cartão 3' },
+  'care.3': { width: 1200, height: 900, mime: 'image/jpeg', label: 'Áreas de cuidado — cartão 4' },
   'background.marble': { width: 1920, height: 1080, mime: 'image/jpeg', label: 'Fundo de mármore' },
   'footer.logo': { width: 512, height: 512, mime: 'image/png', label: 'Logo' },
   'seo.og': { width: 1200, height: 630, mime: 'image/jpeg', label: 'Imagem de compartilhamento' },
@@ -257,11 +330,41 @@ export const LANDING_DEFAULTS: { [K in LandingSectionId]: z.input<(typeof LANDIN
     ],
     primaryCta: 'Agendar avaliação',
     secondaryCta: 'Mais sobre os procedimentos',
+    pillars: ['Ciência', 'Experiência', 'Naturalidade'],
+    signature: 'Saúde · Equilíbrio · Resultados reais',
+  },
+  TRUST: {
+    items: [
+      { icon: 'registro', title: 'CRM/MS 5691', detail: 'Registro e ética' },
+      { icon: 'pessoa', title: 'Atendimento personalizado', detail: 'Escuta real, planos individuais' },
+      { icon: 'local', title: 'Chapadão do Sul', detail: 'Cuidando de você aqui' },
+    ],
+  },
+  CARE: {
+    eyebrow: 'Tratamentos',
+    title: 'Cuidado completo, em todas as fases',
+    lead: 'Procedimentos personalizados para realçar a sua beleza, preservar a sua identidade e cuidar da sua pele com ciência, segurança e naturalidade.',
+    items: [
+      { name: 'Face', description: 'Harmonia, expressão e naturalidade para realçar sua beleza única.', icon: 'rosto', alt: 'Olho e pele em close' },
+      { name: 'Pele', description: 'Qualidade, viço e saúde em cada fase, com tratamentos personalizados.', icon: 'pele', alt: 'Textura natural de pele em close' },
+      { name: 'Pescoço', description: 'Firmeza e definição para um contorno natural e elegante.', icon: 'pescoco', alt: 'Pescoço e colo em close' },
+      { name: 'Corpo', description: 'Equilíbrio e bem-estar para você se sentir bem em todas as suas fases.', icon: 'corpo', alt: 'Ombro e colo em close' },
+    ],
+  },
+  VALUES: {
+    items: [
+      'Medicina Estética',
+      'Procedimentos Personalizados',
+      'Beleza e Saúde',
+      'Resultados Reais',
+      'Experiência e Cuidado',
+      'Ciência e Naturalidade',
+    ],
   },
   ABOUT: {
     eyebrow: 'Dra. Marcela Campanini Duch',
-    titleTop: 'Saúde, beleza',
-    titleBottom: 'e naturalidade.',
+    titleTop: 'Evoluir',
+    titleBottom: 'sem exageros',
     lead:
       'A medicina a seu favor: onde saúde e beleza andam juntas. Cada plano é construído com análise médica, estratégia e respeito à identidade de cada paciente, buscando qualidade de pele, harmonia e evolução natural.',
     highlights: [
@@ -272,9 +375,12 @@ export const LANDING_DEFAULTS: { [K in LandingSectionId]: z.input<(typeof LANDIN
     ],
     crmLabel: 'CRM/MS',
     crmNumber: '5691',
-    ctaLabel: 'Conhecer a Abordagem',
+    ctaLabel: 'Conheça a minha história',
     portrait: null,
     watermark: 'marcela',
+    philosophyLabel: 'Minha filosofia',
+    quote: 'Estética de verdade é quando você se reconhece — e se sente bem.',
+    quoteAuthor: 'Dra. Marcela Duch',
   },
   PROCEDURES: {
     eyebrow: 'Tratamentos em destaque',
@@ -343,6 +449,7 @@ export const LANDING_DEFAULTS: { [K in LandingSectionId]: z.input<(typeof LANDIN
     newsletterTitle: 'Novidades',
     newsletterLead: 'Receba conteúdos sobre saúde da pele e novidades da clínica.',
     logo: null,
+    hours: ['Segunda a sexta: 9h às 18h', 'Sábado: 9h às 13h'],
   },
   /* Os mesmos valores que `apps/web/src/index.css` declara como padrão. Se um
      dia a marca mudar no CSS, este bloco precisa acompanhar — é o que

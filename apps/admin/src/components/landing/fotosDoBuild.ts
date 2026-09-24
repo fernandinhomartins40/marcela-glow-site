@@ -2,6 +2,10 @@ import draEditorial from '../../assets/dra-marcela-editorial-limpa-v1.png'
 import draPortrait from '../../assets/dra-marcela-portrait-limpa-v1.png'
 import marble from '../../assets/hero-regeneracao-desktop-v1.png'
 import logoMD from '../../assets/brand/md-monogram-white.webp'
+import careFace from '../../assets/approved/treatment-face-v2.webp'
+import careSkin from '../../assets/approved/treatment-skin-v2.webp'
+import careNeck from '../../assets/approved/treatment-neck-v2.webp'
+import careBody from '../../assets/approved/treatment-body-v2.webp'
 
 /**
  * As fotos que o site traz no build.
@@ -25,4 +29,9 @@ export const FOTOS_DO_BUILD: Record<string, string> = {
   'hero.2': marble,
   'about.portrait': draPortrait,
   'footer.logo': logoMD,
+  /* Os cartões das áreas de cuidado, na ordem do site (`CareAreas.tsx`). */
+  'care.0': careFace,
+  'care.1': careSkin,
+  'care.2': careNeck,
+  'care.3': careBody,
 }

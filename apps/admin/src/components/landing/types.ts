@@ -17,6 +17,9 @@ export type SectionId =
   | 'APPOINTMENT'
   | 'FOOTER'
   | 'SEO'
+  | 'TRUST'
+  | 'CARE'
+  | 'VALUES'
 
 export interface SectionState {
   content: Record<string, any>

@@ -22,6 +22,43 @@ import type { LandingData, SectionId } from './types'
  *   ganhou a explicação de que ela é decorativa.
  */
 
+function SeletorDeIcone({
+  valor,
+  opcoes,
+  onChange,
+}: {
+  valor: string
+  opcoes: readonly (readonly [string, string])[]
+  onChange: (v: string) => void
+}) {
+  return (
+    <select value={valor} onChange={(e) => onChange(e.target.value)}>
+      {opcoes.map(([id, nome]) => (
+        <option key={id} value={id}>{nome}</option>
+      ))}
+    </select>
+  )
+}
+
+/* Os mesmos nomes de `TRUST_ICONS` e `CARE_ICONS` na API: outro valor é recusado. */
+const ICONES_CONFIANCA = [
+  ['registro', 'Estetoscópio (registro)'],
+  ['pessoa', 'Pessoa (atendimento)'],
+  ['local', 'Marcador (endereço)'],
+  ['agenda', 'Agenda'],
+  ['coracao', 'Coração'],
+  ['estrela', 'Estrela'],
+] as const
+
+const ICONES_CUIDADO = [
+  ['rosto', 'Rosto'],
+  ['pele', 'Brilho (pele)'],
+  ['pescoco', 'Ondas (pescoço)'],
+  ['corpo', 'Linhas (corpo)'],
+  ['cabelo', 'Flor (cabelo)'],
+  ['bemestar', 'Pulso (bem-estar)'],
+] as const
+
 export function SectionFields({
   id,
   draft,
@@ -80,6 +117,23 @@ export function SectionFields({
           </div>
         </Bloco>
 
+        <Bloco
+          title="Legenda e assinatura"
+          hint="Valem para todos os slides."
+        >
+          <StringList
+            label="Palavra"
+            titulo="Legenda vertical ao lado do retrato"
+            items={draft.pillars ?? []}
+            max={4}
+            placeholder="Ex.: Ciência"
+            onChange={(items) => set('pillars', items)}
+          />
+          <Field label="Assinatura sob os botões" hint="A linha pequena em maiúsculas. Deixe vazio para não mostrar.">
+            <input value={draft.signature ?? ''} onChange={(e) => set('signature', e.target.value)} />
+          </Field>
+        </Bloco>
+
         <RepeatingList
           label="Slides"
           singular="slide"
@@ -110,21 +164,15 @@ export function SectionFields({
                 <input value={slide.eyebrow} onChange={(e) => update({ ...slide, eyebrow: e.target.value })} />
               </Field>
               <div className="form-row form-row-2">
-                <Field label="Título — 1ª linha" hint="Sai em letra reta, mais firme.">
+                <Field label="Título — 1ª linha">
                   <input value={slide.titleTop} onChange={(e) => update({ ...slide, titleTop: e.target.value })} />
                 </Field>
-                <Field label="Título — 2ª linha" hint="Sai em itálico, mais leve.">
+                <Field label="Título — 2ª linha">
                   <input value={slide.titleBottom} onChange={(e) => update({ ...slide, titleBottom: e.target.value })} />
                 </Field>
               </div>
               <Field label="Texto de apoio" hint="Uma ou duas frases sob o título.">
                 <textarea rows={3} value={slide.subtitle} onChange={(e) => update({ ...slide, subtitle: e.target.value })} />
-              </Field>
-              <Field
-                label="Palavra decorativa de fundo"
-                hint="Uma palavra que aparece gigante e clarinha atrás do texto, só em telas grandes. Pode deixar vazio."
-              >
-                <input value={slide.watermark} onChange={(e) => update({ ...slide, watermark: e.target.value })} />
               </Field>
             </>
           )}
@@ -134,50 +182,145 @@ export function SectionFields({
   }
 
   if (id === 'ABOUT') {
-    const highlights: string[] = draft.highlights ?? []
     return (
       <>
-        <Bloco title="Retrato" hint="A foto que aparece ao lado do texto.">
-          <ImageField slot="about.portrait" images={images} targets={targets} onChanged={onChanged} />
-        </Bloco>
-
-        <Bloco title="Apresentação" hint="O título da seção e o parágrafo de abertura.">
-          <HeadingFields draft={draft} set={set} />
-          <Field label="Texto de apresentação" hint="O parágrafo principal sobre a doutora.">
-            <textarea rows={6} value={draft.lead ?? ''} onChange={(e) => set('lead', e.target.value)} />
+        <Bloco title="Apresentação" hint="O lado do mármore: título, parágrafo e botão.">
+          <Field label="Linha pequena acima do título" hint="Sai em maiúsculas, com um traço ao lado.">
+            <input value={draft.philosophyLabel ?? ''} onChange={(e) => set('philosophyLabel', e.target.value)} />
+          </Field>
+          <div className="form-row form-row-2">
+            <Field label="Título — 1ª linha">
+              <input value={draft.titleTop ?? ''} onChange={(e) => set('titleTop', e.target.value)} />
+            </Field>
+            <Field label="Título — 2ª linha">
+              <input value={draft.titleBottom ?? ''} onChange={(e) => set('titleBottom', e.target.value)} />
+            </Field>
+          </div>
+          <Field label="Texto de apresentação" hint="O parágrafo sobre a filosofia da doutora.">
+            <textarea rows={5} value={draft.lead ?? ''} onChange={(e) => set('lead', e.target.value)} />
+          </Field>
+          <Field label="Texto do botão">
+            <input value={draft.ctaLabel ?? ''} onChange={(e) => set('ctaLabel', e.target.value)} />
           </Field>
         </Bloco>
 
-        <Bloco
-          title="Pontos de destaque"
-          hint="Aparecem em lista, cada um com um tracinho à esquerda."
-        >
-          <StringList
-            label="Ponto"
-            items={highlights}
-            max={8}
-            placeholder="Ex.: Médica com CRM/MS 5691 em Chapadão do Sul"
-            onChange={(items) => set('highlights', items)}
-          />
-        </Bloco>
-
-        <Bloco title="Registro e botão" hint="O selo com o CRM e a chamada final.">
-          <div className="form-row form-row-3">
+        <Bloco title="Citação" hint="O lado das folhas: a frase da doutora e quem assina.">
+          <Field label="Frase" hint="Sai em itálico, entre aspas — não precisa digitar as aspas.">
+            <textarea rows={3} value={draft.quote ?? ''} onChange={(e) => set('quote', e.target.value)} />
+          </Field>
+          <Field label="Assinatura" hint="Sai em maiúsculas sob o traço.">
+            <input value={draft.quoteAuthor ?? ''} onChange={(e) => set('quoteAuthor', e.target.value)} />
+          </Field>
+          <Field label="Nome completo sob a assinatura">
+            <input value={draft.eyebrow ?? ''} onChange={(e) => set('eyebrow', e.target.value)} />
+          </Field>
+          <div className="form-row form-row-2">
             <Field label="Sigla do registro" hint="Ex.: CRM/MS.">
               <input value={draft.crmLabel ?? ''} onChange={(e) => set('crmLabel', e.target.value)} />
             </Field>
             <Field label="Número" hint="Só os dígitos.">
               <input value={draft.crmNumber ?? ''} onChange={(e) => set('crmNumber', e.target.value)} />
             </Field>
-            <Field label="Palavra decorativa" hint="Fundo, opcional.">
-              <input value={draft.watermark ?? ''} onChange={(e) => set('watermark', e.target.value)} />
-            </Field>
           </div>
-          <Field label="Texto do botão">
-            <input value={draft.ctaLabel ?? ''} onChange={(e) => set('ctaLabel', e.target.value)} />
-          </Field>
         </Bloco>
       </>
+    )
+  }
+
+  if (id === 'TRUST') {
+    const items: any[] = draft.items ?? []
+    return (
+      <RepeatingList
+        label="Itens da faixa"
+        singular="item"
+        hint="De um a quatro, lado a lado no computador e um embaixo do outro no celular."
+        items={items}
+        max={4}
+        itemTitle={(item, index) => item.title || `Item ${index + 1}`}
+        onChange={(next) => set('items', next)}
+        blank={() => ({ icon: 'estrela', title: '', detail: '' })}
+        render={(item, _index, update) => (
+          <>
+            <div className="form-row form-row-2">
+              <Field label="Título" hint="Em letra de destaque.">
+                <input value={item.title} onChange={(e) => update({ ...item, title: e.target.value })} />
+              </Field>
+              <Field label="Ícone">
+                <SeletorDeIcone valor={item.icon} opcoes={ICONES_CONFIANCA} onChange={(icon) => update({ ...item, icon })} />
+              </Field>
+            </div>
+            <Field label="Linha de apoio" hint="Pequena, em maiúsculas. Pode deixar vazio.">
+              <input value={item.detail ?? ''} onChange={(e) => update({ ...item, detail: e.target.value })} />
+            </Field>
+          </>
+        )}
+      />
+    )
+  }
+
+  if (id === 'CARE') {
+    const items: any[] = draft.items ?? []
+    return (
+      <>
+        <Bloco title="Cabeçalho da seção" hint="O título centralizado acima dos cartões.">
+          <Field label="Linha pequena acima do título">
+            <input value={draft.eyebrow ?? ''} onChange={(e) => set('eyebrow', e.target.value)} />
+          </Field>
+          <Field label="Título">
+            <input value={draft.title ?? ''} onChange={(e) => set('title', e.target.value)} />
+          </Field>
+          <Field label="Texto de apoio">
+            <textarea rows={3} value={draft.lead ?? ''} onChange={(e) => set('lead', e.target.value)} />
+          </Field>
+        </Bloco>
+        <RepeatingList
+          label="Cartões"
+          singular="cartão"
+          hint="Até quatro. Cada cartão tem a sua foto; sem foto enviada, o site usa a que já vem pronta."
+          items={items}
+          max={4}
+          itemTitle={(item, index) => item.name || `Cartão ${index + 1}`}
+          onChange={(next) => set('items', next)}
+          blank={() => ({ name: '', description: '', icon: 'pele', alt: '' })}
+          render={(item, index, update) => (
+            <>
+              <ImageField slot={`care.${index}`} images={images} targets={targets} onChanged={onChanged} />
+              <div className="form-row form-row-2">
+                <Field label="Nome da área">
+                  <input value={item.name} onChange={(e) => update({ ...item, name: e.target.value })} />
+                </Field>
+                <Field label="Ícone no círculo">
+                  <SeletorDeIcone valor={item.icon} opcoes={ICONES_CUIDADO} onChange={(icon) => update({ ...item, icon })} />
+                </Field>
+              </div>
+              <Field label="Descrição" hint="Uma frase curta.">
+                <textarea rows={2} value={item.description} onChange={(e) => update({ ...item, description: e.target.value })} />
+              </Field>
+              <Field label="Descrição da foto" hint="Para quem usa leitor de tela. Ex.: Pescoço e colo em close.">
+                <input value={item.alt ?? ''} onChange={(e) => update({ ...item, alt: e.target.value })} />
+              </Field>
+            </>
+          )}
+        />
+      </>
+    )
+  }
+
+  if (id === 'VALUES') {
+    return (
+      <Bloco
+        title="Palavras da faixa"
+        hint="De duas a oito, separadas por traços no computador."
+        nota={<>No celular aparecem as <strong>quatro primeiras</strong>, em lista.</>}
+      >
+        <StringList
+          label="Palavra"
+          items={draft.items ?? []}
+          max={8}
+          placeholder="Ex.: Resultados Reais"
+          onChange={(items) => set('items', items)}
+        />
+      </Bloco>
     )
   }
 
@@ -211,9 +354,6 @@ export function SectionFields({
       <>
         <Bloco title="Cabeçalho da seção" hint="O título e o texto de abertura.">
           <HeadingFields draft={draft} set={set} lead />
-          <Field label="Palavra decorativa de fundo" hint="Opcional.">
-            <input value={draft.watermark ?? ''} onChange={(e) => set('watermark', e.target.value)} />
-          </Field>
         </Bloco>
 
         <RepeatingList
@@ -278,26 +418,24 @@ export function SectionFields({
   if (id === 'APPOINTMENT') {
     return (
       <>
-        <Bloco title="Convite" hint="O texto ao lado do formulário de agendamento.">
+        <Bloco
+          title="Convite"
+          hint="O texto ao lado do formulário de agendamento."
+          nota={
+            <>
+              O telefone, o e-mail e o endereço ao lado do formulário vêm de{' '}
+              <strong>Rodapé e contato</strong> — mudar lá muda aqui também.
+            </>
+          }
+        >
           <HeadingFields draft={draft} set={set} lead />
         </Bloco>
-        <Bloco title="Aviso e WhatsApp" hint="O que aparece depois do formulário.">
+        <Bloco title="Aviso" hint="A frase sob o botão de enviar.">
           <Field
             label="Aviso sob o formulário"
             hint="Explique o que acontece depois que a paciente envia o pedido."
           >
             <textarea rows={3} value={draft.disclaimer ?? ''} onChange={(e) => set('disclaimer', e.target.value)} />
-          </Field>
-          <Field
-            label="WhatsApp da clínica"
-            hint="Só números, com DDD. Deixe vazio para não mostrar o botão."
-          >
-            <input
-              value={draft.whatsapp ?? ''}
-              onChange={(e) => set('whatsapp', e.target.value || null)}
-              placeholder="67999998888"
-              inputMode="numeric"
-            />
           </Field>
         </Bloco>
       </>
@@ -314,7 +452,7 @@ export function SectionFields({
           </Field>
         </Bloco>
 
-        <Bloco title="Contato" hint="Como a paciente encontra e fala com a clínica.">
+        <Bloco title="Contato" hint="Aparece no rodapé e ao lado do formulário de agendamento.">
           <Field label="Endereço">
             <input value={draft.address ?? ''} onChange={(e) => set('address', e.target.value)} />
           </Field>
@@ -335,13 +473,14 @@ export function SectionFields({
           </Field>
         </Bloco>
 
-        <Bloco title="Newsletter" hint="A caixinha de inscrição por e-mail.">
-          <Field label="Título">
-            <input value={draft.newsletterTitle ?? ''} onChange={(e) => set('newsletterTitle', e.target.value)} />
-          </Field>
-          <Field label="Chamada">
-            <textarea rows={2} value={draft.newsletterLead ?? ''} onChange={(e) => set('newsletterLead', e.target.value)} />
-          </Field>
+        <Bloco title="Horário de atendimento" hint="Uma linha por faixa de dias, na coluna Horário do rodapé.">
+          <StringList
+            label="Linha"
+            items={draft.hours ?? []}
+            max={4}
+            placeholder="Ex.: Segunda a sexta: 9h às 18h"
+            onChange={(items) => set('hours', items)}
+          />
         </Bloco>
       </>
     )

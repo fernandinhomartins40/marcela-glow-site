@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { landingApi, type LandingResponse } from "@/lib/api";
+import { usePrevia, type EstadoPrevia } from "@/lib/previa";
 
 /**
  * Conteúdo editável da landing.
@@ -19,10 +21,31 @@ export type SectionId =
   | "TESTIMONIALS"
   | "APPOINTMENT"
   | "FOOTER"
-  | "SEO";
+  | "SEO"
+  | "TRUST"
+  | "CARE"
+  | "VALUES";
+
+/**
+ * Na prévia do painel, o rascunho entra por cima do que a API devolveu: a
+ * seção editada aparece visível e com o texto que está sendo escrito, e as
+ * imagens recém-enviadas substituem as publicadas. Fora da prévia não há
+ * rascunho e isto é só a resposta da API.
+ */
+function mesclar(base: LandingResponse | undefined, previa: EstadoPrevia): LandingResponse {
+  const sections = { ...(base?.sections ?? {}) };
+  for (const [id, content] of Object.entries(previa.sections)) {
+    sections[id] = { content, isVisible: true, isCustom: true };
+  }
+  const images = { ...(base?.images ?? {}) };
+  for (const [slot, img] of Object.entries(previa.images)) {
+    images[slot] = { ...(images[slot] ?? { width: 0, height: 0 }), url: img.url, alt: img.alt };
+  }
+  return { sections, images };
+}
 
 export function useLanding() {
-  return useQuery<LandingResponse>({
+  const query = useQuery<LandingResponse>({
     queryKey: ["landing"],
     queryFn: landingApi.get,
     staleTime: 5 * 60 * 1000,
@@ -30,6 +53,9 @@ export function useLanding() {
     refetchOnWindowFocus: false,
     retry: 1,
   });
+  const previa = usePrevia();
+  const data = useMemo(() => (previa ? mesclar(query.data, previa) : query.data), [query.data, previa]);
+  return { ...query, data };
 }
 
 /**

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useImage, useLanding, useSection } from "@/hooks/useLanding";
+import { EM_PREVIA } from "@/lib/previa";
 import draEditorial from "@/assets/candidatas/dra-marcela-editorial-limpa-v1.webp";
 import draPortrait from "@/assets/candidatas/dra-marcela-portrait-limpa-v1.webp";
 import marble from "@/assets/approved/landing-hero-marble-desktop-v2.webp";
@@ -23,6 +24,8 @@ interface HeroContent {
   slides: HeroSlide[];
   primaryCta: string;
   secondaryCta: string;
+  pillars?: string[];
+  signature?: string;
 }
 
 const FALLBACK: HeroContent = {
@@ -63,7 +66,9 @@ const Hero = () => {
   const slides = content.slides.length ? content.slides : FALLBACK.slides;
 
   useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    /* Na prévia do painel o slide não troca sozinho: a pessoa está olhando o
+       texto que acabou de escrever, e ele sumiria em sete segundos. */
+    if (EM_PREVIA || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 7000);
@@ -96,7 +101,8 @@ const Hero = () => {
   /* Legenda vertical do mockup: fica ao lado do retrato no desktop e sobre a
      borda esquerda da foto no celular. É decoração — o conteúdo já está no
      título e no subtítulo. */
-  const pillars = ["Ciência", "Experiência", "Naturalidade"];
+  const pillars = content.pillars?.length ? content.pillars : ["Ciência", "Experiência", "Naturalidade"];
+  const signature = content.signature ?? "Saúde · Equilíbrio · Resultados reais";
 
   return (
     <section
@@ -161,7 +167,7 @@ const Hero = () => {
               {content.secondaryCta}
             </Button>
           </div>
-          <p className="hero-editorial-signature">Saúde · Equilíbrio · Resultados reais</p>
+          {signature && <p className="hero-editorial-signature">{signature}</p>}
         </div>
       </div>
       <ul className="hero-editorial-watermark" aria-hidden="true">
