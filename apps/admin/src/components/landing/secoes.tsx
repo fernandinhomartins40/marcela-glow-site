@@ -442,6 +442,119 @@ export function SectionFields({
     )
   }
 
+  if (id === 'PRIVACY') {
+    const c = draft.controller ?? {}
+    const dpo = draft.dpo ?? {}
+    const d = draft.developer ?? {}
+    const faltando = [
+      !c.name && 'nome da controladora',
+      !c.document && 'CNPJ ou CPF da controladora',
+      !dpo.email && 'e-mail do encarregado',
+    ].filter(Boolean)
+    return (
+      <>
+        {faltando.length > 0 && (
+          <p className="error" role="status">
+            Antes de enviar os apps às lojas, preencha: {faltando.join(', ')}. A página já está no ar em
+            /privacidade, e campo vazio não aparece nela.
+          </p>
+        )}
+        <Bloco
+          title="Controladora"
+          hint="Quem decide sobre os dados das pacientes: a clínica ou a médica responsável."
+          nota={<>É a controladora quem responde à paciente e à ANPD pelos dados de saúde.</>}
+        >
+          <div className="form-row form-row-2">
+            <Field label="Nome ou razão social">
+              <input value={c.name ?? ''} onChange={(e) => set('controller.name', e.target.value)} />
+            </Field>
+            <Field label="CNPJ ou CPF">
+              <input value={c.document ?? ''} onChange={(e) => set('controller.document', e.target.value)} />
+            </Field>
+          </div>
+          <Field label="Endereço">
+            <input value={c.address ?? ''} onChange={(e) => set('controller.address', e.target.value)} />
+          </Field>
+          <div className="form-row form-row-2">
+            <Field label="E-mail" hint="Deixe vazio para não mostrar.">
+              <input type="email" value={c.email ?? ''} onChange={(e) => set('controller.email', e.target.value)} />
+            </Field>
+            <Field label="Telefone" hint="Deixe vazio para não mostrar.">
+              <input value={c.phone ?? ''} onChange={(e) => set('controller.phone', e.target.value)} />
+            </Field>
+          </div>
+        </Bloco>
+
+        <Bloco
+          title="Encarregado (DPO)"
+          hint="A pessoa que recebe os pedidos das pacientes sobre os dados delas."
+        >
+          <div className="form-row form-row-2">
+            <Field label="Nome">
+              <input value={dpo.name ?? ''} onChange={(e) => set('dpo.name', e.target.value)} />
+            </Field>
+            <Field label="E-mail">
+              <input type="email" value={dpo.email ?? ''} onChange={(e) => set('dpo.email', e.target.value)} />
+            </Field>
+          </div>
+        </Bloco>
+
+        <Bloco
+          title="Desenvolvedor do sistema (operador)"
+          hint="Quem desenvolve e mantém o sistema e trata os dados em nome da clínica. Sem nome, o quadro não aparece."
+        >
+          <div className="form-row form-row-2">
+            <Field label="Nome ou razão social">
+              <input value={d.name ?? ''} onChange={(e) => set('developer.name', e.target.value)} />
+            </Field>
+            <Field label="CNPJ ou CPF">
+              <input value={d.document ?? ''} onChange={(e) => set('developer.document', e.target.value)} />
+            </Field>
+          </div>
+          <div className="form-row form-row-2">
+            <Field label="E-mail">
+              <input type="email" value={d.email ?? ''} onChange={(e) => set('developer.email', e.target.value)} />
+            </Field>
+            <Field label="Site">
+              <input value={d.site ?? ''} onChange={(e) => set('developer.site', e.target.value)} />
+            </Field>
+          </div>
+        </Bloco>
+
+        <Bloco
+          title="Texto da política"
+          hint="Uma seção por assunto, na ordem em que aparecem."
+          nota={
+            <>
+              Linha em branco separa parágrafos; linha que começa com <strong>- </strong> vira item de lista.
+              O texto de fábrica segue a LGPD — mudanças de conteúdo pedem revisão jurídica.
+            </>
+          }
+        >
+          <RepeatingList<{ title: string; body: string }>
+            label="Seções"
+            singular="seção"
+            items={draft.sections ?? []}
+            max={30}
+            itemTitle={(item) => item.title}
+            onChange={(next) => set('sections', next)}
+            blank={() => ({ title: '', body: '' })}
+            render={(item, _index, update) => (
+              <>
+                <Field label="Título">
+                  <input value={item.title} onChange={(e) => update({ ...item, title: e.target.value })} />
+                </Field>
+                <Field label="Texto">
+                  <textarea rows={10} value={item.body} onChange={(e) => update({ ...item, body: e.target.value })} />
+                </Field>
+              </>
+            )}
+          />
+        </Bloco>
+      </>
+    )
+  }
+
   if (id === 'FOOTER') {
     return (
       <>

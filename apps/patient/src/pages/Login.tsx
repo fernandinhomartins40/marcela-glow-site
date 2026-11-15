@@ -7,7 +7,7 @@ import monogramBrown from '@/assets/brand/md-monogram-brown.webp'
 import monogramWhite from '@/assets/brand/md-monogram-white.webp'
 import { Splash, useAbertura } from '@/components/Splash'
 import { useAplicativoInstalado } from '@/lib/standalone'
-import { ehNativo, guardarSessao } from '@/lib/nativo'
+import { abrirExterno, ehNativo, guardarSessao, URL_DO_SITE } from '@/lib/nativo'
 
 /* Fora do app de loja: o `build:nativo` roda no modo `nativo`, o Vite troca
    `MODE` por texto fixo e o minificador descarta o objeto — a senha não vai
@@ -272,6 +272,13 @@ export function Login() {
                 Preencher {demoPatient.label}
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => abrirExterno(`${URL_DO_SITE}/privacidade`)}
+              className="w-full text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground transition-colors"
+            >
+              Política de privacidade
+            </button>
           </div>
         </div>
       </div>

@@ -275,10 +275,13 @@ workflow acima.
   `capacitor://localhost` e `https://localhost`. Sem isso, enviar anexo pelo
   app falha (pelo site continua funcionando). É ajuste no painel do provedor
   de armazenamento.
-- **Política de privacidade publicada numa página pública.** Hoje o link
-  "Política de Privacidade" do rodapé do site **não leva a lugar nenhum**
-  (`href="#"`). As duas lojas recusam sem ela. Precisa ser escrita (com apoio
-  jurídico: dados de saúde, LGPD) e publicada antes do envio.
+- **Política de privacidade:** já existe em
+  `https://www.dramarceladuch.com.br/privacidade` (é esse o endereço que vai
+  nas duas lojas) e é editada no painel, em **Site → Privacidade**. O texto
+  padrão segue a LGPD. Antes do envio, preencha ali o CNPJ ou CPF da
+  controladora (a clínica), o e-mail do encarregado (DPO) e os dados do
+  desenvolvedor; o painel avisa o que falta. Revisão jurídica recomendada:
+  são dados de saúde.
 - **Página de exclusão de conta na web** (exigência do Google): o portal na web
   já tem "Excluir minha conta" em *Mais*. Informe ao Google o endereço
   `https://www.dramarceladuch.com.br/paciente/` com a instrução "entre na sua

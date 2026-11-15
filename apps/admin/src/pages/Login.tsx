@@ -5,7 +5,7 @@ import marbleTexture from '../assets/hero-regeneracao-desktop-v1.png'
 import monogramBrown from '../assets/brand/md-monogram-brown.webp'
 import { Splash, useAbertura } from '../components/Splash'
 import { useAplicativoInstalado } from '../lib/standalone'
-import { ehNativo, guardarSessao } from '../lib/nativo'
+import { abrirExterno, ehNativo, guardarSessao, URL_DO_SITE } from '../lib/nativo'
 
 type ContaDemo = { label: string; email: string; password: string }
 
@@ -98,6 +98,9 @@ export function Login() {
           <button type="submit">{mode === 'login' ? 'Entrar' : 'Registrar equipe'}</button>
           <button type="button" className="link-button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
             {mode === 'login' ? 'Criar primeiro acesso' : 'Já tenho acesso'}
+          </button>
+          <button type="button" className="link-button" onClick={() => abrirExterno(`${URL_DO_SITE}/privacidade`)}>
+            Política de privacidade
           </button>
         </form>
       </section>

@@ -17,6 +17,7 @@ import {
   RotateCcw,
   Save,
   Search,
+  ShieldCheck,
   Sparkles,
   UserRound,
   Wrench,
@@ -70,6 +71,7 @@ const SECTIONS: {
   { id: 'APPOINTMENT', label: 'Agendamento', icon: CalendarCheck, about: 'O convite ao lado do formulário de solicitação de horário.' },
   { id: 'FOOTER', label: 'Rodapé e contato', icon: PanelBottom, about: 'Logo, contato e horário. O telefone, o e-mail e o endereço também aparecem no agendamento.' },
   { id: 'SEO', label: 'Google e redes', icon: Search, about: 'O título e o resumo que aparecem no Google e ao compartilhar o link.' },
+  { id: 'PRIVACY', label: 'Privacidade', icon: ShieldCheck, about: 'A política de privacidade em /privacidade: o link do rodapé e o que vai nas lojas de apps.' },
 ]
 
 /**
@@ -321,8 +323,9 @@ function SectionEditor({
       {save.isError && <p className="error">{errorMessage(save.error)}</p>}
 
       {/* A paleta não liga nem desliga: o site sempre tem cor, e o que existe
-          aqui é qual cor. Restaurar devolve a de fábrica. */}
-      {id !== 'THEME' && (
+          aqui é qual cor. Restaurar devolve a de fábrica. A política também não:
+          a LGPD e as lojas exigem que ela esteja sempre no ar. */}
+      {id !== 'THEME' && id !== 'PRIVACY' && (
         <>
       {/* Ligar e desligar abre a página: é a decisão que muda o site inteiro,
           e no cabeçalho ela ficava a um clique de "Restaurar". */}

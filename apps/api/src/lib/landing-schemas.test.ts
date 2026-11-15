@@ -55,4 +55,12 @@ describe('conteúdo da landing', () => {
     const r = LANDING_SCHEMAS.TRUST.safeParse({ items: [{ icon: 'foguete', title: 'Algo', detail: '' }] })
     expect(r.success).toBe(false)
   })
+  it('a política de privacidade aceita identificação a preencher e recusa e-mail inválido', () => {
+    // Gravada só com o texto: os quadros de identificação entram vazios, e o painel avisa.
+    const so = LANDING_SCHEMAS.PRIVACY.parse({ sections: [{ title: 'Uma seção', body: 'Um texto.' }] })
+    expect(so.controller.document).toBe('')
+    expect(so.dpo.email).toBe('')
+    const r = LANDING_SCHEMAS.PRIVACY.safeParse({ dpo: { email: 'sem-arroba' }, sections: [{ title: 'Uma', body: 'Texto.' }] })
+    expect(r.success).toBe(false)
+  })
 })

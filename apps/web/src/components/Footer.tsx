@@ -147,7 +147,7 @@ const Footer = () => {
         <div className="mt-8 flex flex-col items-center gap-3 border-t border-[hsl(var(--cream))]/12 pt-5 text-center text-xs text-[hsl(var(--cream))]/65 md:flex-row md:justify-between md:text-left">
           <p>© {new Date().getFullYear()} Dra. Marcela Duch. Todos os direitos reservados.</p>
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-            <a href="#" className="hover:text-[hsl(var(--cream))]">Política de Privacidade</a>
+            <a href="/privacidade" className="hover:text-[hsl(var(--cream))]">Política de Privacidade</a>
             <span aria-hidden="true">|</span>
             <a href="#" className="hover:text-[hsl(var(--cream))]">Termos de Uso</a>
             <span aria-hidden="true" className="hidden md:inline">|</span>

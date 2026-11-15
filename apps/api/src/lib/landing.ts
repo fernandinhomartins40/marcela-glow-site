@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { PRIVACY_DEFAULT, privacySchema } from './privacidade'
 
 /**
  * Forma do conteúdo de cada seção da landing page.
@@ -249,6 +250,7 @@ export const LANDING_SCHEMAS = {
   TRUST: trustSchema,
   CARE: careSchema,
   VALUES: valuesSchema,
+  PRIVACY: privacySchema,
 } as const
 
 export type LandingSectionId = keyof typeof LANDING_SCHEMAS
@@ -351,6 +353,7 @@ export const LANDING_DEFAULTS: { [K in LandingSectionId]: z.input<(typeof LANDIN
       { name: 'Corpo', description: 'Equilíbrio e bem-estar para você se sentir bem em todas as suas fases.', icon: 'corpo', alt: 'Ombro e colo em close' },
     ],
   },
+  PRIVACY: PRIVACY_DEFAULT,
   VALUES: {
     items: [
       'Medicina Estética',

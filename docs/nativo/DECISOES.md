@@ -89,3 +89,12 @@ plano (`02-PLANO-DE-IMPLEMENTACAO.md`); o usuário não alterou nenhum padrão.
 - **Barra de status no WebView < 140:** fundo da janela em `MainActivity` (`ColorDrawable`) pinta o recuo com a cor do tema. Provado no emulador (API 35, WebView 124) antes da mudança de rumo.
 - **Versão de teste (`build:nativo:teste`, `CAP_TESTE_LOCAL=1`):** `allowMixedContent` e HTTP só para `10.0.2.2`, este só no APK de depuração; o `build.gradle` recusa release com config de teste sincronizado. Provado por inspeção do APK de release (sem `networkSecurityConfig`); a recusa não foi exercitada.
 - **Política de privacidade não existe** (link do rodapé é `#`): bloqueia as duas lojas. Pendência da usuária (U7).
+
+## Política de privacidade (15/11/2026)
+
+- **A clínica é a controladora; a empresa que desenvolve o sistema é a operadora.** Pôr a desenvolvedora como controladora de prontuários seria declarar algo falso e transferir a ela a responsabilidade pelos dados de saúde. A conta de desenvolvedor nas lojas pode ser da desenvolvedora; a política identifica quem trata os dados.
+- **Dinâmica, no painel:** seção `PRIVACY` do CMS da landing (Site → Privacidade), página pública em `/privacidade`. Identificação (controladora, encarregado, desenvolvedor) separada do texto; o texto padrão fala em "a clínica" e não precisa ser reescrito quando o CNPJ chegar.
+- **Não se esconde:** a aba não tem o interruptor de visibilidade e a página ignora `isVisible` — LGPD e lojas exigem a política sempre no ar.
+- **Texto puro, nunca HTML:** parágrafo por linha em branco, lista por "- ". Quem edita no painel não escreve marcação na página pública.
+- Link da política no login dos dois apps e na tela de exclusão de conta (as lojas pedem acesso de dentro do app).
+- Pendente: dados da controladora (CNPJ/CPF), encarregado e desenvolvedor; revisão jurídica do texto; "Termos de Uso" do rodapé continua `href="#"`.

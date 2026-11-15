@@ -24,7 +24,8 @@ export type SectionId =
   | "SEO"
   | "TRUST"
   | "CARE"
-  | "VALUES";
+  | "VALUES"
+  | "PRIVACY";
 
 /**
  * Na prévia do painel, o rascunho entra por cima do que a API devolveu: a

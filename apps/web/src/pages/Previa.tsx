@@ -11,6 +11,7 @@ import Testimonials from "@/components/Testimonials";
 import Appointment from "@/components/Appointment";
 import Footer from "@/components/Footer";
 import Theme from "@/components/Theme";
+import PoliticaDePrivacidade from "@/components/PoliticaDePrivacidade";
 import { avisarPainel } from "@/lib/previa";
 
 /**
@@ -38,6 +39,7 @@ const POR_SECAO: Record<string, ComponentType[]> = {
   TESTIMONIALS: [Testimonials],
   APPOINTMENT: [Appointment],
   FOOTER: [Footer],
+  PRIVACY: [PoliticaDePrivacidade],
   THEME: PAGINA,
 };
 

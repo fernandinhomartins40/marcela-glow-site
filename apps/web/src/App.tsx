@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Previa from "./pages/Previa";
+import Privacidade from "./pages/Privacidade";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           {/* Prévia ao vivo do editor do painel — ver lib/previa.ts. */}
           <Route path="/previa" element={<Previa />} />
+          {/* Política de privacidade: endereço informado às lojas de apps. */}
+          <Route path="/privacidade" element={<Privacidade />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

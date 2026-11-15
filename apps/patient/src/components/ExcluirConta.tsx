@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import { Loader2, X } from 'lucide-react'
 import { excluirConta, getErrorMessage } from '@/lib/api'
 import { Feedback } from './ui'
+import { abrirExterno, URL_DO_SITE } from '@/lib/nativo'
 
 /**
  * Exclusão do acesso ao portal, exigida pelas lojas (Apple 5.1.1(v)) e
@@ -41,7 +42,11 @@ export function ExcluirConta({ onFechar }: { onFechar: () => void }) {
         <form onSubmit={enviar} className="mt-2 space-y-4">
           <p className="text-sm text-muted-foreground leading-relaxed">
             O seu acesso ao portal é removido: a senha deixa de valer, as sessões abertas são encerradas e os lembretes
-            param. O seu registro clínico é mantido pela clínica, por obrigação legal.
+            param. O seu registro clínico é mantido pela clínica, por obrigação legal. Detalhes na{' '}
+            <button type="button" className="underline underline-offset-2" onClick={() => abrirExterno(`${URL_DO_SITE}/privacidade`)}>
+              política de privacidade
+            </button>
+            .
           </p>
           <div>
             <label htmlFor="excluir-senha" className="block text-sm font-medium text-foreground mb-1.5">

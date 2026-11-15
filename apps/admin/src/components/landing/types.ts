@@ -20,6 +20,7 @@ export type SectionId =
   | 'TRUST'
   | 'CARE'
   | 'VALUES'
+  | 'PRIVACY'
 
 export interface SectionState {
   content: Record<string, any>

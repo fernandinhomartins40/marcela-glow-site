@@ -493,6 +493,8 @@ enum LandingSection {
   CARE
   /// Faixa escura de valores entre as áreas e os tratamentos.
   VALUES
+  /// Política de privacidade — não é faixa da landing: o site a mostra em /privacidade.
+  PRIVACY
 }
 
 /// Conteúdo de uma seção da landing.
