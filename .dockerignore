@@ -59,3 +59,7 @@ kit-auditoria
 # Sistema operacional
 Thumbs.db
 .DS_Store
+
+# Projetos nativos dos apps (Capacitor): versionados no git, inúteis na imagem web
+apps/*/android
+apps/*/ios
