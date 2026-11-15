@@ -257,6 +257,8 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           MIN_APP_VERSION_PATIENT: ${{ vars.MIN_APP_VERSION_PATIENT }}
           MIN_APP_VERSION_ADMIN: ${{ vars.MIN_APP_VERSION_ADMIN }}
+          # Chave de envio do Velomail (so email:send). Ausente: o .env fica como esta.
+          VELOMAIL_API_KEY: ${{ secrets.VELOMAIL_API_KEY }}
         run: |
           # A conta de servico vai em base64: o JSON tem aspas e \n na chave, e o
           # upsert_env (awk -v) interpretaria o \n. A API aceita os dois formatos.
@@ -269,7 +271,7 @@ jobs:
           case "${MIN_APP_VERSION_PATIENT:-}" in *[!0-9.]*) MIN_APP_VERSION_PATIENT="" ;; esac
           case "${MIN_APP_VERSION_ADMIN:-}" in *[!0-9.]*) MIN_APP_VERSION_ADMIN="" ;; esac
           sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "APP_ROOT='${{ env.APP_ROOT }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' IMAGE_PREFIX='${{ env.IMAGE_PREFIX }}' IMAGE_TAG='${{ env.RELEASE_VERSION }}' FIREBASE_SA_B64='$FIREBASE_SA_B64' MIN_APP_VERSION_PATIENT='${MIN_APP_VERSION_PATIENT:-}' MIN_APP_VERSION_ADMIN='${MIN_APP_VERSION_ADMIN:-}' bash -s" <<'ENDSSH'
+            "APP_ROOT='${{ env.APP_ROOT }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' IMAGE_PREFIX='${{ env.IMAGE_PREFIX }}' IMAGE_TAG='${{ env.RELEASE_VERSION }}' FIREBASE_SA_B64='$FIREBASE_SA_B64' MIN_APP_VERSION_PATIENT='${MIN_APP_VERSION_PATIENT:-}' MIN_APP_VERSION_ADMIN='${MIN_APP_VERSION_ADMIN:-}' VELOMAIL_API_KEY='${VELOMAIL_API_KEY:-}' bash -s" <<'ENDSSH'
             set -euo pipefail
 
             ENV_FILE="$APP_ROOT/.env"
@@ -370,6 +372,12 @@ jobs:
             upsert_env "FRONTEND_URL" "$CANONICAL_URL"
             upsert_env "S3_ENDPOINT" "http://minio:9000"
             upsert_env "S3_PUBLIC_BASE_URL" "$CANONICAL_URL/files"
+            # Base dos links e do monograma nos e-mails.
+            upsert_env "PUBLIC_BASE_URL" "$CANONICAL_URL"
+            ensure_env "MAIL_FROM" "nao-responda@dramarceladuch.com.br"
+            if [ -n "${VELOMAIL_API_KEY:-}" ]; then
+              upsert_env "VELOMAIL_API_KEY" "$VELOMAIL_API_KEY"
+            fi
             if [ -n "${FIREBASE_SA_B64:-}" ]; then
               upsert_env "FIREBASE_SERVICE_ACCOUNT" "$FIREBASE_SA_B64"
             fi

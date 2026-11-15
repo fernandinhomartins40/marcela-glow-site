@@ -1,37 +1,23 @@
-import nodemailer, { type Transporter } from 'nodemailer'
-
 /**
- * Envio de e-mail transacional.
+ * Envio de e-mail transacional, pelo Velomail (servidor de e-mail próprio do
+ * desenvolvedor, API HTTP — `POST /api/emails/send` com chave Bearer).
  *
- * Existe porque três fluxos geram um token que só serve se chegar à pessoa:
- * recuperação de senha da equipe, da paciente, e convite de novo integrante.
- * Sem SMTP configurado o token era gerado e descartado — em produção a resposta
- * nem devolvia o valor, então ninguém conseguia concluir.
+ * Existe porque os fluxos de recuperação de senha, convite da equipe, ativação
+ * do portal e avisos de agendamento geram algo que só serve se chegar à pessoa.
  *
- * Quando o SMTP não está configurado o link vai para o log do servidor em vez
- * de sumir: em desenvolvimento isso mantém o fluxo utilizável sem depender de
- * um provedor, e em produção deixa rastro para a equipe socorrer alguém preso
- * na porta. O e-mail nunca derruba a requisição que o disparou.
+ * Sem `VELOMAIL_API_KEY` o link vai para o log do servidor em vez de sumir: em
+ * desenvolvimento isso mantém o fluxo utilizável sem provedor, e em produção
+ * deixa rastro para a equipe socorrer alguém preso na porta. O e-mail nunca
+ * derruba a requisição que o disparou.
  */
 
-const host = process.env.SMTP_HOST
-const port = Number(process.env.SMTP_PORT || 587)
-const user = process.env.SMTP_USER
-const pass = process.env.SMTP_PASSWORD
-const from = process.env.SMTP_FROM || 'Dra. Marcela Duch <nao-responda@drmarceladuch.com.br>'
+const apiKey = process.env.VELOMAIL_API_KEY
+const apiUrl = process.env.VELOMAIL_API_URL || 'https://www.velomail.com.br/api/emails/send'
+// O Velomail só aceita endereço puro no `from`, de domínio autenticado nele.
+const from = process.env.MAIL_FROM || 'nao-responda@dramarceladuch.com.br'
+const replyTo = process.env.MAIL_REPLY_TO || undefined
 
-export const mailerConfigured = Boolean(host && user && pass)
-
-let transporter: Transporter | null = null
-if (mailerConfigured) {
-  transporter = nodemailer.createTransport({
-    host,
-    port,
-    // 465 é TLS implícito; as demais portas usam STARTTLS.
-    secure: port === 465,
-    auth: { user: user!, pass: pass! },
-  })
-}
+export const mailerConfigured = Boolean(apiKey)
 
 export interface MailInput {
   to: string
@@ -55,27 +41,65 @@ function escapeHtml(value: string): string {
     .replace(/"/g, '&quot;')
 }
 
+/* Paleta oficial do kit de marca (Dra_Marcela_Duch_Brand_Assets/README.md).
+   Contraste medido (WCAG): grafite/branco 15,57:1; botão off-white/institucional
+   9,33:1; rodapé #6B5A4E/nude claro 4,73:1; nude/marrom profundo 6,21:1. */
+const COR = {
+  profundo: '#3E281F',
+  institucional: '#5B3828',
+  nude: '#C7A98D',
+  nudeClaro: '#E9D8C9',
+  offWhite: '#F8F3EE',
+  grafite: '#272321',
+  apoio: '#6B5A4E',
+}
+
+const SERIFA = "'Cormorant Garamond',Georgia,'Times New Roman',serif"
+const SANS = "Inter,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
+
 /**
- * Layout único para todo e-mail do sistema. Estilo inline porque cliente de
- * e-mail ignora folha de estilo externa.
+ * Layout único para todo e-mail do sistema, na identidade da marca: faixa em
+ * marrom profundo com o monograma MD branco, cartão branco sobre off-white,
+ * botão no marrom institucional. Tabelas e estilo inline porque cliente de
+ * e-mail (Outlook, Gmail) ignora folha de estilo e layout moderno.
  */
-function renderHtml(input: MailInput): string {
-  const paragraphs = input.body
+export function renderHtml(input: MailInput): string {
+  const base = publicBaseUrl()
+  const paragrafos = input.body
     .split('\n\n')
-    .map((p) => `<p style="margin:0 0 16px;line-height:1.6">${escapeHtml(p).replace(/\n/g, '<br>')}</p>`)
+    .map(
+      (p) =>
+        `<p style="margin:0 0 16px;font-family:${SANS};font-size:15px;line-height:1.65;color:${COR.grafite}">${escapeHtml(p).replace(/\n/g, '<br>')}</p>`,
+    )
     .join('')
 
-  const action = input.action
-    ? `<p style="margin:24px 0"><a href="${escapeHtml(input.action.url)}" style="background:#b08d57;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block">${escapeHtml(input.action.label)}</a></p>
-       <p style="margin:0 0 16px;color:#666;font-size:13px;line-height:1.6">Se o botão não funcionar, copie este endereço no navegador:<br>${escapeHtml(input.action.url)}</p>`
+  const acao = input.action
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0 8px"><tr><td style="border-radius:999px;background:${COR.institucional}">
+<a href="${escapeHtml(input.action.url)}" style="display:inline-block;padding:14px 32px;font-family:${SANS};font-size:14px;font-weight:600;letter-spacing:.04em;color:${COR.offWhite};text-decoration:none;border-radius:999px">${escapeHtml(input.action.label)}</a>
+</td></tr></table>
+<p style="margin:16px 0 0;font-family:${SANS};font-size:12px;line-height:1.6;color:${COR.apoio}">Se o botão não funcionar, copie este endereço no navegador:<br><span style="word-break:break-all">${escapeHtml(input.action.url)}</span></p>`
     : ''
 
-  return `<!doctype html><html lang="pt-BR"><body style="margin:0;background:#faf7f2;padding:24px;font-family:-apple-system,Segoe UI,Roboto,sans-serif;color:#2c2c2c">
-<div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;padding:32px">
-<h1 style="margin:0 0 24px;font-size:18px;font-weight:600">${escapeHtml(input.subject)}</h1>
-${paragraphs}${action}
-<p style="margin:32px 0 0;padding-top:16px;border-top:1px solid #eee;color:#999;font-size:12px">Este é um e-mail automático — não responda.</p>
-</div></body></html>`
+  return `<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>${escapeHtml(input.subject)}</title></head>
+<body style="margin:0;padding:0;background:${COR.offWhite}">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${COR.offWhite}"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px">
+<tr><td align="center" style="background:${COR.profundo};border-radius:16px 16px 0 0;padding:28px 24px 22px">
+<img src="${base}/email/monograma-branco.png" width="56" height="56" alt="MD" style="display:block;border:0;width:56px;height:56px">
+<p style="margin:14px 0 0;font-family:${SERIFA};font-size:20px;letter-spacing:.22em;text-transform:uppercase;color:${COR.offWhite}">Dra. Marcela Duch</p>
+<p style="margin:4px 0 0;font-family:${SANS};font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:${COR.nude}">Medicina Estética</p>
+</td></tr>
+<tr><td style="background:#FFFFFF;padding:36px 32px 32px;border-left:1px solid ${COR.nudeClaro};border-right:1px solid ${COR.nudeClaro}">
+<h1 style="margin:0 0 20px;font-family:${SERIFA};font-size:26px;font-weight:600;line-height:1.25;color:${COR.institucional}">${escapeHtml(input.subject)}</h1>
+${paragrafos}${acao}
+</td></tr>
+<tr><td align="center" style="background:${COR.nudeClaro};border-radius:0 0 16px 16px;padding:20px 24px">
+<p style="margin:0;font-family:${SANS};font-size:12px;line-height:1.6;color:${COR.apoio}">Este é um e-mail automático da clínica Dra. Marcela Duch — não responda.<br>
+<a href="${base}/privacidade" style="color:${COR.institucional}">Política de privacidade</a></p>
+</td></tr>
+</table></td></tr></table>
+</body></html>`
 }
 
 /**
@@ -83,20 +107,28 @@ ${paragraphs}${action}
  * concluiu (token gravado, convite criado) e não pode falhar por causa do envio.
  */
 export async function sendMail(input: MailInput): Promise<{ sent: boolean }> {
-  if (!transporter) {
+  if (!apiKey) {
     const link = input.action ? ` | ${input.action.url}` : ''
-    console.warn(`[mailer] SMTP nao configurado. Destino: ${input.to} | ${input.subject}${link}`)
+    console.warn(`[mailer] Velomail nao configurado. Destino: ${input.to} | ${input.subject}${link}`)
     return { sent: false }
   }
 
   try {
-    await transporter.sendMail({
-      from,
-      to: input.to,
-      subject: input.subject,
-      text: input.action ? `${input.body}\n\n${input.action.url}` : input.body,
-      html: renderHtml(input),
+    const res = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(15_000),
+      body: JSON.stringify({
+        from,
+        reply_to: replyTo,
+        to: input.to,
+        subject: input.subject,
+        text: input.action ? `${input.body}\n\n${input.action.url}` : input.body,
+        html: renderHtml(input),
+        tracking_enabled: false,
+      }),
     })
+    if (!res.ok) throw new Error(`Velomail respondeu ${res.status}: ${(await res.text()).slice(0, 300)}`)
     return { sent: true }
   } catch (err) {
     console.error(`[mailer] Falha ao enviar para ${input.to}:`, err)
