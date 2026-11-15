@@ -161,6 +161,35 @@ corrigiu e o que ficou pendente. Sem isso a proxima refaz o mesmo caminho.
 
 ### Registro
 
+**2026-11-15 — apps nativos (Capacitor) da paciente e da médica, e política de privacidade**
+
+`apps/patient` e `apps/admin` viraram também apps de loja (Capacitor 8): mesmo
+código do PWA, casca nativa em `android/` e `ios/` de cada app. Tudo o que muda
+dentro da casca passa por `src/lib/nativo.ts`, **par byte-idêntico** nos dois
+apps (`nativo.test.ts` guarda). Build e assinatura **só no GitHub Actions**
+(`apps-nativos.yml`, disparo manual ou tag `paciente-v*`/`medica-v*`): gera
+AAB, APK, APK de teste local e IPA para baixar. Não compilar Android/iOS nesta
+máquina. Passo a passo e segredos em `docs/nativo/PUBLICACAO.md`; decisões em
+`docs/nativo/DECISOES.md`.
+
+**Achado de segurança, corrigido:** o cadastro do portal dava sessão a quem
+soubesse o e-mail de uma paciente sem senha. Agora o acesso só se ativa pelo
+link enviado ao e-mail (`POST /auth/activate`, link de uso único) — **exige
+SMTP em produção**; sem ele o cadastro responde 503. Travado em
+`patient.conta.test.ts`.
+
+A API passou a `node:22-alpine` (o `firebase-admin` exige). Push nativo por
+FCM (`PushProvider`), exclusão de conta (`DELETE /patient/me`, exigência das
+lojas) e `GET /api/app/versao` com versão mínima por app.
+
+Política de privacidade: seção `PRIVACY` do CMS (Site → Privacidade), página
+`/privacidade` — o endereço das lojas. A clínica é a controladora; quem
+desenvolve, operadora. A página não se esconde e o texto é puro, nunca HTML.
+
+Pendente: workflow nunca provado no iOS; push real; paridade visual no APK do
+Actions; dados da controladora/encarregado/desenvolvedor na política; contas
+Apple/Google, Firebase e segredos (U1–U10 em `PUBLICACAO.md`).
+
 **2026-09-24 — o editor "Site" do painel acompanha a landing redesenhada**
 
 A prévia do painel era uma cópia da landing (o bloco `.lp`), redesenhada à
@@ -454,6 +483,10 @@ Duas armadilhas ao ler o resultado:
   de so dar `tail`.
 
 ## Convencoes
+
+- **Trabalhar direto no `main`**, sem branch nova. Push no `main` dispara o deploy de produção.
+- **Apps de loja ficam para trás do site.** Tela nova só chega aos apps na próxima versão enviada às lojas. Mudança de API precisa continuar aceitando a versão anterior dos apps, ou subir `MIN_APP_VERSION_*` (o app antigo mostra "Atualize o app").
+- **`lib/nativo.ts` é par byte-idêntico** em `admin` e `patient`: ao mudar um, copiar para o outro.
 
 - O POST público de `/appointments` devolve apenas comprovante (`id`, `status`, `scheduledAt`). O objeto com `patient`, contatos e campos operacionais é exclusivo de rotas autenticadas; preservar essa separação ao evoluir o agendamento.
 
