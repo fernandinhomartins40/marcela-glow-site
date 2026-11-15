@@ -37,6 +37,7 @@ import {
   type WhatsAppLink,
 } from '../lib/schedule'
 import { api, Chip, errorMessage } from '../lib/ui'
+import { abrirExterno } from '../lib/nativo'
 
 export function Schedule({ appointments }: { appointments: Appointment[] }) {
   /* `?dia=2026-09-12` abre a agenda no dia pedido.
@@ -406,7 +407,7 @@ export function AppointmentDrawer({
   /** Abre o WhatsApp e marca que a paciente foi avisada. */
   function openWhatsApp(link: WhatsAppLink) {
     if (!link.url) return
-    window.open(link.url, '_blank', 'noopener')
+    abrirExterno(link.url)
     api.post(`/appointments/${appointment.id}/notified`).then(refresh).catch(() => undefined)
   }
 

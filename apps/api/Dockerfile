@@ -1,7 +1,8 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # Build stage
 # ──────────────────────────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+# Node 22: o firebase-admin (push dos apps nativos) declara engines >=22.
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -37,7 +38,7 @@ RUN cd apps/api && npx tsc
 # Vitest e todo o devDependency do workspace dentro da imagem de producao.
 # Aqui se instala so o que roda, na mesma versao do lock.
 # ──────────────────────────────────────────────────────────────────────────────
-FROM node:20-alpine AS prod-deps
+FROM node:22-alpine AS prod-deps
 
 WORKDIR /app
 
@@ -52,7 +53,7 @@ RUN npm ci --omit=dev
 # ──────────────────────────────────────────────────────────────────────────────
 # Production runner stage
 # ──────────────────────────────────────────────────────────────────────────────
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 

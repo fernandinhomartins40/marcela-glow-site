@@ -1,4 +1,5 @@
 import React from 'react'
+import { api } from '../lib/ui'
 
 /**
  * Tela de abertura do aplicativo instalado.
@@ -67,7 +68,11 @@ function useIconeDaClinica(app: 'admin' | 'patient'): string | null {
 
   React.useEffect(() => {
     let vivo = true
-    fetch(`/api/landing/manifest/${app}.webmanifest`)
+    /* Pela base da API, não `/api` cru: na casca nativa a origem é a do app.
+       Os `src` de fábrica são caminhos do site (`/admin/icon-192.png`) e se
+       resolvem contra a origem da API — na web, a mesma da página. */
+    const base = api.defaults.baseURL || '/api'
+    fetch(`${base}/landing/manifest/${app}.webmanifest`)
       .then((r) => (r.ok ? r.json() : null))
       .then((m: { icons?: { src?: string; sizes?: string; purpose?: string }[] } | null) => {
         if (!vivo || !Array.isArray(m?.icons)) return
@@ -79,7 +84,7 @@ function useIconeDaClinica(app: 'admin' | 'patient'): string | null {
           uteis.find((i) => i.sizes === '192x192') ??
           uteis.find((i) => i.sizes === '180x180') ??
           uteis[0]
-        if (escolhido?.src) setIcone(escolhido.src)
+        if (escolhido?.src) setIcone(new URL(escolhido.src, new URL(base, window.location.href)).href)
       })
       .catch(() => {
         // Sem rede ou API fora: o monograma continua valendo.

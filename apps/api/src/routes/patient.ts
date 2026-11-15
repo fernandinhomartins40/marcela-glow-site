@@ -1,8 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
-// prismaAuth so nos dois pontos que precisam ler o hash (login e ativacao de
-// conta); o `prisma` comum omite o campo de toda consulta.
+// prismaAuth so nos quatro pontos que precisam ler o hash (login, checagem do
+// cadastro, ativacao e exclusao de conta); o `prisma` comum omite o campo.
 import { prisma, prismaAuth } from '@marcela/database'
 import { signToken } from '../lib/jwt'
 import { authenticate, requirePatient } from '../middleware/auth'
@@ -10,7 +10,7 @@ import { AppError, UnauthorizedError } from '../lib/errors'
 import { addDays, addHours, randomToken, sha256 } from '../lib/security'
 import { verifySignaturePayload } from '../lib/clinical'
 import { audit } from '../lib/audit'
-import { getVapidPublicKey } from '../lib/push'
+import { getVapidPublicKey, inscreverAparelho, removerAparelho } from '../lib/push'
 import { presignDownload, storageConfigured } from '../lib/storage'
 import { checkSlotAvailable, resolveEndsAt } from '../lib/scheduling'
 import { publicBaseUrl, sendMail } from '../lib/mailer'
@@ -50,13 +50,27 @@ const resetConfirmSchema = z.object({
   password: z.string().min(8),
 })
 
-const pushSubscriptionSchema = z.object({
-  endpoint: z.string().url(),
-  keys: z.object({
-    p256dh: z.string(),
-    auth: z.string(),
+// Navegador (formato de sempre) ou aparelho dos apps nativos (token FCM).
+const pushSubscriptionSchema = z.union([
+  z.object({
+    endpoint: z.string().url(),
+    keys: z.object({
+      p256dh: z.string(),
+      auth: z.string(),
+    }),
   }),
-})
+  z.object({
+    provider: z.literal('FCM'),
+    token: z.string().min(1).max(4096),
+    platform: z.enum(['ios', 'android']),
+  }),
+])
+
+const pushTokenSchema = z.object({ token: z.string().min(1).max(4096) })
+
+const activateSchema = z.object({ token: z.string().min(20).max(200) })
+
+const deleteAccountSchema = z.object({ password: z.string().min(1) })
 
 async function tenantBySlug(slug: string) {
   const tenant = await prisma.tenant.findUnique({ where: { slug } })
@@ -90,41 +104,111 @@ async function createPatientSession(req: Request, patient: { id: string; email: 
   return token
 }
 
+const LINK_INVALIDO = 'Link inválido ou expirado'
+const CONTA_EXISTE = 'Já existe uma conta com este e-mail. Faça login ou use "esqueci minha senha".'
+
 router.post('/auth/register', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const body = registerSchema.parse(req.body)
     const tenant = await tenantBySlug(body.tenantSlug)
-    const passwordHash = await bcrypt.hash(body.password, 12)
 
     // prismaAuth porque a verificacao abaixo depende de LER o passwordHash: o
     // cliente comum o devolve como undefined, e a conta ja ativada pareceria
-    // sem senha — abrindo justamente o furo que o comentario seguinte proibe.
+    // sem senha.
     const existing = await prismaAuth.patient.findUnique({
       where: { email_tenantId: { email: body.email, tenantId: tenant.id } },
     })
 
-    // Cadastro feito pela clínica ainda não tem senha: este registro é a
-    // ativação do acesso. Já tendo senha, trocá-la aqui entregaria o prontuário
-    // a quem apenas soubesse o e-mail — recuperação de senha é o caminho.
     if (existing?.passwordHash) {
+      throw new AppError(CONTA_EXISTE, 409, 'ACCOUNT_EXISTS')
+    }
+
+    /* Cadastro da clinica sem senha ou e-mail novo: nada e gravado na paciente
+       nem criado ate o link do e-mail ser aberto. Antes, este ponto gravava a
+       senha direto, e quem soubesse o e-mail de uma paciente cadastrada pela
+       clinica entrava no prontuario dela (medido por HTTP em 14/11/2026). A
+       resposta e a mesma nos dois casos, para nao revelar quem ja e paciente. */
+    const token = randomToken()
+    const pedido = await prisma.patientActivationToken.create({
+      data: {
+        tenantId: tenant.id,
+        email: body.email,
+        name: body.name,
+        phone: body.phone,
+        passwordHash: await bcrypt.hash(body.password, 12),
+        tokenHash: sha256(token),
+        expiresAt: addHours(24),
+      },
+    })
+
+    const { sent } = await sendMail({
+      to: body.email,
+      subject: 'Ativar acesso — portal da paciente',
+      body: `Olá, ${body.name}.\n\nRecebemos um pedido para criar o seu acesso ao portal. Para confirmar que este e-mail é seu, use o link abaixo. Ele vale por 24 horas.\n\nSe não foi você, ignore este e-mail: nenhum acesso foi criado.`,
+      action: { label: 'Ativar acesso', url: `${publicBaseUrl()}/paciente/?ativar=${token}` },
+    })
+
+    // Em producao, nao prometer um e-mail que nao saiu.
+    if (!sent && process.env.NODE_ENV === 'production') {
+      await prisma.patientActivationToken.delete({ where: { id: pedido.id } })
       throw new AppError(
-        'Já existe uma conta com este e-mail. Faça login ou use "esqueci minha senha".',
-        409,
-        'ACCOUNT_EXISTS',
+        'Não foi possível enviar o e-mail de ativação agora. Tente mais tarde ou fale com a clínica.',
+        503,
+        'MAIL_UNAVAILABLE',
       )
     }
+
+    res.status(202).json({
+      status: 'CONFIRMAR_EMAIL',
+      email: body.email,
+      activationToken: process.env.NODE_ENV === 'production' ? undefined : token,
+    })
+  } catch (err) {
+    next(err)
+  }
+})
+
+router.post('/auth/activate', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { token } = activateSchema.parse(req.body)
+    const pedido = await prisma.patientActivationToken.findUnique({ where: { tokenHash: sha256(token) } })
+    if (!pedido || pedido.usedAt || pedido.expiresAt < new Date()) throw new UnauthorizedError(LINK_INVALIDO)
+
+    // Reivindica o link de forma atomica: dois cliques simultaneos nao ativam duas vezes.
+    const { count } = await prisma.patientActivationToken.updateMany({
+      where: { id: pedido.id, usedAt: null },
+      data: { usedAt: new Date() },
+    })
+    if (count !== 1) throw new UnauthorizedError(LINK_INVALIDO)
+
+    const tenant = await prisma.tenant.findUnique({ where: { id: pedido.tenantId } })
+    if (!tenant || !tenant.isActive) throw new UnauthorizedError(LINK_INVALIDO)
+
+    // prismaAuth: decidir se a conta ja tem senha exige ler o hash.
+    const existing = await prismaAuth.patient.findUnique({
+      where: { email_tenantId: { email: pedido.email, tenantId: pedido.tenantId } },
+    })
+
+    // Ativada por outro caminho (outro link, recuperacao de senha) depois deste pedido.
+    if (existing?.passwordHash) throw new AppError(CONTA_EXISTE, 409, 'ACCOUNT_EXISTS')
 
     const patient = existing
       ? await prisma.patient.update({
           where: { id: existing.id },
           data: {
-            passwordHash,
+            passwordHash: pedido.passwordHash,
             // Não sobrescreve o cadastro da clínica com dados do formulário
-            phone: existing.phone ?? body.phone,
+            phone: existing.phone ?? pedido.phone,
           },
         })
       : await prisma.patient.create({
-          data: { name: body.name, email: body.email, phone: body.phone, passwordHash, tenantId: tenant.id },
+          data: {
+            name: pedido.name,
+            email: pedido.email,
+            phone: pedido.phone,
+            passwordHash: pedido.passwordHash,
+            tenantId: tenant.id,
+          },
         })
 
     /* Uma solicitação da landing pode chegar antes da pessoa criar acesso ao
@@ -143,11 +227,11 @@ router.post('/auth/register', async (req: Request, res: Response, next: NextFunc
       data: { patientId: patient.id },
     })
 
-    const token = await createPatientSession(req, patient)
+    const sessionToken = await createPatientSession(req, patient)
     await prisma.patient.update({ where: { id: patient.id }, data: { lastLoginAt: new Date() } })
 
     res.status(201).json({
-      token,
+      token: sessionToken,
       patient: { id: patient.id, name: patient.name, email: patient.email, phone: patient.phone },
       tenant: { id: tenant.id, name: tenant.name, slug: tenant.slug },
     })
@@ -288,6 +372,37 @@ router.get('/me', async (req, res, next) => {
     })
     if (!patient) throw new UnauthorizedError()
     res.json(patient)
+  } catch (err) {
+    next(err)
+  }
+})
+
+/**
+ * Exclusao da conta pela propria paciente (exigencia das lojas).
+ *
+ * Remove o ACESSO, nao o registro: prontuario, consultas e documentos tem
+ * guarda legal obrigatoria e ficam. A conta volta ao estado de "cadastrada
+ * pela clinica, sem acesso" — e reativar passa pela confirmacao por e-mail.
+ */
+router.delete('/me', async (req, res, next) => {
+  try {
+    const { password } = deleteAccountSchema.parse(req.body)
+    // prismaAuth: conferir a senha exige o hash, que o cliente comum omite.
+    const patient = await prismaAuth.patient.findUnique({ where: { id: req.user!.userId } })
+    if (!patient || patient.tenantId !== req.user!.tenantId || !patient.passwordHash) throw new UnauthorizedError()
+    if (!(await bcrypt.compare(password, patient.passwordHash))) throw new UnauthorizedError('Senha incorreta')
+
+    await prisma.patient.update({ where: { id: patient.id }, data: { passwordHash: null } })
+    await prisma.authSession.updateMany({
+      where: { patientId: patient.id, revokedAt: null },
+      data: { revokedAt: new Date() },
+    })
+    await prisma.pushSubscription.deleteMany({ where: { patientId: patient.id } })
+    await prisma.patientActivationToken.deleteMany({
+      where: { tenantId: patient.tenantId, email: patient.email, usedAt: null },
+    })
+    await audit(req, 'DELETE', 'patientAccess', patient.id)
+    res.status(204).end()
   } catch (err) {
     next(err)
   }
@@ -446,19 +561,23 @@ router.post('/appointments', async (req, res, next) => {
 router.post('/push/subscriptions', async (req, res, next) => {
   try {
     const body = pushSubscriptionSchema.parse(req.body)
-    const subscription = await prisma.pushSubscription.upsert({
-      where: { endpoint: body.endpoint },
-      update: { keys: body.keys, revokedAt: null, userAgent: req.headers['user-agent'] },
-      create: {
-        endpoint: body.endpoint,
-        keys: body.keys,
-        subjectType: 'PATIENT',
-        patientId: req.user!.userId,
-        tenantId: req.user!.tenantId,
-        userAgent: req.headers['user-agent'],
-      },
-    })
+    const subscription = await inscreverAparelho(
+      { patientId: req.user!.userId, tenantId: req.user!.tenantId, userAgent: req.headers['user-agent'] },
+      body,
+    )
     res.status(201).json(subscription)
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Chamado no logout do app. Mesma resposta exista ou nao, seja de quem for:
+// nao revela se o token pertence a outra paciente.
+router.delete('/push/subscriptions', async (req, res, next) => {
+  try {
+    const { token } = pushTokenSchema.parse(req.body)
+    await removerAparelho(req.user!.userId, token)
+    res.status(204).end()
   } catch (err) {
     next(err)
   }

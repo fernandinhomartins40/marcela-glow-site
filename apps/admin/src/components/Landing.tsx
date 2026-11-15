@@ -26,6 +26,7 @@ import { api, ConfirmDialog, errorMessage } from '../lib/ui'
 import { SectionFields } from './landing/secoes'
 import { SearchPreview } from './landing/preview'
 import { PreviaAoVivo } from './landing/PreviaAoVivo'
+import { abrirExterno, ehNativo, URL_DO_SITE } from '../lib/nativo'
 import type { SectionId, SectionState, LandingData } from './landing/types'
 
 /**
@@ -282,8 +283,15 @@ function SectionEditor({
         </div>
 
         <div className="cms-head-actions">
-          {/* O admin mora em /admin/ do mesmo domínio, então a raiz é o site. */}
-          <a className="cms-btn" href="/" target="_blank" rel="noreferrer">
+          {/* Na web o admin mora em /admin/ do mesmo domínio, então a raiz é o
+              site; na casca nativa a raiz é o próprio app, e o site abre fora. */}
+          <a
+            className="cms-btn"
+            href={ehNativo ? URL_DO_SITE : '/'}
+            target="_blank"
+            rel="noreferrer"
+            onClick={ehNativo ? (e) => { e.preventDefault(); abrirExterno(URL_DO_SITE) } : undefined}
+          >
             <ExternalLink size={14} aria-hidden="true" />
             Abrir o site
           </a>

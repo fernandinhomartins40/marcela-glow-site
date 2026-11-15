@@ -14,6 +14,17 @@ describe('continuidade entre solicitação pública e portal', () => {
 
   it('mantém o mesmo endpoint autenticado para criar o acesso', () => {
     expect(login).toContain('api.post(`/patient/auth/${mode}`')
-    expect(login).toContain('localStorage.setItem(TOKEN_KEY, data.token)')
+    // O token da conta recém-criada é gravado pela fronteira nativa (localStorage + sistema).
+    expect(login).toContain('guardarSessao(TOKEN_KEY, data.token)')
+  })
+
+  it('o cadastro pede confirmação por e-mail e o link de ativação conclui o acesso', () => {
+    // Sem token no cadastro, avisa do e-mail em vez de entrar.
+    expect(login).toContain('if (!data?.token)')
+    expect(login).toContain('Enviamos um link de ativação para')
+    // `/paciente/?ativar=<token>` troca o token do e-mail pela sessão, pelo mesmo caminho do login.
+    expect(login).toContain("url.searchParams.get('ativar')")
+    expect(login).toContain(".post('/patient/auth/activate', { token: ativar })")
+    expect(login).toContain("url.searchParams.delete('ativar')")
   })
 })

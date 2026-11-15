@@ -29,6 +29,7 @@ import {
   Toolbar,
 } from '../lib/ui'
 import { useDebounced } from '../lib/useDebounced'
+import { URL_DO_SITE } from '../lib/nativo'
 
 interface TeamUser {
   id: string
@@ -424,7 +425,7 @@ function InviteForm({ catalog, onClose }: { catalog?: RoleCatalog; onClose: () =
           <input
             aria-label="Link do convite, para copiar"
             readOnly
-            value={`${window.location.origin}/convite/${sent}`}
+            value={`${URL_DO_SITE}/convite/${sent}`}
             onFocus={(e) => e.target.select()}
           />
           <p className="hint">

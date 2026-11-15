@@ -70,7 +70,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
             <RefreshCw size={16} aria-hidden="true" />
             Recarregar a pagina
           </button>
-          <button type="button" className="ghost" onClick={() => { window.location.href = '/admin/' }}>
+          <button type="button" className="ghost" onClick={() => { window.location.href = import.meta.env.BASE_URL }}>
             Voltar ao inicio
           </button>
         </div>

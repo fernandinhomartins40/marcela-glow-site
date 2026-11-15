@@ -1,4 +1,5 @@
 import React from 'react'
+import { ehNativo } from './nativo'
 
 /**
  * Se o portal da paciente está rodando como aplicativo instalado.
@@ -45,6 +46,8 @@ export function registrarModoAplicativo(): void {
 
 export function ehAplicativoInstalado(): boolean {
   if (typeof window === 'undefined') return false
+  // Na casca nativa nenhuma das três detecções abaixo vale, e ela é app por definição.
+  if (ehNativo) return true
 
   const porMediaQuery = window.matchMedia?.('(display-mode: standalone)').matches ?? false
   const porSafariIOS = (window.navigator as { standalone?: boolean }).standalone === true

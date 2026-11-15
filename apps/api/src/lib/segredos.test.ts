@@ -75,12 +75,19 @@ describe('so a autenticacao usa prismaAuth', () => {
     expect(auth).toMatch(/prismaAuth\.user\.findUnique/)
   })
 
-  it('o login da paciente e a ativacao de conta tambem', () => {
+  it('o login da paciente, o cadastro, a ativacao e a exclusao de conta tambem', () => {
     const paciente = lerRota('patient.ts')
-    // Dois pontos: o login e a checagem de conta ja ativada. A segunda decide
-    // por `existing?.passwordHash`, que com o cliente comum seria sempre
-    // undefined — e a senha de uma conta existente seria sobrescrita.
-    expect(paciente.match(/prismaAuth\.patient\.findUnique/g)?.length).toBe(2)
+    // Quatro pontos, ampliados de dois em 14/11/2026 conscientemente:
+    // - login: bcrypt.compare;
+    // - cadastro e ativacao: decidem por `existing?.passwordHash`, que com o
+    //   cliente comum seria sempre undefined — a conta ja ativada pareceria
+    //   nova e a senha seria sobrescrita;
+    // - exclusao de conta: confere a senha atual antes de remover o acesso.
+    expect(paciente.match(/prismaAuth\.patient\.findUnique/g)?.length).toBe(4)
+    for (const rota of ["'/auth/login'", "'/auth/register'", "'/auth/activate'", "router.delete('/me'"]) {
+      const trecho = paciente.slice(paciente.indexOf(rota), paciente.indexOf(rota) + 1200)
+      expect(trecho, rota).toMatch(/prismaAuth\.patient\.findUnique/)
+    }
   })
 
   it('nenhuma outra rota importa prismaAuth', () => {

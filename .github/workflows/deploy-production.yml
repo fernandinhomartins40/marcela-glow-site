@@ -252,9 +252,24 @@ jobs:
       - name: Ensure .env exists on VPS
         env:
           SSHPASS: ${{ secrets.VPS_PASSWORD }}
+          # Push dos apps nativos e versao minima deles. Ausentes: o .env da VPS
+          # fica como esta (vazio/padrao) e o deploy segue.
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          MIN_APP_VERSION_PATIENT: ${{ vars.MIN_APP_VERSION_PATIENT }}
+          MIN_APP_VERSION_ADMIN: ${{ vars.MIN_APP_VERSION_ADMIN }}
         run: |
+          # A conta de servico vai em base64: o JSON tem aspas e \n na chave, e o
+          # upsert_env (awk -v) interpretaria o \n. A API aceita os dois formatos.
+          FIREBASE_SA_B64=""
+          if [ -n "${FIREBASE_SERVICE_ACCOUNT:-}" ]; then
+            FIREBASE_SA_B64="$(printf '%s' "$FIREBASE_SERVICE_ACCOUNT" | base64 -w0)"
+            echo "::add-mask::$FIREBASE_SA_B64"
+          fi
+          # So digitos e pontos: o valor entra na linha de comando remota.
+          case "${MIN_APP_VERSION_PATIENT:-}" in *[!0-9.]*) MIN_APP_VERSION_PATIENT="" ;; esac
+          case "${MIN_APP_VERSION_ADMIN:-}" in *[!0-9.]*) MIN_APP_VERSION_ADMIN="" ;; esac
           sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "APP_ROOT='${{ env.APP_ROOT }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' IMAGE_PREFIX='${{ env.IMAGE_PREFIX }}' IMAGE_TAG='${{ env.RELEASE_VERSION }}' bash -s" <<'ENDSSH'
+            "APP_ROOT='${{ env.APP_ROOT }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' IMAGE_PREFIX='${{ env.IMAGE_PREFIX }}' IMAGE_TAG='${{ env.RELEASE_VERSION }}' FIREBASE_SA_B64='$FIREBASE_SA_B64' MIN_APP_VERSION_PATIENT='${MIN_APP_VERSION_PATIENT:-}' MIN_APP_VERSION_ADMIN='${MIN_APP_VERSION_ADMIN:-}' bash -s" <<'ENDSSH'
             set -euo pipefail
 
             ENV_FILE="$APP_ROOT/.env"
@@ -349,10 +364,25 @@ jobs:
             upsert_env "PUBLIC_APP_URL" "$CANONICAL_URL"
             # Os dois domínios respondem: o secundário redireciona, mas um app já
             # aberto nele continua chamando a API com aquela origem.
-            upsert_env "CORS_ORIGIN" "https://${SECONDARY_DOMAIN},https://${PRIMARY_DOMAIN}"
+            # capacitor://localhost (iOS) e https://localhost (Android) sao a
+            # origem dos apps nativos; a API autentica por Bearer, nao cookie.
+            upsert_env "CORS_ORIGIN" "https://${SECONDARY_DOMAIN},https://${PRIMARY_DOMAIN},capacitor://localhost,https://localhost"
             upsert_env "FRONTEND_URL" "$CANONICAL_URL"
             upsert_env "S3_ENDPOINT" "http://minio:9000"
             upsert_env "S3_PUBLIC_BASE_URL" "$CANONICAL_URL/files"
+            if [ -n "${FIREBASE_SA_B64:-}" ]; then
+              upsert_env "FIREBASE_SERVICE_ACCOUNT" "$FIREBASE_SA_B64"
+            fi
+            if [ -n "${MIN_APP_VERSION_PATIENT:-}" ]; then
+              upsert_env "MIN_APP_VERSION_PATIENT" "$MIN_APP_VERSION_PATIENT"
+            else
+              ensure_env "MIN_APP_VERSION_PATIENT" "0.0.0"
+            fi
+            if [ -n "${MIN_APP_VERSION_ADMIN:-}" ]; then
+              upsert_env "MIN_APP_VERSION_ADMIN" "$MIN_APP_VERSION_ADMIN"
+            else
+              ensure_env "MIN_APP_VERSION_ADMIN" "0.0.0"
+            fi
 
             POSTGRES_USER_VALUE="$(get_env "POSTGRES_USER" | tr -d '\r')"
             POSTGRES_PASSWORD_VALUE="$(get_env "POSTGRES_PASSWORD" | tr -d '\r')"

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { ehNativo, esquecerSessao, plataforma } from './nativo'
 
 export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || '/api' })
 export const tenantSlug = import.meta.env.VITE_TENANT_SLUG || 'marcela-duch'
@@ -15,8 +16,11 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (axios.isAxiosError(error) && error.response?.status === 401 && localStorage.getItem(TOKEN_KEY)) {
-      localStorage.removeItem(TOKEN_KEY)
+    /* A exclusão de conta responde 401 para senha errada: ali o erro vai para
+       a folha, e a paciente continua logada. */
+    const senhaErradaNaExclusao = axios.isAxiosError(error) && error.config?.method === 'delete' && error.config?.url === '/patient/me'
+    if (axios.isAxiosError(error) && error.response?.status === 401 && !senhaErradaNaExclusao && localStorage.getItem(TOKEN_KEY)) {
+      esquecerSessao(TOKEN_KEY)
       window.location.reload()
     }
     return Promise.reject(error)
@@ -29,9 +33,34 @@ export function getErrorMessage(error: unknown, fallback = 'Não foi possível c
   return fallback
 }
 
-export function logout() {
-  localStorage.removeItem(TOKEN_KEY)
+/* O token FCM com que este aparelho se inscreveu. Fica guardado para o logout
+   conseguir dizer à API qual inscrição apagar. */
+const PUSH_TOKEN_KEY = 'patient_push_token'
+
+export async function logout() {
+  const tokenDoAparelho = ehNativo ? localStorage.getItem(PUSH_TOKEN_KEY) : null
+  if (tokenDoAparelho) {
+    localStorage.removeItem(PUSH_TOKEN_KEY)
+    /* Antes de esquecer a sessão: a rota exige o token de acesso. Falha de
+       rede não prende ninguém no app — no pior caso a API revoga o token
+       quando o FCM o recusar. */
+    const { FirebaseMessaging } = await import('@capacitor-firebase/messaging')
+    await FirebaseMessaging.deleteToken().catch(() => undefined)
+    await api
+      .delete('/patient/push/subscriptions', { data: { token: tokenDoAparelho }, timeout: 5000 })
+      .catch(() => undefined)
+  }
+  esquecerSessao(TOKEN_KEY)
   window.location.reload()
+}
+
+/**
+ * Remove o acesso da paciente ao portal. A API exige a senha atual e mantém o
+ * registro clínico; aqui só resta sair.
+ */
+export async function excluirConta(password: string) {
+  await api.delete('/patient/me', { data: { password } })
+  await logout()
 }
 
 export type AppointmentStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | string
@@ -181,7 +210,61 @@ function urlBase64ToUint8Array(value: string) {
   return Uint8Array.from([...raw].map((char) => char.charCodeAt(0)))
 }
 
+const SEM_LEMBRETES = 'Lembretes ainda não estão disponíveis.'
+
+/**
+ * Push do app de loja: token FCM nos dois sistemas (no iOS o Firebase repassa
+ * ao APNs). Sem `google-services.json` / `GoogleService-Info.plist` o plugin
+ * recusa o `getToken` em vez de derrubar o app — e a paciente vê a mesma
+ * mensagem que a web mostra quando a API não tem chave.
+ */
+async function ativarPushNativo() {
+  const { FirebaseMessaging } = await import('@capacitor-firebase/messaging')
+  const { receive } = await FirebaseMessaging.requestPermissions()
+  if (receive !== 'granted') {
+    throw new Error('As notificações estão desligadas para este aplicativo. Ative-as nos ajustes do celular.')
+  }
+  /* Android 8+: `avisos` é o canal que a API usa; sem ele criado a notificação
+     cai no canal genérico do FCM. O manifesto também o aponta como padrão. */
+  if (plataforma === 'android') {
+    await FirebaseMessaging.createChannel({ id: 'avisos', name: 'Lembretes e avisos' }).catch(() => undefined)
+  }
+  const token = await FirebaseMessaging.getToken()
+    .then((r) => r.token)
+    .catch(() => null)
+  if (!token) throw new Error(SEM_LEMBRETES)
+  await api.post('/patient/push/subscriptions', { provider: 'FCM', token, platform: plataforma })
+  localStorage.setItem(PUSH_TOKEN_KEY, token)
+}
+
+/**
+ * Ouvintes do push nativo, ligados uma vez na abertura do app.
+ *
+ * Toque na notificação: a API manda `url` com o caminho da web
+ * (`/paciente/jornada/...`); no app o roteador não tem esse prefixo.
+ * Token renovado pelo FCM: reinscreve, senão a API seguiria mandando para um
+ * token morto.
+ */
+export async function ouvirPushNativo(navegar: (caminho: string) => void) {
+  if (!ehNativo) return
+  const { FirebaseMessaging } = await import('@capacitor-firebase/messaging')
+  await FirebaseMessaging.addListener('notificationActionPerformed', ({ notification }) => {
+    const url = (notification.data as { url?: unknown } | undefined)?.url
+    if (typeof url !== 'string' || !url.startsWith('/')) return
+    navegar(url.replace(/^\/paciente(?=\/|$)/, '') || '/')
+  })
+  await FirebaseMessaging.addListener('tokenReceived', ({ token }) => {
+    const anterior = localStorage.getItem(PUSH_TOKEN_KEY)
+    if (!anterior || anterior === token || !localStorage.getItem(TOKEN_KEY)) return
+    api
+      .post('/patient/push/subscriptions', { provider: 'FCM', token, platform: plataforma })
+      .then(() => localStorage.setItem(PUSH_TOKEN_KEY, token))
+      .catch(() => undefined)
+  })
+}
+
 export async function enablePushNotifications() {
+  if (ehNativo) return ativarPushNativo()
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     throw new Error('Seu navegador não permite lembretes automáticos.')
   }

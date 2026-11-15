@@ -1,5 +1,6 @@
 import React from 'react'
-import { Loader2, Monitor, Smartphone } from 'lucide-react'
+import { ExternalLink, Loader2, Monitor, Smartphone } from 'lucide-react'
+import { abrirExterno, ehNativo, URL_DO_SITE } from '../../lib/nativo'
 import type { LandingData, SectionId } from './types'
 
 /**
@@ -37,15 +38,35 @@ function dispositivoSalvo(): Dispositivo {
   }
 }
 
-export function PreviaAoVivo({
-  secao,
-  draft,
-  images,
-}: {
+type Props = {
   secao: SectionId
   draft: Record<string, unknown>
   images: LandingData['images']
-}) {
+}
+
+/**
+ * Na casca nativa a origem é a do app, e o site só aceita mensagem do próprio
+ * domínio (trava de `previa.test.ts`, que não se afrouxa): sem moldura, só o
+ * caminho para o site. Editar a landing é tarefa de computador (D4).
+ */
+export function PreviaAoVivo(props: Props) {
+  if (ehNativo) {
+    return (
+      <div className="previa-vivo">
+        <p className="hint">A prévia ao vivo fica no computador.</p>
+        <div>
+          <button type="button" className="cms-btn" onClick={() => abrirExterno(URL_DO_SITE)}>
+            <ExternalLink size={14} aria-hidden="true" />
+            Abrir o site
+          </button>
+        </div>
+      </div>
+    )
+  }
+  return <PreviaNaMoldura {...props} />
+}
+
+function PreviaNaMoldura({ secao, draft, images }: Props) {
   const moldura = React.useRef<HTMLIFrameElement>(null)
   const palco = React.useRef<HTMLDivElement>(null)
   const [dispositivo, setDispositivo] = React.useState<Dispositivo>(dispositivoSalvo)

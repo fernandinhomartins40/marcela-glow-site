@@ -5,7 +5,8 @@ export default defineConfig({
   // O CRM é servido pelo nginx sob `/admin/`. Sem esta base explícita, um
   // build de container pode emitir `/assets/...`, que cai no site público e
   // deixa o painel em branco por receber HTML no lugar do bundle.
-  base: '/admin/',
+  // O app de loja serve da raiz da casca: `build:nativo` passa `--base /`.
+  base: process.env.VITE_BASE_PATH || '/admin/',
   plugins: [react()],
   server: {
     host: '0.0.0.0',

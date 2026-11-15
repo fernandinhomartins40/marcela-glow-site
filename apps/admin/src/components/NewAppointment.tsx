@@ -1,6 +1,7 @@
 import React from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { MessageCircle } from 'lucide-react'
+import { abrirExterno } from '../lib/nativo'
 import {
   api,
   errorMessage,
@@ -90,7 +91,7 @@ export function NewAppointment({
           <h3>Mensagem para a paciente</h3>
           <pre>{result.message}</pre>
           {result.url ? (
-            <button className="whatsapp-button" onClick={() => window.open(result.url!, '_blank', 'noopener')}>
+            <button className="whatsapp-button" onClick={() => abrirExterno(result.url!)}>
               <MessageCircle size={15} />
               Abrir no WhatsApp
             </button>

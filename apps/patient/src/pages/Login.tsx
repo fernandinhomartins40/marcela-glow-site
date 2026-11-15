@@ -7,12 +7,18 @@ import monogramBrown from '@/assets/brand/md-monogram-brown.webp'
 import monogramWhite from '@/assets/brand/md-monogram-white.webp'
 import { Splash, useAbertura } from '@/components/Splash'
 import { useAplicativoInstalado } from '@/lib/standalone'
+import { ehNativo, guardarSessao } from '@/lib/nativo'
 
-const demoPatient = {
-  label: 'Paciente demo',
-  email: 'paciente@exemplo.com',
-  password: 'Paciente@2026',
-}
+/* Fora do app de loja: o `build:nativo` roda no modo `nativo`, o Vite troca
+   `MODE` por texto fixo e o minificador descarta o objeto — a senha não vai
+   para o pacote que se publica. Na web nada muda. */
+const demoPatient = import.meta.env.MODE === 'nativo'
+  ? null
+  : {
+      label: 'Paciente demo',
+      email: 'paciente@exemplo.com',
+      password: 'Paciente@2026',
+    }
 
 export function Login() {
   /* O site chega aqui depois de uma solicitação pública. Abrir já no cadastro
@@ -27,6 +33,7 @@ export function Login() {
   const [password, setPassword] = React.useState('')
   const [showPassword, setShowPassword] = React.useState(false)
   const [error, setError] = React.useState('')
+  const [aviso, setAviso] = React.useState('')
   /* Instalado, a entrada e a de um aplicativo: a marca aparece primeiro e o
      formulario recebe o monograma no lugar do nome escrito. */
   const comoApp = useAplicativoInstalado()
@@ -36,6 +43,7 @@ export function Login() {
   const isRegister = mode === 'register'
 
   function fillDemo() {
+    if (!demoPatient) return
     setMode('login')
     setEmail(demoPatient.email)
     setPassword(demoPatient.password)
@@ -45,11 +53,36 @@ export function Login() {
   function switchMode() {
     setMode(isRegister ? 'login' : 'register')
     setError('')
+    setAviso('')
   }
+
+  /* O link de ativação do e-mail chega como `?ativar=<token>`. O parâmetro sai
+     da URL antes da chamada: o token é de uso único e não deve ficar no
+     histórico nem ser reenviado por uma segunda execução do efeito. */
+  React.useEffect(() => {
+    const url = new URL(window.location.href)
+    const ativar = url.searchParams.get('ativar')
+    if (!ativar) return
+    url.searchParams.delete('ativar')
+    window.history.replaceState(window.history.state, '', url)
+    setIsSubmitting(true)
+    api
+      .post('/patient/auth/activate', { token: ativar })
+      .then(({ data }) => {
+        guardarSessao(TOKEN_KEY, data.token)
+        window.location.reload()
+      })
+      .catch((err) => {
+        setMode('login')
+        setError(getErrorMessage(err, 'Link inválido ou expirado.'))
+        setIsSubmitting(false)
+      })
+  }, [])
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
     setError('')
+    setAviso('')
     setIsSubmitting(true)
     try {
       const { data } = await api.post(`/patient/auth/${mode}`, {
@@ -59,7 +92,14 @@ export function Login() {
         password,
         tenantSlug,
       })
-      localStorage.setItem(TOKEN_KEY, data.token)
+      /* Cadastro novo não entra direto: a API manda o link de ativação ao
+         e-mail, para provar que a conta é de quem o informou. */
+      if (!data?.token) {
+        setAviso(`Enviamos um link de ativação para ${data?.email ?? email}. Abra-o para concluir o acesso.`)
+        setIsSubmitting(false)
+        return
+      }
+      guardarSessao(TOKEN_KEY, data.token)
       window.location.reload()
     } catch (err) {
       setError(getErrorMessage(err, 'Não foi possível entrar. Confira seus dados.'))
@@ -211,6 +251,7 @@ export function Login() {
             </div>
 
             <Feedback tone="error">{error}</Feedback>
+            <Feedback tone="success">{aviso}</Feedback>
 
             <button type="submit" className="btn-primary w-full" disabled={isSubmitting}>
               {isSubmitting && <Loader2 size={16} className="animate-spin" aria-hidden="true" />}
@@ -222,13 +263,15 @@ export function Login() {
             <button type="button" onClick={switchMode} className="btn-outline w-full">
               {isRegister ? 'Já tenho acesso' : 'Quero criar meu acesso'}
             </button>
-            <button
-              type="button"
-              onClick={fillDemo}
-              className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Preencher {demoPatient.label}
-            </button>
+            {demoPatient && !ehNativo && (
+              <button
+                type="button"
+                onClick={fillDemo}
+                className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Preencher {demoPatient.label}
+              </button>
+            )}
           </div>
         </div>
       </div>

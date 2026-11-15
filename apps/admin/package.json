@@ -9,7 +9,10 @@
     "preview": "vite preview --port 4174",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:nativo": "tsc --noEmit -p tsconfig.app.json && vite build --mode nativo --base /",
+    "cap:sync": "cap sync",
+    "cap:assets": "capacitor-assets generate --android --ios --assetPath resources --iconBackgroundColor \"#f6f2ec\" --splashBackgroundColor \"#f6f2ec\""
   },
   "dependencies": {
     "@capacitor/app": "^8.1.2",

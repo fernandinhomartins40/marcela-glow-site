@@ -1,10 +1,11 @@
 import React from 'react'
-import { Bell, CalendarDays, ChevronRight, FileText, Home, LogOut, Menu, MessageCircle, Sparkles, X, type LucideIcon } from 'lucide-react'
+import { Bell, CalendarDays, ChevronRight, FileText, Home, LogOut, Menu, MessageCircle, Sparkles, UserX, X, type LucideIcon } from 'lucide-react'
 import { logout } from '@/lib/api'
 import { firstName, initials } from '@/lib/format'
 import { cn } from './ui'
 import logoMD from '@/assets/brand/md-monogram-brown.webp'
 import { useAplicativoInstalado } from '@/lib/standalone'
+import { ExcluirConta } from './ExcluirConta'
 
 export type SectionId = 'inicio' | 'consultas' | 'jornada' | 'prescricoes' | 'mensagens'
 
@@ -51,6 +52,7 @@ export function AppShell({
      muda — lá a barra de endereço e o botão de voltar já dão esse contexto. */
   const comoApp = useAplicativoInstalado()
   const [maisAberto, setMaisAberto] = React.useState(false)
+  const [excluindo, setExcluindo] = React.useState(false)
 
   React.useEffect(() => {
     if (!maisAberto) return
@@ -137,6 +139,10 @@ export function AppShell({
           <button onClick={logout} className="btn-ghost w-full justify-start">
             <LogOut size={16} aria-hidden="true" />
             Sair
+          </button>
+          <button onClick={() => setExcluindo(true)} className="btn-ghost w-full justify-start">
+            <UserX size={16} aria-hidden="true" />
+            Excluir minha conta
           </button>
         </div>
       </aside>
@@ -275,10 +281,26 @@ export function AppShell({
                   <span className="flex-1 font-medium">Sair da conta</span>
                 </button>
               </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMaisAberto(false)
+                    setExcluindo(true)
+                  }}
+                  className="flex w-full min-h-14 items-center gap-4 text-left text-foreground"
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-primary"><UserX size={18} aria-hidden="true" /></span>
+                  <span className="flex-1 font-medium">Excluir minha conta</span>
+                  <ChevronRight size={18} className="text-muted-foreground" aria-hidden="true" />
+                </button>
+              </li>
             </ul>
           </div>
         </div>
       )}
+
+      {excluindo && <ExcluirConta onFechar={() => setExcluindo(false)} />}
     </div>
   )
 }

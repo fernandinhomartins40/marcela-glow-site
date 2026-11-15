@@ -1,4 +1,5 @@
 import React from 'react'
+import { ehNativo } from './nativo'
 
 /**
  * Se o painel está rodando como aplicativo instalado.
@@ -61,7 +62,8 @@ export function ehAplicativoInstalado(): boolean {
     // Navegador com armazenamento bloqueado: as outras duas deteccoes bastam.
   }
 
-  return porMediaQuery || porSafariIOS || porParametro
+  // A casca nativa é sempre aplicativo: nenhuma das três detecções vale dentro dela.
+  return ehNativo || porMediaQuery || porSafariIOS || porParametro
 }
 
 /**

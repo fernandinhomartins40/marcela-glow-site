@@ -227,6 +227,7 @@ model Tenant {
   authSessions        AuthSession[]
   auditLogs           AuditLog[]
   passwordResetTokens PasswordResetToken[]
+  patientActivationTokens PatientActivationToken[]
   staffInvites        StaffInvite[]
   pushSubscriptions   PushSubscription[]
   userPermissions     UserPermission[]
@@ -1193,6 +1194,27 @@ model PasswordResetToken {
   tenant  Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
+// Pedido de acesso ao portal ainda nao confirmado pelo e-mail. Nada e gravado
+// na paciente (nem criado) antes do link ser aberto: sem isso, quem soubesse o
+// e-mail de uma paciente cadastrada pela clinica entrava no prontuario dela.
+// `passwordHash` e o bcrypt da senha digitada no cadastro; nunca sai em resposta.
+model PatientActivationToken {
+  id           String    @id @default(cuid())
+  tenantId     String
+  email        String
+  name         String
+  phone        String?
+  passwordHash String
+  tokenHash    String    @unique
+  expiresAt    DateTime
+  usedAt       DateTime?
+  createdAt    DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, email])
+}
+
 model StaffInvite {
   id          String       @id @default(cuid())
   email       String
@@ -1212,10 +1234,19 @@ model StaffInvite {
   @@index([email, tenantId])
 }
 
+// WEBPUSH: endpoint do navegador + chaves VAPID. FCM: o token do aparelho vai
+// em `endpoint` (ja unico) e `keys` fica {}.
+enum PushProvider {
+  WEBPUSH
+  FCM
+}
+
 model PushSubscription {
   id          String          @id @default(cuid())
   endpoint    String          @unique
   keys        Json
+  provider    PushProvider    @default(WEBPUSH)
+  platform    String?
   subjectType AuthSubjectType
   patientId   String?
   tenantId    String

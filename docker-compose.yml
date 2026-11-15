@@ -139,7 +139,7 @@ services:
       # Para popular uma instalacao nova, ponha SEED_DEMO_DATA=1 no .env.
       SEED_DEMO_DATA: ${SEED_DEMO_DATA:-0}
       PORT: 3001
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3095}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3095,capacitor://localhost,https://localhost}
       RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-1200}
       # nginx do host + nginx deste compose
       TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-2}
@@ -158,6 +158,9 @@ services:
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_SUBJECT: ${VAPID_SUBJECT:-mailto:contato@drmarceladuch.com.br}
+      FIREBASE_SERVICE_ACCOUNT: ${FIREBASE_SERVICE_ACCOUNT:-}
+      MIN_APP_VERSION_PATIENT: ${MIN_APP_VERSION_PATIENT:-0.0.0}
+      MIN_APP_VERSION_ADMIN: ${MIN_APP_VERSION_ADMIN:-0.0.0}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}

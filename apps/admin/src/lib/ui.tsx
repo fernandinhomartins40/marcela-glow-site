@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom'
 import axios from 'axios'
 import { useQuery } from '@tanstack/react-query'
 import { useDebounced } from './useDebounced'
+import { abrirExterno, esquecerSessao } from './nativo'
 import { AlertTriangle, ArrowLeft, Download, Loader2, Paperclip, Search, Upload, UserRound, X } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -49,7 +50,7 @@ api.interceptors.response.use(
     const status = axios.isAxiosError(error) ? error.response?.status : undefined
     // 403 é permissão faltando para esta conta: continua sendo erro de tela.
     if (status === 401 && localStorage.getItem(TOKEN_KEY)) {
-      localStorage.removeItem(TOKEN_KEY)
+      esquecerSessao(TOKEN_KEY)
       window.location.reload()
     }
     return Promise.reject(error)
@@ -775,7 +776,7 @@ export function AttachmentsPanel({
     setOpening(id)
     try {
       const { data } = await api.get(`/admin/files/${id}/download`)
-      window.open(data.downloadUrl, '_blank', 'noopener')
+      abrirExterno(data.downloadUrl)
     } finally {
       setOpening(null)
     }

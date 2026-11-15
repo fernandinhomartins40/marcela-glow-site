@@ -30,6 +30,7 @@ import {
   formatRelative,
   prescriptionStatus,
 } from '@/lib/format'
+import { abrirExterno } from '@/lib/nativo'
 import { EmptyState, Feedback, ItemRow, Panel, StatusChip } from './ui'
 
 export function AppointmentsList({ appointments }: { appointments: Appointment[] }) {
@@ -232,7 +233,7 @@ function AttachmentRow({ attachment }: { attachment: Attachment }) {
   const open = useMutation({
     mutationFn: () => fetchAttachmentUrl(attachment.id),
     onMutate: () => setError(null),
-    onSuccess: (url) => window.open(url, '_blank', 'noopener,noreferrer'),
+    onSuccess: (url) => abrirExterno(url),
     onError: (err) => setError(getErrorMessage(err, 'Não foi possível abrir o arquivo.')),
   })
 

@@ -45,6 +45,7 @@ import { AppointmentDrawer } from './Schedule'
 import { AvisosBarra, EnviarAviso } from './Avisos'
 import { Receber, type Pendencia } from './Receber'
 import { useAvisos } from '../lib/avisos'
+import { abrirExterno } from '../lib/nativo'
 
 /**
  * A tela da recepção.
@@ -245,7 +246,7 @@ export function Reception() {
   /** Abre a conversa e registra que a paciente foi avisada. */
   function avisarWhats(id: string, link: WhatsAppLink) {
     if (!link.url) return
-    window.open(link.url, '_blank', 'noopener')
+    abrirExterno(link.url)
     api.post(`/appointments/${id}/notified`).then(refresh).catch(() => undefined)
   }
 

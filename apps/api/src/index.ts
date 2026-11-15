@@ -116,6 +116,17 @@ app.get('/api/health', async (_req: Request, res: Response) => {
   }
 })
 
+/**
+ * Versao minima dos apps nativos. O app empacotado nao se atualiza com o
+ * deploy: abaixo desta versao ele pede para atualizar em vez de falhar.
+ */
+app.get('/api/app/versao', (_req: Request, res: Response) => {
+  res.json({
+    patient: { minima: process.env.MIN_APP_VERSION_PATIENT || '0.0.0' },
+    admin: { minima: process.env.MIN_APP_VERSION_ADMIN || '0.0.0' },
+  })
+})
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Routes
 // ─────────────────────────────────────────────────────────────────────────────

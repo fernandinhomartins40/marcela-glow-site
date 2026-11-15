@@ -5,18 +5,18 @@ import marbleTexture from '../assets/hero-regeneracao-desktop-v1.png'
 import monogramBrown from '../assets/brand/md-monogram-brown.webp'
 import { Splash, useAbertura } from '../components/Splash'
 import { useAplicativoInstalado } from '../lib/standalone'
+import { ehNativo, guardarSessao } from '../lib/nativo'
 
-const demoAdmin = {
-  label: 'Admin demo',
-  email: 'admin@drmarceladuch.com.br',
-  password: 'Admin@2024!',
-}
+type ContaDemo = { label: string; email: string; password: string }
 
-const demoStaff = {
-  label: 'Equipe demo',
-  email: 'equipe@drmarceladuch.com.br',
-  password: 'Equipe@2026!',
-}
+/* Fora do app de loja. O `MODE` é trocado no build, então no `build:nativo` o
+   ramo inteiro — senhas incluídas — sai do bundle; o `ehNativo` cobre o resto. */
+const CONTAS_DEMO: ContaDemo[] = import.meta.env.MODE === 'nativo' || ehNativo
+  ? []
+  : [
+      { label: 'Admin demo', email: 'admin@drmarceladuch.com.br', password: 'Admin@2024!' },
+      { label: 'Equipe demo', email: 'equipe@drmarceladuch.com.br', password: 'Equipe@2026!' },
+    ]
 
 export function Login() {
   const [email, setEmail] = React.useState('')
@@ -30,7 +30,7 @@ export function Login() {
   const comoApp = useAplicativoInstalado()
   const abrindo = useAbertura(comoApp)
 
-  function fillDemo(user: typeof demoAdmin) {
+  function fillDemo(user: ContaDemo) {
     setMode('login')
     setEmail(user.email)
     setPassword(user.password)
@@ -48,7 +48,7 @@ export function Login() {
         password,
         tenantSlug,
       })
-      localStorage.setItem(TOKEN_KEY, data.token)
+      guardarSessao(TOKEN_KEY, data.token)
       window.location.reload()
     } catch (err) {
       setError(errorMessage(err, 'Falha ao autenticar'))
@@ -83,13 +83,15 @@ export function Login() {
             <span className="eyebrow">Acesso da equipe</span>
             <h2>{mode === 'login' ? 'Entrar no painel' : 'Criar primeiro acesso'}</h2>
           </div>
-          <div className="demo-actions" aria-label="Usuários de teste">
-            {[demoAdmin, demoStaff].map((user) => (
-              <button key={user.email} type="button" className="demo-button" onClick={() => fillDemo(user)}>
-                {user.label}
-              </button>
-            ))}
-          </div>
+          {CONTAS_DEMO.length > 0 && (
+            <div className="demo-actions" aria-label="Usuários de teste">
+              {CONTAS_DEMO.map((user) => (
+                <button key={user.email} type="button" className="demo-button" onClick={() => fillDemo(user)}>
+                  {user.label}
+                </button>
+              ))}
+            </div>
+          )}
           <label>E-mail<input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="email@clinica.com" /></label>
           <label>Senha<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Sua senha" /></label>
           {error && <p className="error">{error}</p>}

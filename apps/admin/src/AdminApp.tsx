@@ -9,6 +9,8 @@ import { AppBar } from './components/AppBar'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { useAvisos } from './lib/avisos'
 import { useAplicativoInstalado } from './lib/standalone'
+import { ehNativo, esquecerSessao } from './lib/nativo'
+import { AtualizeOApp, useAtualizacaoObrigatoria } from './components/AtualizeOApp'
 import monogram from './assets/brand/md-monogram-white.webp'
 import './styles.css'
 
@@ -262,7 +264,7 @@ function Shell() {
           ))}
         </nav>
 
-        <button className="nav-signout" onClick={() => { localStorage.removeItem(TOKEN_KEY); window.location.reload() }}>
+        <button className="nav-signout" onClick={() => { esquecerSessao(TOKEN_KEY); window.location.reload() }}>
           <LogOut size={17} />Sair
         </button>
         <p className="nav-lema">Cuidado<br />em cada encontro.</p>
@@ -324,7 +326,7 @@ function Shell() {
           tab={tab}
           onNavigate={go}
           onSignOut={() => {
-            localStorage.removeItem(TOKEN_KEY)
+            esquecerSessao(TOKEN_KEY)
             window.location.reload()
           }}
         />
@@ -334,10 +336,14 @@ function Shell() {
 }
 
 function App() {
+  const atualizar = useAtualizacaoObrigatoria()
+
   React.useEffect(() => {
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
+    // Na casca os arquivos já são locais: service worker não tem o que guardar.
+    if (!ehNativo && 'serviceWorker' in navigator) navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`)
   }, [])
 
+  if (atualizar) return <AtualizeOApp />
   if (!localStorage.getItem(TOKEN_KEY)) return <Login />
 
   return (
