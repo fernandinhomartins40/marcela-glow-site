@@ -66,8 +66,12 @@ compose() {
 # sem tsc, sem Vite disputando CPU com os outros projetos do host.
 # ─────────────────────────────────────────────────────────────────────────────
 
+# So as imagens desta release. As de terceiros (postgres, minio, nginx) sao
+# fixadas por versao e ja estao no host; o `up` so as baixa se faltarem. Puxar
+# todas fazia o deploy depender do registry delas: em 15/11/2026 o quay.io
+# passou a responder 401 para a imagem do MinIO e barrou a release inteira.
 echo "Baixando as imagens da release $RELEASE..."
-if ! compose pull; then
+if ! compose pull api web admin patient; then
   echo "Falha ao baixar as imagens: a versao em producao segue intacta." >&2
   exit 1
 fi
