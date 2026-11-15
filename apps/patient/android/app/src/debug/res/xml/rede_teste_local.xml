@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tráfego em claro liberado SÓ para 10.0.2.2 (o computador visto de dentro do
+     emulador). Todo o resto segue o padrão do Android: só HTTPS. -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>

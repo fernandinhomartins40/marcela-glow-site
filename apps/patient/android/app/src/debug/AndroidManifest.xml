@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Só no APK de depuração: o build de teste (`npm run build:nativo:teste`)
+     fala com a API local do emulador em http://10.0.2.2. O release não leva isto. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application android:networkSecurityConfig="@xml/rede_teste_local" />
+</manifest>

@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "test": "vitest run",
     "build:nativo": "tsc --noEmit -p tsconfig.app.json && vite build --mode nativo --base /",
+    "build:nativo:teste": "node -e \"process.env.VITE_API_URL='http://10.0.2.2:3001/api';process.env.CAP_TESTE_LOCAL='1';require('child_process').execSync('npm run build:nativo && npx cap sync android',{stdio:'inherit'})\"",
     "cap:sync": "cap sync",
     "cap:assets": "capacitor-assets generate --android --ios --assetPath resources --iconBackgroundColor \"#f6f2ec\" --splashBackgroundColor \"#f6f2ec\""
   },

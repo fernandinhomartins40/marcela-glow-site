@@ -7,8 +7,10 @@ android {
         applicationId "br.com.dramarceladuch.medica"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // Versão: um lugar só. O CI passa -PversaoApp (da tag, ex. 1.2.3) e
+        // -PbuildApp (número da execução, sempre crescente); sem eles, o padrão local.
+        versionCode((project.findProperty('buildApp') ?: '1').toString().toInteger())
+        versionName((project.findProperty('versaoApp') ?: '1.0.0').toString())
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -16,8 +18,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            // Só no CI, com a chave de upload vinda dos segredos (ver docs/nativo/PUBLICACAO.md).
+            // Sem ela o release sai sem assinatura, e o CI avisa.
+            def chave = System.getenv('ANDROID_KEYSTORE_PATH')
+            if (chave) {
+                storeFile file(chave)
+                storePassword System.getenv('ANDROID_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('ANDROID_KEY_ALIAS')
+                keyPassword System.getenv('ANDROID_KEY_PASSWORD')
+            }
+        }
+    }
     buildTypes {
         release {
+            if (System.getenv('ANDROID_KEYSTORE_PATH')) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -43,6 +59,18 @@ dependencies {
 }
 
 apply from: 'capacitor.build.gradle'
+
+// O build de teste (`npm run build:nativo:teste`) liga allowMixedContent e aponta
+// para a API local. Se o sync dele ficou na pasta, nenhum release sai com ele.
+tasks.matching { it.name == 'preReleaseBuild' }.configureEach {
+    doFirst {
+        def config = file('src/main/assets/capacitor.config.json')
+        if (config.exists() && config.text =~ /"allowMixedContent"\s*:\s*true/) {
+            throw new GradleException('capacitor.config.json veio do build de teste (allowMixedContent). ' +
+                'Rode `npm run build:nativo` e `npx cap sync android` antes do release.')
+        }
+    }
+}
 
 try {
     def servicesJSON = file('google-services.json')

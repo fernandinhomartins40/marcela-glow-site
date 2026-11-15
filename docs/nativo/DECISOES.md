@@ -80,3 +80,12 @@ plano (`02-PLANO-DE-IMPLEMENTACAO.md`); o usuário não alterou nenhum padrão.
   `--mode nativo` no paciente): a forma `defineConfig(({ mode }) => …)` quebrava
   o Vitest 4. Os dois apps chegaram a soluções diferentes para o mesmo
   problema; ambas mantêm o padrão web (`/admin/`, `VITE_BASE_PATH` no paciente).
+
+## Onda 2 (agente D) — build pelo GitHub Actions
+
+- **Build só no GitHub Actions** (pedido da usuária, para não travar o computador): `.github/workflows/apps-nativos.yml` gera, por app, AAB, APK, APK de teste local e IPA (ou `.xcarchive` sem assinatura quando faltam os segredos da Apple), guardados 30 dias para baixar. Envio às lojas só com a opção ligada no disparo manual e o segredo presente.
+- **Versão:** `-PversaoApp` (da tag ou do disparo) e `-PbuildApp` = `run_number`.
+- **Assinatura iOS só automática**, pela chave da API do App Store Connect (`-allowProvisioningUpdates`): é o caminho sem Mac e sem `.p12`. Não provado até o primeiro envio.
+- **Barra de status no WebView < 140:** fundo da janela em `MainActivity` (`ColorDrawable`) pinta o recuo com a cor do tema. Provado no emulador (API 35, WebView 124) antes da mudança de rumo.
+- **Versão de teste (`build:nativo:teste`, `CAP_TESTE_LOCAL=1`):** `allowMixedContent` e HTTP só para `10.0.2.2`, este só no APK de depuração; o `build.gradle` recusa release com config de teste sincronizado. Provado por inspeção do APK de release (sem `networkSecurityConfig`); a recusa não foi exercitada.
+- **Política de privacidade não existe** (link do rodapé é `#`): bloqueia as duas lojas. Pendência da usuária (U7).

@@ -32,6 +32,14 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
             android:value="avisos" />
+        <!-- Icone da barra de notificacoes: monograma branco sobre transparente.
+             Sem ele o Android usa o icone do app e mostra um quadrado branco. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_stat_monograma" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/barra_status" />
     </application>
 
     <!-- Permissions -->

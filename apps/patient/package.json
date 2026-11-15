@@ -7,6 +7,7 @@
     "dev": "vite --port 5175",
     "build": "tsc --noEmit -p tsconfig.app.json && vite build",
     "build:nativo": "tsc --noEmit -p tsconfig.app.json && vite build --mode nativo",
+    "build:nativo:teste": "node -e \"process.env.VITE_API_URL='http://10.0.2.2:3001/api';process.env.CAP_TESTE_LOCAL='1';require('child_process').execSync('npm run build:nativo && npx cap sync android',{stdio:'inherit'})\"",
     "cap:sync": "cap sync",
     "preview": "vite preview --port 4175",
     "lint": "eslint .",

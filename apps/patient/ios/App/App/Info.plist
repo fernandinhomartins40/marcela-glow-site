@@ -66,11 +66,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>O Minha Jornada usa a câmera para você fotografar e enviar documentos e fotos de acompanhamento à clínica.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>O Minha Jornada acessa suas fotos para você escolher imagens e enviá-las à clínica.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>O Minha Jornada salva nas suas fotos os arquivos que você baixar da clínica.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

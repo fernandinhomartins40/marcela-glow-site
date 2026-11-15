@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Cor de tema do portal da paciente (a mesma da meta theme-color do index.html). -->
+    <color name="barra_status">#6f4f45</color>
+</resources>
