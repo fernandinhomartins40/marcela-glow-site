@@ -1,0 +1,60 @@
+# Vídeo de uso do "Marcela CRM" para a revisão da App Store, e os prints da
+# loja de carona (takeScreenshot). Roda no simulador do GitHub Actions
+# (.github/workflows/app-ios-video.yml), contra a API de produção.
+#
+# Este app não cria conta (a equipe é cadastrada pela clínica), então a Apple
+# não exige exclusão: o vídeo termina saindo da conta. Só navega, não altera
+# nada: atendimento, documento e agenda são dados que a clínica usa.
+appId: br.com.dramarceladuch.medica
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Entrar no painel"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: 01-entrar
+
+# Entrar
+- tapOn: "E-mail"
+- inputText: ${EMAIL}
+- tapOn: "Senha"
+- inputText: ${SENHA}
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Atender"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: 02-hoje
+
+- tapOn: "Agenda"
+- waitForAnimationToEnd
+- takeScreenshot: 03-agenda
+- tapOn: "Atender"
+- waitForAnimationToEnd
+- takeScreenshot: 04-atender
+- tapOn: "Pacientes"
+- waitForAnimationToEnd
+- takeScreenshot: 05-pacientes
+- tapOn:
+    text: ".*Paciente VIP Demo.*"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 06-paciente-detalhe
+
+- tapOn: "Mais"
+- tapOn: "Documentos"
+- waitForAnimationToEnd
+- takeScreenshot: 07-documentos
+- tapOn: "Mais"
+- tapOn: "Leads"
+- waitForAnimationToEnd
+- takeScreenshot: 08-leads
+
+# Sair
+- tapOn: "Mais"
+- tapOn: "Sair da conta"
+- extendedWaitUntil:
+    visible: "Entrar no painel"
+    timeout: 30000
+- waitForAnimationToEnd

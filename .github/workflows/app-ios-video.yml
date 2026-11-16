@@ -1,0 +1,155 @@
+name: iOS — vídeo e prints da App Store
+
+# Grava no simulador de iPhone do macOS o vídeo de uso de cada app (a Apple
+# pede na revisão; no da paciente, até excluir a conta) e tira os prints da
+# loja no mesmo percurso. Tudo contra a API de produção, com as contas de
+# revisão dos segredos. Nada roda no computador local.
+#
+# Roteiros: apps/patient/.maestro/video.yaml e apps/admin/.maestro/video.yaml.
+# Saída (Artifacts): ios-video-<app> com video.mp4, prints/ e a depuração do Maestro.
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: Qual app
+        type: choice
+        options: [ambos, paciente, medica]
+        default: ambos
+
+permissions:
+  contents: read
+
+jobs:
+  gravar:
+    name: Gravar (${{ matrix.app }})
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ inputs.app == 'ambos' && fromJSON('["paciente","medica"]') || fromJSON(format('["{0}"]', inputs.app)) }}
+    runs-on: macos-26
+    timeout-minutes: 75
+    env:
+      SAIDA: ${{ github.workspace }}/saida
+      PASTA: ${{ matrix.app == 'paciente' && 'apps/patient' || 'apps/admin' }}
+      WS: ${{ matrix.app == 'paciente' && '@marcela/patient' || '@marcela/admin' }}
+      BUNDLE: br.com.dramarceladuch.${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # O Maestro roda em Java.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build web do app (produção)
+        run: npm run build:nativo -w "$WS"
+
+      - name: Sincronizar a casca
+        working-directory: ${{ env.PASTA }}
+        run: npx cap sync ios
+
+      # Assinatura local ("-"): sem ela o app do simulador não usa o keychain.
+      - name: Compilar para o simulador
+        working-directory: ${{ env.PASTA }}/ios/App
+        run: |
+          set -o pipefail
+          xcodebuild -project App.xcodeproj -scheme App -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= PROVISIONING_PROFILE_SPECIFIER= \
+            build | tail -n 30
+          echo "APP_PATH=$RUNNER_TEMP/dd/Build/Products/Release-iphonesimulator/App.app" >> "$GITHUB_ENV"
+
+      # A tela "Hoje" e os horários seguem o fuso do aparelho, que herda o do runner (UTC).
+      - name: Fuso de Chapadão do Sul
+        run: sudo systemsetup -settimezone America/Campo_Grande >/dev/null 2>&1 || true
+
+      # 6,9" (1320×2868) é o tamanho que a App Store exige.
+      - name: Preparar o simulador
+        run: |
+          xcrun simctl list devices available -j > "$RUNNER_TEMP/devs.json"
+          DEV=$(node -e '
+            const d = require(process.argv[1]).devices
+            const todos = Object.entries(d).filter(([r]) => r.includes("iOS")).flatMap(([, l]) => l)
+            const pm = todos.filter((x) => /^iPhone \d+ Pro Max$/.test(x.name))
+              .sort((a, b) => parseInt(b.name.match(/\d+/)) - parseInt(a.name.match(/\d+/)))
+            if (!pm.length) { console.error(todos.map((x) => x.name).join(", ")); process.exit(1) }
+            console.log(pm[0].udid + " " + pm[0].name)
+          ' "$RUNNER_TEMP/devs.json")
+          UDID=${DEV%% *}
+          echo "Simulador: ${DEV#* }"
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl ui "$UDID" appearance light
+          xcrun simctl status_bar "$UDID" override --time "9:41" --dataNetwork wifi --wifiMode active --wifiBars 3 \
+            --cellularMode active --cellularBars 4 --batteryState charged --batteryLevel 100
+          xcrun simctl install "$UDID" "$APP_PATH"
+
+      - name: Instalar o Maestro
+        run: |
+          curl -fsSL https://get.maestro.mobile.dev | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      # A API tem de responder do runner; senão o vídeo sai com telas vazias.
+      - name: API de produção responde
+        run: curl -fsS https://dramarceladuch.com.br/api/app/versao
+
+      - name: Gravar o vídeo e tirar os prints
+        env:
+          EMAIL: ${{ matrix.app == 'paciente' && secrets.REVIEW_PATIENT_EMAIL || secrets.REVIEW_STAFF_EMAIL }}
+          SENHA: ${{ matrix.app == 'paciente' && secrets.REVIEW_PATIENT_PASSWORD || secrets.REVIEW_STAFF_PASSWORD }}
+        run: |
+          if [ -z "$EMAIL" ] || [ -z "$SENHA" ]; then
+            echo "::error::Faltam os segredos da conta de revisão deste app."; exit 1
+          fi
+          mkdir -p "$SAIDA/prints" "$SAIDA/maestro"
+          FLOW="$GITHUB_WORKSPACE/$PASTA/.maestro/video.yaml"
+
+          # Aquece: a primeira abertura do WebView é lenta e ficaria no vídeo.
+          xcrun simctl launch "$UDID" "$BUNDLE"
+          sleep 30
+          xcrun simctl terminate "$UDID" "$BUNDLE" || true
+
+          xcrun simctl io "$UDID" recordVideo --codec h264 --force "$SAIDA/video.mp4" &
+          GRAVADOR=$!
+          sleep 3
+          set +e
+          (cd "$SAIDA/prints" && maestro test --debug-output "$SAIDA/maestro" \
+            -e EMAIL="$EMAIL" -e SENHA="$SENHA" "$FLOW")
+          RESULTADO=$?
+          set -e
+          sleep 2
+          kill -INT "$GRAVADOR"; wait "$GRAVADOR" || true
+
+          # O takeScreenshot grava onde o Maestro decidir; junta tudo em prints/.
+          find "$GITHUB_WORKSPACE/$PASTA/.maestro" "$HOME/.maestro" -name '[0-9][0-9]-*.png' \
+            -exec mv {} "$SAIDA/prints/" \; 2>/dev/null || true
+          xcrun simctl spawn "$UDID" log show --last 20m --predicate 'process == "App"' > "$SAIDA/app.log" 2>/dev/null || true
+          exit $RESULTADO
+
+      - name: Tamanho dos prints
+        if: always()
+        run: |
+          for f in "$SAIDA"/prints/*.png; do
+            [ -f "$f" ] && echo "$(basename "$f"): $(sips -g pixelWidth -g pixelHeight "$f" | awk '/pixel/ {printf "%s ", $2}')"
+          done
+          true
+
+      - name: Guardar vídeo, prints e depuração
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-video-${{ matrix.app }}
+          path: ${{ env.SAIDA }}/
+          retention-days: 30

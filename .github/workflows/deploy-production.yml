@@ -259,6 +259,9 @@ jobs:
           MIN_APP_VERSION_ADMIN: ${{ vars.MIN_APP_VERSION_ADMIN }}
           # Chave de envio do Velomail (so email:send). Ausente: o .env fica como esta.
           VELOMAIL_API_KEY: ${{ secrets.VELOMAIL_API_KEY }}
+          # Conta de revisão das lojas (patient.ts). Ausente: o .env fica como está.
+          REVIEW_PATIENT_EMAIL: ${{ secrets.REVIEW_PATIENT_EMAIL }}
+          REVIEW_PATIENT_PASSWORD: ${{ secrets.REVIEW_PATIENT_PASSWORD }}
         run: |
           # A conta de servico vai em base64: o JSON tem aspas e \n na chave, e o
           # upsert_env (awk -v) interpretaria o \n. A API aceita os dois formatos.
@@ -270,8 +273,14 @@ jobs:
           # So digitos e pontos: o valor entra na linha de comando remota.
           case "${MIN_APP_VERSION_PATIENT:-}" in *[!0-9.]*) MIN_APP_VERSION_PATIENT="" ;; esac
           case "${MIN_APP_VERSION_ADMIN:-}" in *[!0-9.]*) MIN_APP_VERSION_ADMIN="" ;; esac
+          # Em base64: a senha entra entre aspas simples na linha de comando remota.
+          REVIEW_B64=""
+          if [ -n "${REVIEW_PATIENT_EMAIL:-}" ] && [ -n "${REVIEW_PATIENT_PASSWORD:-}" ]; then
+            REVIEW_B64="$(printf '%s\n%s' "$REVIEW_PATIENT_EMAIL" "$REVIEW_PATIENT_PASSWORD" | base64 -w0)"
+            echo "::add-mask::$REVIEW_B64"
+          fi
           sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
-            "APP_ROOT='${{ env.APP_ROOT }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' IMAGE_PREFIX='${{ env.IMAGE_PREFIX }}' IMAGE_TAG='${{ env.RELEASE_VERSION }}' FIREBASE_SA_B64='$FIREBASE_SA_B64' MIN_APP_VERSION_PATIENT='${MIN_APP_VERSION_PATIENT:-}' MIN_APP_VERSION_ADMIN='${MIN_APP_VERSION_ADMIN:-}' VELOMAIL_API_KEY='${VELOMAIL_API_KEY:-}' bash -s" <<'ENDSSH'
+            "APP_ROOT='${{ env.APP_ROOT }}' CANONICAL_URL='${{ env.CANONICAL_URL }}' DEPLOY_PORT='${{ env.DEPLOY_PORT }}' PRIMARY_DOMAIN='${{ env.PRIMARY_DOMAIN }}' SECONDARY_DOMAIN='${{ env.SECONDARY_DOMAIN }}' IMAGE_PREFIX='${{ env.IMAGE_PREFIX }}' IMAGE_TAG='${{ env.RELEASE_VERSION }}' FIREBASE_SA_B64='$FIREBASE_SA_B64' MIN_APP_VERSION_PATIENT='${MIN_APP_VERSION_PATIENT:-}' MIN_APP_VERSION_ADMIN='${MIN_APP_VERSION_ADMIN:-}' VELOMAIL_API_KEY='${VELOMAIL_API_KEY:-}' REVIEW_B64='$REVIEW_B64' bash -s" <<'ENDSSH'
             set -euo pipefail
 
             ENV_FILE="$APP_ROOT/.env"
@@ -377,6 +386,10 @@ jobs:
             ensure_env "MAIL_FROM" "nao-responda@dramarceladuch.com.br"
             if [ -n "${VELOMAIL_API_KEY:-}" ]; then
               upsert_env "VELOMAIL_API_KEY" "$VELOMAIL_API_KEY"
+            fi
+            if [ -n "${REVIEW_B64:-}" ]; then
+              upsert_env "REVIEW_PATIENT_EMAIL" "$(printf '%s' "$REVIEW_B64" | base64 -d | sed -n 1p)"
+              upsert_env "REVIEW_PATIENT_PASSWORD" "$(printf '%s' "$REVIEW_B64" | base64 -d | sed -n 2p)"
             fi
             if [ -n "${FIREBASE_SA_B64:-}" ]; then
               upsert_env "FIREBASE_SERVICE_ACCOUNT" "$FIREBASE_SA_B64"

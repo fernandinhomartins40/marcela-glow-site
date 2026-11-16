@@ -1,0 +1,69 @@
+# Vídeo de uso do "Minha Jornada" para a revisão da App Store, e os prints
+# da loja de carona (takeScreenshot). Roda no simulador do GitHub Actions
+# (.github/workflows/app-ios-video.yml), contra a API de produção, com a
+# conta de revisão: ela volta a entrar mesmo depois de excluída (patient.ts).
+#
+# Os textos são os rótulos reais das telas. Não envia mensagem nem pede
+# horário: a clínica receberia de verdade.
+appId: br.com.dramarceladuch.paciente
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Quero criar meu acesso"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: 01-entrar
+
+# Entrar
+- tapOn: "E-mail"
+- inputText: ${EMAIL}
+- tapOn: "Senha"
+- inputText: ${SENHA}
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Jornada"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: 02-inicio
+
+# Jornada e o detalhe de um plano
+- tapOn: "Jornada"
+- waitForAnimationToEnd
+- takeScreenshot: 03-jornada
+- tapOn:
+    text: ".*Ver detalhes.*"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 04-jornada-detalhe
+- tapOn:
+    text: "Minha jornada"
+    optional: true
+
+# Consultas, documentos, mensagens
+- tapOn: "Consultas"
+- waitForAnimationToEnd
+- takeScreenshot: 05-consultas
+- tapOn: "Documentos"
+- waitForAnimationToEnd
+- takeScreenshot: 06-documentos
+- tapOn: "Mais"
+- tapOn: "Mensagens"
+- waitForAnimationToEnd
+- takeScreenshot: 07-mensagens
+
+# Excluir a conta (exigência da Apple, diretriz 5.1.1(v))
+- tapOn: "Mais"
+- tapOn: "Excluir minha conta"
+- extendedWaitUntil:
+    visible: "Confirme com a sua senha"
+    timeout: 10000
+- takeScreenshot: 08-excluir-conta
+- tapOn: "Confirme com a sua senha"
+- inputText: ${SENHA}
+- pressKey: Enter
+# Acesso removido: volta para a entrada.
+- extendedWaitUntil:
+    visible: "Quero criar meu acesso"
+    timeout: 30000
+- waitForAnimationToEnd

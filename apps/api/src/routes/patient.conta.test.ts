@@ -258,6 +258,26 @@ describe('exclusao de conta', () => {
     expect(banco.appointment).toHaveLength(1)
   })
 
+  it('conta de revisao das lojas volta a entrar depois de excluida; outra conta nao', async () => {
+    process.env.REVIEW_PATIENT_EMAIL = 'Revisao@exemplo.com'
+    process.env.REVIEW_PATIENT_PASSWORD = SENHA
+    try {
+      const tok = await contaAtiva('revisao@exemplo.com')
+      expect((await http('/me', 'DELETE', { password: SENHA }, tok)).status).toBe(204)
+      expect((await http('/auth/login', 'POST', { email: 'revisao@exemplo.com', password: 'errada' })).status).toBe(401)
+      expect((await http('/auth/login', 'POST', { email: 'revisao@exemplo.com', password: SENHA })).status).toBe(200)
+
+      const outra = await contaAtiva('fernanda@exemplo.com')
+      await http('/me', 'DELETE', { password: SENHA }, outra)
+      expect((await http('/auth/login', 'POST', { email: 'fernanda@exemplo.com', password: SENHA })).status).toBe(401)
+      // Não cria paciente: só reabre cadastro existente.
+      expect((await http('/auth/login', 'POST', { email: 'nao-existe@exemplo.com', password: SENHA })).status).toBe(401)
+    } finally {
+      delete process.env.REVIEW_PATIENT_EMAIL
+      delete process.env.REVIEW_PATIENT_PASSWORD
+    }
+  })
+
   it('depois dela, o cadastro volta a exigir o e-mail', async () => {
     const tok = await contaAtiva()
     await http('/me', 'DELETE', { password: SENHA }, tok)
