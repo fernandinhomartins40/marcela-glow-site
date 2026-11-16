@@ -75,14 +75,17 @@ jobs:
         run: sudo systemsetup -settimezone America/Campo_Grande >/dev/null 2>&1 || true
 
       # 6,9" (1320×2868) é o tamanho que a App Store exige.
+      # Em 16/11/2026 o "iPhone 17 Pro Max" (runtime mais novo que o da imagem)
+      # travou no boot por 73 min: prefere o 16 Pro Max, mesma tela de 6,9".
       - name: Preparar o simulador
+        timeout-minutes: 15
         run: |
           xcrun simctl list devices available -j > "$RUNNER_TEMP/devs.json"
           DEV=$(node -e '
             const d = require(process.argv[1]).devices
             const todos = Object.entries(d).filter(([r]) => r.includes("iOS")).flatMap(([, l]) => l)
-            const pm = todos.filter((x) => /^iPhone \d+ Pro Max$/.test(x.name))
-              .sort((a, b) => parseInt(b.name.match(/\d+/)) - parseInt(a.name.match(/\d+/)))
+            const nota = (x) => (x.name === "iPhone 16 Pro Max" ? 1000 : parseInt(x.name.match(/\d+/)))
+            const pm = todos.filter((x) => /^iPhone \d+ Pro Max$/.test(x.name)).sort((a, b) => nota(b) - nota(a))
             if (!pm.length) { console.error(todos.map((x) => x.name).join(", ")); process.exit(1) }
             console.log(pm[0].udid + " " + pm[0].name)
           ' "$RUNNER_TEMP/devs.json")
