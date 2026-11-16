@@ -41,6 +41,11 @@ appId: br.com.dramarceladuch.medica
     optional: true
 - waitForAnimationToEnd
 - takeScreenshot: 06-paciente-detalhe
+# A ficha abre em tela cheia, sem a barra de baixo.
+- tapOn:
+    text: "Voltar"
+    optional: true
+- waitForAnimationToEnd
 
 - tapOn: "Mais"
 - tapOn: "Documentos"

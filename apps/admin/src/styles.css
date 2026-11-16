@@ -1371,7 +1371,8 @@ body.page-lock { overflow: hidden; }
 .page-view-bar {
   position: sticky; top: 0; z-index: 5; margin: 0;
   display: flex; align-items: center; gap: 14px;
-  padding: 12px clamp(16px, 3vw, 32px);
+  /* Página em tela cheia no app: o Voltar e o nome não ficam sob a câmera. Fora do app o env() é 0. */
+  padding: calc(12px + env(safe-area-inset-top)) clamp(16px, 3vw, 32px) 12px;
   background: var(--cream-soft); border-bottom: 1px solid var(--border);
 }
 .page-view-heading { min-width: 0; }
@@ -1952,8 +1953,10 @@ img, video, canvas { max-width: 100%; height: auto; }
   padding-left: max(1rem, env(safe-area-inset-left));
   padding-right: max(1rem, env(safe-area-inset-right));
 }
-/* O cabeçalho começa abaixo do entalhe da câmera, não sob ele. */
-.app-shell.is-app main > header { padding-top: calc(env(safe-area-inset-top) + 0.5rem); }
+/* O conteúdo começa abaixo do entalhe da câmera, não sob ele. No `main`, não no
+   `header`: a `.topbar` (busca) vem antes do cabeçalho e ficava sob a Dynamic
+   Island — visto no simulador do iPhone em 16/11/2026. */
+.app-shell.is-app main { padding-top: calc(env(safe-area-inset-top) + 12px); }
 
 /* Sem seleção de texto nem rolagem elástica: os dois são gestos de página, e
    num app eles fazem a tela parecer solta. O texto de conteúdo volta a ser

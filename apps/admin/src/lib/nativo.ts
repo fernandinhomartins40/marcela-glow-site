@@ -80,8 +80,9 @@ export function iniciarCasca(): void {
   })
 
   const cor = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.content
-  // As duas cores de tema são escuras: ícones claros. `setBackgroundColor` não vale no Android 15+ (edge-to-edge).
-  void StatusBar.setStyle({ style: Style.Dark }).catch(() => undefined)
+  // Android: a barra é pintada com a cor do tema (escura), ícones claros. `setBackgroundColor` não vale no Android 15+ (edge-to-edge).
+  // iOS: a página passa por baixo da barra e o fundo dos dois apps é creme — texto escuro, senão a hora some.
+  void StatusBar.setStyle({ style: plataforma === 'ios' ? Style.Light : Style.Dark }).catch(() => undefined)
   if (cor && plataforma === 'android') {
     void StatusBar.setBackgroundColor({ color: cor }).catch(() => undefined)
   }

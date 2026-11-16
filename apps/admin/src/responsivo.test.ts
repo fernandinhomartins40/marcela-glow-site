@@ -40,4 +40,10 @@ describe('responsividade do painel', () => {
     expect(regra('.queue-card')).toMatch(/justify-content:\s*stretch/)
     expect(regra('.event')).toMatch(/justify-content:\s*stretch/)
   })
+  it('no app do iPhone nada fica sob a câmera (Dynamic Island)', () => {
+    /* A busca do topo vem antes do <header> e ficava sob a câmera; a barra
+       Voltar das páginas em tela cheia também. Visto no simulador, 16/11/2026. */
+    expect(css).toContain('.app-shell.is-app main { padding-top: calc(env(safe-area-inset-top) + 12px); }')
+    expect(regra('.page-view-bar')).toContain('env(safe-area-inset-top)')
+  })
 })

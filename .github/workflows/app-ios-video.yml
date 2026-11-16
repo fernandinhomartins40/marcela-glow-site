@@ -119,10 +119,10 @@ jobs:
           mkdir -p "$SAIDA/prints" "$SAIDA/maestro"
           FLOW="$GITHUB_WORKSPACE/$PASTA/.maestro/video.yaml"
 
-          # Aquece: a primeira abertura do WebView é lenta e ficaria no vídeo.
-          xcrun simctl launch "$UDID" "$BUNDLE"
-          sleep 30
-          xcrun simctl terminate "$UDID" "$BUNDLE" || true
+          # Aquece: a primeira abertura do WebView e a instalação do driver do
+          # Maestro levam ~1 min de tela inicial do iPhone, que ficaria no vídeo.
+          printf 'appId: %s\n---\n- launchApp\n- waitForAnimationToEnd\n- stopApp\n' "$BUNDLE" > "$RUNNER_TEMP/aquecer.yaml"
+          maestro test "$RUNNER_TEMP/aquecer.yaml" || true
 
           xcrun simctl io "$UDID" recordVideo --codec h264 --force "$SAIDA/video.mp4" &
           GRAVADOR=$!
@@ -135,9 +135,10 @@ jobs:
           sleep 2
           kill -INT "$GRAVADOR"; wait "$GRAVADOR" || true
 
-          # O takeScreenshot grava onde o Maestro decidir; junta tudo em prints/.
-          find "$GITHUB_WORKSPACE/$PASTA/.maestro" "$HOME/.maestro" -name '[0-9][0-9]-*.png' \
-            -exec mv {} "$SAIDA/prints/" \; 2>/dev/null || true
+          # O takeScreenshot grava onde o Maestro decidir (inclusive em pasta
+          # oculta da depuração); junta tudo em prints/.
+          find "$SAIDA/maestro" "$GITHUB_WORKSPACE/$PASTA/.maestro" "$HOME/.maestro" -name '[0-9][0-9]-*.png' \
+            -exec cp {} "$SAIDA/prints/" \; 2>/dev/null || true
           xcrun simctl spawn "$UDID" log show --last 20m --predicate 'process == "App"' > "$SAIDA/app.log" 2>/dev/null || true
           exit $RESULTADO
 
@@ -155,4 +156,6 @@ jobs:
         with:
           name: ios-video-${{ matrix.app }}
           path: ${{ env.SAIDA }}/
+          # A depuração do Maestro fica em `.maestro/`: sem isto o artefato a descarta.
+          include-hidden-files: true
           retention-days: 30
