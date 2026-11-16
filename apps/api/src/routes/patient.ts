@@ -1,6 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import bcrypt from 'bcryptjs'
-import { timingSafeEqual } from 'node:crypto'
 import { z } from 'zod'
 // prismaAuth so nos quatro pontos que precisam ler o hash (login, checagem do
 // cadastro, ativacao e exclusao de conta); o `prisma` comum omite o campo.
@@ -8,7 +7,7 @@ import { prisma, prismaAuth } from '@marcela/database'
 import { signToken } from '../lib/jwt'
 import { authenticate, requirePatient } from '../middleware/auth'
 import { AppError, UnauthorizedError } from '../lib/errors'
-import { addDays, addHours, randomToken, sha256 } from '../lib/security'
+import { addDays, addHours, credencialDeRevisao, randomToken, sha256 } from '../lib/security'
 import { verifySignaturePayload } from '../lib/clinical'
 import { audit } from '../lib/audit'
 import { getVapidPublicKey, inscreverAparelho, removerAparelho } from '../lib/push'
@@ -103,14 +102,6 @@ async function createPatientSession(req: Request, patient: { id: string; email: 
   })
   await prisma.authSession.update({ where: { id: session.id }, data: { tokenHash: sha256(token) } })
   return token
-}
-
-/** E-mail e senha da conta de revisão (REVIEW_PATIENT_EMAIL/PASSWORD no .env). Sem os dois, nunca casa. */
-function contaDeRevisao(email: string, senha: string): boolean {
-  const e = process.env.REVIEW_PATIENT_EMAIL
-  const s = process.env.REVIEW_PATIENT_PASSWORD
-  if (!e || !s || email.toLowerCase() !== e.toLowerCase()) return false
-  return timingSafeEqual(Buffer.from(sha256(senha)), Buffer.from(sha256(s)))
 }
 
 const LINK_INVALIDO = 'Link inválido ou expirado'
@@ -260,7 +251,7 @@ router.post('/auth/login', async (req, res, next) => {
     // Conta de revisão das lojas: o revisor da Apple exclui a conta no teste, e o
     // próximo login com a senha de revisão devolve o acesso (ao revisor seguinte
     // e ao vídeo gravado no Actions). Só reabre um cadastro que já existe.
-    if (patient && contaDeRevisao(body.email, body.password)) {
+    if (patient && credencialDeRevisao('PATIENT', body.email, body.password)) {
       if (!patient.passwordHash || !(await bcrypt.compare(body.password, patient.passwordHash))) {
         patient.passwordHash = await bcrypt.hash(body.password, 12)
         await prismaAuth.patient.update({ where: { id: patient.id }, data: { passwordHash: patient.passwordHash } })

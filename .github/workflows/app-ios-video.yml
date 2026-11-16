@@ -143,6 +143,11 @@ jobs:
           find "$SAIDA/maestro" "$GITHUB_WORKSPACE/$PASTA/.maestro" "$HOME/.maestro" -name '[0-9][0-9]-*.png' \
             -exec cp {} "$SAIDA/prints/" \; 2>/dev/null || true
           xcrun simctl spawn "$UDID" log show --last 20m --predicate 'process == "App"' > "$SAIDA/app.log" 2>/dev/null || true
+          # O maestro.log grava as variáveis (-e) em texto puro: mascara antes de virar artefato.
+          grep -rlIF -e "$SENHA" -e "$EMAIL" "$SAIDA" | while read -r f; do
+            perl -pi -e 's/\Q$ENV{SENHA}\E/***/g; s/\Q$ENV{EMAIL}\E/***/g' "$f"
+          done
+          if grep -rqIF "$SENHA" "$SAIDA"; then echo "::error::senha ainda no artefato"; rm -rf "$SAIDA/maestro"; fi
           exit $RESULTADO
 
       - name: Tamanho dos prints

@@ -81,3 +81,14 @@ export function verifyJsonWithPublicKey(payload: unknown, signature: string, pub
   verifier.end()
   return verifier.verify(publicKeyPem.replace(/\\n/g, '\n'), signature, 'base64')
 }
+
+/**
+ * Credencial da conta de revisão das lojas (REVIEW_<QUEM>_EMAIL/PASSWORD no .env).
+ * Sem as duas variáveis, nunca casa.
+ */
+export function credencialDeRevisao(quem: 'PATIENT' | 'STAFF', email: string, senha: string): boolean {
+  const e = process.env[`REVIEW_${quem}_EMAIL`]
+  const s = process.env[`REVIEW_${quem}_PASSWORD`]
+  if (!e || !s || email.toLowerCase() !== e.toLowerCase()) return false
+  return crypto.timingSafeEqual(Buffer.from(sha256(senha)), Buffer.from(sha256(s)))
+}

@@ -398,11 +398,16 @@ e nunca as escreva no código nem no repositório** — só no formulário da lo
   paciente "Revisão App Store" com e-mail que você controle, ative o acesso
   pelo link do e-mail, e crie para ela uma consulta, uma sessão na jornada e
   um documento de exemplo — senão o revisor vê telas vazias.
-- **Usuário da equipe** (para o Marcela CRM): crie em *Equipe* um usuário com
-  perfil de **recepção ou equipe (STAFF)** — **nunca ADMIN** —, com acesso às
-  pacientes fictícias apenas. Lembre que ele enxerga o que o perfil enxerga:
-  se houver pacientes reais, o revisor as verá. Prefira revisar num momento em
-  que o perfil escolhido só alcance dados fictícios, ou peça orientação antes.
+- **Usuário da equipe** (para o Marcela CRM): existe sozinho. Com os segredos
+  `REVIEW_STAFF_EMAIL`/`REVIEW_STAFF_PASSWORD` no GitHub (o deploy os leva ao
+  `.env`), o primeiro login com eles cria "Revisão das lojas" com perfil de
+  **médica (DOCTOR)** — nunca ADMIN —, para o revisor ver Atender e
+  Documentos. A senha acompanha o segredo. Cópia local fora do repositório:
+  `~/.segredos/marcela-revisao-equipe.txt`.
+  **Todo perfil da equipe lê as pacientes da clínica**: com pacientes reais, o
+  revisor as verá. Então, **desative a conta em *Equipe* depois da aprovação
+  e reative só durante cada revisão** — desativada, o login com o segredo não
+  a reativa (`auth.revisao.test.ts`).
 - **Não use** as contas de demonstração do ambiente de desenvolvimento.
 - Depois da aprovação, pode desativar as contas (e reativar a cada nova
   versão).
