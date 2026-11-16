@@ -92,7 +92,7 @@ export function Login() {
               ))}
             </div>
           )}
-          <label>E-mail<input value={email} onChange={(event) => setEmail(event.target.value)} placeholder="email@clinica.com" /></label>
+          <label>E-mail<input type="email" autoComplete="username" autoCapitalize="none" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="email@clinica.com" /></label>
           <label>Senha<input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Sua senha" /></label>
           {error && <p className="error">{error}</p>}
           <button type="submit">{mode === 'login' ? 'Entrar' : 'Registrar equipe'}</button>
