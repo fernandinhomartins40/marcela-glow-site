@@ -48,11 +48,12 @@ appId: br.com.dramarceladuch.medica
 - waitForAnimationToEnd
 
 - tapOn: "Mais"
-- tapOn: "Documentos"
+# Na folha "Mais" o item vem com a descrição junto: "Documentos Assinar e enviar..."
+- tapOn: 'Documentos[\s\S]*'
 - waitForAnimationToEnd
 - takeScreenshot: 07-documentos
 - tapOn: "Mais"
-- tapOn: "Leads"
+- tapOn: 'Leads[\s\S]*'
 - waitForAnimationToEnd
 - takeScreenshot: 08-leads
 
