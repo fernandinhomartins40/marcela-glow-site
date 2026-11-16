@@ -8,11 +8,15 @@ demonstração): nenhuma tela mostra paciente real.
 | `google-play/paciente/`, `google-play/medica/` | 1080 × 1920 (9:16) | APK do GitHub Actions rodando no emulador Android | Play Console → Página principal da loja → Capturas de tela do telefone |
 | `google-play/*/icone-512.png` | 512 × 512 | `apps/*/resources/icon-only.png` | Play Console → Ícone do app |
 | `google-play/*/destaque-1024x500.png` | 1024 × 500 | Arte com a paleta e o monograma da marca | Play Console → Recurso gráfico |
-| `app-store/paciente/`, `app-store/medica/` | 1320 × 2868 (iPhone 6,9") | Mesmo app web em modo aplicativo, no tamanho do iPhone | App Store Connect → Capturas do iPhone 6,9" |
+| `app-store/paciente/`, `app-store/medica/` | 1320 × 2868 (iPhone 6,9") | Simulador do iPhone 16 Pro Max no GitHub Actions (`app-ios-video.yml`), API de produção | App Store Connect → Capturas do iPhone 6,9" |
+| `app-store/*/video-revisao.mp4` | 720 × 1564 | Mesmo percurso, gravado no simulador | Link nas notas da revisão (App Store Connect → Informações da revisão) |
 
-Os prints da App Store não saíram de um iPhone: o app iOS desenha o mesmo
-conteúdo web, então foram capturados do portal e do painel em modo aplicativo,
-sem barra de status. Para prints do iPad (exigidos se o app for oferecido em
-iPad), falta gerar no tamanho 2064 × 2752.
+Os prints e os vídeos da App Store saem do simulador de iPhone do GitHub
+Actions: Actions → "iOS — vídeo e prints da App Store". O vídeo da paciente
+vai até excluir a conta (diretriz 5.1.1(v)); o da médica termina saindo, porque
+esse app não cria conta. A conta da paciente é a de revisão
+(REVIEW_PATIENT_EMAIL/PASSWORD): volta a entrar depois de excluída. O vídeo foi
+cortado no início (instalação do Maestro) e reduzido para 720 px; o original em
+1320 × 2868 fica no artefato da execução. Para iPad (2064 × 2752) ainda não há prints.
 
 Ordem sugerida: a numeração dos arquivos.
