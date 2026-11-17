@@ -53,9 +53,10 @@ appId: br.com.dramarceladuch.medica
 - waitForAnimationToEnd
 - takeScreenshot: 07-documentos
 - tapOn: "Mais"
-- tapOn: 'Leads[\s\S]*'
+# A conta de revisão é médica: Leads não é dela, Cadastros (procedimentos e modelos) é.
+- tapOn: 'Cadastros[\s\S]*'
 - waitForAnimationToEnd
-- takeScreenshot: 08-leads
+- takeScreenshot: 08-cadastros
 
 # Sair
 - tapOn: "Mais"
