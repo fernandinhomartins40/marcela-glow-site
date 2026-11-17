@@ -6,7 +6,7 @@ plano (`02-PLANO-DE-IMPLEMENTACAO.md`); o usuário não alterou nenhum padrão.
 | | Decisão | Valor em uso | Origem |
 |---|---|---|---|
 | D1 | Identificadores e nomes | `br.com.dramarceladuch.paciente` — "Minha Jornada"; `br.com.dramarceladuch.medica` — "Marcela CRM" | Padrão do plano. **Irreversível depois de publicar** — confirmar antes do primeiro envio (U1) |
-| D2 | App da médica público ou não listado | Não listado (Apple) / restrito (Google) | Padrão |
+| D2 | App da médica público ou não listado | **Público**, na busca das duas lojas | Usuário, 17/11/2026: estar listado prova à clínica que o app é dela |
 | D3 | Push por Firebase nos dois sistemas | Sim — `@capacitor-firebase/messaging` no app, `firebase-admin` na API | Padrão |
 | D4 | Editor "Site" sem prévia ao vivo no app | Sim | Padrão |
 | D5 | Biometria na médica na primeira versão | Não (fica O1) | Padrão |

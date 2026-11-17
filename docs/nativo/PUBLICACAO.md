@@ -40,7 +40,7 @@ saber programar: cada passo diz onde clicar e o que copiar.
 |---|---|---|
 | Nome na loja | Minha Jornada | Marcela CRM |
 | Identificador | `br.com.dramarceladuch.paciente` | `br.com.dramarceladuch.medica` |
-| Distribuição | Pública | Restrita (Apple: não listado; Google: teste fechado) |
+| Distribuição | Pública | **Pública** (decisão de 17/11/2026: listado na busca das duas lojas) |
 
 **O identificador não pode ser trocado depois do primeiro envio.** Se quiser
 outro, avise antes de criar os apps nas lojas — ele está no código.
@@ -437,7 +437,7 @@ e nunca as escreva no código nem no repositório** — só no formulário da lo
 > Marcela CRM is the internal staff tool of the Dra. Marcela Duch clinic in
 > Brazil (interface in Portuguese): daily schedule, front desk, patient
 > records and treatment plans. There is no public sign-up; staff accounts are
-> created by the clinic administrator. We request unlisted distribution.
+> created by the clinic administrator.
 >
 > Demo account (staff profile, fictitious data only): (e-mail) / (senha).
 >
@@ -460,7 +460,13 @@ Sugestão de telas — paciente: Início, Consultas, Jornada (com sessões),
 Documentos, Mensagens. Médica: Hoje, Agenda, Atender, Pacientes. **Sempre com
 as contas fictícias**: nenhuma captura pode mostrar paciente real.
 
-## 12. App da médica fora da busca
+## 12. App da médica fora da busca (não adotado)
+
+**Decisão de 17/11/2026: o Marcela CRM fica listado nas duas lojas.** Estar na
+busca é a prova, para a clínica, de que o app é dela e foi publicado de fato.
+Ele já se protege sozinho: não tem cadastro aberto, e só entra quem a clínica
+cadastrou. O caminho abaixo fica registrado caso a Apple recuse o app listado
+por ser ferramenta de uma só empresa (diretriz 3.2) — aí, sim, vale pedir.
 
 - **Apple — distribuição não listada.** Primeiro o app passa pela revisão
   normal. Depois, peça em https://developer.apple.com/contact/request/unlisted-app/
@@ -490,9 +496,10 @@ Se mesmo assim vier a recusa:
    o código é empacotado no app, não carregado de um site.
 2. Anexe um vídeo curto (gravação de tela do iPhone) mostrando: login,
    notificação chegando, jornada de tratamento, exclusão de conta.
-3. Para o **Marcela CRM**, reforce que é ferramenta interna e peça a
-   distribuição não listada (item 12) — a Apple trata ferramenta de equipe de
-   forma diferente de app ao público.
+3. Para o **Marcela CRM**, reforce que é a ferramenta da equipe da clínica,
+   com conteúdo próprio por usuária. Só se a recusa for por ser app de uma só
+   empresa, peça a distribuição não listada (item 12) — a decisão padrão é
+   manter listado.
 4. Se a recusa persistir, peça a apelação ao *App Review Board* (link na
    própria mensagem de recusa).
 
