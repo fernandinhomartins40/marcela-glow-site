@@ -55,10 +55,13 @@ const SECUNDARIAS: { id: AdminTab; label: string; hint: string }[] = [
 
 export function AppBar({
   tab,
+  permitidas,
   onNavigate,
   onSignOut,
 }: {
   tab: AdminTab
+  /** As seções do menu lateral: sem isto a folha oferecia à médica Leads e Site, que a devolviam ao Hoje. */
+  permitidas: ReadonlySet<AdminTab>
   onNavigate: (id: AdminTab) => void
   onSignOut: () => void
 }) {
@@ -105,7 +108,7 @@ export function AppBar({
               </button>
             </header>
             <ul>
-              {SECUNDARIAS.map((s) => (
+              {SECUNDARIAS.filter((s) => permitidas.has(s.id)).map((s) => (
                 <li key={s.id}>
                   <button
                     className={tab === s.id ? 'is-active' : ''}

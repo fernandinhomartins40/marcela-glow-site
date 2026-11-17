@@ -234,3 +234,13 @@ describe('a lateral nao rola junto com a pagina', () => {
     expect(regra).not.toMatch(/overflow-x:\s*hidden/)
   })
 })
+
+describe('folha Mais do app', () => {
+  it('só oferece as seções que o menu lateral mostra à pessoa', () => {
+    /* Visto no vídeo da revisão (16/11/2026): a médica tocava em Leads e o app a
+       devolvia ao Hoje, porque a folha listava as sete seções a todo papel. */
+    const appBar = readFileSync(join(raiz, 'apps/admin/src/components/AppBar.tsx'), 'utf8')
+    expect(appBar).toContain('SECUNDARIAS.filter((s) => permitidas.has(s.id))')
+    expect(fonte).toContain('permitidas={new Set(gruposVisiveis')
+  })
+})

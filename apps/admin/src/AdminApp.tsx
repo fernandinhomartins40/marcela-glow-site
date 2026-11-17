@@ -324,6 +324,7 @@ function Shell() {
       {comoApp && (
         <AppBar
           tab={tab}
+          permitidas={new Set(gruposVisiveis.flatMap((g) => g.items.map(([id]) => id)))}
           onNavigate={go}
           onSignOut={() => {
             esquecerSessao(TOKEN_KEY)
