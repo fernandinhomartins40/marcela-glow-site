@@ -15,7 +15,11 @@ Os prints e os vídeos da App Store saem do simulador de iPhone do GitHub
 Actions: Actions → "iOS — vídeo e prints da App Store". O vídeo da paciente
 vai até excluir a conta (diretriz 5.1.1(v)); o da médica termina saindo, porque
 esse app não cria conta. A conta da paciente é a de revisão
-(REVIEW_PATIENT_EMAIL/PASSWORD): volta a entrar depois de excluída. O vídeo foi
+(REVIEW_PATIENT_EMAIL/PASSWORD): volta a entrar depois de excluída; a da médica,
+REVIEW_STAFF_* (perfil DOCTOR). Os dados que aparecem são de demonstração, da
+"Paciente VIP Demo". Os dois vídeos também estão publicados para as notas da
+revisão: `https://dramarceladuch.com.br/revisao/minha-jornada.mp4` e
+`.../revisao/marcela-crm.mp4` (`apps/web/public/revisao/`, fora da busca). O vídeo foi
 cortado no início (instalação do Maestro) e reduzido para 720 px; o original em
 1320 × 2868 fica no artefato da execução. Para iPad (2064 × 2752) ainda não há prints.
 
