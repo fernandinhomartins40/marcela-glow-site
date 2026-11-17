@@ -6,8 +6,16 @@ demonstração): nenhuma tela mostra paciente real.
 | Pasta | Tamanho | Origem | Onde enviar |
 |---|---|---|---|
 | `google-play/paciente/`, `google-play/medica/` | 1080 × 1920 (9:16) | APK do GitHub Actions rodando no emulador Android | Play Console → Página principal da loja → Capturas de tela do telefone |
-| `google-play/*/icone-512.png` | 512 × 512 | `apps/*/resources/icon-only.png` | Play Console → Ícone do app |
-| `google-play/*/destaque-1024x500.png` | 1024 × 500 | Arte com a paleta e o monograma da marca | Play Console → Recurso gráfico |
+| `google-play/*/icone-512.png` | 512 × 512 | `icones/*/icone-mestre.png` (Codex, 16/11/2026) | Play Console → Ícone do app |
+| `google-play/*/destaque-1024x500.png` | 1024 × 500 | Banner do Codex (`final/banner/`) | Play Console → Recurso gráfico |
+| `app-store/*/icone-1024.png` | 1024 × 1024 | O mesmo mestre; a Apple tira o ícone do próprio IPA | Referência (não se envia) |
+| `icones/*/` | 1254 / 1024 | Mestre do Codex + camadas do ícone adaptável do Android | Fonte de `apps/*/resources/icon-*.png` |
+
+**Trocar o ícone dos apps:** copiar o mestre para `apps/<app>/resources/icon-only.png`
+(1024, sem transparência) e as camadas para `icon-foreground.png`/`icon-background.png`;
+rodar `npx capacitor-assets generate --android --ios --assetPath resources` dentro do app
+e versionar só as imagens geradas (a ferramenta reformata `AndroidManifest.xml` e alguns
+`Contents.json`: desfazer). O ícone só chega aos aparelhos no próximo build das lojas.
 | `app-store/paciente/`, `app-store/medica/` | 1320 × 2868 (iPhone 6,9") | Simulador do iPhone 16 Pro Max no GitHub Actions (`app-ios-video.yml`), API de produção | App Store Connect → Capturas do iPhone 6,9" |
 | `app-store/*/video-revisao.mp4` | 720 × 1564 | Mesmo percurso, gravado no simulador | Link nas notas da revisão (App Store Connect → Informações da revisão) |
 
