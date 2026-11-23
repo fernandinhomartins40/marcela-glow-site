@@ -100,6 +100,15 @@ export function marcarDocumentoComoAplicativo(): void {
 
   document.documentElement.classList.add('modo-aplicativo')
 
+  /* O iOS aproxima a tela ao focar um campo com fonte abaixo de 16px e não
+     desfaz: a tela "sai do lugar" e fica assim. No painel quase todo campo tem
+     13–14px (as regras de `.field`/`.page-view` vencem a de 16px do modo
+     aplicativo), e as páginas abertas por cima já focam o primeiro campo — editar
+     um documento ampliava a tela na hora. Dentro do app o WKWebView respeita
+     `maximum-scale=1`, que desliga esse zoom sem mexer no tamanho de campo nenhum. */
+  const viewport = document.querySelector<HTMLMetaElement>('meta[name="viewport"]')
+  if (viewport && !viewport.content.includes('maximum-scale')) viewport.content += ', maximum-scale=1'
+
   /* O gesto de pinça do Safari não é coberto por `touch-action` em todos os
      casos, então é cancelado direto. `passive: false` é obrigatório: sem ele o
      `preventDefault` é ignorado. */
