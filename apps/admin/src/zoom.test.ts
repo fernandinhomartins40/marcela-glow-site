@@ -25,3 +25,15 @@ describe('zoom ao focar campo no app', () => {
     expect(meta).not.toMatch(/maximum-scale|user-scalable/)
   })
 })
+
+describe('barra de status no app', () => {
+  // Sem a faixa, o conteúdo rolava por baixo do relógio (auditoria no simulador, 23/11/2026).
+  it('o modo aplicativo cobre a área da barra de status', () => {
+    const css = readFileSync(join(__dirname, 'styles.css'), 'utf8')
+    const regra = css.slice(css.indexOf('html.modo-aplicativo body::before'))
+    expect(regra.indexOf('{')).toBeGreaterThan(0)
+    const corpo = regra.slice(0, regra.indexOf('}'))
+    expect(corpo).toMatch(/position:\s*fixed/)
+    expect(corpo).toMatch(/height:\s*env\(safe-area-inset-top\)/)
+  })
+})

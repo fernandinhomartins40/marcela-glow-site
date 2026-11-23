@@ -3050,6 +3050,24 @@ html.modo-aplicativo body {
   text-size-adjust: 100%;
 }
 
+/* Faixa sob a barra de status. Sem ela, ao rolar, o conteudo passava por baixo
+   do relogio e da bateria — cara de pagina, nao de app (auditoria no simulador,
+   23/11/2026). Fica abaixo das paginas abertas por cima (z 40), que tem a
+   propria barra com o recuo da camera. Fora do app o env() e 0 e a faixa some. */
+html.modo-aplicativo body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  z-index: 35;
+  background: rgba(248, 243, 238, .92); /* --marble */
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  pointer-events: none;
+}
+
 /* Rolagem continua livre onde precisa: listas, modais, qualquer area que role.
    `pan-x pan-y` ja permite, mas areas com rolagem propria precisam do proprio
    `touch-action` para nao herdar restricao de ancestral. */
