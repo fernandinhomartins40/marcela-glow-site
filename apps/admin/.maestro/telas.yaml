@@ -1,0 +1,180 @@
+# Auditoria de telas do "Marcela CRM" no simulador de iPhone do GitHub Actions
+# (.github/workflows/app-ios-video.yml, roteiro "telas"). Abre cada tela que a
+# conta de revisão (médica) alcança, inclusive as páginas abertas por cima, e
+# toca num campo para provar que o app não amplia ao focar. Um print por passo.
+#
+# Só olha: nunca toca em Salvar, Criar, Enviar, Assinar ou Excluir. Passo que
+# depende de dado existir é opcional, para a auditoria seguir até o fim.
+appId: br.com.dramarceladuch.medica
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Entrar no painel"
+    timeout: 90000
+- waitForAnimationToEnd
+- takeScreenshot: 01-login
+- tapOn: "E-mail"
+- waitForAnimationToEnd
+- takeScreenshot: 02-login-campo-focado
+- inputText: ${EMAIL}
+- tapOn: "Senha"
+- inputText: ${SENHA}
+- pressKey: Enter
+- extendedWaitUntil:
+    visible: "Atender"
+    timeout: 60000
+- waitForAnimationToEnd
+- takeScreenshot: 03-hoje
+- scroll
+- takeScreenshot: 04-hoje-rolado
+
+- tapOn: "Agenda"
+- waitForAnimationToEnd
+- takeScreenshot: 05-agenda
+- tapOn:
+    text: ".*Novo agendamento.*"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 06-agenda-novo
+- tapOn:
+    text: "Voltar"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn: "Atender"
+- waitForAnimationToEnd
+- takeScreenshot: 07-atender
+
+- tapOn: "Pacientes"
+- waitForAnimationToEnd
+- takeScreenshot: 08-pacientes
+- tapOn:
+    text: ".*Buscar.*"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 09-pacientes-busca-focada
+- tapOn:
+    text: ".*Nova paciente.*"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 10-paciente-nova
+- tapOn:
+    text: "Voltar"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: ".*Paciente VIP Demo.*"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 11-ficha
+- scroll
+- takeScreenshot: 12-ficha-rolada
+- tapOn:
+    text: "Editar plano"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 13-ficha-editar-plano
+- tapOn:
+    text: "Voltar"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Voltar"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn: "Mais"
+- waitForAnimationToEnd
+- takeScreenshot: 14-mais
+- tapOn: 'Financeiro[\s\S]*'
+- waitForAnimationToEnd
+- takeScreenshot: 15-financeiro
+- scroll
+- takeScreenshot: 16-financeiro-rolado
+
+- tapOn: "Mais"
+- tapOn: 'Documentos[\s\S]*'
+- waitForAnimationToEnd
+- takeScreenshot: 17-documentos
+# O defeito relatado: editar um documento ampliava o app.
+- tapOn:
+    text: "Editar documento"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 18-documento-editar
+- tapOn:
+    text: "Voltar"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Novo"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 19-documento-novo
+- tapOn:
+    text: "Voltar"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn: "Mais"
+- tapOn: 'Cadastros[\s\S]*'
+- waitForAnimationToEnd
+- takeScreenshot: 20-cadastros-procedimentos
+- tapOn:
+    text: "Editar procedimento"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 21-procedimento-editar
+- tapOn:
+    text: "Voltar"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Medicamentos"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 22-cadastros-medicamentos
+- tapOn:
+    text: "Editar item"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 23-medicamento-editar
+- tapOn:
+    text: "Voltar"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Exames"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 24-cadastros-exames
+- tapOn:
+    text: "Orientações e modelos"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 25-cadastros-orientacoes
+- tapOn:
+    text: "Modelos de documento"
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 26-cadastros-modelos
+- tapOn:
+    text: ".*Editar.*"
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- takeScreenshot: 27-modelo-editar
+- tapOn:
+    text: "Voltar"
+    optional: true
+- waitForAnimationToEnd
+
+- tapOn: "Mais"
+- tapOn: "Sair da conta"
+- extendedWaitUntil:
+    visible: "Entrar no painel"
+    timeout: 30000

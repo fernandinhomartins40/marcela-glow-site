@@ -5,8 +5,9 @@ name: iOS — vídeo e prints da App Store
 # loja no mesmo percurso. Tudo contra a API de produção, com as contas de
 # revisão dos segredos. Nada roda no computador local.
 #
-# Roteiros: apps/patient/.maestro/video.yaml e apps/admin/.maestro/video.yaml.
-# Saída (Artifacts): ios-video-<app> com video.mp4, prints/ e a depuração do Maestro.
+# Roteiros em apps/<app>/.maestro/: video.yaml (o da revisão) e telas.yaml
+# (auditoria: abre todas as telas e foca campos, sem alterar nada).
+# Saída (Artifacts): ios-<roteiro>-<app> com video.mp4, prints/ e a depuração do Maestro.
 
 on:
   workflow_dispatch:
@@ -16,6 +17,11 @@ on:
         type: choice
         options: [ambos, paciente, medica]
         default: ambos
+      roteiro:
+        description: "video: o da revisão (a paciente exclui a conta); telas: auditoria de todas as telas, só olhando"
+        type: choice
+        options: [video, telas]
+        default: video
 
 permissions:
   contents: read
@@ -120,7 +126,7 @@ jobs:
             echo "::error::Faltam os segredos da conta de revisão deste app."; exit 1
           fi
           mkdir -p "$SAIDA/prints" "$SAIDA/maestro"
-          FLOW="$GITHUB_WORKSPACE/$PASTA/.maestro/video.yaml"
+          FLOW="$GITHUB_WORKSPACE/$PASTA/.maestro/${{ inputs.roteiro }}.yaml"
 
           # Aquece: a primeira abertura do WebView e a instalação do driver do
           # Maestro levam ~1 min de tela inicial do iPhone, que ficaria no vídeo.
@@ -162,7 +168,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-video-${{ matrix.app }}
+          name: ios-${{ inputs.roteiro }}-${{ matrix.app }}
           path: ${{ env.SAIDA }}/
           # A depuração do Maestro fica em `.maestro/`: sem isto o artefato a descarta.
           include-hidden-files: true
